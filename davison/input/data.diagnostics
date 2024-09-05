@@ -1,0 +1,49 @@
+# Diagnostic Package Choices
+#
+# 2-D fields:
+# =================
+# 
+# ETAN     Perturbation of Surface (pressure, height) (Pa,m)
+# 
+# monthly 3-D fields:
+# ===================
+# 
+# SALTanom Salt anomaly (=SALT-35; g/kg)
+# THETA    Potential Temperature (degC,K)
+# UVELMASS Zonal Mass-Weighted Comp of Velocity (m/s)
+# VVELMASS Meridional Mass-Weighted Comp of Velocity (m/s)
+# WVELMASS Vertical Mass-Weighted Comp of Velocity (m/s)
+#
+ &diagnostics_list
+   frequency(8) = 86400.,
+    fields(1,8) = 'BRGfwFlx',
+    filename(8) = 'BRGfwFlx', 
+   frequency(9) = 86400.,
+    fields(1,9) = 'BRGhtFlx',
+    filename(9) = 'BRGhtFlx',
+   frequency(10) = 86400.,
+    fields(1,10) = 'BRGmltRt',
+    filename(10) = 'BRGmltRt', 
+ &
+
+# Parameter for Diagnostics of per level statistics:
+#-----------------
+# for each output-stream:
+#  stat_fname(n) : prefix of the output file name (only 8.c long) for
+#outp.stream n
+#  stat_freq(n):< 0 : write snap-shot output every |stat_freq| seconds
+#               > 0 : write time-average output every stat_freq seconds
+#  stat_phase(n)    : write at time = stat_phase + multiple of |stat_freq|
+#  stat_region(:,n) : list of "regions" (default: 1 region only=global)
+#  stat_fields(:,n) : list of diagnostics fields (8.c) (see
+#"available_diagnostics.log"
+#                 file for the list of all available diag. in this particular
+#config)
+#-----------------
+ &DIAG_STATIS_PARMS
+#- an example just to check the agreement with MONITOR output:
+#stat_fields(1,1)= 'ETAN    ','UVEL    ','VVEL    ','WVEL    ', 'THETA   ',
+#   stat_fname(1)= 'dynStDiag',
+#    stat_freq(1)= -864000.,
+#   stat_phase(1)= 0.,
+ &
