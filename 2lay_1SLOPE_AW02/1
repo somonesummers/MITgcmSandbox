@@ -1,0 +1,134 @@
+from MITgcmutils import mds
+import matplotlib.pyplot as plt
+import numpy as np
+
+steps = np.arange(8640,8640,8640)
+
+nt = np.shape(steps)[0] 
+dt = 10.
+ekin = np.zeros(nt)
+
+for n in np.arange(0,nt):
+    step = steps[n]
+    print('{} / {}'.format(n+1,nt)) 
+    
+    x = mds.rdmds('XC')
+    x = x[0,:]
+    dx = np.gradient(x)
+    nx = np.shape(x)[0]    
+
+    z = mds.rdmds('RC')
+    z = z[:,0,0]
+    dz = np.gradient(z)
+    
+    data = mds.rdmds('dynDiag',step)
+    t = data[0,:,0,:]
+    s = data[1,:,0,:]
+    u = data[2,:,0,:]
+    w = data[3,:,0,:]
+    
+    SHIflux = mds.rdmds('SHIfluxDiag',step)
+    fwf = SHIflux[0,:]
+    hef = SHIflux[1,:]
+    m = fwf/1000/np.mean(dx)/np.mean(dz)
+    ekin[n] = np.sum(u**2+w**2)
+    
+    flux = mds.rdmds('fluxDiag',step)
+    su = flux[0,:,0,:]
+    tu = flux[1,:,0,:]
+    sw = flux[2,:,0,:]
+    tw = flux[3,:,0,:]
+
+    dep = np.fromfile('topog.slope', dtype='>f8')
+    ice = np.fromfile('icetopo.exp1', dtype='>f8')
+    tref = np.fromfile('T.bound', dtype='>f8')
+    sref = np.fromfile('S.bound', dtype='>f8')
+
+    for i in np.arange(1,nx):
+        t[z>ice[i],i] = float('nan')     
+        #s[s<30] = float('nan')
+        s[z>ice[i],i] = float('nan')
+        u[z>ice[i],i] = float('nan')
+        w[z>ice[i],i] = float('nan')
+        t[:,i] = t[:,i]-tref
+        s[:,i] = s[:,i]-sref
+   
+    levels = np.linspace(-1,1,41)
+    ints = np.arange(0,nx,20)
+    
+    [fig, axs] = plt.subplots(4,1,figsize=(16,10))
+    
+    cf1 = axs[0].contourf(x/1000, z/1000, t, levels/5, extend='both', cmap='RdBu_r')
+    axs[0].plot(x/1000,dep/1000,'k', linewidth=2)
+    axs[0].plot(x/1000,ice/1000,'k', linewidth=2)
+    axs[0].text(1,-0.2,'Meltrate: \n {melt:.2e}'.format(melt=np.mean(m)))
+    axs[0].quiver(x[ints]/1000,ice[ints]/1000,np.zeros(np.shape(ints)[0]),hef[0,ints], scale=50, width=0.005)
+    axs[0].set_title('Temperature at step: {} ; Ekin = {}'.format(step,ekin[n]))
+
+    cf2 = axs[1].contourf(x/1000, z/1000, s, levels/50, extend='both', cmap='RdBu_r')
+    axs[1].plot(x/1000,dep/1000,'k', linewidth=2)
+    axs[1].plot(x/1000,ice/1000,'k', linewidth=2)
+    axs[1].quiver(x[ints]/1000,ice[ints]/1000,np.zeros(np.shape(ints)[0]),fwf[0,ints], scale=0.01, width=0.005)
+    axs[1].set_title('Salinity')
+
+    cf3 = axs[2].contourf(x/1000, z/1000, u, levels/1000, extend='both', cmap='RdBu_r')
+    axs[2].plot(x/1000,dep/1000,'k', linewidth=2)
+    axs[2].plot(x/1000,ice/1000,'k', linewidth=2)
+    axs[2].set_title('horizontal velocity')
+
+    cf4 = axs[3].contourf(x/1000, z/1000, w, levels/10000, extend='both', cmap='RdBu_r')
+    axs[3].plot(x/1000,dep/1000,'k', linewidth=2)
+    axs[3].plot(x/1000,ice/1000,'k', linewidth=2)
+    axs[3].set_title('vertical velocity')
+
+    fig.colorbar(cf1, ax=axs[0])
+    fig.colorbar(cf2, ax=axs[1])
+    fig.colorbar(cf3, ax=axs[2])
+    fig.colorbar(cf4, ax=axs[3])
+    
+    if step == np.inf:
+        fig_name = 'tsuw_ave_final.eps'
+    else:
+        fig_name = 'tsuw_ave_{step:06.0f}.eps'
+    
+    fig.savefig(fig_name.format(step=step))
+    plt.close('all')
+
+    fig, axs = plt.subplots(4,1,figsize=(16,10))
+    
+    cf1 = axs[0].contourf(x/1000, z/1000, tu, levels/100, extend='both', cmap='RdBu_r')
+    axs[0].plot(x/1000,dep/1000,'k', linewidth=2)
+    axs[0].plot(x/1000,ice/1000,'k', linewidth=2)
+    axs[0].set_title('horizontal heat flux')
+
+    cf2 = axs[1].contourf(x/1000, z/1000, tw, levels/1000, extend='both', cmap='RdBu_r')
+    axs[1].plot(x/1000,dep/1000,'k', linewidth=2)
+    axs[1].plot(x/1000,ice/1000,'k', linewidth=2)
+    axs[1].set_title('vertical heat flux')
+    
+    cf3 = axs[2].contourf(x/1000, z/1000, su, levels/100, extend='both', cmap='RdBu_r')
+    axs[2].plot(x/1000,dep/1000,'k', linewidth=2)
+    axs[2].plot(x/1000,ice/1000,'k', linewidth=2)
+    axs[2].set_title('horizontal salt flux')
+
+    cf4 = axs[3].contourf(x/1000, z/1000, sw, levels/1000, extend='both', cmap='RdBu_r')
+    axs[3].plot(x/1000,dep/1000,'k', linewidth=2)
+    axs[3].plot(x/1000,ice/1000,'k', linewidth=2)
+    axs[3].set_title('vertical salt flux')
+    
+    fig.colorbar(cf1, ax=axs[0])
+    fig.colorbar(cf2, ax=axs[1])
+    fig.colorbar(cf3, ax=axs[2])
+    fig.colorbar(cf4, ax=axs[3])
+    
+    if step == np.inf:
+        fig_name = 'flux_ave_final.eps'
+    else:
+        fig_name = 'flux_ave_{step:06.0f}.eps'
+    
+    fig.savefig(fig_name.format(step=step))
+    plt.close('all')
+
+[fig, axs] = plt.subplots(1,1,figsize=(10,10))
+axs.plot(steps*dt,ekin)
+fig.savefig('ekin.eps')

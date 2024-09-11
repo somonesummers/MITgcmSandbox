@@ -1,0 +1,3 @@
+Note to Paul (aka self)
+Sept 6th, 2024
+This folder was massively re-arranged to actually be a well organized MITgcm repo. I added a data.DIAGNOSTIC_SIZE.h file as well as adjusting a "." to a "," in input/data and it seems to be running. NetCDF and MNC still don't work, but actually aren't even used by this script at all so a non-issue at present.

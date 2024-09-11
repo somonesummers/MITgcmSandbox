@@ -1,0 +1,94 @@
+from MITgcmutils import mds
+import matplotlib.pyplot as plt
+import numpy as np
+
+steps = np.arange(8640,172801,8640)
+
+nt = np.shape(steps)[0] 
+dt = 10.
+ekin = np.zeros(nt)
+
+for n in np.arange(0,nt):
+    step = steps[n]
+    print('{} / {}'.format(n+1,nt)) 
+    
+    x = mds.rdmds('XC')
+    x = x[0,:]
+    dx = np.gradient(x)
+    nx = np.shape(x)[0]    
+
+    z = mds.rdmds('RC')
+    z = z[:,0,0]
+    dz = np.gradient(z)
+    
+    data = mds.rdmds('dynDiag',step)
+    t = data[0,:,0,:]
+    s = data[1,:,0,:]
+    w = data[2,:,0,:]
+    u = data[3,:,0,:]
+    
+    flux = mds.rdmds('fluxDiag',step)
+    fwf = flux[0,:]
+    hef = flux[1,:]
+    m = fwf/1000/np.mean(dx)/np.mean(dz)
+    ekin[n] = np.sum(u**2+w**2)
+
+    dep = np.fromfile('topog.slope', dtype='>f8')
+    ice = np.fromfile('icetopo.exp1', dtype='>f8')
+    tref = t[:,-1]
+    sref = np.fromfile('S.bound', dtype='>f8')
+
+    for i in np.arange(1,nx):
+        t[z>ice[i],i] = float('nan')     
+        #s[s<30] = float('nan')
+        s[z>ice[i],i] = float('nan')
+        u[z>ice[i],i] = float('nan')
+        w[z>ice[i],i] = float('nan')
+        t[:,i] = t[:,i]-tref
+        s[:,i] = s[:,i]-sref
+    
+    levels = np.linspace(-1,1,21)
+    ints = np.arange(0,nx,41)
+    
+    [fig, axs] = plt.subplots(4,1,figsize=(16,10))
+    
+    cf1 = axs[0].contourf(x/1000, z/1000, t, levels/4, extend='both', cmap='RdBu_r')
+    axs[0].plot(x/1000,dep/1000,'k', linewidth=2)
+    axs[0].plot(x/1000,ice/1000,'k', linewidth=2)
+    axs[0].quiver(x[ints]/1000,ice[ints]/1000,np.zeros(np.shape(ints)[0]),m[0,ints], scale=10, width=0.005)
+    axs[0].set_title('Salinity at step: ' + str(step))
+
+    cf2 = axs[1].contourf(x/1000, z/1000, s, levels/100, extend='both', cmap='RdBu_r')
+    axs[1].plot(x/1000,dep/1000,'k', linewidth=2)
+    axs[1].plot(x/1000,ice/1000,'k', linewidth=2)
+    #axs[1].quiver(x[ints]/1000,ice[ints]/1000,np.zeros(np.shape(ints)[0]),fwf[0,ints], scale=10, width=0.005)
+    axs[1].set_title('Temperature')
+
+    cf3 = axs[2].contourf(x/1000, z/1000, u, levels/5000, extend='both', cmap='RdBu_r')
+    axs[2].plot(x/1000,dep/1000,'k', linewidth=2)
+    axs[2].plot(x/1000,ice/1000,'k', linewidth=2)
+    axs[2].set_title('horizontal velocity')
+
+    cf4 = axs[3].contourf(x/1000, z/1000, w, levels/1000, extend='both', cmap='RdBu_r')
+    axs[3].plot(x/1000,dep/1000,'k', linewidth=2)
+    axs[3].plot(x/1000,ice/1000,'k', linewidth=2)
+    axs[3].set_title('vertical velocity')
+
+    fig.colorbar(cf1, ax=axs[0])
+    fig.colorbar(cf2, ax=axs[1])
+    fig.colorbar(cf3, ax=axs[2])
+    fig.colorbar(cf4, ax=axs[3])
+    
+    if step == np.inf:
+        fig_name = 'tsuw_snap_final.eps'
+    else:
+        fig_name = 'tsuw_snap_{step:06.0f}.eps'
+    
+    fig.savefig(fig_name.format(step=step))
+    plt.close('all')
+    
+
+print(ekin)
+#[fig, axs] = plt.subplots(1,1,figsize=(10,10))
+#axs.plot(steps*dt,ekin)
+#fig.savefig('ekin.eps')

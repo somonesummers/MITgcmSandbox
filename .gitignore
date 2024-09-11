@@ -28,6 +28,7 @@ core
 *.meta
 *STDOUT*
 *STDERR*
+*ipynb_checkpoints*
 
 #Build files
 *build*/*.h
