@@ -8,7 +8,7 @@ ZC = mds.rdmds('RC')
 ZC = ZC.squeeze()
 XC = XC.squeeze()
 
-endStep = 100000
+endStep = 864000
 
 T = mds.rdmds('T', endStep)
 T = T[:,0,:].squeeze()
@@ -33,12 +33,18 @@ plt.savefig("temp.png")
 plt.show()
 
 plt.figure(2)
-plt.contourf(XC, ZC, U, np.linspace(-0.025, 0.025, 12), cmap='bwr')
+plt.contourf(XC, ZC, U, np.linspace(-0.12, 0.12, 12), cmap='bwr')
 plt.colorbar()
 plt.title('U velocity')
 plt.savefig("U.png")
 plt.show()
 
+plt.figure(3)
+plt.contourf(XC, ZC, W, np.linspace(-0.04, 0.04, 12), cmap='bwr')
+plt.colorbar()
+plt.title('W velocity')
+plt.savefig("W.png")
+plt.show()
 
 # plt.figure(3)
 # plt.quiver(XC, ZC, U, W)
