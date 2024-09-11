@@ -16,17 +16,25 @@ _$*
 *.Z
 *.elc
 *.ln
+*.png
 core
 # CVS default ignores end
 *.pyc
 # OSX system files
 .DS_store
 
-*/build/*.h
-*/build/*.F
-*/build/*.for
-*/build/*.c
-*/build/*.log
+#Output files
+*.data
+*.meta
+*STDOUT*
+*STDERR*
+
+#Build files
+*build*/*.h
+*build*/*.F
+*build*/*.for
+*build*/*.c
+*build*/*.log
 davison/build/Makefile
 
 /doc/_build/
