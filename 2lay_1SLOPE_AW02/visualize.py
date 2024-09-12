@@ -8,7 +8,7 @@ figDir = 'figs/'
 ZC = ZC.squeeze()
 XC = XC.squeeze()
 
-endStep = 1000
+endStep = 432000
 
 T = mds.rdmds('T', endStep)
 T = T[:,0,:].squeeze()
