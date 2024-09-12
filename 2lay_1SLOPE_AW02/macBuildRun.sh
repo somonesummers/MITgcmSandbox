@@ -9,7 +9,8 @@ echo "Done with make depend, moving to make..."
 make -s
 cd ../run
 echo "clean up run folder, then make simlinks and run"
-rm *
+rm -r *
+mkdir figs
 ln -s ../input/* .
 ln -s ../build/mitgcmuv .
 echo  'running at directory '$(pwd)

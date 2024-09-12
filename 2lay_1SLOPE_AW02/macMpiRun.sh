@@ -3,10 +3,11 @@
 echo "Building already done, just new runtime options"
 cd run
 echo "clean up run folder, then make simlinks and run"
-rm *
+rm -r *
+mkdir figs
 ln -s ../input/* .
 echo  'running at directory '$(pwd)
-mpirun -np 8 ../build/mitgcmuv
+time mpirun -np 8 ../build/mitgcmuv
 afplay /System/Library/Sounds/Funk.aiff
 python ../quicklook.py
 python ../visualize.py

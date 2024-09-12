@@ -10,10 +10,11 @@ echo -e "\nDone with make depend, moving to make...\n"
 make -s
 cd ../run
 echo -e "\nclean up run folder, then make simlinks and run"
-rm *
+rm -r *
+mkdir figs
 ln -s ../input/* .
 echo  'running at directory '$(pwd)
-mpirun -np 8 ../build/mitgcmuv
+time mpirun -np 8 ../build/mitgcmuv
 afplay /System/Library/Sounds/Funk.aiff
 python ../visualize.py
 echo "End of script..."

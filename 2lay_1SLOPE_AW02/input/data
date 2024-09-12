@@ -4,8 +4,8 @@
 #
 # Continuous equation parameters
  &PARM01
- tRef=20*1.,
- sRef=20*35.,
+ tRef=50*1.,
+ sRef=50*35.,
  viscA4=0.0E4,
  viscAh=2.5E-1,
  viscAz=1.E-3,
@@ -70,7 +70,7 @@
 #delXfile='dx.bin',
  dXspacing=40.,
  dYspacing=10.,
- delZ=20*50,
+ delZ=50*20,
  &
 
 # Input datasets

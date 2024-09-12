@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 XC = mds.rdmds('XC')
 YC = mds.rdmds('YC')
 ZC = mds.rdmds('RC')
-
+figDir = 'figs/'
 ZC = ZC.squeeze()
 XC = XC.squeeze()
 
@@ -29,21 +29,21 @@ plt.figure(1)
 plt.contourf(XC, ZC, T, np.linspace(-1.8, .4, 12), cmap='hot_r')
 plt.colorbar()
 plt.title('Temperature')
-plt.savefig("temp.png")
+plt.savefig("%stemp.png" % figDir)
 plt.show()
 
 plt.figure(2)
 plt.contourf(XC, ZC, U, np.linspace(-0.12, 0.12, 12), cmap='bwr')
 plt.colorbar()
 plt.title('U velocity')
-plt.savefig("U.png")
+plt.savefig("%sU.png" % figDir)
 plt.show()
 
 plt.figure(3)
 plt.contourf(XC, ZC, W, np.linspace(-0.04, 0.04, 12), cmap='bwr')
 plt.colorbar()
 plt.title('W velocity')
-plt.savefig("W.png")
+plt.savefig("%sW.png" % figDir)
 plt.show()
 
 # plt.figure(3)

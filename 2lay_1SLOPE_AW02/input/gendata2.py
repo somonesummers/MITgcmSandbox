@@ -18,7 +18,7 @@ Ly = 10
 
 nx = 400
 ny = 1
-nz = 20
+nz = 50
 
 dx = Lx / nx
 dy = Ly / ny
