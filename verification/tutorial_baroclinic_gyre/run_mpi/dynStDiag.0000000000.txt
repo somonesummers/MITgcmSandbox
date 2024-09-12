@@ -1,0 +1,9 @@
+# header of file: dynStDiag
+# frequency (s):    2592000.000000
+# phase (s)    :          0.000000
+# Regions      :   0
+# Fields       : THETA    TRELAX  
+# Nb of levels :   15   1
+# end of header ------------------------------------------------------------
+ 
+# records End here.
