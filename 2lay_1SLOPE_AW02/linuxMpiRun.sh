@@ -8,7 +8,6 @@ mkdir figs
 ln -s ../input/* .
 echo  'running at directory '$(pwd)
 time srun -np 8 ../build/mitgcmuv
-afplay /System/Library/Sounds/Funk.aiff
 python ../quicklook.py
 python ../visualize.py
 echo -e "End of script...\n"

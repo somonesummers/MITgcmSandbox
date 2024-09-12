@@ -15,6 +15,5 @@ mkdir figs
 ln -s ../input/* .
 echo  'running at directory '$(pwd)
 time srun ../build/mitgcmuv
-afplay /System/Library/Sounds/Funk.aiff
 python ../visualize.py
 echo "End of script..."
