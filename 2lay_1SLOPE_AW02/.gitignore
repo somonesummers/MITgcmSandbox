@@ -1,5 +1,12 @@
 *ipynb
 run/*
 run_*/*
-*.exp1
-*.sgd
+input/*.exp1
+input/*.sgd
+input/*.bound
+input/*.bin
+input/*.init
+input/topog.slope
+input/*.forcing
+input/icefrontdepth
+input/icefrontlength
