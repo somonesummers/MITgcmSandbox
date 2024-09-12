@@ -8,7 +8,7 @@ ZC = mds.rdmds('RC')
 ZC = ZC.squeeze()
 XC = XC.squeeze()
 
-endStep = 864000
+endStep = 1000
 
 T = mds.rdmds('T', endStep)
 T = T[:,0,:].squeeze()

@@ -50,7 +50,7 @@
 # Time stepping parameters
  &PARM03
  nIter0=0,
- nTimeSteps=43200,
+ nTimeSteps=1000,
 #nTimeSteps=43200,
 #nTimeSteps=864000,
 #nTimeSteps=3110400,

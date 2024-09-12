@@ -1,4 +1,2 @@
-iceberg_*
-*.bin
-*.mat
-*.png
+*
+!.gitignore
