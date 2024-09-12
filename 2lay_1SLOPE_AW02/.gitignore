@@ -1,3 +1,5 @@
 *ipynb
 run/*
 run_*/*
+*.exp1
+*.sgd
