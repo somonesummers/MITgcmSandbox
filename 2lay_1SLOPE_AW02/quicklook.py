@@ -50,11 +50,11 @@ for i in np.arange(startStep, maxStep + 1, startStep*10):
     elif k == 3:
         plt.title("Ver Vel at {}".format(i))
     j = i/startStep
-    str = "quick%05i.png" % j
-    # plt.savefig(str, format='png')
+    str = "figs/quick%05i.png" % j
+    plt.savefig(str, format='png')
     # plt.close()
     plt.show()
-    
+
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)
 # plt.show()
