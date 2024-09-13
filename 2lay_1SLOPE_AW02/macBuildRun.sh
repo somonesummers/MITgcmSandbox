@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 cd build
 echo " Cleaning up previous builds..."
 make Clean

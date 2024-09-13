@@ -14,8 +14,4 @@ echo -e "\nclean up run folder, then make simlinks and run"
 rm -r *
 mkdir figs
 ln -s ../input/* .
-echo  'running at directory '$(pwd)
-time mpirun -np 8 ../build/mitgcmuv
-afplay /System/Library/Sounds/Funk.aiff
-python ../visualize.py
-echo "End of script..."
+echo "End of build script"
