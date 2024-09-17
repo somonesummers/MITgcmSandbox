@@ -3,7 +3,7 @@
 
 import numpy as np
 import sys
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 def write_bin(fname, data):
@@ -77,11 +77,11 @@ write_bin("T.bound", T)
 write_bin("U.bound", ubound)
 
 
-plt.plot(S - 34, z, label="Sref - 34")
-plt.plot(T, z, label="Tref")
-plt.legend()
-plt.savefig("initialTS")
-plt.show()
+#plt.plot(S - 34, z, label="Sref - 34")
+#plt.plot(T, z, label="Tref")
+#plt.legend()
+#plt.savefig("initialTS")
+#plt.show()
 
 # Topographie
 
@@ -147,13 +147,13 @@ if sgdd != 0:
     write_bin("U.sgd", sgdu)
 
 
-plt.plot(x, iceshelf[:, 0], label="shelfice")
-# plot(sgdu * 1000, z)
-# plt.plot(x, icefront[:, 0], label="icefront")
-plt.plot(x, d[:, 0], label="bathy")
-plt.legend()
-plt.savefig("geo")
-plt.show()
+#plt.plot(x, iceshelf[:, 0], label="shelfice")
+## plot(sgdu * 1000, z)
+## plt.plot(x, icefront[:, 0], label="icefront")
+#plt.plot(x, d[:, 0], label="bathy")
+#plt.legend()
+#plt.savefig("geo")
+#plt.show()
 
 write_bin("icetopo.exp1", iceshelf)
 write_bin("icefrontdepth", icefront)

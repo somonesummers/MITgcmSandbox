@@ -1,0 +1,70 @@
+
+GENMAKE :
+
+A program for GENerating MAKEfiles for the MITgcm project.
+   For a quick list of options, use "genmake2 -h"
+or for more detail see the documentation, section "Building the model"
+   (under "Getting Started") at:  https://mitgcm.readthedocs.io/
+
+===  Processing options files and arguments  ===
+  getting local config information:  none found
+  getting OPTFILE information:
+    using OPTFILE="../linux_amd64_gfortran"
+    get Compiler-version: '12'
+  getting AD_OPTFILE information:
+    using AD_OPTFILE="../../../tools/adjoint_options/adjoint_default"
+  check Fortran Compiler...   (set FC_CHECK=3/5)
+  check makedepend (local: 0, system: 1, 1)
+  Turning on MPI cpp macros
+
+===  Checking system libraries  ===
+  Do we have the system() command using /usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-11.3.1/gcc-12.3.0-ukkkutsxfl5kpnnaxflpkq2jtliwthfz/bin/gfortran...  yes
+  Do we have the fdate() command using /usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-11.3.1/gcc-12.3.0-ukkkutsxfl5kpnnaxflpkq2jtliwthfz/bin/gfortran...  yes
+  Do we have the etime() command using /usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-11.3.1/gcc-12.3.0-ukkkutsxfl5kpnnaxflpkq2jtliwthfz/bin/gfortran... c,r: yes (SbR)
+  Can we call simple C routines (here, "cloc()") using /usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-11.3.1/gcc-12.3.0-ukkkutsxfl5kpnnaxflpkq2jtliwthfz/bin/gfortran...  yes
+  Can we unlimit the stack size using /usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-11.3.1/gcc-12.3.0-ukkkutsxfl5kpnnaxflpkq2jtliwthfz/bin/gfortran...  yes
+  Can we register a signal handler using /usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-11.3.1/gcc-12.3.0-ukkkutsxfl5kpnnaxflpkq2jtliwthfz/bin/gfortran...  yes
+  Can we use stat() through C calls...  yes
+  Can we create NetCDF-enabled binaries...  no
+    skip check for LAPACK Libs
+  Can we call FLUSH intrinsic subroutine...  yes
+
+===  Setting defaults  ===
+  Adding MODS directories: ../code 
+  Making source files in eesupp from templates
+  Making source files in pkg/exch2 from templates
+  Making source files in pkg/regrid from templates
+
+===  Determining package settings  ===
+  getting package dependency info from  ../../../pkg/pkg_depend
+  getting package groups info from      ../../../pkg/pkg_groups
+  checking list of packages to compile:
+    using PKG_LIST="../code/packages.conf"
+    before group expansion packages are: gfd obcs rbcs shelfice diagnostics
+    replacing "gfd" with:  mom_common mom_fluxform mom_vecinv generic_advdiff debug mdsio rw monitor
+    after group expansion packages are:  mom_common mom_fluxform mom_vecinv generic_advdiff debug mdsio rw monitor obcs rbcs shelfice diagnostics
+  applying DISABLE settings
+  applying ENABLE settings
+    packages are:  debug diagnostics generic_advdiff mdsio mom_common mom_fluxform mom_vecinv monitor obcs rbcs rw shelfice
+  applying package dependency rules
+    packages are:  debug diagnostics generic_advdiff mdsio mom_common mom_fluxform mom_vecinv monitor obcs rbcs rw shelfice
+  Adding STANDARDDIRS='eesupp model'
+  Searching for *OPTIONS.h files in order to warn about the presence
+    of "#define "-type statements that are no longer allowed:
+    found CPP_OPTIONS="../code/CPP_OPTIONS.h"
+    found CPP_EEOPTIONS="../../../eesupp/inc/CPP_EEOPTIONS.h"
+  Creating the list of files for the adjoint compiler.
+
+===  Creating the Makefile  ===
+  setting INCLUDES
+  Determining the list of source and include files
+  Writing makefile: Makefile
+  Add the source list for AD code generation
+  Making list of "exceptions" that need ".p" files
+  Making list of NOOPTFILES
+  Add rules for links
+  Adding makedepend marker
+
+===  Done  ===
+  original 'Makefile' generated but was unable to
+   run compiled test-program (please see 'genmake.log')

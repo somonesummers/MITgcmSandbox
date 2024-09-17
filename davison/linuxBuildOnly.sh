@@ -12,7 +12,7 @@ cd ../run
 echo "clean up run folder, then make simlinks and run"
 rm *
 ln -s ../input/* .
-ln -s ../build/mitgcm .
+ln -s ../build/mitgcmuv .
 pwd
-./mitgcm > output.txt
+./mitgcmuv > output.txt
 echo "End of script..."
