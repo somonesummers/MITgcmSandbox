@@ -1,14 +1,7 @@
 #!/usr/bin/env bash
 set -e
-cd build
-echo " Cleaning up previous builds..."
-make Clean
-../../tools/genmake2 -mods ../code -optfile ../../tools/build_options/darwin_amd64_gfortran
-echo "Done compiling, moving to make depend..."
-make depend -s
-echo "Done with make depend, moving to make..."
-make -s
-cd ../run
+bash linuxRunOnly.sh
+cd run
 echo "clean up run folder, then make simlinks and run"
 rm *
 ln -s ../input/* .
