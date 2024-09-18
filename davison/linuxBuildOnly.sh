@@ -24,6 +24,4 @@ echo " Clean up run folder, then make simlinks and run"
 rm *
 ln -s ../input/* .
 ln -s ../build/mitgcmuv .
-pwd
-./mitgcmuv > output.txt
-echo "End of script..."
+echo "End of script, run directory is configured..."
