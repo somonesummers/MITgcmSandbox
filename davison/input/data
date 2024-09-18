@@ -4,8 +4,8 @@
 #
 # Continuous equation parameters
  &PARM01
- tRef = 20*0.,
- sRef = 20*34.,
+ Tref = 20*0.,
+ Sref = 20*34.,
  viscAz=0.00001,
  viscC2smag=2.2,
  diffKzT=0.00001,
