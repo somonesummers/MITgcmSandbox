@@ -1,7 +1,8 @@
 #!/bin/bash
 #
 #
-# Build options for PGI compiler on Linux AMD64 platform
+# Build options for PGI compiler on Linux AMD64 platform. Copied from pgf77 on 17 sept 2024. 
+# Not tested on anything, but the below is left for reference
 #
 # tested with PGI version 10.9 on baudelaire (Linux 2.6.34.7-61.fc13.x86_64), using:
 #   -  sh,bash:
