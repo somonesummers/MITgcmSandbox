@@ -36,6 +36,7 @@
 
 # Time stepping parameters
  &PARM03
+ rwsuffixtype=1.,
  nIter0=0,
  endTime=864000.,
  deltaT=100.,
