@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+set -e
 echo "Building already done, just new runtime options"
 cd run
 echo "clean up run folder, then make simlinks and run"
@@ -7,7 +7,7 @@ rm -r *
 mkdir figs
 ln -s ../input/* .
 echo  'running at directory '$(pwd)
-time srun -np 8 ../build/mitgcmuv
-python ../quicklook.py
-python ../visualize.py
+time mpirun -n 8 ../build/mitgcmuv
+# python ../quicklook.py
+# python ../visualize.py
 echo -e "End of script...\n"

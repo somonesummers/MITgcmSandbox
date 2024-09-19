@@ -13,4 +13,4 @@ cd $SLURM_SUBMIT_DIR                            # Change to working directory
 #cd run
 #./mitgcmuv
 
-bash linuxPgiBuildRun.sh
+bash linuxBuildOnly.sh
