@@ -9,7 +9,7 @@ clc
 %%  Initial settings
 
 % Add paths to libraries
-addpath(genpath('D:/work/PhD/MITgcm/mfiles'));
+addpath(genpath('../matlabFunctions'));
 
 % Accuracy of binary files
 acc = 'real*8';
@@ -130,7 +130,7 @@ driftMask(2:12,2:end-1) = 1; % calculate effect of iceberg drift on melt rates
 barrierMask(2:12,2:end-1) = 1; % make icebergs a physical barrier to water flow
 
 % Iceberg concentration (% of each surface cell that is filled in plan view)
-bergConc(2:12,2:end-1) = 10; % iceberg concentration is uniformly 10%
+bergConc(2:12,2:end-1) = 95; % iceberg concentration is uniformly 10%
 
 % Generate iceberg size-frequency distribution
  [all_berg_areas, all_berg_lengths, all_berg_widths, all_berg_depths, numBergsPerCell, ...

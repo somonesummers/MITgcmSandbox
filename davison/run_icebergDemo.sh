@@ -1,24 +1,13 @@
 #!/bin/bash
+#$ -l h_rt=05:00:00
+#$ -l rmem=4G
 
-# load modules (copy into command line)
+# add mpi modules
 module load dev/PGI-compilers/17.5
 
-## Compile code
-mkdir ./build # create build directory
-cd ./build # move to build directory
-# start compiling
-../../tools/genmake2 -mods=../code -optfile=../../optfile/linux_ia32_pgf77_icebergmpi_netcdf_sharc -rootdir=../../
-make depend
-make
+# add libraries to path
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/packages/dev/pgi/linux86-64/17.5/lib"
+export LDFLAGS="-rpath /usr/local/packages/dev/pgi/linux86-64/17.5/lib "$LDFLAGS
 
-# Setup run directory
-cd ../ # Move back to main directory
-rm -r ./run
-mkdir ./run
-cd ./run
-cp -r ../input/* . # copy contents of input to run
-cp ../build/mitgcmuv . # copy MITgcm executable to run
-chmod 755 ./mitgcmuv # ensure we have permissions to run MITgcm
-
-# Run
-qsub run_icebergDemo.sh # submit as batch job
+# execution bit:
+./mitgcmuv > output.txt

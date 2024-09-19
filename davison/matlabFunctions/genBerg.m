@@ -930,7 +930,7 @@ difference = derived_cover - bergConc;
 figure; 
 subplot(1,3,1); imagesc(bergConc); colorbar; caxis([0 10]); title('target cover');
 subplot(1,3,2); imagesc(derived_cover); colorbar; caxis([0 10]);  title('derived cover');
-ax3= subplot(1,3,3); imagesc(difference); colorbar; caxis([-5 5]); colormap(ax3, redblue); title('difference');
+ax3= subplot(1,3,3); imagesc(difference); colorbar; caxis([-5 5]); title('difference');
 print('-dpng','-r150','derived_iceberg_cover.png');
 close
 

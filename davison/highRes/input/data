@@ -4,8 +4,8 @@
 #
 # Continuous equation parameters
  &PARM01
- Tref = 20*0.,
- Sref = 20*34.,
+ Tref = 30*0.,
+ Sref = 30*34.,
  viscAz=0.00001,
  viscC2smag=2.2,
  diffKzT=0.00001,
@@ -56,7 +56,7 @@
  usingCartesianGrid=.TRUE.,
  delXfile='delx.bin',
  delYfile='dely.bin',
- delZ= 20*10.,
+ delZ= 30*10.,
  &
 
 # Input datasets

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=Berg95                       # Job name
+#SBATCH --job-name=BergHD                     # Job name
 #SBATCH --account=gts-arobel3                   # charge account
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
@@ -10,8 +10,6 @@
 #SBATCH --mail-user=psummers8@gatech.edu        # E-mail address for notifications
 cd $SLURM_SUBMIT_DIR                            # Change to working directory
 
-bash linuxInputOnly.sh
-bash linuxBuildOnly.sh
-bash linuxRunOnly.sh
+bash linuxBuildRun.sh
 
 #bash linuxBuildOnly.sh
