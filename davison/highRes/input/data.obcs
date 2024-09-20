@@ -7,7 +7,7 @@
 # turn off obcs output
  OBCS_monitorFreq=0,
 
- OB_Ieast  =   12*-1,
+ OB_Ieast  =   22*-1,
  OBEtFile='EBCt.bin',
  OBEsFile='EBCs.bin',
  OBEuFile='EBCu.bin',
