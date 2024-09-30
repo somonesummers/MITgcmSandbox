@@ -16,7 +16,7 @@ cd run
 echo "Cleaning up run folder, remove simlinks"
 find . -maxdepth 1 -type l -delete
 echo "Copy over non-simlinks"
-cp * ../$FINAL_DIR
+cp * ../$FINAL_DIR/run
 echo "Copy over input data"
 cp ../input/* ../$FINAL_DIR/input
 echo "Clear run folder"
