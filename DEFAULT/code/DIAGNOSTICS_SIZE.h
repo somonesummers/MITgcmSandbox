@@ -1,3 +1,7 @@
+C $Header: /u/gcmpack/MITgcm_contrib/icefront/2D_example/code/DIAGNOSTICS_SIZE.h,v 1.1 2012/03/19 23:43:54 yunx Exp $
+C $Name:  $
+
+
 C     Diagnostics Array Dimension
 C     ---------------------------
 C     ndiagMax   :: maximum total number of available diagnostics
@@ -16,11 +20,11 @@ C  and "diagSt_size" (statistics-diags) since values here are deliberately small
       INTEGER    numDiags
       INTEGER    nRegions, sizRegMsk, nStats
       INTEGER    diagSt_size
-      PARAMETER( ndiagMax = 500 )
-      PARAMETER( numlists = 10, numperlist = 50, numLevels=2*Nr )
-      PARAMETER( numDiags = 20*Nr )
+      PARAMETER( ndiagMax = 1000 )
+      PARAMETER( numlists = 20, numperlist = 50, numLevels=Nr )
+      PARAMETER( numDiags = 30+30*Nr )
       PARAMETER( nRegions = 0 , sizRegMsk = 1 , nStats = 4 )
-      PARAMETER( diagSt_size = 10*Nr )
+      PARAMETER( diagSt_size = 13*Nr )
 
 
 CEH3 ;;; Local Variables: ***
