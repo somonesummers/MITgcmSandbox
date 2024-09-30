@@ -7,7 +7,7 @@ set -e
 #export MANPATH=$MANPATH:$PGI/linux86-64/24.5/compilers/man
 #export LM_LICENSE_FILE=$PGI/license/LICENSE.txt
 if [ $# -lt 1 ]; then
-  echo 1>&2 "$0: not enough arguments"
+  echo 1>&2 "$0: not enough arguments, need to specifiy path to MITgcm from build location"
   exit 2
 fi
 
@@ -21,8 +21,14 @@ esac
 echo "Idenitfied machine as ${MACHINE}"
 
 cd build
-echo " Cleaning up previous builds..."
-make Clean
+FILE=Makefile     
+if [ -f $FILE ]; then
+   echo "File $FILE exists, cleaning"
+   make Clean
+else
+   echo "File $FILE does not exist, no cleaning needed"
+fi
+
 if [ "$MACHINE" == "Linux" ];
 then
 	#BUILD_FILE='linux_amd64_pgf77_pace'

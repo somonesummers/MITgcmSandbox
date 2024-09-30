@@ -7,6 +7,6 @@ touch test.txt #this ensures the dir is not empty
 rm *
 ln -s ../input/* .
 cp ../build/mitgcmuv .
-./mitgcmuv > output.txt
+./mitgcmuv
 
 echo "Done running..."

@@ -37,7 +37,7 @@ core
 *build*/*.c
 *build*/*.log
 davison/build/Makefile
-
+davison
 /doc/_build/
 
 /eesupp/src/exch_xy_r[ls48].F
