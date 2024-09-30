@@ -9,7 +9,7 @@ clc
 %%  Initial settings
 
 % Add paths to libraries
-addpath(genpath('../matlabFunctions'));
+addpath(genpath('../../matlabFunctions'));
 
 % Accuracy of binary files
 acc = 'real*8';
