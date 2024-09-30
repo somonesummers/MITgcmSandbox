@@ -395,8 +395,8 @@ def plot_layer_avg_vals(vble, vname, zr, tr, params, clvls=[], cmap=plt.cm.rainb
         cb = plt.colorbar(im, extend='both')
     
     # add labels
-    plt.xlabel("X (km)", fontsize=fz)
-    plt.xlabel("Y (km)", fontsize=fz)
+    plt.xlabel("X (m)", fontsize=fz)
+    plt.xlabel("Y (m)", fontsize=fz)
     plt.title("Mean %s-%sm %s for years %s-%s" %(zr[0], zr[1], vname, tr[0], tr[-1]), fontsize=fz)
     cb.set_label('%s (%s)' %(vname, get_units(vname.upper())), fontsize=fz)
     
@@ -587,7 +587,7 @@ def computeDomainInt(exp_name, vname, zr=[], xr=[], yr=[], tstep=1, getKE=False,
             if dim=='z':
                 s_str = "_%s=%s-%sm" %(dim, np.abs(sr).min(), np.abs(sr).max())
             else:
-                s_str = "_%s=%s-%skm" %(dim, np.abs(sr).min()/1e3, np.abs(sr).max()/1e3)
+                s_str = "_%s=%s-%sm" %(dim, np.abs(sr).min(), np.abs(sr).max())
         else:
             si = np.logical_and(ss>=ss.min(), ss<=ss.max())
             s_str = ''
@@ -778,8 +778,8 @@ def find_tracer_depth(vname, tr, exp_name, exp_name_alias, clvls, testing=False,
             im = plt.contourf(XX, YY, surf_z[:, :, idx].T, 25, cmap=plt.cm.rainbow_r)
             cb = plt.colorbar(im)
             cb.set_label('Depth (m)', fontsize=fz) 
-            plt.xlabel("X (km)", fontsize=fz)
-            plt.ylabel("Y (km)", fontsize=fz)
+            plt.xlabel("X (m)", fontsize=fz)
+            plt.ylabel("Y (m)", fontsize=fz)
             plt.title("Depth of %s=%s surface" %(vname, clvls[idx]), fontsize=fz)
             #axes[ii].set_facecolor('k')
             

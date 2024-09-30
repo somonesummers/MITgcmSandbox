@@ -3,7 +3,7 @@ import matplotlib.pylab as plt
 
 
 def add_bathy(run_config, domain_params, grid_params, fz=12, show_plot=True, 
-              y_slices_km=[], x_slices_km=[], cmap='cividis'): # y_slices: 850, 1500
+              y_slices_m=[], x_slices_m=[], cmap='cividis'): # y_slices: 850, 1500
     
     # TODO: 
     # + add doc string
@@ -124,8 +124,8 @@ def add_bathy(run_config, domain_params, grid_params, fz=12, show_plot=True,
         plt.contour(XX/1e3, YY/1e3, h, [-5], colors='k')
         plt.axis('equal') # added by ED
         ax0 = plt.gca()
-        plt.ylabel('Y (km)', fontsize=fz)
-        plt.xlabel('X (km)', fontsize=fz)
+        plt.ylabel('Y (m)', fontsize=fz)
+        plt.xlabel('X (m)', fontsize=fz)
         
         cb= plt.colorbar(pp)
         cb.set_label('Depth', fontsize=fz)
@@ -135,13 +135,13 @@ def add_bathy(run_config, domain_params, grid_params, fz=12, show_plot=True,
         # plot meridonal slices
         plt.sca(axes[0])
         
-        for x_slice in x_slices_km:
+        for x_slice in x_slices_m:
             x_idx = np.argmin(np.abs(xx-x_slice*1e3))
-            plt.plot(yy/1e3, h[x_idx, :], '.-', label="X=%s km" %(xx[x_idx]/1000))
+            plt.plot(yy/1e3, h[x_idx, :], '.-', label="X=%s m" %(xx[x_idx]/1000))
             ax0.axvline(xx[x_idx]/1000, linestyle='--', color='w')
         
         
-        plt.xlabel('Y (km)', fontsize=fz)
+        plt.xlabel('Y (m)', fontsize=fz)
         plt.ylabel('H (m)', fontsize=fz)
         plt.title('Meridional slices', fontsize=fz)
         
@@ -161,12 +161,12 @@ def add_bathy(run_config, domain_params, grid_params, fz=12, show_plot=True,
         # plot zonal slices
         plt.sca(axes[1])
         
-        for y_slice in y_slices_km:
+        for y_slice in y_slices_m:
             y_idx = np.argmin(np.abs(yy-y_slice*1e3))
-            plt.plot(xx/1e3, h[:, y_idx], '.-', label="Y=%s km" %(yy[y_idx]/1000))
+            plt.plot(xx/1e3, h[:, y_idx], '.-', label="Y=%s m" %(yy[y_idx]/1000))
             ax0.axhline(yy[y_idx]/1000, linestyle='--', color='w')
         
-        plt.xlabel('X (km)', fontsize=fz)
+        plt.xlabel('X (m)', fontsize=fz)
         plt.ylabel('H (m)', fontsize=fz)
         plt.title('Zonal slices', fontsize=fz)
         plt.grid(True)
@@ -378,8 +378,8 @@ def add_meridional_canyon(XX, YY, X0, dX, cc, H_MR, h, Y0, Yend, ss):
     
     # print(h_MR.shape)
     
-    # Y0 = 50 #km
-    # Yend = 300 #km
+    # Y0 = 50 #m
+    # Yend = 300 #m
     # ss = 10*1000
     scale = -2 + (1+np.tanh((YY-Y0*1000)/ss)/2) + (1-np.tanh((YY-Yend*1000)/ss)/2)
        
