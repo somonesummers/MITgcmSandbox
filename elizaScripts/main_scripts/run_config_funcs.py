@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import re
-import MITgcmutils # see https://mitgcm.readthedocs.io/en/latest/utilities/utilities.html
+#import MITgcmutils # see https://mitgcm.readthedocs.io/en/latest/utilities/utilities.html
 import pickle
 import shutil
 import run_analysis_funcs as raf
