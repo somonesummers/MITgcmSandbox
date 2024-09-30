@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 
 saveGif = True
 
-%silly change
 
 XC = mds.rdmds('XC')
 YC = mds.rdmds('YC')
