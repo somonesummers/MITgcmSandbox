@@ -29,13 +29,13 @@ import run_config_funcs as rcf # import helpter functions
 
 run_config = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'BergSolid500'
-run_config['ndays'] = 20 # simulaton time (days)
-run_config['test'] = True # if True, run_config['nyrs'] will be shortened to a few time steps
+run_config['run_name'] = 'B95_1000_mac'
+run_config['ndays'] = 1 # simulaton time (days)
+run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 500 # horizontal grid spacing (km)
+run_config['horiz_res_m'] = 1000 # horizontal grid spacing (km)
 run_config['Lx_m'] = 25000 # domain size in x (m)
-run_config['Ly_m'] = 6000 # domain size in y (m)
+run_config['Ly_m'] = 5000 # domain size in y (m)
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 run_config['evolve_salt'] = False
@@ -167,7 +167,7 @@ grid_params['nPy'] = run_config['ncpus_xy'][1] #num of processors in x-direction
 # grid_params['Ny'] = grid_params['sNy'] * grid_params['nSy'] * grid_params['nPy']
 
 grid_params['Nx'] = domain_params['Lx']/(run_config['horiz_res_m']) # num of x points
-grid_params['Ny'] = domain_params['Ly']/(run_config['horiz_res_m']) # num of y points
+grid_params['Ny'] = domain_params['Ly']/(run_config['horiz_res_m']) + 2 # num of y points (plus 2 for walls)
 
 print("Nx: %s" %grid_params['Nx'])
 print("Ny: %s" %grid_params['Ny'])
@@ -353,7 +353,7 @@ params03['ExternForcingCycle'] = 1000.0
 if run_config['test']:
     nTimeSteps = 10
 else:
-    nTimeSteps = np.ceil(run_config['ndays']*secsInDay/detlaT)
+    nTimeSteps = np.ceil(run_config['ndays']*secsInDay/deltaT)
 
 simTimeAct = nTimeSteps*deltaT
 
@@ -505,7 +505,7 @@ rcf.write_data(run_config, diag_params, group_name='diagnostics')
 
 
 ## create DIAGNOSTICS_SIZE.h
-Nlevels = np.max([grid_params['Nr'], Nlayers])
+Nlevels = grid_params['Nr']
 rcf.createDIAGSIZEh(run_config, Ndiags, Nlevels)
 
 
