@@ -29,9 +29,9 @@ import run_config_funcs as rcf # import helpter functions
 
 run_config = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'BergSolid500'
-run_config['ndays'] = 4 # simulaton time (days)
-run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
+run_config['run_name'] = 'B95_1000'
+run_config['ndays'] = 1 # simulaton time (days)
+run_config['test'] = True # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 1000 # horizontal grid spacing (km)
 run_config['Lx_m'] = 25000 # domain size in x (m)
@@ -146,8 +146,8 @@ domain_params['H'] = 200 # max domain depth (m)
 # NOTE: the only thing you may need to change here is the number of z-grid points)
 grid_params = {}
 
-domain_params['Lx']/(run_config['horiz_res_m'])
-domain_params['Ly']/(run_config['horiz_res_m'])
+#domain_params['Lx']/(run_config['horiz_res_m'])
+#domain_params['Ly']/(run_config['horiz_res_m'])
 
 grid_params['nSx'] = 1 # num of tiles per processor in x-direction
 grid_params['nSy'] = 1 # num of tiles per processor in y-direction
@@ -155,7 +155,7 @@ grid_params['nTx'] = 1 # num of threads per processor in x-direction
 grid_params['nTy'] = 1 # num of threads per processor in y-direction
 grid_params['OLx'] = 3 # num of overlapping x-gridpoints per tile
 grid_params['OLy'] = 3 # num of overlapping y-gridpoints per tile
-grid_params['Nr'] = 20 # num of z-grid points
+grid_params['Nr'] = 15 # num of z-grid points
 
 grid_params['nPx'] = run_config['ncpus_xy'][0] #num of processors in x-direction
 grid_params['nPy'] = run_config['ncpus_xy'][1] #num of processors in x-direction
