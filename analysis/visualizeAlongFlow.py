@@ -4,10 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-dataDir = 'Berg10HighRes2/'
+dataDir = 'B95_1000_864/'
 saveGif = True
 figDir = '%sfigs/' % dataDir
-dataDir = '%srun/' % dataDir
+dataDir = '%sresults/' % dataDir
 print(figDir)
 print(dataDir)
 
@@ -23,9 +23,9 @@ print('YC:',np.shape(YC))
 print('ZC:',np.shape(ZC))
 
 startStep = 00
-endStep = 17280
+endStep = 864
 stepSize = 864
-ySlice = 6
+ySlice = 3
 XC = XC[ySlice,:].squeeze()
 width = YC[ySlice,0]
 print(width)
