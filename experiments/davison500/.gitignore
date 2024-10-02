@@ -1,0 +1,5 @@
+build/*
+results/*
+input/*.bin
+input/iceberg*.txt
+input/*.mat
