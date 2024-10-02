@@ -21,14 +21,14 @@ nt = 1;
 %% Gridding
 
 % Cell resolution
-deltaX = 500;
-deltaY = 500;
-deltaZ = 10;
+deltaX = 250;
+deltaY = 250;
+deltaZ = 5;
 
 % Dimensions of grid
-nx=50; % 15 km long
-ny=12; % 10 km wide (plus 500 m walls)
-nz=20; % 200 m deep
+nx=100; % 15 km long
+ny=22; % 10 km wide (plus 500 m walls)
+nz=40; % 200 m deep
 
 % x scale
 delx = zeros(1,nx); 
@@ -121,16 +121,16 @@ maxWidth = 0; % (m) - set to zero if 'prescribing' max iceberg depth
 minWidth = 20; % (m)
 
 % Iceberg mask
-bergMask(2:12,2:end-1) = 1; % icebergs in inner 5 km, all oriented east-west
+bergMask(2:24,2:end-1) = 1; % icebergs in inner 5 km, all oriented east-west
 
 % Drift mask
-driftMask(2:12,2:end-1) = 1; % calculate effect of iceberg drift on melt rates 
+driftMask(2:24,2:end-1) = 1; % calculate effect of iceberg drift on melt rates 
 
 % Barrier mask
-barrierMask(2:12,2:end-1) = 1; % make icebergs a physical barrier to water flow
+barrierMask(2:24,2:end-1) = 1; % make icebergs a physical barrier to water flow
 
 % Iceberg concentration (% of each surface cell that is filled in plan view)
-bergConc(2:12,2:end-1) = 95; % iceberg concentration is uniformly 10%
+bergConc(2:24,2:end-1) = 95; % iceberg concentration is uniformly 10%
 
 % Generate iceberg size-frequency distribution
  [all_berg_areas, all_berg_lengths, all_berg_widths, all_berg_depths, numBergsPerCell, ...

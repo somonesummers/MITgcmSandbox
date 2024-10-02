@@ -2,8 +2,8 @@ import numpy as np
 import os
 import importlib
 import matplotlib.pylab as plt
-import MITgcmutils # see https://mitgcm.readthedocs.io/en/latest/utilities/utilities.html
-from IPython.core.debugger import set_trace # for debugging
+#import MITgcmutils # see https://mitgcm.readthedocs.io/en/latest/utilities/utilities.html
+#from IPython.core.debugger import set_trace # for debugging
 import pickle
 import run_config_funcs as rcf
 

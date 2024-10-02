@@ -37,8 +37,7 @@
 # Time stepping parameters
  &PARM03
  nIter0=0,
- endTime=1000.,
-#endTime=84600.,
+ endTime=1728000.,
  deltaT=100.,
  abEps=0.1,
  pChkptFreq=0.0,

@@ -14,8 +14,8 @@ import shutil
 from scipy.interpolate import make_interp_spline
 
 import sys
-sys.path.append('/Users/psummers8/Documents/MITgcm/MITgcm/elizaScripts/main_scripts')
-
+sys.path.append('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/elizaScripts/main_scripts')
+#sys.path.append('/Users/psummers8/Documents/MITgcm/MITgcm/elizaScripts/main_scripts')
 import build_domain_funcs as build_domain 
 import run_config_funcs as rcf # import helpter functions
 
@@ -29,8 +29,8 @@ import run_config_funcs as rcf # import helpter functions
 
 run_config = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'B95_1000_mac'
-run_config['ndays'] = 1 # simulaton time (days)
+run_config['run_name'] = 'BergSolid500'
+run_config['ndays'] = 4 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 1000 # horizontal grid spacing (km)
@@ -48,7 +48,7 @@ MITgcm_release = 'MITgcm-checkpoint69a' #Sept 2024 release
 # you probably don't need to touch this
 run_config['use_MPI'] = True # for multi-processing
 run_config['lf'] = '\r\n' # linebreak characters 
-run_config['exps_dir'] = os.path.join('/Users/psummers8/Documents/MITgcm/MITgcm/experiments') 
+run_config['exps_dir'] = os.path.join('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/experiments') 
 run_config['run_dir'] = os.path.join(run_config['exps_dir'], run_config['run_name'])
 
 
@@ -77,13 +77,13 @@ for subdir in run_subdir_list:
     os.makedirs(run_config['%s_dir'% subdir], exist_ok=True)
      
 # copy over defaults
-default_dirs = os.listdir('/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT/')
+default_dirs = os.listdir('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT/')
 for dir00 in default_dirs:
     print(dir00)
     if dir00.startswith('.'):
         continue
         
-    default_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT/%s/'%dir00
+    default_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT/%s/'%dir00
     default_files = os.listdir(default_dir)
     dst_dir = os.path.join(run_config['run_dir'], dir00)
     
@@ -101,7 +101,7 @@ for dir00 in default_dirs:
 
 
 # just to see what the default files
-os.listdir('/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT/code')
+os.listdir('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT/code')
 
 
 # In[7]:
