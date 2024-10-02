@@ -11,3 +11,4 @@ input/topog.slope
 input/*.forcing
 input/icefrontdepth
 input/icefrontlength
+figs/

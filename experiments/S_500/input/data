@@ -23,7 +23,7 @@
  tempAdvScheme=33,
  saltAdvScheme=33,
  staggerTimeStep=.TRUE.,
- f0=0.e-4,
+ f0=1.5e-4,
  beta=0.E-11,
  eosType='LINEAR',
  tAlpha=0.4E-4,
@@ -51,7 +51,7 @@
  &PARM03
  nIter0=0,
 #nTimeSteps=10,
- nTimeSteps=432000,
+ nTimeSteps=43200,
 #nTimeSteps=864000,
 #nTimeSteps=3110400,
  deltaT=20.0,
