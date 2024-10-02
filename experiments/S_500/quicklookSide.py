@@ -4,9 +4,12 @@ import numpy as np
 import os
 
 
-maxStep = 21600
+maxStep = 43200
 sizeStep = 2160
 startStep = 2160
+
+os.system('rm figs/side*.png')
+os.system('rm figs/autoside*.gif')
 
 name = ["Temp", "Sal", "U", "W"]
 for k in [0,1,2,3]:
@@ -39,13 +42,13 @@ for k in [0,1,2,3]:
         plt.title("%s at %i" % (name[k], i))
         j = i/startStep
         
-        str = "figs/%s%05i.png" % (name[k],j)
+        str = "figs/side%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png')
         plt.close()
         #plt.show()
 
-    os.system('magick -delay 5 figs/%s*.png -colors 256 -depth 256 figs/auto_%s.gif' %(name[k], name[k]))
+    os.system('magick -delay 5 figs/side%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(name[k], name[k]))
 
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)

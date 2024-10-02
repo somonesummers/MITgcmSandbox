@@ -3,6 +3,9 @@ from matplotlib import pyplot as plt
 import numpy as np
 import os
 
+os.system('rm figs/map*.png')
+os.system('rm figs/automap*.gif')
+
 maxStep = 21600
 sizeStep = 2160
 startStep = 2160
