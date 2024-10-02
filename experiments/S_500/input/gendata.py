@@ -38,7 +38,6 @@ x[:, 0] = dx / 2
 for i in np.arange(1, nx):
     x[:,i] = x[:, i - 1] + dx
 
-
 z = -dz / 2 + np.arange(0, -H, -dz)
 
 # Temperature profile
@@ -81,8 +80,8 @@ write_bin("T.bound", T)
 write_bin("U.bound", ubound)
 
 
-plt.plot(S - 34, z, label="Sref - 34")
-plt.plot(T, z, label="Tref")
+plt.plot(S - 34, z, 'b', label="Sref - 34")
+plt.plot(T, z, 'r', label="Tref")
 plt.legend()
 plt.savefig("initialTS")
 plt.show()
@@ -95,10 +94,10 @@ d = np.zeros([ny, nx]) - H
 write_bin("topog.slope", d)
 
 # Ice shelf
-gldepth = -H + 20
-icebase = -20
+gldepth = -H + 10
+icebase = -10
 sgdd = 0
-L = [0, 10, 10000]
+L = [0, 100, 15000]
 D = [-H + sgdd, gldepth, icebase]
 
 m = np.zeros([ny, nx]) - 1
@@ -109,8 +108,7 @@ m = np.zeros([ny, nx])
 for j in np.arange(0, ny):
     # print(j)
     for i in np.arange(1, np.shape(D)[0]):
-        xi = np.where((x >= L[i - 1]) & (x < L[i]))[0]
-        # print(np.size(xi))
+        xi = np.where((x[j,:] >= L[i - 1]) & (x[j,:] < L[i]))[0]
         m[j, xi] = (D[i] - D[i - 1]) / (L[i] - L[i - 1])
         iceshelf[j, xi] = np.linspace(D[i - 1], D[i], np.size(xi))
         # print(np.linspace(D[i - 1], D[i], np.size(xi)))

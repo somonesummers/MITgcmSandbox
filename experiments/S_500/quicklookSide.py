@@ -4,13 +4,13 @@ import numpy as np
 import os
 
 
-maxStep = 432000
+maxStep = 43200
 sizeStep = 2160
 startStep = 2160
 
 name = ["Temp", "Sal", "U", "W"]
 for k in [0,1,2,3]:
-    for i in np.arange(startStep, maxStep + 1, sizeStep*10):
+    for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/dynDiag", i)
         if k == 0:
             lvl = np.linspace(-3, 1, 32)
@@ -19,7 +19,7 @@ for k in [0,1,2,3]:
             lvl = np.linspace(33, 35, 128)
             cm = "viridis"
         elif k == 2:
-            lvl = np.linspace(-0.05, 0.05, 32)
+            lvl = np.linspace(-0.01, 0.01, 32)
             cm = "bwr"
         elif k == 3:
             lvl = np.linspace(-0.001, 0.001, 32)

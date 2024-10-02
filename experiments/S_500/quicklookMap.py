@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import os
 
-maxStep = 432000
+maxStep = 43200
 sizeStep = 2160
 startStep = 2160
 
@@ -11,7 +11,7 @@ zSlice = 10;
 
 name = ["Temp", "Sal", "U", "W"]
 for k in [0,1,2,3]:
-    for i in np.arange(startStep, maxStep + 1, sizeStep*10):
+    for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/dynDiag", i)
         if k == 0:
             lvl = np.linspace(-3, 1, 32)
