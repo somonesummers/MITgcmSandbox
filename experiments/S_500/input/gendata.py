@@ -18,7 +18,7 @@ Ly = 5.0e3
 
 nx = 50
 ny = 10
-nz = 20
+nz = 40
 
 dx = Lx / nx
 dy = Ly / ny

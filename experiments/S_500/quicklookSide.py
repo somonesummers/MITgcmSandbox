@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 
-maxStep = 43200
+maxStep = 21600
 sizeStep = 2160
 startStep = 2160
 
@@ -45,7 +45,7 @@ for k in [0,1,2,3]:
         plt.close()
         #plt.show()
 
-        os.system('magick -delay 5 figs/%s*.png -colors 256 -depth 256 figs/auto_%s.gif' %(name[k], name[k]))
+    os.system('magick -delay 5 figs/%s*.png -colors 256 -depth 256 figs/auto_%s.gif' %(name[k], name[k]))
 
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)

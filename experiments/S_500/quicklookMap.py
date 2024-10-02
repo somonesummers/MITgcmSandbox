@@ -3,11 +3,11 @@ from matplotlib import pyplot as plt
 import numpy as np
 import os
 
-maxStep = 43200
+maxStep = 21600
 sizeStep = 2160
 startStep = 2160
 
-zSlice = 10;
+zSlice = 7
 
 name = ["Temp", "Sal", "U", "W"]
 for k in [0,1,2,3]:
@@ -47,7 +47,7 @@ for k in [0,1,2,3]:
         plt.close()
         #plt.show()
 
-        os.system('magick -delay 5 figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(name[k], name[k]))
+    os.system('magick -delay 5 figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(name[k], name[k]))
 
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)
