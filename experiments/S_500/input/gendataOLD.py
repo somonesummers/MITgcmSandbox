@@ -5,14 +5,10 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 
-writeFiles = True
 
 def write_bin(fname, data):
     print(fname, np.shape(data))
-    if(writeFiles):
-        data.astype(">f8").tofile(fname)
-    else:
-        print('Not saving')
+    data.astype(">f8").tofile(fname)
 
 
 # Dimensions of grid
@@ -45,9 +41,9 @@ for i in np.arange(1, nx):
 z = -dz / 2 + np.arange(0, -H, -dz)
 
 # Temperature profile
-tcd = 40
-Tmin = -3
-Tmax = -1
+tcd = 50
+Tmin = -1.6
+Tmax = 0.2
 Tc = (Tmax + Tmin) / 2
 Trange = Tmax - Tmin
 T2 = np.zeros([nz,ny])
@@ -56,7 +52,7 @@ for j in np.arange(0,ny):
 Tconst = np.zeros([nz,ny]) + 0.4
 T = T2
 
-Sc = 33.5
+Sc = 34.5
 Srange = -1
 S2 = np.zeros([nz,ny])
 for j in np.arange(0,ny):
@@ -109,23 +105,14 @@ iceshelf = np.zeros([ny, nx])
 icefront = np.zeros([ny, nx])
 m = np.zeros([ny, nx])
 
-
-
-# for j in np.arange(0, ny):
-#     # print(j)
-#     for i in np.arange(1, np.shape(D)[0]):
-#         xi = np.where((x[j,:] >= L[i - 1]) & (x[j,:] < L[i]))[0]
-#         m[j, xi] = (D[i] - D[i - 1]) / (L[i] - L[i - 1])
-#         iceshelf[j, xi] = np.linspace(D[i - 1], D[i], np.size(xi))
-#         # print(np.linspace(D[i - 1], D[i], np.size(xi)))
-#         icefront[j, xi] = np.linspace(D[i - 1], D[i], np.size(xi))
-mX=np.load('melangeX.npy')
-mH=np.load('melangeH.npy')
-
 for j in np.arange(0, ny):
     # print(j)
-    #for i in np.arange(0,nx):
-    iceshelf[j,:] = np.interp(x[j,:],mX,-mH)
+    for i in np.arange(1, np.shape(D)[0]):
+        xi = np.where((x[j,:] >= L[i - 1]) & (x[j,:] < L[i]))[0]
+        m[j, xi] = (D[i] - D[i - 1]) / (L[i] - L[i - 1])
+        iceshelf[j, xi] = np.linspace(D[i - 1], D[i], np.size(xi))
+        # print(np.linspace(D[i - 1], D[i], np.size(xi)))
+        icefront[j, xi] = np.linspace(D[i - 1], D[i], np.size(xi))
 
 iceshelf[:, 0] = D[0]
 icefront[:, 0] = D[0]

@@ -19,7 +19,7 @@
 #--------------------
  &DIAGNOSTICS_LIST
 
-  fields(1:4,1) = 'THETA   ','SALT    ','UVEL    ','WVEL    ',
+  fields(1:5,1) = 'THETA   ','SALT    ','UVEL    ','WVEL    ','VVEL    ',
    fileName(1) = 'dynDiag',
   frequency(1) = 43200.,
 

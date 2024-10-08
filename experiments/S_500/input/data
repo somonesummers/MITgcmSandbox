@@ -51,7 +51,7 @@
  &PARM03
  nIter0=0,
 #nTimeSteps=10,
- nTimeSteps=21600,
+ nTimeSteps=43200,
 #nTimeSteps=864000,
 #nTimeSteps=3110400,
  deltaT=20.0,
@@ -70,7 +70,7 @@
 #delXfile='dx.bin',
  dXspacing=500.,
  dYspacing=500.,
- delZ=40*10,
+ delZ=40*5,
  &
 
 # Input datasets
