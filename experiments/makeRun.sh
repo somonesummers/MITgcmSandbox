@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-
+TIME="$(date +"%H%M%S")" 
 unameOut="$(uname -s)"
 case "${unameOut}" in
     Linux*)     MACHINE="Linux";;
@@ -16,7 +16,7 @@ cp ../build/mitgcmuv .
 
 if [ "$MACHINE" == "Mac" ];
 then
-	./mitgcmuv > Report.txt
+	./mitgcmuv > Report$TIME.txt
 else
 	./mitgcmuv
 fi

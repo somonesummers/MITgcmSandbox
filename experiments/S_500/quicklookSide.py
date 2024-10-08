@@ -3,7 +3,6 @@ from matplotlib import pyplot as plt
 import numpy as np
 import os
 
-
 maxStep = 43200
 sizeStep = 2160
 startStep = 2160

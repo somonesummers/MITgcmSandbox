@@ -12,6 +12,7 @@ if [ $# -lt 1 ]; then
 fi
 
 ROOT=$1
+OPT2=$2
 
 unameOut="$(uname -s)"
 case "${unameOut}" in
@@ -37,8 +38,18 @@ else
 	BUILD_FILE='darwin_amd64_gfortran'
 fi
 
-echo " Building with ${BUILD_FILE} at " $(pwd)
-$ROOT/tools/genmake2 -mods ../code -optfile $ROOT/tools/build_options/$BUILD_FILE -rootdir $ROOT
+if [ -z $OPT2 ]; then
+   echo "===== Building with ${BUILD_FILE} at $(pwd) ====="
+   $ROOT/tools/genmake2 -mods ../code -optfile $ROOT/tools/build_options/$BUILD_FILE -rootdir $ROOT
+elif [ "$2" == "-mpi" ]; then
+   echo "====== Building with MPI and ${BUILD_FILE} at $(pwd) ====="
+   $ROOT/tools/genmake2 -mods ../code -mpi -optfile $ROOT/tools/build_options/$BUILD_FILE -rootdir $ROOT
+else
+   echo "$2"
+   echo "invalid 2nd argument"
+   exit 2
+fi
+
 echo " Done compiling, moving to make depend..."
 make depend -s
 echo " Done with make depend, moving to make..."
