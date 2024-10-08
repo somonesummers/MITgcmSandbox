@@ -6,9 +6,20 @@ import os
 os.system('rm figs/map*.png')
 os.system('rm figs/automap*.gif')
 
-maxStep = 43200
-sizeStep = 2160
-startStep = 2160
+maxStep = 9
+sizeStep = 1
+startStep = 1
+
+for file in os.listdir('results'):
+    print(file)
+    if "dynDiag" in file:
+        words = file.split(".")
+        print(words[1])  
+        if int(words[1]) < maxStep:
+            maxStep = int(words[1])
+        if int(words[1]) > startStep:
+            sizeStep = int(words[1])
+            startStep = int(words[1])
 
 zSlice = 7
 
