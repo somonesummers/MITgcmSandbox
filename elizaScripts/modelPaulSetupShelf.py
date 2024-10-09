@@ -19,7 +19,8 @@ from scipy.interpolate import make_interp_spline
 import sys
 if OSX == 'Darwin':
     sys.path.append('/Users/psummers8/Documents/MITgcm/MITgcm/elizaScripts/main_scripts')
-
+else:
+    sys.path.append('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/elizaScripts/main_scripts')
 import build_domain_funcs as build_domain 
 import run_config_funcs as rcf # import helpter functions
 
@@ -33,16 +34,16 @@ import run_config_funcs as rcf # import helpter functions
 
 run_config = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'shelfTest'
-run_config['ndays'] = 20 # simulaton time (days)
-run_config['test'] = True # if True, run_config['nyrs'] will be shortened to a few time steps
+run_config['run_name'] = 'shelf500'
+run_config['ndays'] = 50 # simulaton time (days)
+run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
 run_config['Lx_m'] = 25000 # domain size in x (m)
 run_config['Ly_m'] = 6000 # domain size in y (m)
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-run_config['evolve_salt'] = False
+#run_config['evolve_salt'] = False
 run_config['use_GMRedi'] = False # should be set to false for eddy permitting resolutions
 run_config['periodic_forcing'] = False # note: the code is not yet set up to handle time-dependent forcing
 
@@ -54,6 +55,8 @@ run_config['use_MPI'] = False # for multi-processing
 run_config['lf'] = '\r\n' # linebreak characters 
 if OSX == 'Darwin':
     run_config['exps_dir'] = os.path.join('/Users/psummers8/Documents/MITgcm/MITgcm/experiments') 
+else:
+    run_config['exps_dir'] = os.path.join('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/experiments') 
 run_config['run_dir'] = os.path.join(run_config['exps_dir'], run_config['run_name'])
 print('run_config is', run_config)
 
@@ -73,13 +76,17 @@ for subdir in run_subdir_list:
 # copy over defaults
 if OSX == 'Darwin':
     default_dirs = os.listdir('/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Shelf/')
+else:
+    default_dirs = os.listdir('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Shelf/')
 for dir00 in default_dirs:
     print(dir00)
     if dir00.startswith('.'):
         continue
         
     if OSX == 'Darwin':
-            default_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Shelf/%s/'%dir00
+        default_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Shelf/%s/'%dir00
+    else:
+        default_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Shelf/%s/'%dir00    
     default_files = os.listdir(default_dir)
     dst_dir = os.path.join(run_config['run_dir'], dir00)
     
@@ -106,6 +113,8 @@ print(os.listdir(run_config['run_dir']))
 # create new analysis sub-dir in your home directory
 if OSX == 'Darwin':
     analysis_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/analysis/%s'%run_config['run_name']
+else:
+    analysis_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/analysis/%s'%run_config['run_name']
 os.makedirs(analysis_dir, exist_ok=True)
 print(analysis_dir)
 os.getcwd()
@@ -142,7 +151,7 @@ grid_params['nTx'] = 1 # num of threads per processor in x-direction
 grid_params['nTy'] = 1 # num of threads per processor in y-direction
 grid_params['OLx'] = 3 # num of overlapping x-gridpoints per tile
 grid_params['OLy'] = 3 # num of overlapping y-gridpoints per tile
-grid_params['Nr'] = 40 # num of z-grid points
+grid_params['Nr'] = 50 # num of z-grid points
 
 grid_params['nPx'] = run_config['ncpus_xy'][0] #num of processors in x-direction
 grid_params['nPy'] = run_config['ncpus_xy'][1] #num of processors in x-direction
@@ -232,9 +241,6 @@ params01['vectorInvariantMomentum'] = True
 
 #Note: here and elsewhere, we need to be explicit about floats vs ints. E.g., use 12.0 to represent float and
 # 12 for int
-
-f0=0.
-beta=0.E-11
 
 # viscosity parameters
 params01['viscA4'] = 0.0000 # Biharmonic viscosity?
@@ -336,7 +342,7 @@ params03['ExternForcingCycle'] = 1000.0
 if run_config['test']:
     nTimeSteps = 10
 else:
-    nTimeSteps = np.ceil(run_config['ndays']*secsInDay/detlaT)
+    nTimeSteps = np.ceil(run_config['ndays']*secsInDay/deltaT)
 
 simTimeAct = nTimeSteps*deltaT
 
@@ -420,8 +426,8 @@ if run_config['test']:
     run_config['tavg_freq'] = 1 # multiples of timestep
     
 else:
-    run_config['inst_freq'] = 1 # multiples of day
-    run_config['tavg_freq'] = 1 # multiples of day
+    run_config['inst_freq'] = 6 # multiples of hours
+    run_config['tavg_freq'] = 6 # multiples of hours
 
 
 #---------specify time averaged fields------#
@@ -443,8 +449,8 @@ if run_config['test'] == True:
     diag_freq_inst = -run_config['inst_freq']*deltaT # negative values indicate snapshots at given interval
     diag_freq_avg = run_config['tavg_freq']*deltaT # positive values indicate time average over specified interval
 else:
-    diag_freq_inst = -run_config['inst_freq']*secsInDay
-    diag_freq_avg = run_config['tavg_freq']*secsInDay
+    diag_freq_inst = -run_config['inst_freq']*3600
+    diag_freq_avg = run_config['tavg_freq']*3600
     
     
 diag_params01 = {}
