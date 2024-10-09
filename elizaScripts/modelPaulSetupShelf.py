@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[31]:
-
-
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,14 +24,11 @@ import run_config_funcs as rcf # import helpter functions
 
 # ## Main run configuration
 
-# In[33]:
-
-
 # set high level run configurations
 
 run_config = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'shelf500'
+run_config['run_name'] = 'shelf22'
 run_config['ndays'] = 50 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -607,13 +601,12 @@ plt.show()
 
 # Topography
 d = np.zeros([grid_params['Ny'], grid_params['Nx']]) - domain_params['H']
-d[0, :] = 0
+d[ 0, :] = 0  # walls of fjord
 d[-1, :] = 0
 write_bin("topog.slope", d)
 
+
 # Ice shelf
-
-
 m = np.zeros([grid_params['Ny'], grid_params['Nx']]) - 1
 iceshelf = np.zeros([grid_params['Ny'], grid_params['Nx']])
 m = np.zeros([grid_params['Ny'], grid_params['Nx']])
@@ -626,9 +619,10 @@ for j in np.arange(0, grid_params['Ny']):
     #for i in np.arange(0,nx):
     iceshelf[j,:] = np.interp(x[j,:],mX,-mH,0,0)
 
-iceshelf[:, 0] = -domain_params['H']
+iceshelf[:, 0] = -domain_params['H']  #ice to bottom of ocean
 
-
+iceshelf[ 0, :] = 0  # no ice on walls
+iceshelf[-1, :] = 0
 
 plt.plot(np.transpose(x), np.transpose(iceshelf), 'r', label="shelfice")
 plt.plot(np.transpose(x), np.transpose(d), 'b', label="bathy")
@@ -666,11 +660,13 @@ write_bin("phi0.exp1", pano)
 # In[27]:
 
 
-k
+
 
 
 # ## Estimate wall clock time
-
+print('===== Wall Clock Time =====')
+estTime = int(grid_params['Ny']) * int(grid_params['Nx']) * int(grid_params['Nr']) * int(grid_params['Nt']) *1.25e-8
+print('Estimated run time is %.2f hours' % (estTime/60), 'for one CPU' )
 # ## Next steps
 # 
 # Once you've successfully set up the model experiment, you will need to do the following:
