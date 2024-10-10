@@ -4,33 +4,50 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-dataDir = 'B95_1000_864/'
+dataDir = 'shelf500/'
 saveGif = True
 figDir = '%sfigs/' % dataDir
 dataDir = '%sresults/' % dataDir
 print(figDir)
 print(dataDir)
 
-XC = mds.rdmds('%sXC' % dataDir)
-YC = mds.rdmds('%sYC' % dataDir)
-ZC = mds.rdmds('%sRC' % dataDir)
+x = mds.rdmds('%sXC' % dataDir)
+y = mds.rdmds('%sYC' % dataDir)
+z = mds.rdmds('%sRC' % dataDir)
 
-ZC = ZC.squeeze()
-XC = XC.squeeze()
-YC = YC.squeeze()
-print('XC:',np.shape(XC))
-print('YC:',np.shape(YC))
-print('ZC:',np.shape(ZC))
+maxStep = 0
+sizeStep = 1e10
+startStep = 1e10
 
-startStep = 00
-endStep = 864
-stepSize = 864
-ySlice = 3
-XC = XC[ySlice,:].squeeze()
-width = YC[ySlice,0]
-print(width)
+for file in os.listdir(dataDir):
+    # print(file)
+    if "T.0" in file:
+        words = file.split(".")
+        # print(words[1])  
+        if int(words[1]) > maxStep:
+            maxStep = int(words[1])
+        if int(words[1]) < startStep and int(words[1]) > 0:
+            sizeStep = int(words[1])
+            startStep = int(words[1])
 
-for i in np.arange(startStep, endStep+1, stepSize):
+if(maxStep/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
+    dwnScale = round((maxStep/sizeStep)/50)
+    print('Reducing time resolution by', dwnScale)
+    sizeStep = sizeStep * dwnScale
+print(startStep,sizeStep,maxStep)
+
+os.system('rm figs/sideDump*.png')
+os.system('rm figs/autoSideDump*.gif')
+
+crossSection = 1250
+
+ySlice = np.argmin(np.abs(y[:,0] - crossSection))
+print('cross section is y =', y[ySlice,0])
+width = y[ySlice,0]
+
+x = x[ySlice,:].squeeze()
+z = z.squeeze()
+for i in np.arange(startStep, maxStep+1, sizeStep):
     print(i)
     T = mds.rdmds('%sT' % dataDir, i)
     #print('T:',np.shape(T))
@@ -52,27 +69,39 @@ for i in np.arange(startStep, endStep+1, stepSize):
     S = S[:,ySlice,:].squeeze()
     print("S: ", np.min(S) , " " , np.max(S))
 
+    V = mds.rdmds('%sV' % dataDir, i)
+    V = V[:,ySlice,:].squeeze()
+    print("V: ", np.min(V) , " " , np.max(V))
+
     plt.figure
-    plt.contourf(XC, ZC, T, np.linspace(-1.2, 3, 128), cmap='hot_r')
+    plt.contourf(x, z, T, np.linspace(-1, 1, 128), cmap='hot_r')
     plt.colorbar()
     plt.title('Temperature @ %f step %05i' % (width,i))
-    plt.savefig("%ssideT%05i.png" % (figDir, i))
+    plt.savefig("%ssideTdump%05i.png" % (figDir, i))
     # plt.show()
     plt.close()
 
     plt.figure
-    plt.contourf(XC, ZC, U, np.linspace(-0.007, 0.007, 128), cmap='bwr')
+    plt.contourf(x, z, U, np.linspace(-0.01, 0.01, 128), cmap='bwr')
     plt.colorbar()
     plt.title('U velocity @ %f step %05i' % (width,i))
-    plt.savefig("%ssideU%05i.png" % (figDir, i))
+    plt.savefig("%ssideUdump%05i.png" % (figDir, i))
     # plt.show()
     plt.close()
 
     plt.figure
-    plt.contourf(XC, ZC, W, np.linspace(-6e-5, 6e-5, 128), cmap='bwr')
+    plt.contourf(x, z, W, np.linspace(-0.0001, 0.0001, 128), cmap='bwr')
     plt.colorbar()
     plt.title('W velocity @ % step %05i' % (width,i))
-    plt.savefig("%ssideW%05i.png" % (figDir, i))
+    plt.savefig("%ssideWdump%05i.png" % (figDir, i))
+    # plt.show()
+    plt.close()
+
+    plt.figure
+    plt.contourf(x, z, V, np.linspace(-6e-5, 6e-5, 128), cmap='bwr')
+    plt.colorbar()
+    plt.title('W velocity @ % step %05i' % (width,i))
+    plt.savefig("%ssideVdump%05i.png" % (figDir, i))
     # plt.show()
     plt.close()
 
@@ -84,18 +113,18 @@ for i in np.arange(startStep, endStep+1, stepSize):
     # plt.show()
 
     plt.figure(4)
-    plt.contourf(XC, ZC, S, np.linspace(33, 35, 128), cmap='bwr')
+    plt.contourf(x, z, S, np.linspace(33, 35, 128), cmap='viridis')
     plt.colorbar()
     plt.title('Salt @ % step %05i' % (width,i))
-    plt.savefig("%ssideS%05i.png" % (figDir, i))
+    plt.savefig("%ssideSdump%05i.png" % (figDir, i))
     # plt.show()
     plt.close()
 
 if(saveGif):
-    toPlot = ['U','W','T','S']
+    toPlot = ['U','W','T','S','V']
     for q in toPlot:
-        os.system('magick -delay 50 %sside%s*.png -colors 256 -depth 256 %sside%03i%s.gif' %(figDir,q,figDir,np.abs(width),q))
-        print('magick %sside%s*.png %sside%03i%s.gif' %(figDir,q,figDir,np.abs(width),q))
+        os.system('magick -delay 50 %sside%s*.png -colors 256 -depth 256 %sautoSide%03i%s.gif' %(figDir,q,figDir,np.abs(width),q))
+        print('magick %ssidedump%s*.png %ssidedump%03i%s.gif' %(figDir,q,figDir,np.abs(width),q))
         # filenames = ['']
         # images = []
         # for i in np.arange(startStep, endStep+1, stepSize):
