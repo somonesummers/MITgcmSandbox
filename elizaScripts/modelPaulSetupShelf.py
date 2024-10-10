@@ -28,7 +28,7 @@ import run_config_funcs as rcf # import helpter functions
 
 run_config = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'shelf22'
+run_config['run_name'] = 'shelf500'
 run_config['ndays'] = 50 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -145,7 +145,7 @@ grid_params['nTx'] = 1 # num of threads per processor in x-direction
 grid_params['nTy'] = 1 # num of threads per processor in y-direction
 grid_params['OLx'] = 3 # num of overlapping x-gridpoints per tile
 grid_params['OLy'] = 3 # num of overlapping y-gridpoints per tile
-grid_params['Nr'] = 50 # num of z-grid points
+grid_params['Nr'] = 40 # num of z-grid points
 
 grid_params['nPx'] = run_config['ncpus_xy'][0] #num of processors in x-direction
 grid_params['nPy'] = run_config['ncpus_xy'][1] #num of processors in x-direction
@@ -277,7 +277,7 @@ params01['implicitViscosity'] = True
 params01['implicitDiffusion'] = True
 
 # physical parameters
-params01['f0'] = 1.5e-4
+params01['f0'] = 1.36e-4
 params01['beta'] = 0.0e-13
 params01['gravity'] = g
 
@@ -420,8 +420,8 @@ if run_config['test']:
     run_config['tavg_freq'] = 1 # multiples of timestep
     
 else:
-    run_config['inst_freq'] = 6 # multiples of hours
-    run_config['tavg_freq'] = 6 # multiples of hours
+    run_config['inst_freq'] = 12 # multiples of hours
+    run_config['tavg_freq'] = 12 # multiples of hours
 
 
 #---------specify time averaged fields------#
@@ -620,9 +620,6 @@ for j in np.arange(0, grid_params['Ny']):
     iceshelf[j,:] = np.interp(x[j,:],mX,-mH,0,0)
 
 iceshelf[:, 0] = -domain_params['H']  #ice to bottom of ocean
-
-iceshelf[ 0, :] = 0  # no ice on walls
-iceshelf[-1, :] = 0
 
 plt.plot(np.transpose(x), np.transpose(iceshelf), 'r', label="shelfice")
 plt.plot(np.transpose(x), np.transpose(d), 'b', label="bathy")
