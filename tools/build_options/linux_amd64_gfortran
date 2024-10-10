@@ -31,9 +31,9 @@
 #-------
 
 if test "x$MPI" = xtrue ; then
-  CC=${CC:=mpicc}
-  FC=${FC:=mpif77}
-  F90C=${F90C:=mpif90}
+  CC=mpicc
+  FC=mpif77
+  F90C=mpif90
 else
   CC=gcc
   FC=gfortran
@@ -56,9 +56,9 @@ fcVers=`$CC -dumpversion | head -n 1 | sed 's/^[^0-9]* //;s/\..*$//'`
 if ! [[ $fcVers =~ ^[0-9]+$ ]] ; then
   echo "    un-recognized Compiler-version '$fcVers' ; ignored (-> set to 0)" ; fcVers=0 ;
 else echo "    get Compiler-version: '$fcVers'" ; fi
-
 if [ $fcVers -ge 10 ] ; then
-  FFLAGS="$FFLAGS -fallow-argument-mismatch"
+  	echo '+++++ flag added +++++'
+	FFLAGS="$FFLAGS -fallow-argument-mismatch -O2"
 fi
 #- Requires gfortran from 2006 onwards for -fconvert=big-endian
 FFLAGS="$FFLAGS -fconvert=big-endian -fimplicit-none"
