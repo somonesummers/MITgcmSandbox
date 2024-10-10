@@ -51,8 +51,13 @@
  &PARM03
  nIter0=0,
 #nTimeSteps=10,
+<<<<<<< Updated upstream
  nTimeSteps=43200,
 #nTimeSteps=864000,
+=======
+#nTimeSteps=21600,
+ nTimeSteps=864000,
+>>>>>>> Stashed changes
 #nTimeSteps=3110400,
  deltaT=20.0,
  abEps=0.01,

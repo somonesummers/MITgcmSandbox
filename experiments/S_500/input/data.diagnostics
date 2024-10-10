@@ -21,19 +21,19 @@
 
   fields(1:5,1) = 'THETA   ','SALT    ','UVEL    ','WVEL    ','VVEL    ',
    fileName(1) = 'dynDiag',
-  frequency(1) = 43200.,
+  frequency(1) = 432000.,
 
   fields(1:4,2) = 'UVELSLT ','UVELTH  ','WVELSLT ','WVELTH  ',
    fileName(2) = 'fluxDiag',
-  frequency(2) = 43200.,
+  frequency(2) = 432000.,
 
   fields(1:4,3) = 'SHIfwFlx','SHIhtFlx','SHIForcT','SHIForcS',
    filename(3) = 'SHIfluxDiag',
-  frequency(3) = 43200.,
+  frequency(3) = 432000.,
 
   fields(1:3,4) = 'SHIgammT','SHIgammS','SHIuStar',
    filename(4) = 'SHIgamma',
-  frequency(4) = 44300.,
+  frequency(4) = 443000.,
  &
 
 #--------------------
