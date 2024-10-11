@@ -33,6 +33,8 @@ fi
 if [ "$MACHINE" == "Linux" ];
 then
 	#BUILD_FILE='linux_amd64_pgf77_pace'
+	module load mvapich2/2.3.7-1 
+	export MPI_HOME='/usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-12.3.0/mvapich2-2.3.7-1-qv3gjagtbx5e3rlbdy6iy2sfczryftyt/'
 	BUILD_FILE='linux_amd64_gfortran'
 else
 	BUILD_FILE='darwin_amd64_gfortran'
