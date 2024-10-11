@@ -21,6 +21,7 @@ else:
 import build_domain_funcs as build_domain 
 import run_config_funcs as rcf # import helpter functions
 
+setupNotes = open("setupReport.txt", "w") 
 
 # ## Main run configuration
 
@@ -28,9 +29,9 @@ import run_config_funcs as rcf # import helpter functions
 
 run_config = {}
 run_config['ncpus_xy'] = [5, 2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'shelf200MPI10'
+run_config['run_name'] = 'testTest'
 run_config['ndays'] = 20 # simulaton time (days)
-run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
+run_config['test'] = True # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
 run_config['Lx_m'] = 26000 # domain size in x (m)
@@ -53,7 +54,7 @@ else:
     run_config['exps_dir'] = os.path.join('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/experiments') 
 run_config['run_dir'] = os.path.join(run_config['exps_dir'], run_config['run_name'])
 print('run_config is', run_config)
-
+setupNotes.write('run_config is ' + str(run_config)+'\n')
 
 # ## Generate new experiment directory and copy over defaults
 
@@ -73,7 +74,6 @@ if OSX == 'Darwin':
 else:
     default_dirs = os.listdir('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Shelf/')
 for dir00 in default_dirs:
-    print(dir00)
     if dir00.startswith('.'):
         continue
         
@@ -99,7 +99,9 @@ for dir00 in default_dirs:
 
 print(run_config['run_dir'])
 print(os.listdir(run_config['run_dir']))
-
+setupNotes.write('run directory and subdirectories:\n')
+setupNotes.write(str(run_config['run_dir'])+'\n')
+setupNotes.write(str(os.listdir(run_config['run_dir']))+'\n')
 
 # In[5]:
 
@@ -110,8 +112,7 @@ if OSX == 'Darwin':
 else:
     analysis_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/analysis/%s'%run_config['run_name']
 os.makedirs(analysis_dir, exist_ok=True)
-print(analysis_dir)
-os.getcwd()
+
 
 
 # ## Domain  and grid parameters
@@ -161,12 +162,16 @@ grid_params['Ny'] = domain_params['Ly']/(run_config['horiz_res_m']) # num of y p
 
 print("Nx: %s" %grid_params['Nx'])
 print("Ny: %s" %grid_params['Ny'])
+setupNotes.write("Nx: %s" %grid_params['Nx']+'\n')
+setupNotes.write("Ny: %s" %grid_params['Ny']+'\n')
 
 grid_params['sNx'] = grid_params['Nx']/grid_params['nPx']#num of x-gridpoints per tile
 grid_params['sNy'] = grid_params['Ny']/grid_params['nPy'] #num of y-gridpoints per tile
 
 print("sNx: %s" %grid_params['sNx'])
 print("sNy: %s" %grid_params['sNy'])
+setupNotes.write("sNx: %s" %grid_params['sNx']+'\n')
+setupNotes.write("sNy: %s" %grid_params['sNy']+'\n')
 
 # NOTE: sNx and sNy should be whole numbers/integers. As long we keep the horizontal resolution,
 # domain dimesions, and number of cpus to be multiples of five, we should be ok. 
@@ -176,6 +181,8 @@ for key, param  in grid_params.items():
     grid_params[key] = int(param)
     
 print(grid_params)
+setupNotes.write('Grid parameters\n')
+setupNotes.write(str(grid_params)+'\n')
 #run_config['grid_params'] = grid_params
 
 
@@ -477,6 +484,8 @@ for ii in range(numdiags_inst):
     diag_params01['timePhase(%s)'%n] = diag_phase_inst
     
 print(diag_params01)
+setupNotes.write('Diagnostic Settings\n')
+setupNotes.write(str(diag_params01)+'\n')
 Ndiags = n
 
 
@@ -514,22 +523,12 @@ writeFiles = True
 
 def write_bin(fname, data):
     print(fname, np.shape(data))
+    setupNotes.write(fname + " " + str(np.shape(data))+'\n')
     if(writeFiles):
         
         data.astype(">f8").tofile(run_config['run_dir']+'/input/'+fname)
     else:
         print('Not saving')
-
-
-
-# In[23]:
-
-
-fname = 'salt.ini'
-print(run_config['run_dir']+'/input/'+fname)
-
-
-# In[24]:
 
 
 gravity = 9.81
@@ -664,7 +663,15 @@ write_bin("phi0.exp1", pano)
 # ## Estimate wall clock time
 print('===== Wall Clock Time =====')
 estTime = int(grid_params['Ny']) * int(grid_params['Nx']) * int(grid_params['Nr']) * int(grid_params['Nt']) *1.25e-8
-print('Estimated run time is %.2f hours' % (estTime/60), 'for one CPU' )
+print('Estimated run time is %.2f hours for one CPU' % (estTime/60))
+
+setupNotes.write('===== Wall Clock Time =====\n')
+setupNotes.write('Estimated run time is %.2f hours for one CPU\n' % (estTime/60))
+
+setupNotes.close()
+
+shutil.move('setupReport.txt', run_config['run_dir'])
+print(run_config['run_dir'])
 # ## Next steps
 # 
 # Once you've successfully set up the model experiment, you will need to do the following:
