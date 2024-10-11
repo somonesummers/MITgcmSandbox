@@ -27,25 +27,25 @@ import run_config_funcs as rcf # import helpter functions
 # set high level run configurations
 
 run_config = {}
-run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'shelf500'
-run_config['ndays'] = 50 # simulaton time (days)
+run_config['ncpus_xy'] = [5, 2] # cpu distribution in the x and y directions
+run_config['run_name'] = 'shelf200MPI10'
+run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
-run_config['Lx_m'] = 25000 # domain size in x (m)
-run_config['Ly_m'] = 6000 # domain size in y (m)
+run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
+run_config['Lx_m'] = 26000 # domain size in x (m)
+run_config['Ly_m'] = 5600 # domain size in y (m)
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 #run_config['evolve_salt'] = False
 run_config['use_GMRedi'] = False # should be set to false for eddy permitting resolutions
 run_config['periodic_forcing'] = False # note: the code is not yet set up to handle time-dependent forcing
 
-MITgcm_release = 'MITgcm-checkpoint69a' #Sept 2024 release
+MITgcm_release = 'MITgcm-checkpoint68z' #Sept 2024 release
 #MITgcm_code_dir = os.path.join(group_home_dir, 'shared/mitgcm_releases', MITgcm_release)
 
 # you probably don't need to touch this
-run_config['use_MPI'] = False # for multi-processing
+run_config['use_MPI'] = True # for multi-processing
 run_config['lf'] = '\r\n' # linebreak characters 
 if OSX == 'Darwin':
     run_config['exps_dir'] = os.path.join('/Users/psummers8/Documents/MITgcm/MITgcm/experiments') 
@@ -145,7 +145,7 @@ grid_params['nTx'] = 1 # num of threads per processor in x-direction
 grid_params['nTy'] = 1 # num of threads per processor in y-direction
 grid_params['OLx'] = 3 # num of overlapping x-gridpoints per tile
 grid_params['OLy'] = 3 # num of overlapping y-gridpoints per tile
-grid_params['Nr'] = 40 # num of z-grid points
+grid_params['Nr'] = 100 # num of z-grid points
 
 grid_params['nPx'] = run_config['ncpus_xy'][0] #num of processors in x-direction
 grid_params['nPy'] = run_config['ncpus_xy'][1] #num of processors in x-direction
@@ -277,6 +277,7 @@ params01['implicitViscosity'] = True
 params01['implicitDiffusion'] = True
 
 # physical parameters
+#params01['f0'] = -1.36e-4
 params01['f0'] = 1.36e-4
 params01['beta'] = 0.0e-13
 params01['gravity'] = g
