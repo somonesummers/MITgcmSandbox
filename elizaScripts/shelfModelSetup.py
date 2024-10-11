@@ -28,14 +28,14 @@ email = 'psummers8@gatech.edu'
 # set high level run configurations
 
 run_config = {}
-run_config['ncpus_xy'] = [5, 2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'testTest'
+run_config['ncpus_xy'] = [10, 4] # cpu distribution in the x and y directions
+run_config['run_name'] = '4_node_shelf100'
 run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = True # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
-run_config['Lx_m'] = 26000 # domain size in x (m)
-run_config['Ly_m'] = 5600 # domain size in y (m)
+run_config['horiz_res_m'] = 100 # horizontal grid spacing (m)
+run_config['Lx_m'] = 25000 # domain size in x (m)
+run_config['Ly_m'] = 5200 # domain size in y (m)
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 #run_config['evolve_salt'] = False
@@ -669,7 +669,7 @@ cluster_params['email'] = email
 
 cluster_params['exps_dir'] = run_config['run_dir']
 cluster_params['run_dir'] = os.path.join(cluster_params['exps_dir'], run_config['run_name'])
-cluster_params['cpus_per_node'] = 20 
+cluster_params['cpus_per_node'] = 10 
 
 
 
@@ -693,7 +693,7 @@ shutil.move('setupReport.txt', run_config['run_dir'])
 
 rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
 
-
+print('Done! Remember to build before you run the script, building on MPI time is very inefficient)
 
 
 # ## Next steps

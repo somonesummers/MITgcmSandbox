@@ -327,7 +327,7 @@ def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email,
     
 
     if ncpus > 1:
-        build_cmd = 'bash ../makeBuildMpi.sh ../../.. -mpi\n'
+        build_cmd = 'bash ../makeBuild.sh ../../.. -mpi\n'
         run_cmd = 'bash ../makeRunMpi.sh'
     else:
         # default to non-mpi
@@ -341,7 +341,7 @@ def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email,
     cmd_list = ['#!/bin/bash \n', '#SBATCH -J %s # job name \n' %run_config['run_name'],
                   '#SBATCH -o output_%j.txt # output and error file name (%j expands to jobID)\n',
                   '#SBATCH --account=%s    #charge account\n' %(account),
-                  '#SBATCH --N%i --ntasks-per-node=%i   #total number of nodes,CPUs requested\n' %(nodes,ncpus),
+                  '#SBATCH -N%i --ntasks-per-node=%i   #total number of nodes,CPUs requested\n' %(nodes,np.ceil(ncpus/nodes)),
                   '#SBATCH --mem-per-cpu=%sG\n' %mem_GB,
                   '#SBATCH -q%s\n' %queue,
                   '#SBATCH -t %s # run time (hh:mm:ss)\n'%walltime_str,
@@ -350,7 +350,7 @@ def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email,
                   '\n',
                   'cd $SLURM_SUBMIT_DIR    # Change to working directory\n',
                   'set -e\n',
-                   build_cmd,
+                  #build_cmd,
                    run_cmd]
 
 
