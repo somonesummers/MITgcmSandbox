@@ -24,7 +24,7 @@ import run_config_funcs as rcf # import helpter functions
 setupNotes = open("setupReport.txt", "w") 
 
 # ## Main run configuration
-
+email = 'psummers8@gatech.edu'
 # set high level run configurations
 
 run_config = {}
@@ -654,24 +654,48 @@ for j in np.arange(0,grid_params['Ny']):
 write_bin("phi0.exp1", pano)
 
 
-# In[27]:
+# Pace (Stanford)
+
+
+cluster_params = {}
+cluster_params['cluster_name'] = 'PACE'
+cluster_params['opt_file'] = 'darwin_amd64_gfortran' #<-- may need to update this at some point
+cluster_params['mvapich2_ver'] = '2.3.7' #'4.0.3' 4.1.2'
+cluster_params['mvapich2_inc_dir'] = '/usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-12.3.0/mvapich2-2.3.7-1-qv3gjagtbx5e3rlbdy6iy2sfczryftyt/' 
+cluster_params['netcdf_dir'] = ''
+cluster_params['use_mpi'] = True
+
+cluster_params['email'] = email
+
+cluster_params['exps_dir'] = run_config['run_dir']
+cluster_params['run_dir'] = os.path.join(cluster_params['exps_dir'], run_config['run_name'])
+cluster_params['cpus_per_node'] = 20 
 
 
 
 
 
 # ## Estimate wall clock time
+ncpus = run_config['ncpus_xy'][0]*run_config['ncpus_xy'][1]
 print('===== Wall Clock Time =====')
 estTime = int(grid_params['Ny']) * int(grid_params['Nx']) * int(grid_params['Nr']) * int(grid_params['Nt']) *1.25e-8
 print('Estimated run time is %.2f hours for one CPU' % (estTime/60))
+print('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/ncpus*1.2,ncpus))
 
 setupNotes.write('===== Wall Clock Time =====\n')
 setupNotes.write('Estimated run time is %.2f hours for one CPU\n' % (estTime/60))
-
+setupNotes.write('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/ncpus*1.2,ncpus))
+comptime_hrs = estTime/60/ncpus*1.2 
 setupNotes.close()
 
 shutil.move('setupReport.txt', run_config['run_dir'])
-print(run_config['run_dir'])
+
+
+rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
+
+
+
+
 # ## Next steps
 # 
 # Once you've successfully set up the model experiment, you will need to do the following:

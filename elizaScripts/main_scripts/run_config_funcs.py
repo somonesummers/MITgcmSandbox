@@ -304,8 +304,8 @@ def createSIZEh(run_config, grid_params):
         f.writelines(text_str)    
     
 def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email, 
-                              min_walltime_hrs=2/60, max_walltime_hrs=48, mem_GB=1, 
-                              part='serc', use_mpirun=False, specify_nodes=True):
+                              min_walltime_hrs=10/60, max_walltime_hrs=48, mem_GB=1, 
+                              queue='inferno',account='gts-arobel3'):
 
     """
     function to generate sbatch code for slurm submission
@@ -324,45 +324,40 @@ def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email,
     walltime_str = "%02d:%02d:%02d" %(walltime_hrs//1, (walltime_hrs%1)*60, (((walltime_hrs%1)*60)%1)*60)
     
     ncpus = run_config['ncpus_xy'][0]*run_config['ncpus_xy'][1]
-    results_fpath = os.path.join(run_config['run_dir'], 'results')
     
-    
-    if use_mpirun:
-        run_cmd = 'mpirun -np %s ./mitgcmuv'%(ncpus)
+
+    if ncpus > 1:
+        build_cmd = 'bash ../makeBuildMpi.sh ../../.. -mpi\n'
+        run_cmd = 'bash ../makeRunMpi.sh'
     else:
-        # default to srun
-        run_cmd = 'srun ./mitgcmuv'
+        # default to non-mpi
+        build_cmd = 'bash ../makeBuild.sh ../../..\n'
+        run_cmd = 'bash ../makeRun.sh'
        
     # compute the minimum number of nodes necessary (assuming we get all cpus on each node)
     nodes = np.ceil(ncpus/cluster_params['cpus_per_node']) 
-    if specify_nodes:
-        node_reqest_cmd = '#SBATCH --nodes=%i   #total number of nodes requested\n'%(nodes)
-    else:
-        # otherwise, let the scheduler be opportunistic
-        node_reqest_cmd = '##SBATCH --nodes=%i   #total number of nodes requested\n'%(nodes)
 
     ### Set variables for PBS
     cmd_list = ['#!/bin/bash \n', '#SBATCH -J %s # job name \n' %run_config['run_name'],
                   '#SBATCH -o output_%j.txt # output and error file name (%j expands to jobID)\n',
-                  '#SBATCH -n %i   #total number of mpi tasks requested\n' %ncpus,
-                  node_reqest_cmd,
+                  '#SBATCH --account=%s    #charge account\n' %(account),
+                  '#SBATCH --N%i --ntasks-per-node=%i   #total number of nodes,CPUs requested\n' %(nodes,ncpus),
                   '#SBATCH --mem-per-cpu=%sG\n' %mem_GB,
-                  '#SBATCH -p %s\n' %part,
+                  '#SBATCH -q%s\n' %queue,
                   '#SBATCH -t %s # run time (hh:mm:ss)\n'%walltime_str,
                   '#SBATCH --mail-user=%s\n'%email,
-                  '#SBATCH --mail-type=begin  # email me when the job starts\n',
-                  '#SBATCH --mail-type=end  # email me when the job finishes\n',
+                  '#SBATCH --mail-type=end,fail  # email me when the job finishes/fails\n',
                   '\n',
-                  'module load netcdf\n',
-                  'module load openmpi/%s\n' %cluster_params['open_mpi_ver'],
-                  '#module load openmpi\n',
+                  'cd $SLURM_SUBMIT_DIR    # Change to working directory\n',
+                  'set -e\n',
+                   build_cmd,
                    run_cmd]
 
 
     ### Open output script and write header text
-    fpath = os.path.join(results_fpath, 'run_mitgcm')
+    fpath = run_config['run_dir']
     
-    with open(fpath, 'w') as f:
+    with open(os.path.join(fpath, 'submitBatch.sh'), 'w') as f:
         text_str = "".join(cmd_list)
         f.writelines(text_str)
         
