@@ -28,14 +28,14 @@ email = 'psummers8@gatech.edu'
 # set high level run configurations
 
 run_config = {}
-run_config['ncpus_xy'] = [10, 4] # cpu distribution in the x and y directions
-run_config['run_name'] = '4_node_shelf100'
-run_config['ndays'] = 20 # simulaton time (days)
+run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'sgdTest'
+run_config['ndays'] = 1 # simulaton time (days)
 run_config['test'] = True # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 100 # horizontal grid spacing (m)
+run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
 run_config['Lx_m'] = 25000 # domain size in x (m)
-run_config['Ly_m'] = 5200 # domain size in y (m)
+run_config['Ly_m'] = 6000 # domain size in y (m)
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 #run_config['evolve_salt'] = False
@@ -46,7 +46,7 @@ MITgcm_release = 'MITgcm-checkpoint68z' #Sept 2024 release
 #MITgcm_code_dir = os.path.join(group_home_dir, 'shared/mitgcm_releases', MITgcm_release)
 
 # you probably don't need to touch this
-run_config['use_MPI'] = True # for multi-processing
+run_config['use_MPI'] = False # for multi-processing
 run_config['lf'] = '\r\n' # linebreak characters 
 if OSX == 'Darwin':
     run_config['exps_dir'] = os.path.join('/Users/psummers8/Documents/MITgcm/MITgcm/experiments') 
@@ -146,7 +146,7 @@ grid_params['nTx'] = 1 # num of threads per processor in x-direction
 grid_params['nTy'] = 1 # num of threads per processor in y-direction
 grid_params['OLx'] = 3 # num of overlapping x-gridpoints per tile
 grid_params['OLy'] = 3 # num of overlapping y-gridpoints per tile
-grid_params['Nr'] = 100 # num of z-grid points
+grid_params['Nr'] = 40 # num of z-grid points
 
 grid_params['nPx'] = run_config['ncpus_xy'][0] #num of processors in x-direction
 grid_params['nPy'] = run_config['ncpus_xy'][1] #num of processors in x-direction
@@ -605,6 +605,36 @@ d[ 0, :] = 0  # walls of fjord
 d[-1, :] = 0
 write_bin("topog.slope", d)
 
+# SGD
+sgdd = 20
+a0 = -0.0573
+c0 = 0.0832
+b = -7.53e-4
+
+if sgdd != 0:
+    sgdu = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
+    sgdS = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
+    sgdT = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
+    sgdMu = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
+    sgdMtr = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
+    sgd = 0.0123 * 3
+    tau = 3600
+    sgdi = np.where((z < -domain_params['H'] + sgdd))
+    for sgdii in sgdi[0]:
+        print(sgdi[0])
+        print(sgdii)
+        sgdu[sgdii, :, 1] = sgd / run_config['horiz_res_m'] / (dz[sgdii])
+        sgdS[sgdii, :, 1] = 0
+        sgdT[sgdii, :, 1] = a0 * sgdS[sgdii, 0, 0] + c0 + b * -z[sgdii]
+        sgdMu[sgdii, :, 1] = 1
+        sgdMtr[sgdii, :, 1] = sgd * tau / (sgdd * run_config['horiz_res_m'] * run_config['horiz_res_m'])
+
+    write_bin("T.sgd", sgdT)
+    write_bin("S.sgd", sgdS)
+    write_bin("U.sgd", sgdu)
+    write_bin("Mu.sgd", sgdMu)
+    write_bin("Mtr.sgd", sgdMtr)
+
 
 # Ice shelf
 m = np.zeros([grid_params['Ny'], grid_params['Nx']]) - 1
@@ -619,7 +649,7 @@ for j in np.arange(0, grid_params['Ny']):
     #for i in np.arange(0,nx):
     iceshelf[j,:] = np.interp(x[j,:],mX,-mH,0,0)
 
-iceshelf[:, 0] = -domain_params['H']  #ice to bottom of ocean
+iceshelf[:, 0] = -domain_params['H'] + sgdd  #ice to bottom of ocean
 
 plt.plot(np.transpose(x), np.transpose(iceshelf), 'r', label="shelfice")
 plt.plot(np.transpose(x), np.transpose(d), 'b', label="bathy")
@@ -693,7 +723,7 @@ shutil.move('setupReport.txt', run_config['run_dir'])
 
 rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
 
-print('Done! Remember to build before you run the script, building on MPI time is very inefficient)
+print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
 
 
 # ## Next steps
