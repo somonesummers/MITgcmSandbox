@@ -29,7 +29,7 @@ email = 'psummers8@gatech.edu'
 
 run_config = {}
 run_config['ncpus_xy'] = [7, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'shelf500'
+run_config['run_name'] = 'berg500'
 run_config['ndays'] = 10 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -70,17 +70,17 @@ for subdir in run_subdir_list:
      
 # copy over defaults
 if OSX == 'Darwin':
-    default_dirs = os.listdir('/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Shelf/')
+    default_dirs = os.listdir('/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg/')
 else:
-    default_dirs = os.listdir('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Shelf/')
+    default_dirs = os.listdir('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Berg/')
 for dir00 in default_dirs:
     if dir00.startswith('.'):
         continue
         
     if OSX == 'Darwin':
-        default_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Shelf/%s/'%dir00
+        default_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg/%s/'%dir00
     else:
-        default_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Shelf/%s/'%dir00    
+        default_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Berg/%s/'%dir00    
     default_files = os.listdir(default_dir)
     dst_dir = os.path.join(run_config['run_dir'], dir00)
     
@@ -436,9 +436,9 @@ else:
 
 #---------specify time averaged fields------#
 # NOTE: many more options available see mitgcm docs
-diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],['UVELSLT ','UVELTH  ','WVELSLT ','WVELTH  '],['SHIfwFlx','SHIhtFlx','SHIForcT','SHIForcS'],['SHIgammT','SHIgammS','SHIuStar']]
+diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],['UVELSLT ','UVELTH  ','WVELSLT ','WVELTH  '],['BRGfwFlx','BRGhtFlx','BRGmltRt'],['SHIfwFlx','SHIhtFlx','SHIForcT','SHIForcS'],['SHIgammT','SHIgammS','SHIuStar']]
 diag_fields_max = 0
-diag_fields_avg_name = ['dynDiag','fluxDiag','SHIflux','SHIgamma']
+diag_fields_avg_name = ['dynDiag','fluxDiag','BRGFlx','SHIflux','SHIgamma']
 # diag_fields_avg = ['UVEL', 'VVEL', 'WVEL', 'UVELSQ', 'VVELSQ', 'WVELSQ',
 #                   'UVELTH', 'VVELTH', 'WVELTH', 'THETA', 'THETASQ',
 #                   'PHIHYD', 'LaUH1TH', 'LaVH1TH', 'LaHw1TH','LaHs1TH']
@@ -638,13 +638,7 @@ m = np.zeros([grid_params['Ny'], grid_params['Nx']]) - 1
 iceshelf = np.zeros([grid_params['Ny'], grid_params['Nx']])
 m = np.zeros([grid_params['Ny'], grid_params['Nx']])
 
-mX=np.load('%smelangeX.npy' % (run_config['run_dir']+'/input/'))
-mH=np.load('%smelangeH.npy' % (run_config['run_dir']+'/input/'))
 
-for j in np.arange(0, grid_params['Ny']):
-    # print(j)
-    #for i in np.arange(0,nx):
-    iceshelf[j,:] = np.interp(x[j,:],mX,-mH,0,0)
 
 iceshelf[:, 0] = -domain_params['H'] + sgdd  #ice to bottom of ocean
 
@@ -705,7 +699,7 @@ cluster_params['cpus_per_node'] = 10
 # ## Estimate wall clock time
 ncpus = run_config['ncpus_xy'][0]*run_config['ncpus_xy'][1]
 print('===== Wall Clock Time =====')
-estTime = int(grid_params['Ny']) * int(grid_params['Nx']) * int(grid_params['Nr']) * int(grid_params['Nt']) *1.25e-8
+estTime = int(grid_params['Ny']) * int(grid_params['Nx']) * int(grid_params['Nr']) * int(grid_params['Nt']) *2e-7
 print('Estimated run time is %.2f hours for one CPU' % (estTime/60))
 print('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/ncpus*1.2,ncpus))
 
@@ -720,7 +714,7 @@ shutil.move('setupReport.txt', run_config['run_dir'])
 
 rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
 
-print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
+print('Done! Remember to make MATLAB files and build before you run the script, building on MPI time is very inefficient')
 
 
 # ## Next steps
