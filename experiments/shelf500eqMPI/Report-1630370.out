@@ -1,0 +1,331 @@
+---------------------------------------
+Begin Slurm Prolog: Oct-10-2024 15:08:33
+Job ID:    1630370
+User ID:   psummers8
+Account:   gts-arobel3
+Job name:  shelf500eq
+Partition: cpu-small
+QOS:       inferno
+---------------------------------------
+Idenitfied machine as Linux
+File Makefile does not exist, no cleaning needed
+
+Due to MODULEPATH changes, the following have been reloaded:
+  1) gmp/6.2.1         3) libxml2/2.10.3     5) mpfr/4.2.0     7) zlib/1.2.13
+  2) libiconv/1.17     4) mpc/1.3.1          6) xz/5.4.1
+
+====== Building with MPI and linux_amd64_gfortran at /storage/home/hcoda1/2/psummers8/MITgcmSandbox/experiments/shelf500eqMPI/build =====
+
+GENMAKE :
+
+A program for GENerating MAKEfiles for the MITgcm project.
+   For a quick list of options, use "genmake2 -h"
+or for more detail see the documentation, section "Building the model"
+   (under "Getting Started") at:  https://mitgcm.readthedocs.io/
+
+===  Processing options files and arguments  ===
+  getting local config information:  none found
+  getting OPTFILE information:
+    using OPTFILE="../../../tools/build_options/linux_amd64_gfortran"
+    get Compiler-version: '12'
++++++ flag added +++++
+  getting AD_OPTFILE information:
+    using AD_OPTFILE="../../../tools/adjoint_options/adjoint_default"
+  check Fortran Compiler...  pass  (set FC_CHECK=5/5)
+  check makedepend (local: 0, system: 1, 1)
+  Turning on MPI cpp macros
+
+===  Checking system libraries  ===
+  Do we have the system() command using mpif77...  yes
+  Do we have the fdate() command using mpif77...  yes
+  Do we have the etime() command using mpif77... c,r: yes (SbR)
+  Can we call simple C routines (here, "cloc()") using mpif77...  yes
+  Can we unlimit the stack size using mpif77...  yes
+  Can we register a signal handler using mpif77...  yes
+  Can we use stat() through C calls...  yes
+  Can we create NetCDF-enabled binaries...  no
+    skip check for LAPACK Libs
+  Can we call FLUSH intrinsic subroutine...  yes
+
+===  Setting defaults  ===
+  Adding MODS directories: ../code 
+  Making source files in eesupp from templates
+  Making source files in pkg/exch2 from templates
+  Making source files in pkg/regrid from templates
+
+===  Determining package settings  ===
+  getting package dependency info from  ../../../pkg/pkg_depend
+  getting package groups info from      ../../../pkg/pkg_groups
+  checking list of packages to compile:
+    using PKG_LIST="../code/packages.conf"
+    before group expansion packages are: gfd obcs rbcs shelfice diagnostics
+    replacing "gfd" with:  mom_common mom_fluxform mom_vecinv generic_advdiff debug mdsio rw monitor
+    after group expansion packages are:  mom_common mom_fluxform mom_vecinv generic_advdiff debug mdsio rw monitor obcs rbcs shelfice diagnostics
+  applying DISABLE settings
+  applying ENABLE settings
+    packages are:  debug diagnostics generic_advdiff mdsio mom_common mom_fluxform mom_vecinv monitor obcs rbcs rw shelfice
+  applying package dependency rules
+    packages are:  debug diagnostics generic_advdiff mdsio mom_common mom_fluxform mom_vecinv monitor obcs rbcs rw shelfice
+  Adding STANDARDDIRS='eesupp model'
+  Searching for *OPTIONS.h files in order to warn about the presence
+    of "#define "-type statements that are no longer allowed:
+    found CPP_OPTIONS="../code/CPP_OPTIONS.h"
+    found CPP_EEOPTIONS="../../../eesupp/inc/CPP_EEOPTIONS.h"
+  Creating the list of files for the adjoint compiler.
+
+===  Creating the Makefile  ===
+  setting INCLUDES
+  Determining the list of source and include files
+  Writing makefile: Makefile
+  Add the source list for AD code generation
+  Making list of "exceptions" that need ".p" files
+  Making list of NOOPTFILES
+  Add rules for links
+  Adding makedepend marker
+
+===  Done  ===
+  original 'Makefile' generated successfully
+=> next steps:
+  > make depend
+  > make       (<-- to generate executable)
+ Done compiling, moving to make depend...
+Creating FC_NAMEMANGLE.h ...
+Creating BUILD_INFO.h ...
+Appending dependencies to Makefile
+ Done with make depend, moving to make...
+Update AD_CONFIG.h and make ./mitgcmuv
+ad_config.template AD_CONFIG.h differ: byte 153, line 4
+cumulsum_z_tile.f:1565:27:
+
+ 1559 |             CALL MPI_RECV (ready_to_receive, 1, MPI_INTEGER,
+      |                           2
+......
+ 1565 |             CALL MPI_RECV (shareBufCS1_R8, lbuf1, MPI_DOUBLE_PRECISION,
+      |                           1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(8)/INTEGER(4)).
+cumulsum_z_tile.f:1583:27:
+
+ 1561 |             CALL MPI_SEND (shareBufCS2_R8, lbuf2, MPI_DOUBLE_PRECISION,
+      |                           2
+......
+ 1583 |             CALL MPI_SEND (ready_to_receive, 1, MPI_INTEGER,
+      |                           1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (INTEGER(4)/REAL(8)).
+gather_2d_r4.f:1570:24:
+
+ 1540 |          CALL MPI_RECV (temp, lbuff, MPI_REAL,
+      |                        2
+......
+ 1570 |          CALL MPI_RECV (ready_to_receive, 1, MPI_INTEGER,
+      |                        1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (INTEGER(4)/REAL(4)).
+gather_2d_r4.f:1572:24:
+
+ 1538 |          CALL MPI_SEND (ready_to_receive, 1, MPI_INTEGER,
+      |                        2
+......
+ 1572 |          CALL MPI_SEND (myField, lbuff, MPI_REAL,
+      |                        1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(4)/INTEGER(4)).
+gather_2d_r8.f:1570:24:
+
+ 1540 |          CALL MPI_RECV (temp, lbuff, MPI_REAL8,
+      |                        2
+......
+ 1570 |          CALL MPI_RECV (ready_to_receive, 1, MPI_INTEGER,
+      |                        1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (INTEGER(4)/REAL(8)).
+gather_2d_r8.f:1572:24:
+
+ 1538 |          CALL MPI_SEND (ready_to_receive, 1, MPI_INTEGER,
+      |                        2
+......
+ 1572 |          CALL MPI_SEND (myField, lbuff, MPI_REAL8,
+      |                        1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(8)/INTEGER(4)).
+gather_2d_wh_r4.f:1547:23:
+
+ 1532 |          CALL MPI_RECV (temp, lbuff, MPI_REAL,
+      |                        2
+......
+ 1547 |         CALL MPI_RECV (ready_to_receive, 1, MPI_INTEGER,
+      |                       1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (INTEGER(4)/REAL(4)).
+gather_2d_wh_r4.f:1549:23:
+
+ 1530 |          CALL MPI_SEND (ready_to_receive, 1, MPI_INTEGER,
+      |                        2
+......
+ 1549 |         CALL MPI_SEND (procBuff, lbuff, MPI_REAL,
+      |                       1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(4)/INTEGER(4)).
+gather_2d_wh_r8.f:1547:23:
+
+ 1532 |          CALL MPI_RECV (temp, lbuff, MPI_REAL8,
+      |                        2
+......
+ 1547 |         CALL MPI_RECV (ready_to_receive, 1, MPI_INTEGER,
+      |                       1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (INTEGER(4)/REAL(8)).
+gather_2d_wh_r8.f:1549:23:
+
+ 1530 |          CALL MPI_SEND (ready_to_receive, 1, MPI_INTEGER,
+      |                        2
+......
+ 1549 |         CALL MPI_SEND (procBuff, lbuff, MPI_REAL8,
+      |                       1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(8)/INTEGER(4)).
+gather_vec_r4.f:1520:25:
+
+ 1511 |           CALL MPI_RECV ( gloBuff(jG), lbuff, MPI_REAL,
+      |                          2
+......
+ 1520 |          CALL MPI_RECV ( ready_to_receive, 1, MPI_INTEGER,
+      |                         1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (INTEGER(4)/REAL(4)).
+gather_vec_r4.f:1522:25:
+
+ 1509 |           CALL MPI_SEND ( ready_to_receive, 1, MPI_INTEGER,
+      |                          2
+......
+ 1522 |          CALL MPI_SEND ( myField, lbuff, MPI_REAL,
+      |                         1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(4)/INTEGER(4)).
+gather_vec_r8.f:1520:25:
+
+ 1511 |           CALL MPI_RECV ( gloBuff(jG), lbuff, MPI_REAL8,
+      |                          2
+......
+ 1520 |          CALL MPI_RECV ( ready_to_receive, 1, MPI_INTEGER,
+      |                         1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (INTEGER(4)/REAL(8)).
+gather_vec_r8.f:1522:25:
+
+ 1509 |           CALL MPI_SEND ( ready_to_receive, 1, MPI_INTEGER,
+      |                          2
+......
+ 1522 |          CALL MPI_SEND ( myField, lbuff, MPI_REAL8,
+      |                         1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(8)/INTEGER(4)).
+gather_xz.f:1549:24:
+
+ 1532 |             CALL MPI_RECV (temp, lbuff, MPI_DOUBLE_PRECISION,
+      |                           2
+......
+ 1549 |          CALL MPI_RECV (ready_to_receive, 1, MPI_INTEGER,
+      |                        1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (INTEGER(4)/REAL(8)).
+gather_xz.f:1551:24:
+
+ 1530 |             CALL MPI_SEND (ready_to_receive, 1, MPI_INTEGER,
+      |                           2
+......
+ 1551 |          CALL MPI_SEND (local, lbuff, MPI_DOUBLE_PRECISION,
+      |                        1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(8)/INTEGER(4)).
+gather_yz.f:1549:24:
+
+ 1532 |             CALL MPI_RECV (temp, lbuff, MPI_DOUBLE_PRECISION,
+      |                           2
+......
+ 1549 |          CALL MPI_RECV (ready_to_receive, 1, MPI_INTEGER,
+      |                        1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (INTEGER(4)/REAL(8)).
+gather_yz.f:1551:24:
+
+ 1530 |             CALL MPI_SEND (ready_to_receive, 1, MPI_INTEGER,
+      |                           2
+......
+ 1551 |          CALL MPI_SEND (local, lbuff, MPI_DOUBLE_PRECISION,
+      |                        1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(8)/INTEGER(4)).
+global_max.f:2843:27:
+
+ 1550 |         CALL MPI_Allreduce(tmp,maxPhi,1,MPI_REAL,MPI_MAX,
+      |                           2
+......
+ 2843 |         CALL MPI_Allreduce(tmp,maxPhi,1,MPI_DOUBLE_PRECISION,MPI_MAX,
+      |                           1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(8)/REAL(4)).
+global_max.f:2843:31:
+
+ 1550 |         CALL MPI_Allreduce(tmp,maxPhi,1,MPI_REAL,MPI_MAX,
+      |                               2
+......
+ 2843 |         CALL MPI_Allreduce(tmp,maxPhi,1,MPI_DOUBLE_PRECISION,MPI_MAX,
+      |                               1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(8)/REAL(4)).
+global_sum.f:2871:27:
+
+ 1561 |         CALL MPI_Allreduce(tmp,sumPhi,1,MPI_REAL,MPI_SUM,
+      |                           2
+......
+ 2871 |         CALL MPI_Allreduce(tmp,sumPhi,1,MPI_DOUBLE_PRECISION,MPI_SUM,
+      |                           1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(8)/REAL(4)).
+global_sum.f:2871:31:
+
+ 1561 |         CALL MPI_Allreduce(tmp,sumPhi,1,MPI_REAL,MPI_SUM,
+      |                               2
+......
+ 2871 |         CALL MPI_Allreduce(tmp,sumPhi,1,MPI_DOUBLE_PRECISION,MPI_SUM,
+      |                               1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(8)/REAL(4)).
+global_sum_tile.f:1609:28:
+
+ 1584 |         CALL MPI_Allreduce( localBuf, globalBuf, lbuff,
+      |                            2
+......
+ 1609 |          CALL MPI_Allreduce(sumMyPr,sumAllP,1,MPI_DOUBLE_PRECISION,
+      |                            1
+Warning: Rank mismatch between actual argument at (1) and actual argument at (2) (rank-1 and scalar)
+global_sum_tile.f:1609:36:
+
+ 1584 |         CALL MPI_Allreduce( localBuf, globalBuf, lbuff,
+      |                                      2
+......
+ 1609 |          CALL MPI_Allreduce(sumMyPr,sumAllP,1,MPI_DOUBLE_PRECISION,
+      |                                    1
+Warning: Rank mismatch between actual argument at (1) and actual argument at (2) (rank-1 and scalar)
+global_vec_sum.f:2764:27:
+
+ 1507 |         CALL MPI_Allreduce(tmp1,tmp2,nval,MPI_REAL,
+      |                           2
+......
+ 2764 |         CALL MPI_Allreduce(tmp1,tmp2,nval,MPI_DOUBLE_PRECISION,
+      |                           1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(8)/REAL(4)).
+global_vec_sum.f:2764:32:
+
+ 1507 |         CALL MPI_Allreduce(tmp1,tmp2,nval,MPI_REAL,
+      |                                2
+......
+ 2764 |         CALL MPI_Allreduce(tmp1,tmp2,nval,MPI_DOUBLE_PRECISION,
+      |                                1
+Warning: Type mismatch between actual argument at (1) and actual argument at (2) (REAL(8)/REAL(4)).
+sigreg.c:29:44: warning: 'struct ucontext' declared inside parameter list will not be visible outside of this definition or declaration
+   29 |     unsigned int sn, siginfo_t  si, struct ucontext *sc )
+      |                                            ^~~~~~~~
+Creating mitgcmuv ...
+Done building...
+Idenitfied machine as Linux
+Already build, clean up run folder, then make simlinks and run
+STOP NORMAL END
+STOP NORMAL END
+STOP NORMAL END
+STOP NORMAL END
+STOP NORMAL END
+Done running...
+---------------------------------------
+Begin Slurm Epilog: Oct-10-2024 15:20:55
+Job ID:        1630370
+Array Job ID:  _4294967294
+User ID:       psummers8
+Account:       gts-arobel3
+Job name:      shelf500eq
+Resources:     cpu=5,mem=2G,node=1
+Rsrc Used:     cput=01:01:55,vmem=0,walltime=00:12:23,mem=151980K,energy_used=0
+Partition:     cpu-small
+QOS:           inferno
+Nodes:         atl1-1-02-010-13-2
+---------------------------------------
