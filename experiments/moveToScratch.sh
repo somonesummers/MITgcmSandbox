@@ -6,8 +6,10 @@ if [ $# -lt 1 ]; then
   exit 2
 fi
 
-NAME=$1
-
-mkdir ../../scratch/exps/$NAME
-mv $NAME ../../scratch/exps/
-ln -s ../../scratch/exps/$NAME $NAME
+for NAME in "$@"
+do
+	mkdir ../../scratch/exps/$NAME
+	rsync -ah --info=progress2 $NAME ../../scratch/exps/
+	rm -r $NAME
+	ln -s ../../scratch/exps/$NAME $NAME
+done

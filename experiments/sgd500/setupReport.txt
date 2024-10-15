@@ -1,0 +1,28 @@
+run_config is {'ncpus_xy': [5, 1], 'run_name': 'sgd500', 'ndays': 20, 'test': True, 'horiz_res_m': 500, 'Lx_m': 25000, 'Ly_m': 6000, 'use_GMRedi': False, 'periodic_forcing': False, 'use_MPI': True, 'lf': '\r\n', 'exps_dir': '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/experiments', 'run_dir': '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/experiments/sgd500'}
+run directory and subdirectories:
+/storage/home/hcoda1/2/psummers8/MITgcmSandbox/experiments/sgd500
+['build', 'code', 'input', 'results']
+Nx: 50.0
+Ny: 12.0
+sNx: 10.0
+sNy: 12.0
+Grid parameters
+{'nSx': 1, 'nSy': 1, 'nTx': 1, 'nTy': 1, 'OLx': 3, 'OLy': 3, 'Nr': 50, 'nPx': 5, 'nPy': 1, 'Nx': 50, 'Ny': 12, 'sNx': 10, 'sNy': 12}
+Diagnostic Settings
+{'diag_mnc': False, 'fields(1:5,1)': "THETA','SALT','UVEL','WVEL','VVEL", 'fileName(1)': 'dynDiag', 'frequency(1)': 20.0, 'timePhase(1)': 0.0, 'fields(1:4,2)': "UVELSLT ','UVELTH  ','WVELSLT ','WVELTH  ", 'fileName(2)': 'fluxDiag', 'frequency(2)': 20.0, 'timePhase(2)': 0.0, 'fields(1:4,3)': "SHIfwFlx','SHIhtFlx','SHIForcT','SHIForcS", 'fileName(3)': 'SHIflux', 'frequency(3)': 20.0, 'timePhase(3)': 0.0, 'fields(1:3,4)': "SHIgammT','SHIgammS','SHIuStar", 'fileName(4)': 'SHIgamma', 'frequency(4)': 20.0, 'timePhase(4)': 0.0, 'fields(1:5,5)': "UVEL','VVEL','WVEL','THETA','SALT", 'fileName(5)': 'dynDiag_inst', 'frequency(5)': -20.0, 'timePhase(5)': 0.0}
+T.init (50, 12, 50)
+S.init (50, 12, 50)
+S.bound (50, 12)
+T.bound (50, 12)
+U.bound (50, 12)
+topog.slope (12, 50)
+T.sgd (50, 12, 50)
+S.sgd (50, 12, 50)
+U.sgd (50, 12, 50)
+Mu.sgd (50, 12, 50)
+Mtr.sgd (50, 12, 50)
+icetopo.exp1 (12, 50)
+phi0.exp1 (12, 50)
+===== Wall Clock Time =====
+Estimated run time is 0.00 hours for one CPU
+Estimated run time is 0.00 hours for 5 CPUs

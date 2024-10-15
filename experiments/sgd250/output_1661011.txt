@@ -1,0 +1,27 @@
+---------------------------------------
+Begin Slurm Prolog: Oct-14-2024 10:51:16
+Job ID:    1661011
+User ID:   psummers8
+Account:   gts-arobel3
+Job name:  sgd250
+Partition: cpu-small
+QOS:       inferno
+---------------------------------------
+Idenitfied machine as Linux
+Already build, clean up run folder, then make simlinks and run
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** JOB 1661011 ON atl1-1-02-010-30-2 CANCELLED AT 2024-10-14T12:00:30 DUE TO TIME LIMIT ***
+slurmstepd: error: *** STEP 1661011.0 ON atl1-1-02-010-30-2 CANCELLED AT 2024-10-14T12:00:30 DUE TO TIME LIMIT ***
+---------------------------------------
+Begin Slurm Epilog: Oct-14-2024 12:00:32
+Job ID:        1661011
+Array Job ID:  _4294967294
+User ID:       psummers8
+Account:       gts-arobel3
+Job name:      sgd250
+Resources:     cpu=10,mem=10G,node=1
+Rsrc Used:     cput=11:32:10,vmem=0,walltime=01:09:13,mem=8876K,energy_used=0
+Partition:     cpu-small
+QOS:           inferno
+Nodes:         atl1-1-02-010-30-2
+---------------------------------------
