@@ -22,8 +22,9 @@ C o Include/exclude Implicit vertical advection code
 C o Include/exclude nonHydrostatic code
 #define ALLOW_NONHYDROSTATIC
 
-C o INclude/exclode geothermal heating at the bottom
-#define ALLOW_GEOTHERMAL_FLUX
+C o Allow mass source or sink of Fluid in the interior
+C   (3-D generalisation of oceanic real-fresh water flux)
+#define ALLOW_ADDFLUID
 
 C o Include pressure loading code
 #define ATMOSPHERIC_LOADING
