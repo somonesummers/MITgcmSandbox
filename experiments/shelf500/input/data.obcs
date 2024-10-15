@@ -2,7 +2,7 @@
  &OBCS_PARM01
 
  OB_singleIeast=-1,
-# OB_singleIwest=1,
+ OB_singleIwest=1,
 # OB_Ieast = 10*-1,
 
  useOBCSsponge=.TRUE.,
@@ -12,12 +12,12 @@
  OBEsFile='S.bound',
  OBEtFile='T.bound',
  OBEuFile='U.bound',
-# OBWsFile='S.sgd',
-# OBWtFile='T.sgd',
-# OBWuFile='U.sgd',
+ OBWsFile='S.sgd',
+ OBWtFile='T.sgd',
+ OBWuFile='U.sgd',
 
  OBCS_balanceFacE=1.,
- OBCS_balanceFacW=0.,
+ OBCS_balanceFacW=1.,
  OBCS_balanceFacN=0.,
  OBCS_balanceFacS=0.,
  &
