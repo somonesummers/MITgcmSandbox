@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-dataDir = 'shelf500/'
+dataDir = './'
 saveGif = True
 figDir = '%sfigs/' % dataDir
 dataDir = '%sresults/' % dataDir
