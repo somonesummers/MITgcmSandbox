@@ -2,4 +2,5 @@
 */results/*
 .*
 *iceberg_*.txt
+*.mat
 !.gitignore
