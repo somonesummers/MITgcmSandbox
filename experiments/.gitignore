@@ -1,3 +1,5 @@
 */build/*
 */results/*
+.*
+*iceberg_*.txt
 !.gitignore

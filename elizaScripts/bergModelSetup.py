@@ -524,9 +524,10 @@ def write_bin(fname, data):
     print(fname, np.shape(data))
     setupNotes.write(fname + " " + str(np.shape(data))+'\n')
     if(writeFiles):
-        
+        setupNotes.write(fname + " " + str(np.shape(data))+'\n')
         data.astype(">f8").tofile(run_config['run_dir']+'/input/'+fname)
     else:
+        setupNotes.write('Not saving\n')
         print('Not saving')
 
 

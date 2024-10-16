@@ -1,0 +1,28 @@
+run_config is {'ncpus_xy': [1, 1], 'run_name': 'Berg500', 'ndays': 10, 'test': False, 'horiz_res_m': 500, 'Lx_m': 25000, 'Ly_m': 6000, 'use_GMRedi': False, 'periodic_forcing': False, 'use_MPI': False, 'lf': '\r\n', 'exps_dir': '/Users/psummers8/Documents/MITgcm/MITgcm/experiments', 'run_dir': '/Users/psummers8/Documents/MITgcm/MITgcm/experiments/Berg500'}
+run directory and subdirectories:
+/Users/psummers8/Documents/MITgcm/MITgcm/experiments/Berg500
+['input', 'code', 'results', 'build']
+Nx: 50.0
+Ny: 12.0
+sNx: 50.0
+sNy: 12.0
+Grid parameters
+{'nSx': 1, 'nSy': 1, 'nTx': 1, 'nTy': 1, 'OLx': 3, 'OLy': 3, 'Nr': 20, 'nPx': 1, 'nPy': 1, 'Nx': 50, 'Ny': 12, 'sNx': 50, 'sNy': 12}
+Diagnostic Settings
+{'diag_mnc': False, 'fields(1:5,1)': "THETA','SALT','UVEL','WVEL','VVEL", 'fileName(1)': 'dynDiag', 'frequency(1)': 43200, 'timePhase(1)': 0.0, 'fields(1:4,2)': "UVELSLT ','UVELTH  ','WVELSLT ','WVELTH  ", 'fileName(2)': 'fluxDiag', 'frequency(2)': 43200, 'timePhase(2)': 0.0, 'fields(1:3,3)': "BRGfwFlx','BRGhtFlx','BRGmltRt", 'fileName(3)': 'BRGFlx', 'frequency(3)': 43200, 'timePhase(3)': 0.0, 'fields(1:4,4)': "SHIfwFlx','SHIhtFlx','SHIForcT','SHIForcS", 'fileName(4)': 'SHIflux', 'frequency(4)': 43200, 'timePhase(4)': 0.0, 'fields(1:3,5)': "SHIgammT','SHIgammS','SHIuStar", 'fileName(5)': 'SHIgamma', 'frequency(5)': 43200, 'timePhase(5)': 0.0, 'fields(1:5,6)': "UVEL','VVEL','WVEL','THETA','SALT", 'fileName(6)': 'dynDiag_inst', 'frequency(6)': -43200, 'timePhase(6)': 0.0}
+T.init (20, 12, 50)
+S.init (20, 12, 50)
+S.bound (20, 12)
+T.bound (20, 12)
+U.bound (20, 12)
+topog.slope (12, 50)
+T.sgd (20, 12)
+S.sgd (20, 12)
+U.sgd (20, 12)
+Mu.sgd (20, 12)
+Mtr.sgd (20, 12)
+icetopo.exp1 (12, 50)
+phi0.exp1 (12, 50)
+===== Wall Clock Time =====
+Estimated run time is 0.17 hours for one CPU
+Estimated run time is 0.21 hours for 1 CPUs

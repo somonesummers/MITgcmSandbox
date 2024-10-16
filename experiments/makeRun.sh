@@ -14,6 +14,7 @@ rm *
 ln -s ../input/* .
 cp ../build/mitgcmuv .
 
+echo "Ready to run"
 if [ "$MACHINE" == "Mac" ];
 then
 	./mitgcmuv > Report$TIME.txt

@@ -1,0 +1,56 @@
+Identify machine as Mac
+Make new input files
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2024 The MathWorks, Inc.
+              R2024a Update 2 (24.1.0.2578822) 64-bit (maca64)
+                               April 9, 2024
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Hello Beautiful
+>> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >>>>>>>> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >>>>>>>>>>Target coverage: 95
+Current coverage: 141.7625
+Number of icebergs: 17574
+Target coverage: 95
+Current coverage: 136.9738
+Number of icebergs: 16695
+Target coverage: 95
+Current coverage: 127.8071
+Number of icebergs: 15860
+Target coverage: 95
+Current coverage: 123.0441
+Number of icebergs: 15067
+Target coverage: 95
+Current coverage: 116.8602
+Number of icebergs: 14314
+Target coverage: 95
+Current coverage: 111.4268
+Number of icebergs: 13598
+Target coverage: 95
+Current coverage: 106.3273
+Number of icebergs: 12918
+Target coverage: 95
+Current coverage: 100.8028
+Number of icebergs: 12272
+Target coverage: 95
+Current coverage: 96.7011
+Number of icebergs: 11904
+Target coverage: 95
+Current coverage: 96.0314
+Number of icebergs: 11785
+Target coverage: 95
+Current coverage: 93.0059
+Number of icebergs: 11667
+Target coverage: 95
+Current coverage: 96.0618
+Number of icebergs: 11784
+Target coverage: 95
+Current coverage: 95.8778
+Number of icebergs: 11666
+Assigning bergs to cells...
+Assigning small bergs to cells...
+Calculating iceberg surface area in each cell...
+>> >> >> >> >> >> >> >> >> >> >> Done making input...
