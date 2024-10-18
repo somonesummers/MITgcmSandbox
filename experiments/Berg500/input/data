@@ -47,7 +47,7 @@
  chkptFreq=0.00000000e+00,
  pChkptFreq=0.00000000e+00,
  taveFreq=0.00000000e+00,
- dumpFreq=8.64000000e+04,
+ dumpFreq=0,
  monitorFreq=8.64000000e+04,
  monitorSelect=1,
  periodicExternalForcing=.FALSE.,

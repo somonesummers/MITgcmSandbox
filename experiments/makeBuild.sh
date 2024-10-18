@@ -55,5 +55,5 @@ fi
 echo " Done compiling, moving to make depend..."
 make depend -s
 echo " Done with make depend, moving to make..."
-make -s
-echo "Done building..."
+make -sj 4
+echo "(⌐■_■) Done building..."

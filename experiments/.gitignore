@@ -1,6 +1,9 @@
 */build/*
 */results/*
+*figs*
 .*
 *iceberg_*.txt
 *.mat
 !.gitignore
+
+Berg500*

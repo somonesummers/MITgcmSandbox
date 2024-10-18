@@ -19,4 +19,4 @@ else
 	/Applications/MATLAB_R2024a.app/bin/matlab -nodisplay < gendata.m
 fi
 
-echo 'Done making input...'
+echo '(੭˃ᴗ˂)੭ Done making input...'

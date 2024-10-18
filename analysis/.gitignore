@@ -3,3 +3,4 @@
 !visualize*.py
 !plotAll.sh
 !quick*.py
+*.gif
