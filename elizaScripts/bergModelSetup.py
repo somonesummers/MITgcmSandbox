@@ -29,13 +29,13 @@ email = 'psummers8@gatech.edu'
 
 run_config = {}
 run_config['ncpus_xy'] = [7, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'berg500'
-run_config['ndays'] = 10 # simulaton time (days)
+run_config['run_name'] = 'bergPlume_200'
+run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
+run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
 run_config['Lx_m'] = 35000 # domain size in x (m)
-run_config['Ly_m'] = 6000 # domain size in y (m)
+run_config['Ly_m'] = 5400 # domain size in y (m)
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 #run_config['evolve_salt'] = False
@@ -146,7 +146,7 @@ grid_params['nTx'] = 1 # num of threads per processor in x-direction
 grid_params['nTy'] = 1 # num of threads per processor in y-direction
 grid_params['OLx'] = 3 # num of overlapping x-gridpoints per tile
 grid_params['OLy'] = 3 # num of overlapping y-gridpoints per tile
-grid_params['Nr'] = 20 # num of z-grid points
+grid_params['Nr'] = 70 # num of z-grid points
 
 grid_params['nPx'] = run_config['ncpus_xy'][0] #num of processors in x-direction
 grid_params['nPy'] = run_config['ncpus_xy'][1] #num of processors in x-direction
@@ -329,7 +329,7 @@ params03['abEps'] = 0.1
 params03['chkptFreq'] = 0.0
 params03['pChkptFreq'] = 0.0
 params03['taveFreq'] = 0.0
-params03['dumpFreq'] = 86400.0
+params03['dumpFreq'] = 864000.0
 params03['taveFreq'] = 0.0
 params03['monitorFreq'] = 86400.0
 params03['monitorSelect'] = 1

@@ -29,8 +29,8 @@ email = 'psummers8@gatech.edu'
 
 run_config = {}
 run_config['ncpus_xy'] = [7, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'shelf500'
-run_config['ndays'] = 10 # simulaton time (days)
+run_config['run_name'] = 'MIPshelf'
+run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
