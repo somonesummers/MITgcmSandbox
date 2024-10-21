@@ -1,7 +1,7 @@
 # Packages
  &PACKAGES
  useICEBERG=.TRUE.,
- useSHELFICE=.TRUE.,
+ useSHELFICE=.FALSE.,
  useDiagnostics=.TRUE.,
  useOBCS=.TRUE.,
 #useMNC=.TRUE.,
