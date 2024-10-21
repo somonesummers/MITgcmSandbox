@@ -436,9 +436,9 @@ else:
 
 #---------specify time averaged fields------#
 # NOTE: many more options available see mitgcm docs
-diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],['UVELSLT ','UVELTH  ','WVELSLT ','WVELTH  '],['BRGfwFlx','BRGhtFlx','BRGmltRt'],['SHIfwFlx','SHIhtFlx','SHIForcT','SHIForcS'],['SHIgammT','SHIgammS','SHIuStar']]
+diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],['UVELSLT ','UVELTH  ','WVELSLT ','WVELTH  '],['BRGfwFlx','BRGhtFlx','BRGmltRt']]
 diag_fields_max = 0
-diag_fields_avg_name = ['dynDiag','fluxDiag','BRGFlx','SHIflux','SHIgamma']
+diag_fields_avg_name = ['dynDiag','fluxDiag','BRGFlx']
 # diag_fields_avg = ['UVEL', 'VVEL', 'WVEL', 'UVELSQ', 'VVELSQ', 'WVELSQ',
 #                   'UVELTH', 'VVELTH', 'WVELTH', 'THETA', 'THETASQ',
 #                   'PHIHYD', 'LaUH1TH', 'LaVH1TH', 'LaHw1TH','LaHs1TH']
@@ -581,13 +581,10 @@ for j in np.arange(0,grid_params['Ny']):
         t[k, j, :] = t[k, j, :] + T[k,j]
         s[k, j, :] = s[k, j, :] + S[k,j]
 
-ubound = np.zeros([grid_params['Nr'],grid_params['Ny']])
-
 write_bin("T.init", t)
 write_bin("S.init", s)
 write_bin("S.bound", S)
 write_bin("T.bound", T)
-write_bin("U.bound", ubound)
 
 plt.plot(S - 34, z, 'b', label="Sref - 34")
 plt.plot(T, z, 'r', label="Tref")
@@ -603,77 +600,67 @@ plt.show()
 d = np.zeros([grid_params['Ny'], grid_params['Nx']]) - domain_params['H']
 d[ 0, :] = 0  # walls of fjord
 d[-1, :] = 0
+d[: , 0] = 0 #cap west side
 write_bin("topog.slope", d)
 
-# SGD
-sgdd = 20
-a0 = -0.0573
-c0 = 0.0832
-b = -7.53e-4
+# Plume
+nt = 1 #if variable forcing
+runoffVel = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
+runoffRad = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
+plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
-if sgdd != 0:
-    sgdu = np.zeros([grid_params['Nr'],grid_params['Ny']])
-    sgdS = np.zeros([grid_params['Nr'],grid_params['Ny']])
-    sgdT = np.zeros([grid_params['Nr'],grid_params['Ny']])
-    sgdMu = np.zeros([grid_params['Nr'],grid_params['Ny']])
-    sgdMtr = np.zeros([grid_params['Nr'],grid_params['Ny']])
-    sgd = 0.0123 * 3
-    tau = 3600
-    sgdi = np.where((z < -domain_params['H'] + sgdd))
-    for sgdii in sgdi[0]:
-        sgdu[sgdii, :] = sgd / run_config['horiz_res_m'] / (dz[sgdii])
-        sgdS[sgdii, :] = 0
-        sgdT[sgdii, :] = a0 * sgdS[sgdii, 0] + c0 + b * -z[sgdii]
-        sgdMu[sgdii, :] = 1
-        sgdMtr[sgdii, :] = sgd * tau / (sgdd * run_config['horiz_res_m'] * run_config['horiz_res_m'])
+# Total runoff (m^3/s)
+runoff = 500 
 
-    write_bin("T.sgd", sgdT)
-    write_bin("S.sgd", sgdS)
-    write_bin("U.sgd", sgdu)
-    write_bin("Mu.sgd", sgdMu)
-    write_bin("Mtr.sgd", sgdMtr)
+# velocity (m/s) of subglacial runoff
+wsg = 1
 
+# ice front location
+icefront=1 # adjacent to wall at western end of domain, simulate wall of ice
 
-# Ice shelf
-m = np.zeros([grid_params['Ny'], grid_params['Nx']]) - 1
-iceshelf = np.zeros([grid_params['Ny'], grid_params['Nx']])
-m = np.zeros([grid_params['Ny'], grid_params['Nx']])
+# plume location
+plume_loc = 5
 
+## Define plume-type mask 
+# 1 = ice but no plume (melting only)
+# 2 = sheet plume (Jenkins)
+# 3 = half-conical plume (Morton/Slater)
+# 4 = both sheet plume and half-conical plume (NOT YET IMPLEMENTED)
+# 5 = detaching conical plume (Goldberg)
+# POSITIVE values indicate ice front is orientated north-south
+# NEGATIVE values indicate ice front is orientated east-west
 
+# Create virtual ice wall
+plumeMask[1:-1,icefront] = 1 
+# Located 1 cell in from western boundary (need solid barrier behind), and extending across the fjord with (fjord walls either side)
 
-iceshelf[:, 0] = -domain_params['H'] + sgdd  #ice to bottom of ocean
+# Specify discharge location
+plumeMask[plume_loc,icefront] = 3 # runoff emerges from centre of grounding line
 
-plt.plot(np.transpose(x), np.transpose(iceshelf), 'r', label="shelfice")
-plt.plot(np.transpose(x), np.transpose(d), 'b', label="bathy")
-plt.legend()
-plt.savefig("%sgeo" % (run_config['run_dir']+'/input/'))
-plt.show()
+# specify a runoff velocity of 1 m/s
+runoffVel[plume_loc,icefront,:] = wsg
 
-write_bin("icetopo.exp1", iceshelf)
+# calculate channel radius
+runoffRad[plume_loc,icefront,:] = np.sqrt(2*runoff/(np.pi*wsg))
 
-# Phi 0
+# Write files
+write_bin("runoffVel.bin", runoffVel)
+write_bin("runoffRad.bin", runoffRad)
+write_bin("plumeMask.bin", plumeMask)
 
-pano = np.zeros([grid_params['Ny'], grid_params['Nx']])
-for j in np.arange(0,grid_params['Ny']):
-    for i in np.arange(0, grid_params['Nx']):
-        ki = np.where(z >= iceshelf[j,i])[0]
+## Boundary conditions
 
-        if not ki.size > 0:
-            pextra = 0
-            panoex = 0
-            ptop = 0
-        else:
-            #need to ensure Paul did this correctly for arbitraty dz spacing
-            k = np.nanmax(ki)
-            ptop = np.sum(Rref[0:k,j] * gravity * dz[0:k])  # Ice pressure
-            ptopano = ptop - np.sum(rho0 * gravity * dz[0:k+1])  # Ice pressure anomaly
-            pextra = abs(z[k] - iceshelf[j,i]) * gravity * rho0
-            panoex = pextra - abs(z[k] - iceshelf[j,i]) * gravity * Rref[k,j]
+# pre-allocate
+EBCu = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
 
-        pano[j, i] = panoex + ptopano
+# Apply barotropic velocity to balance input of runoff
+if runoff > 0:
+    fjordMouthCrossSection = -np.sum(d[:,-1]) * run_config['horiz_res_m']
+    fjordMouthVelocity = runoff/fjordMouthCrossSection
+    # Out-of-domain velocity is positive at eastern boundary
+    EBCu[:] = fjordMouthVelocity
 
-
-write_bin("phi0.exp1", pano)
+write_bin("EBCu.bin", EBCu)
 
 
 # Pace (Stanford)
