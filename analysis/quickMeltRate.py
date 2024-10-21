@@ -63,11 +63,11 @@ z = mds.rdmds("%sresults/RC" % ddir)
 
 
 topo = np.fromfile('input/topog.slope', dtype='>f8')
-ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
+# ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
 topo = topo.reshape(np.shape(x))
-ice = ice.reshape(np.shape(x))
+# ice = ice.reshape(np.shape(x))
 
-iceEdge = np.interp(z[0,0,0],ice[0,:],x[0,:])
+# iceEdge = np.interp(z[0,0,0],ice[0,:],x[0,:])
 
 
 for i in np.arange(startStep, maxStep + 1, sizeStep):
@@ -91,7 +91,7 @@ for i in np.arange(startStep, maxStep + 1, sizeStep):
             extend="both",
             cmap=cm
         )
-    plt.plot(iceEdge*np.ones(np.shape(x)),np.squeeze(y[:,0]),color='gray')
+    # plt.plot(iceEdge*np.ones(np.shape(x)),np.squeeze(y[:,0]),color='gray')
     cbar = plt.colorbar(cp)
     cbar.set_label('[m/yr]')
     plt.xlabel('Along Fjord [m] %.2f %.2f nan: %i' %(np.nanmin(dataTemp),np.nanmax(dataTemp),np.max(np.isnan(dataTemp))))

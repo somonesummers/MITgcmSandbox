@@ -5,7 +5,7 @@ import os
 import cmocean
 
 # Pick cross section to view
-crossSection = 1250
+crossSection = 2750
 
 maxStep = 0
 sizeStep = 1e10
@@ -35,8 +35,8 @@ if(os.path.isfile('input/data.iceberg')):
 else:
     isBerg = False
 
-os.system('rm -f figs/side*.png')
-os.system('rm -f figs/autoside*.gif')
+os.system('rm -f figs/side_*.png')
+os.system('rm -f figs/autoside_*.gif')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
@@ -44,9 +44,9 @@ z = mds.rdmds("results/RC")
 
 
 topo = np.fromfile('input/topog.slope', dtype='>f8')
-ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
+# ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
 topo = topo.reshape(np.shape(x))
-ice = ice.reshape(np.shape(x))
+# ice = ice.reshape(np.shape(x))
 
 if(isBerg):
     bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
@@ -130,7 +130,7 @@ for k in range(len(name)):
             cmap=cm,
         )
         plt.plot(x[ySlice,:],topo[ySlice,:],color='black')
-        plt.plot(x[ySlice,:],ice[ySlice,:],color='gray')
+        # plt.plot(x[ySlice,:],ice[ySlice,:],color='gray')
         if(isBerg):
             plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
             cp2 = plt.contourf(

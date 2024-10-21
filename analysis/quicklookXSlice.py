@@ -43,11 +43,39 @@ y = mds.rdmds("results/YC")
 z = mds.rdmds("results/RC")
 
 topo = np.fromfile('input/topog.slope', dtype='>f8')
-ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
+# ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
 topo = topo.reshape(np.shape(x))
-ice = ice.reshape(np.shape(x))
+# ice = ice.reshape(np.shape(x))
 
 if(isBerg):
+    bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
+    bergMask = bergMask.reshape(np.shape(x))
+    bergMaskNums = np.fromfile('input/bergMaskNums.bin', dtype='>f8')
+    bergMaskNums = bergMaskNums.reshape(np.shape(x))
+    bergsPerCell = np.fromfile('input/numBergsPerCell.bin', dtype='>f8')
+    bergsPerCell = bergsPerCell.reshape(np.shape(x))
+    maxDepth = np.zeros(np.shape(x))
+
+    #deepest contour
+    for i in range(np.shape(x)[1]):
+        for j in range(np.shape(x)[0]):
+            bergCount = int(bergsPerCell[j,i])
+            if(bergMask[j,i] == 1 and bergCount > 0):  #only go in if bergs here
+                depthFile = 'input/iceberg_depth_%05i.txt' % int(bergMaskNums[j,i])
+                depths = np.zeros(bergCount)
+                with open(depthFile,'r') as readFile:
+                    ii = 0
+                    for line in readFile:
+                        if ii >= bergCount:
+                            print('berg count mismatch in depth')
+                            break
+                        depths[ii] = float(line)
+                        ii += 1
+                readFile.close()
+                maxDepth[j,i] = np.max(depths)
+
+
+    # contourf plot
     openFrac = np.fromfile('input/openFrac.bin', dtype='>f8')
     openFrac = openFrac.reshape((np.shape(z)[0], np.shape(x)[0], np.shape(x)[1]))
     bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
@@ -62,42 +90,52 @@ xSlice = np.argmin(np.abs(x[0,:] - crossSection))
 print('cross section is x =', x[0,xSlice])
 
 
-name = ["Temp", "Sal", "U", "W", "V"]
-cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
+if(isBerg):
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx']
+    name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]"]
+else:
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
+    name = ["Temp", "Sal", "U", "W", "V"]
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
-for k in [0,1,2,3,4]:
+for k in range(len(name)):
     for i in np.arange(startStep, maxStep + 1, sizeStep):
-        data = mds.rdmds("results/dynDiag", i)
+        data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
             lvl = np.linspace(-1.5, 1.5, 128)
             cm = "cmo.thermal"
         elif k == 1:
             lvl = np.linspace(32, 34, 128)
             cm = "cmo.haline"
-        elif k == 2:
-            lvl = np.linspace(-0.5, 0.5, 128)
+        elif k == 2 or k == 4:
+            lvl = np.linspace(-.5, .5, 128)
             cm = "cmo.balance"
         elif k == 3:
-            lvl = np.linspace(-0.02, 0.02, 128)
+            lvl = np.linspace(-0.08, 0.08, 128)
             cm = "cmo.curl"
-        elif k == 4:
-            lvl = np.linspace(-0.5, 0.5, 128)
-            cm = "cmo.balance"
-
+        elif k == 5:
+            lvl = np.linspace(0, .5, 128)
+            cm = "cmo.rain"
+        if(k == 5):
+            kk = 2
+        else:
+            kk = k
         cp = plt.contourf(
             np.squeeze(y[:,xSlice]),
             np.squeeze(z),
-            np.squeeze(data[k, :, :, xSlice]),
+            np.squeeze(data[kk, :, :, xSlice]),
             lvl,
             extend="both",
             cmap=cm,
         )
 
         plt.plot(y[:,xSlice],topo[:,xSlice],color='black')
-        plt.plot(y[:,xSlice],ice[:,xSlice],color='gray')
+        # plt.plot(y[:,xSlice],ice[:,xSlice],color='gray')
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
         if(isBerg):
+            plt.plot(y[:,xSlice],-np.max(maxDepth,axis=1),color='gray',linestyle='dotted')
             cp2 = plt.contourf(
                 np.squeeze(y[:,xSlice]),
                 np.squeeze(z),
@@ -108,7 +146,7 @@ for k in [0,1,2,3,4]:
                 cmap='cmo.gray')
             cbar2 = plt.colorbar(cp2)
             cbar2.set_label('Ocean Fraction')
-        plt.xlabel('Across Fjord [m]')
+        plt.xlabel('Across Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, :, xSlice]),np.nanmax(data[kk, :, :, xSlice]),np.max(np.isnan(data[kk, :, :, xSlice]))))
         plt.ylabel('Depth [m]')
         plt.title("%s y = %i at %i" % (name[k], x[0,xSlice], i))
         j = i/startStep

@@ -43,11 +43,12 @@ x = mds.rdmds("results/XC")
 z = mds.rdmds("results/RC")
 
 topo = np.fromfile('input/topog.slope', dtype='>f8')
-ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
+# ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
 topo = topo.reshape(np.shape(x))
-ice = ice.reshape(np.shape(x))
+# ice = ice.reshape(np.shape(x))
 
 if(isBerg):
+    # contourf plot
     openFrac = np.fromfile('input/openFrac.bin', dtype='>f8')
     openFrac = openFrac.reshape((np.shape(z)[0], np.shape(x)[0], np.shape(x)[1]))
     bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
@@ -61,7 +62,7 @@ if(isBerg):
 zSlice = np.argmin(np.abs(z[:,0,0]+ depth))
 print('depth is z =', z[zSlice,0,0])
 
-iceEdge = np.interp(z[zSlice,0,0],ice[0,:],x[0,:])
+# iceEdge = np.interp(z[zSlice,0,0],ice[0,:],x[0,:])
 
 name = ["Temp", "Sal", "U", "W", "V"]
 cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
@@ -71,37 +72,49 @@ if(maxStep/sizeStep > 50):   #if more than 50 frames, downscale to be less than 
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
-for k in [0,1,2,3,4]:
+if(isBerg):
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx']
+    name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]"]
+else:
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
+    name = ["Temp", "Sal", "U", "W", "V"]
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
+
+for k in range(len(name)):
     for i in np.arange(startStep, maxStep + 1, sizeStep):
-        data = mds.rdmds("results/dynDiag", i)
+        data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
             lvl = np.linspace(-1.5, 1.5, 128)
             cm = "cmo.thermal"
         elif k == 1:
             lvl = np.linspace(32, 34, 128)
             cm = "cmo.haline"
-        elif k == 2:
-            lvl = np.linspace(-0.5, 0.5, 128)
+        elif k == 2 or k == 4:
+            lvl = np.linspace(-.5, .5, 128)
             cm = "cmo.balance"
         elif k == 3:
-            lvl = np.linspace(-0.02, 0.02, 128)
+            lvl = np.linspace(-0.08, 0.08, 128)
             cm = "cmo.curl"
-        elif k == 4:
-            lvl = np.linspace(-0.5, 0.5, 128)
-            cm = "cmo.balance"
-
+        elif k == 5:
+            lvl = np.linspace(0, .5, 128)
+            cm = "cmo.rain"
+        if(k == 5):
+            kk = 2
+        else:
+            kk = k
         cp = plt.contourf(
             np.squeeze(x),
             np.squeeze(y),
-            np.squeeze(data[k, zSlice, :, :]),
+            np.squeeze(data[kk, zSlice, :, :]),
             lvl,
             extend="both",
             cmap=cm,
         )
-        plt.plot(iceEdge*np.ones(np.shape(x)),np.squeeze(y[:,0]),color='gray')
+        # plt.plot(iceEdge*np.ones(np.shape(x)),np.squeeze(y[:,0]),color='gray')
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
-        plt.xlabel('Along Fjord [m]')
+        plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, zSlice, :, :]),np.nanmax(data[kk, zSlice, :, :]),np.max(np.isnan(data[kk, zSlice, :, :]))))
         plt.ylabel('Across Fjord [m]')
         plt.title("%s depth %f at %i" % (name[k], z[zSlice,0,0] ,i))
         if(isBerg):
