@@ -277,40 +277,40 @@ C     Close berg geometry text files
       close(r3)
 	  
 C     Make output text files for this cell
-       fileName1 = "iceberg_mltRt_" // cellNumStub
-       fileName_melt = fileName1 // ".txt"
-       fileName2 = "iceberg_fwFlx_" // cellNumStub
-       fileName_fw = fileName2 // ".txt"   
-       fileName3 = "iceberg_htFlx_" // cellNumStub
-       fileName_hf = fileName3 // ".txt"
-       fileName4 = "iceberg_spdla_" // cellNumStub
-       fileName_spd1 = fileName4 // ".txt"
-       fileName5 = "iceberg_spdsa_" // cellNumStub
-       fileName_spd2 = fileName5 // ".txt"
-       fileName6 = "iceberg_spdba_" // cellNumStub
-       fileName_spd3 = fileName6 // ".txt"
+C
+C       fileName_melt = fileName1 // ".txt"
+C       fileName2 = "iceberg_fwFlx_" // cellNumStub
+C       fileName_fw = fileName2 // ".txt"   
+C       fileName3 = "iceberg_htFlx_" // cellNumStub
+C       fileName_hf = fileName3 // ".txt"
+C       fileName4 = "iceberg_spdla_" // cellNumStub
+C       fileName_spd1 = fileName4 // ".txt"
+C       fileName5 = "iceberg_spdsa_" // cellNumStub
+C       fileName_spd2 = fileName5 // ".txt"
+C       fileName6 = "iceberg_spdba_" // cellNumStub
+C       fileName_spd3 = fileName6 // ".txt"
 	   
 C      Assign units for reading text files (must be specific to each cell
-        r4 = i + j + bi + bj + 10
-        r5 = i + j + bi + bj + 11
-        r6 = i + j + bi + bj + 12
-        r7 = i + j + bi + bj + 13
-        r8 = i + j + bi + bj + 14
-        r9 = i + j + bi + bj + 15
+C        r4 = i + j + bi + bj + 10
+C        r5 = i + j + bi + bj + 11
+C        r6 = i + j + bi + bj + 12
+C        r7 = i + j + bi + bj + 13
+C        r8 = i + j + bi + bj + 14
+C        r9 = i + j + bi + bj + 15
 		
 C     Open text files for writing - open once per cell
-        open (UNIT=r4, FILE=fileName_melt, 
-     &          FORM='FORMATTED', ACCESS='APPEND')
-        open (UNIT=r5, FILE=fileName_fw, 
-     &          FORM='FORMATTED', ACCESS='APPEND')
-        open (UNIT=r6, FILE=fileName_hf, 
-     &          FORM='FORMATTED', ACCESS='APPEND')
-        open (UNIT=r7, FILE=fileName_spd1, 
-     &          FORM='FORMATTED', ACCESS='APPEND')
-        open (UNIT=r8, FILE=fileName_spd2, 
-     &          FORM='FORMATTED', ACCESS='APPEND')
-        open (UNIT=r9, FILE=fileName_spd3, 
-     &          FORM='FORMATTED', ACCESS='APPEND')
+C        open (UNIT=r4, FILE=fileName_melt, 
+C     &          FORM='FORMATTED', ACCESS='APPEND')
+C        open (UNIT=r5, FILE=fileName_fw, 
+C     &          FORM='FORMATTED', ACCESS='APPEND')
+C        open (UNIT=r6, FILE=fileName_hf, 
+C     &          FORM='FORMATTED', ACCESS='APPEND')
+C        open (UNIT=r7, FILE=fileName_spd1, 
+C     &          FORM='FORMATTED', ACCESS='APPEND')
+C        open (UNIT=r8, FILE=fileName_spd2, 
+C     &          FORM='FORMATTED', ACCESS='APPEND')
+C        open (UNIT=r9, FILE=fileName_spd3, 
+C     &          FORM='FORMATTED', ACCESS='APPEND')
 
 
 C --- ENTER BERG LOOPS ---
@@ -503,21 +503,21 @@ C     Get cell-totals and cell-averages
 	  
 	  
 C     Write berg output to text files
-       IF ( DIFFERENT_MULTIPLE(dumpFreq, myTime, deltaTClock) ) THEN   
+C       IF ( DIFFERENT_MULTIPLE(dumpFreq, myTime, deltaTClock) ) THEN   
 C      Print iceberg geometry data to text file
-        write(r4,*) melt_rate_berg, bergDepth, bergLength,
-     &          bergWidth, cellNum, myIter, k
-        write(r5,*) fw_berg_cumecs, bergDepth, bergLength,
-     &          bergWidth, cellNum, myIter, k
-        write(r6,*) hf_berg, bergDepth, bergLength,
-     &          bergWidth, cellNum, myIter, k
-        write(r7,*) rel_speed_la, bergDepth, bergLength,
-     &          bergWidth, cellNum, myIter, k
-        write(r8,*) rel_speed_sa, bergDepth, bergLength,
-     &          bergWidth, cellNum, myIter, k
-        write(r9,*) rel_speed_base, bergDepth, bergLength,
-     &          bergWidth, cellNum, myIter, k
-      ENDIF ! Stop checking if time is at dumpFreq   
+C        write(r4,*) melt_rate_berg, bergDepth, bergLength,
+C     &          bergWidth, cellNum, myIter, k
+C        write(r5,*) fw_berg_cumecs, bergDepth, bergLength,
+C     &          bergWidth, cellNum, myIter, k
+C        write(r6,*) hf_berg, bergDepth, bergLength,
+C     &          bergWidth, cellNum, myIter, k
+C        write(r7,*) rel_speed_la, bergDepth, bergLength,
+C     &          bergWidth, cellNum, myIter, k
+C        write(r8,*) rel_speed_sa, bergDepth, bergLength,
+C     &          bergWidth, cellNum, myIter, k
+C        write(r9,*) rel_speed_base, bergDepth, bergLength,
+C     &          bergWidth, cellNum, myIter, k
+C      ENDIF ! Stop checking if time is at dumpFreq   
 	   
 	   
 	   
@@ -534,20 +534,20 @@ C     Set variables to 0
         
 C     Write zeros to text file
 C     Write berg output to text files
-       IF ( DIFFERENT_MULTIPLE(dumpFreq, myTime, deltaTClock) ) THEN
-        write(r4,*) melt_rate_berg, bergDepth, bergLength,
-     &          bergWidth, cellNum, myIter, k
-        write(r5,*) fw_berg_cumecs, bergDepth, bergLength,
-     &          bergWidth, cellNum, myIter, k
-        write(r6,*) hf_berg, bergDepth, bergLength,
-     &          bergWidth, cellNum, myIter, k
-        write(r7,*) rel_speed_la, bergDepth, bergLength,
-     &          bergWidth, cellNum,  myIter, k
-        write(r8,*) rel_speed_sa, bergDepth, bergLength,
-     &          bergWidth, cellNum, myIter, k
-        write(r9,*) rel_speed_base, bergDepth, bergLength,
-     &          bergWidth, cellNum, myIter, k
-      ENDIF ! Stop checking if time is at dumpFreq
+C       IF ( DIFFERENT_MULTIPLE(dumpFreq, myTime, deltaTClock) ) THEN
+C        write(r4,*) melt_rate_berg, bergDepth, bergLength,
+C     &          bergWidth, cellNum, myIter, k
+C        write(r5,*) fw_berg_cumecs, bergDepth, bergLength,
+C     &          bergWidth, cellNum, myIter, k
+C        write(r6,*) hf_berg, bergDepth, bergLength,
+C     &          bergWidth, cellNum, myIter, k
+C        write(r7,*) rel_speed_la, bergDepth, bergLength,
+C     &          bergWidth, cellNum,  myIter, k
+C        write(r8,*) rel_speed_sa, bergDepth, bergLength,
+C     &          bergWidth, cellNum, myIter, k
+C        write(r9,*) rel_speed_base, bergDepth, bergLength,
+C     &          bergWidth, cellNum, myIter, k
+C      ENDIF ! Stop checking if time is at dumpFreq
 	 
 	 
       ENDIF ! Stop checking if berg extends to this depth
@@ -557,12 +557,12 @@ C     Write berg output to text files
       ENDDO ! Stop looping through icebergs
 	  
 C     Close output text files
-      close(r4)
-      close(r5)
-      close(r6)
-      close(r7)
-      close(r8)
-      close(r9) 
+C      close(r4)
+C      close(r5)
+C      close(r6)
+C      close(r7)
+C     close(r8)
+C     close(r9) 
 	  
 
 C -----------------------------------------------------------------
