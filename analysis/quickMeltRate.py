@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import os
 import cmocean
+import sys
 
 ddir = ''
 
@@ -21,10 +22,11 @@ if(os.path.isfile('input/data.iceberg')):
     name = ['BRGfwFlx','BRGhtFlx','BRGmltRt'] 
     legendName = ['Fresh Water Flux [kg/m^s/s]','Heat Flux [W/m^2]','MeltRate [m/yr]'] 
 else:
-    isShelf = True
-    loadFile = "SHIflux"
-    name = ['SHIfwFlx','SHIhtFlx','SHIForcT','SHIForcS'] 
-    legendName = ['Fresh Water Flux [m/yr]','Heat Flux [W/m^2]','SHIForcT','SHIForcS'] 
+    sys.exit()
+    #isShelf = True
+    #loadFile = "SHIflux"
+    #name = ['SHIfwFlx','SHIhtFlx','SHIForcT','SHIForcS'] 
+    #legendName = ['Fresh Water Flux [m/yr]','Heat Flux [W/m^2]','SHIForcT','SHIForcS'] 
      
 
 for file in os.listdir('%sresults' % ddir):

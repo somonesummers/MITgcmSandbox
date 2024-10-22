@@ -5,7 +5,12 @@ import os
 import cmocean
 
 #Pick cross section
-crossSection = 10000
+crossSection = 700 #default
+with open('input/plotPoint.txt', 'r') as file:
+    lines = file.readlines()
+    crossSection = float(lines[3]) #reads the 3rd line in the doc
+    print('cross section read from file', crossSection)
+
 
 maxStep = 0
 sizeStep = 1e10
@@ -42,10 +47,11 @@ x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
 z = mds.rdmds("results/RC")
 
-topo = np.fromfile('input/topog.slope', dtype='>f8')
-# ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
-topo = topo.reshape(np.shape(x))
-# ice = ice.reshape(np.shape(x))
+if(os.path.isfile('input/topog.slope')):
+    topo = np.fromfile('input/topog.slope', dtype='>f8')
+    topo = topo.reshape(np.shape(x))
+else:
+    topo = np.zeros(np.shape(x))
 
 if(isBerg):
     bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
@@ -87,7 +93,7 @@ if(isBerg):
 
 
 xSlice = np.argmin(np.abs(x[0,:] - crossSection))
-print('cross section is x =', x[0,xSlice])
+print('cross section is x =', x[0,xSlice],'index', xSlice)
 
 
 if(isBerg):
@@ -148,7 +154,7 @@ for k in range(len(name)):
             cbar2.set_label('Ocean Fraction')
         plt.xlabel('Across Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, :, xSlice]),np.nanmax(data[kk, :, :, xSlice]),np.max(np.isnan(data[kk, :, :, xSlice]))))
         plt.ylabel('Depth [m]')
-        plt.title("%s y = %i at %i" % (name[k], x[0,xSlice], i))
+        plt.title("%s x = %i at %i" % (name[k], x[0,xSlice], i))
         j = i/startStep
         
         str = "figs/sideX%s%05i.png" % (name[k],j)

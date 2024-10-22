@@ -7,8 +7,15 @@ import cmocean
 os.system('rm -f figs/map*.png')
 os.system('rm -f figs/autoMap*.gif')
 
+depth = 100 #default value
+with open('input/plotPoint.txt', 'r') as file:
+    lines = file.readlines()
+    depth = float(lines[1]) #reads the 1st line in the doc
+    print('depth read from file', depth)
+
+
 #Pick Depth you want to see
-depth = 50
+
 
 maxStep = 0
 sizeStep = 1e10
@@ -42,10 +49,13 @@ y = mds.rdmds("results/YC")
 x = mds.rdmds("results/XC")
 z = mds.rdmds("results/RC")
 
-topo = np.fromfile('input/topog.slope', dtype='>f8')
-# ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
-topo = topo.reshape(np.shape(x))
-# ice = ice.reshape(np.shape(x))
+
+
+if(os.path.isfile('input/topog.slope')):
+    topo = np.fromfile('input/topog.slope', dtype='>f8')
+    topo = topo.reshape(np.shape(x))
+else:
+    topo = np.zeros(np.shape(x))
 
 if(isBerg):
     # contourf plot
@@ -59,8 +69,8 @@ if(isBerg):
                     openFrac[:,j,i] = 1
 
 
-zSlice = np.argmin(np.abs(z[:,0,0]+ depth))
-print('depth is z =', z[zSlice,0,0])
+zSlice = np.argmin(np.abs(z[:,0,0]- depth))
+print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
 # iceEdge = np.interp(z[zSlice,0,0],ice[0,:],x[0,:])
 

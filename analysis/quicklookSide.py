@@ -5,7 +5,12 @@ import os
 import cmocean
 
 # Pick cross section to view
-crossSection = 2750
+crossSection = 1000
+with open('input/plotPoint.txt', 'r') as file:
+    lines = file.readlines()
+    crossSection = float(lines[2]) #reads the 3rd line in the doc
+    print('cross section read from file', crossSection)
+
 
 maxStep = 0
 sizeStep = 1e10
@@ -42,10 +47,13 @@ x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
 z = mds.rdmds("results/RC")
 
-
-topo = np.fromfile('input/topog.slope', dtype='>f8')
+if(os.path.isfile('input/topog.slope')):
+    topo = np.fromfile('input/topog.slope', dtype='>f8')
+    topo = topo.reshape(np.shape(x))
+else:
+    topo = np.zeros(np.shape(x))
 # ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
-topo = topo.reshape(np.shape(x))
+
 # ice = ice.reshape(np.shape(x))
 
 if(isBerg):
