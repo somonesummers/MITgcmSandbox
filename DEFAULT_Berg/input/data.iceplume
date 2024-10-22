@@ -17,8 +17,8 @@
  &
 
  &ICEPLUME_PARM02
- applyIceplumeTendT=.TRUE.,
- applyIceplumeTendS=.TRUE.,
+# applyIceplumeTendT=.TRUE.,
+# applyIceplumeTendS=.TRUE.,
  &
 
  &ICEPLUME_PARM03

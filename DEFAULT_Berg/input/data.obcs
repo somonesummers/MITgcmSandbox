@@ -8,8 +8,8 @@
 # useOrlanskiEast=.TRUE.,
 # useOBCSbalance=.TRUE.,
  useOBCSprescribe=.TRUE.,
- OBEsFile='S.bound',
- OBEtFile='T.bound',
+ OBEsFile='EBCs.bin',
+ OBEtFile='EBCt.bin',
  OBEuFile='EBCu.bin',
  &
 

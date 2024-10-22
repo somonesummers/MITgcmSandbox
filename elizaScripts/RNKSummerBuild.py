@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# In[1]:
+
+
+#!/usr/bin/env python
+# coding: utf-8
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,6 +27,10 @@ else:
 import build_domain_funcs as build_domain 
 import run_config_funcs as rcf # import helpter functions
 
+makeDirs = True
+writeFiles = True
+
+
 setupNotes = open("setupReport.txt", "w") 
 
 # ## Main run configuration
@@ -28,14 +38,18 @@ email = 'psummers8@gatech.edu'
 # set high level run configurations
 
 run_config = {}
-run_config['ncpus_xy'] = [7, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'bergPlume_200'
+grid_params = {}
+run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'RNK_500_0Bergs'
 run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
-run_config['Lx_m'] = 35000 # domain size in x (m)
-run_config['Ly_m'] = 5400 # domain size in y (m)
+run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
+run_config['Lx_m'] = 40000 # domain size in x (m)
+run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
+
+grid_params['Nr'] = 1000 # num of z-grid points
+
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 #run_config['evolve_salt'] = False
@@ -56,70 +70,54 @@ run_config['run_dir'] = os.path.join(run_config['exps_dir'], run_config['run_nam
 print('run_config is', run_config)
 setupNotes.write('run_config is ' + str(run_config)+'\n')
 
-# ## Generate new experiment directory and copy over defaults
-
-# In[3]:
-
+## Generate new experiment directory and copy over defaults
 
 # create experimentary directory on SCRATCH and copy over default configuration
 # NOTE: this step does not overwrite existing directories. 
-run_subdir_list = ['build', 'code', 'input', 'results']
-for subdir in run_subdir_list:
-    run_config['%s_dir'% subdir] = os.path.join(run_config['run_dir'], subdir)
-    os.makedirs(run_config['%s_dir'% subdir], exist_ok=True)
+if(makeDirs):
+    run_subdir_list = ['build', 'code', 'input', 'results']
+    for subdir in run_subdir_list:
+        run_config['%s_dir'% subdir] = os.path.join(run_config['run_dir'], subdir)
+        os.makedirs(run_config['%s_dir'% subdir], exist_ok=True)
      
 # copy over defaults
-if OSX == 'Darwin':
-    default_dirs = os.listdir('/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg/')
-else:
-    default_dirs = os.listdir('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Berg/')
-for dir00 in default_dirs:
-    if dir00.startswith('.'):
-        continue
-        
     if OSX == 'Darwin':
-        default_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg/%s/'%dir00
+        default_dirs = os.listdir('/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg/')
     else:
-        default_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Berg/%s/'%dir00    
-    default_files = os.listdir(default_dir)
-    dst_dir = os.path.join(run_config['run_dir'], dir00)
-    
-    for file in default_files:
-
-        if file.startswith('.'):
+        default_dirs = os.listdir('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Berg/')
+    for dir00 in default_dirs:
+        if dir00.startswith('.'):
             continue
+            
+        if OSX == 'Darwin':
+            default_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg/%s/'%dir00
         else:
-            src_fpath = os.path.join(default_dir, file)
-            shutil.copy2(src_fpath, dst_dir)
-            #print(src_fpath, '>', dst_dir)
+            default_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Berg/%s/'%dir00    
+        default_files = os.listdir(default_dir)
+        dst_dir = os.path.join(run_config['run_dir'], dir00)
+        
+        for file in default_files:
+    
+            if file.startswith('.'):
+                continue
+            else:
+                src_fpath = os.path.join(default_dir, file)
+                shutil.copy2(src_fpath, dst_dir)
+                #print(src_fpath, '>', dst_dir)
+    
+    print(run_config['run_dir'])
+    print(os.listdir(run_config['run_dir']))
+    setupNotes.write('run directory and subdirectories:\n')
+    setupNotes.write(str(run_config['run_dir'])+'\n')
+    setupNotes.write(str(os.listdir(run_config['run_dir']))+'\n')
 
-
-# In[4]:
-
-
-print(run_config['run_dir'])
-print(os.listdir(run_config['run_dir']))
-setupNotes.write('run directory and subdirectories:\n')
-setupNotes.write(str(run_config['run_dir'])+'\n')
-setupNotes.write(str(os.listdir(run_config['run_dir']))+'\n')
-
-# In[5]:
-
-
-# create new analysis sub-dir in your home directory
-if OSX == 'Darwin':
-    analysis_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/analysis/%s'%run_config['run_name']
-else:
-    analysis_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/analysis/%s'%run_config['run_name']
-os.makedirs(analysis_dir, exist_ok=True)
-
-
-
-# ## Domain  and grid parameters
-
-# In[6]:
-
-
+    # create new analysis sub-dir in your home directory
+    if OSX == 'Darwin':
+        analysis_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/analysis/%s'%run_config['run_name']
+    else:
+        analysis_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/analysis/%s'%run_config['run_name']
+    os.makedirs(analysis_dir, exist_ok=True)
+    
 secsInDay = 24*60*60
 secsInYear = 365*secsInDay
 
@@ -128,17 +126,10 @@ secsInYear = 365*secsInDay
 domain_params = {}
 domain_params['Lx'] = run_config['Lx_m'] # domain size in x (m)
 domain_params['Ly'] = run_config['Ly_m'] # domain size in y (m)
-domain_params['L_sponge'] = 5000 # width of eastern sponge layer (m)
-domain_params['H'] = 200 # max domain depth (m)
+domain_params['L_sponge'] = 10000 # width of eastern sponge layer (m)
+domain_params['H'] = 1000 # max domain depth (m)
 
-
-# In[7]:
-
-
-#---grid parameters ---# 
-
-# NOTE: the only thing you may need to change here is the number of z-grid points)
-grid_params = {}
+# NOTE: the only thing you may need to change here is the number of z-grid pointsm, which was set above)
 
 grid_params['nSx'] = 1 # num of tiles per processor in x-direction
 grid_params['nSy'] = 1 # num of tiles per processor in y-direction
@@ -146,7 +137,7 @@ grid_params['nTx'] = 1 # num of threads per processor in x-direction
 grid_params['nTy'] = 1 # num of threads per processor in y-direction
 grid_params['OLx'] = 3 # num of overlapping x-gridpoints per tile
 grid_params['OLy'] = 3 # num of overlapping y-gridpoints per tile
-grid_params['Nr'] = 70 # num of z-grid points
+#grid_params['Nr'] = 70 # num of z-grid points (set above)
 
 grid_params['nPx'] = run_config['ncpus_xy'][0] #num of processors in x-direction
 grid_params['nPy'] = run_config['ncpus_xy'][1] #num of processors in x-direction
@@ -185,10 +176,6 @@ setupNotes.write('Grid parameters\n')
 setupNotes.write(str(grid_params)+'\n')
 #run_config['grid_params'] = grid_params
 
-
-# In[8]:
-
-
 # grid_params cont'd
 grid_params['usingCartesianGrid'] = True
 grid_params['usingSphericalPolarGrid'] = False 
@@ -212,18 +199,6 @@ dz = domain_params['H']/grid_params['Nr']*np.ones(grid_params['Nr']);
 
 grid_params['delZ'] = dz
 grid_params['hFacMinDr'] = dz.min()
-
-
-# In[ ]:
-
-
-
-
-
-# 
-# ## Physical parameters
-
-# In[9]:
 
 
 #---physical params---#
@@ -296,18 +271,11 @@ params01['gravity'] = g
 params01['hFacMin'] = 0.05
 params01['nonHydrostatic'] = True
 params01['readBinaryPrec'] = 64
-#params01['plotLevel'] = 0
-
-# AS: Don't allow partial cell height to fall below min grid spacing
-#params01['hFacMinDr'] = np.min(dz)
 
 
 # ## Check for numericl stability?
 
 # ## Numeric solvers and I/O controls
-
-# In[10]:
-
 
 # numeric solver parameters 
 
@@ -327,7 +295,7 @@ params03['abEps'] = 0.1
 #if run_config['testing']:
     
 params03['chkptFreq'] = 0.0
-params03['pChkptFreq'] = 0.0
+params03['pChkptFreq'] = 864000.0
 params03['taveFreq'] = 0.0
 params03['dumpFreq'] = 864000.0
 params03['taveFreq'] = 0.0
@@ -338,10 +306,6 @@ params03['monitorSelect'] = 1
 params03['periodicExternalForcing'] = False
 params03['ExternForcingPeriod'] = 100.0
 params03['ExternForcingCycle'] = 1000.0 
-
-
-# In[11]:
-
 
 if run_config['test']:
     nTimeSteps = 10
@@ -357,13 +321,9 @@ grid_params['Nt'] = nTimeSteps
 
 # ## Create 'data' files
 
-# In[12]:
 
 
 # NOTE: These steps generate the data text files located int the input directory
-
-
-# In[13]:
 
 
 # gather params for data file 
@@ -375,52 +335,20 @@ params04['delY'] = grid_params['delY']
 params04['delZ'] = dz
 
 
-# In[14]:
-
-
 # get data fnames param
 params05 = {}
-params05['bathyFile'] ='topog.slope'
+params05['bathyFile'] ='bathymetry.bin'
 params05['hydrogThetaFile'] = 'T.init'
 params05['hydrogSaltFile'] = 'S.init'
 
-
-# In[15]:
-
-
-data_params = [params01, params02, params03, params04, params05]
-rcf.write_data(run_config, data_params, group_name='data', lf=run_config['lf'])
-
-
-# ## Make SIZE.h File
-
-# In[16]:
-
-
-# generate size.h file
-rcf.createSIZEh(run_config, grid_params)
-
-
-# ## Specifiy relaxation of temperature and salinity 
-
-# In[17]:
-
-
-OBCS = {}
-
-
-# ## Set boundary conditions
-
-# In[ ]:
-
-
-
-
+if(makeDirs):
+    data_params = [params01, params02, params03, params04, params05]
+    #data file
+    rcf.write_data(run_config, data_params, group_name='data', lf=run_config['lf'])
+    #SIZE file
+    rcf.createSIZEh(run_config, grid_params)
 
 # ## Specify Diagnostics
-
-# In[18]:
-
 
 # Here we specify variables that should saved (i.e., written to disk) at various time intervals
 
@@ -471,7 +399,7 @@ for ii in range(numdiags_avg):
 
     
 #--------specify instanteous fields (i.e. snapshots)--------#
-diag_fields_inst = [['UVEL', 'VVEL', 'WVEL','THETA','SALT']]
+diag_fields_inst = [['THETA','SALT','UVEL','WVEL','VVEL']]
 diag_fields_names = ['dynDiag']
 numdiags_inst = len(diag_fields_inst)
 diag_phase_inst = 0.0
@@ -496,29 +424,19 @@ Ndiags = n
 
 diag_params02={}
 diag_params = [diag_params01, diag_params02]
-rcf.write_data(run_config, diag_params, group_name='diagnostics')
+if(makeDirs):
+    rcf.write_data(run_config, diag_params, group_name='diagnostics')
+    
+    ## create DIAGNOSTICS_SIZE.h
+    Nlevels = grid_params['Nr']
+    rcf.createDIAGSIZEh(run_config, Ndiags, Nlevels)
+
+    # create eedata
+    rcf.create_eedata(run_config, grid_params['nTx'], grid_params['nTy'])
 
 
-# In[20]:
+# In[3]:
 
-
-## create DIAGNOSTICS_SIZE.h
-Nlevels = grid_params['Nr']
-rcf.createDIAGSIZEh(run_config, Ndiags, Nlevels)
-
-
-# ## Generate eedata 
-
-# In[21]:
-
-
-# create eedata
-rcf.create_eedata(run_config, grid_params['nTx'], grid_params['nTy'])
-
-
-# # Generate Input Files
-
-writeFiles = True
 
 def write_bin(fname, data):
     print(fname, np.shape(data))
@@ -544,30 +462,57 @@ x[:, 0] = run_config['horiz_res_m'] / 2
 for i in np.arange(1, grid_params['Nx']):
     x[:,i] = x[:, i - 1] + run_config['horiz_res_m']
 
+y = np.zeros([grid_params['Ny'], grid_params['Nx']])
+y[0, :] = run_config['horiz_res_m'] / 2
+
+for j in np.arange(1, grid_params['Ny']):
+    y[j,:] = y[j-1, :] + run_config['horiz_res_m']
+
 z = -np.cumsum(dz)
 
 
-# In[25]:
+# Topography
+sillStart = 25000
+sillHeight = 500
+sillLength = 5000
+d = np.zeros([grid_params['Ny'], grid_params['Nx']]) - domain_params['H']
+d[x>sillStart] = - domain_params['H'] + (x[x>sillStart]-sillStart) * sillHeight/sillLength
+d[x>(sillStart + sillLength)] = sillHeight - domain_params['H']
+d[ 0, :] = 0  # walls of fjord
+d[-1, :] = 0
+d[: , 0] = 0 #cap west side
+
+plt.figure
+plt.plot(x[10,:],d[10,:])
+plt.pcolormesh(x,y,d)
+plt.colorbar()
+if(writeFiles):
+    plt.savefig("%sbathymetry" % (run_config['run_dir']+'/input/'))
+plt.show()
+plt.close()
+
+write_bin("bathymetry.bin", d)
+
+
+# In[4]:
 
 
 # Temperature profile
-tcd = 40
-Tmin = -1
-Tmax = 1
+tcd = 150
+Tmin = 1
+Tmax = 3
 Tc = (Tmax + Tmin) / 2
 Trange = Tmax - Tmin
 T2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
 for j in np.arange(0,grid_params['Ny']):
     T2[:,j] = Tc - Trange / 2 * np.tanh(np.pi * (z + tcd) / tcd)
-Tconst = np.zeros([grid_params['Nr'],grid_params['Ny']]) + 0.4
 T = T2
 
 Sc = 33.5
 Srange = -1
 S2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
 for j in np.arange(0,grid_params['Ny']):
-    S2[:,j] = Sc + Srange / 2 * np.tanh(np.pi * (z + tcd) / tcd)
-Sconst = np.zeros([grid_params['Nr'],grid_params['Ny']]) + 35
+    S2[:,j] = Sc + Srange / 2 * np.tanh(np.pi * (z + tcd) / (tcd))
 
 S = S2
 
@@ -586,22 +531,18 @@ write_bin("S.init", s)
 write_bin("EBCs.bin", S)
 write_bin("EBCt.bin", T)
 
-plt.plot(S - 34, z, 'b', label="Sref - 34")
-plt.plot(T, z, 'r', label="Tref")
+plt.figure()
+plt.plot(S[:,0] - 34, z, 'b', label="Sref - 34")
+plt.plot(T[:,0], z, 'r', label="Tref")
 plt.legend()
-plt.savefig("%sinitialTS" % (run_config['run_dir']+'/input/'))
+if(writeFiles):
+    plt.savefig("%sinitialTS" % (run_config['run_dir']+'/input/'))
 plt.show()
+plt.close()
 
 
-# In[26]:
+# In[8]:
 
-
-# Topography
-d = np.zeros([grid_params['Ny'], grid_params['Nx']]) - domain_params['H']
-d[ 0, :] = 0  # walls of fjord
-d[-1, :] = 0
-d[: , 0] = 0 #cap west side
-write_bin("b", d)
 
 # Plume
 nt = 1 #if variable forcing
@@ -610,7 +551,7 @@ runoffRad = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
 plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 # Total runoff (m^3/s)
-runoff = 500 
+runoff = 50
 
 # velocity (m/s) of subglacial runoff
 wsg = 1
@@ -619,8 +560,8 @@ wsg = 1
 icefront=1 # adjacent to wall at western end of domain, simulate wall of ice
 
 # plume location
-plume_loc = 5
-
+plume_loc = int(np.round(grid_params['Ny']/2))
+print(plume_loc)
 ## Define plume-type mask 
 # 1 = ice but no plume (melting only)
 # 2 = sheet plume (Jenkins)
@@ -648,6 +589,16 @@ write_bin("runoffVel.bin", runoffVel)
 write_bin("runoffRad.bin", runoffRad)
 write_bin("plumeMask.bin", plumeMask)
 
+setupNotes.write('Plume set to discharge at %i m^3/s\n' %runoff)
+
+plt.figure(1)
+plt.pcolormesh(x,y,plumeMask)
+plt.colorbar()
+if(writeFiles):
+    plt.savefig("%splumeMask" % (run_config['run_dir']+'/input/'))
+plt.show()
+plt.close()
+
 ## Boundary conditions
 
 # pre-allocate
@@ -663,8 +614,11 @@ if runoff > 0:
 write_bin("EBCu.bin", EBCu)
 
 
-# Pace (Stanford)
 
+# In[ ]:
+
+
+# PACE (GaTech) 
 
 cluster_params = {}
 cluster_params['cluster_name'] = 'PACE'
@@ -697,30 +651,10 @@ setupNotes.write('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/
 comptime_hrs = estTime/60/ncpus*1.2 
 setupNotes.close()
 
-shutil.move('setupReport.txt', run_config['run_dir'])
-
-
-rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
+if(makeDirs):
+    shutil.move('setupReport.txt', run_config['run_dir'])
+    rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
 
 print('Done! Remember to make MATLAB files and build before you run the script, building on MPI time is very inefficient')
-
-
-# ## Next steps
-# 
-# Once you've successfully set up the model experiment, you will need to do the following:
-# 
-# + Navigate to the build directory and compile the code (i.e., `bash ../makeBuild ../../..`). This may take a couple minutes and will generates lots of new files in the build directory. The key file is the `mitgcmuv` executable.
-# 
-# 
-# 
-# + Next, go to the results directory and submit the job to Sherlock queue or run directly if a test (`bash ../makeRun`). It is recommended that you do this from a login node. This should generate a unique output_xxx file, which logs error messages for each run. You will get emails when the job is released from the queue and when it is completed. Test runs normally take a few minutes. A successful run will generate dozens of output files, including data files like `THETA_inst_000000.data`. 
-# 
-# 
-# To check if the job is running:   `squeue | grep ejdawson`
-# 
-
-# In[ ]:
-
-
 
 

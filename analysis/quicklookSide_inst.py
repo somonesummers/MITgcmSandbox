@@ -20,7 +20,7 @@ startStep = 1e10
 
 for file in os.listdir('results'):
     # print(file)
-    if "dynDiag.0" in file:
+    if "dynDiag_inst" in file:
         words = file.split(".")
         # print(words[1])  
         if int(words[1]) > maxStep:
@@ -42,8 +42,8 @@ if(os.path.isfile('input/data.iceberg')):
 else:
     isBerg = False
 
-os.system('rm -f figs/side_*.png')
-os.system('rm -f figs/autoside_*.gif')
+os.system('rm -f figs/sideinst_*.png')
+os.system('rm -f figs/autosideinst_*.gif')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
@@ -99,14 +99,10 @@ if(isBerg):
 ySlice = np.argmin(np.abs(y[:,0] - crossSection))
 print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
-if(isBerg):
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx']
-    name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]"]
-else:
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
-    name = ["Temp", "Sal", "U", "W", "V"]
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
+
+dynName = ['dynDiag_inst', 'dynDiag_inst', 'dynDiag_inst', 'dynDiag_inst','dynDiag_inst']
+name = ["Temp", "Sal", "U", "W", "V"]
+cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 for k in range(len(name)):
     #print('k,',k)
@@ -160,13 +156,13 @@ for k in range(len(name)):
         plt.title("%s y = %i at %i" % (name[k], y[ySlice,0], i))
         j = i/startStep
         
-        str = "figs/side_%s%05i.png" % (name[k],j)
+        str = "figs/sideinst_%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png')
         plt.close()
         #plt.show()
 
-    os.system('magick -delay 5 figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(name[k], name[k]))
+    os.system('magick -delay 5 figs/sideinst_%s*.png -colors 256 -depth 256 figs/autosideinst_%s.gif' %(name[k], name[k]))
 
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)
