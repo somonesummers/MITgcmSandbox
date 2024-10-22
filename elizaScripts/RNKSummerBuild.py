@@ -48,7 +48,7 @@ run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
 run_config['Lx_m'] = 40000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 
-grid_params['Nr'] = 1000 # num of z-grid points
+grid_params['Nr'] = 50 # num of z-grid points
 
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
@@ -221,10 +221,10 @@ params01['vectorInvariantMomentum'] = True
 # 12 for int
 
 # viscosity parameters
-params01['viscA4'] = 0.0000 # Biharmonic viscosity?
-params01['viscAz'] = 1.0e-3 # Vertical viscosity
-params01['viscAh'] = 2.5e-1 # Vertical viscosity
-#params01['viscC2smag'] = 2.2 # ??? viscosity
+#params01['viscA4'] = 0.0000 # Biharmonic viscosity?
+params01['viscAz'] = 1.0e-5 # Vertical viscosity
+#params01['viscAh'] = 2.5e-1 # Vertical viscosity
+params01['viscC2smag'] = 2.2 # ??? viscosity
 
 # advection and time stepping
 params01['tempAdvScheme'] = 33 # needs to be int
@@ -235,11 +235,11 @@ params01['staggerTimeStep'] = True
 
 # diffusivity
 #params01['diffK4T'] = 0.0e4 # ?? temp diffusion
-params01['diffKhT'] = 2.5e-1 # Horizontal temp diffusion
-params01['diffKzT'] = 2.0e-5 # Vertical temp diffusion
+params01['diffKhT'] = 20. # Horizontal temp diffusion
+params01['diffKhS'] = 20 # Horz salt diffusion
+params01['diffKzT'] = 1.0e-5 # Vertical temp diffusion
+params01['diffKzS'] = 1.0e-1 # Vert salt diffusion
 #params01['diffK4S'] = 0.0e4 # ?? salt diffusion
-params01['diffKhS'] = 2.5e-1 # Horz salt diffusion
-#params01['diffKzS'] = 2.0e-5 # Horz salt diffusion
 
 
 # equation of state
@@ -289,7 +289,7 @@ params02['cg3dTargetResidual'] = 1e-8
 params03 = {}
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 20.0
+deltaT = 5.0
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -498,7 +498,7 @@ write_bin("bathymetry.bin", d)
 
 
 # Temperature profile
-tcd = 150
+tcd = 50
 Tmin = 1
 Tmax = 3
 Tc = (Tmax + Tmin) / 2
@@ -551,7 +551,7 @@ runoffRad = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
 plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 # Total runoff (m^3/s)
-runoff = 50
+runoff = 500
 
 # velocity (m/s) of subglacial runoff
 wsg = 1
@@ -602,7 +602,7 @@ plt.close()
 ## Boundary conditions
 
 # pre-allocate
-EBCu = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
+EBCu = np.zeros([grid_params['Nr'],grid_params['Ny']])
 
 # Apply barotropic velocity to balance input of runoff
 if runoff > 0:

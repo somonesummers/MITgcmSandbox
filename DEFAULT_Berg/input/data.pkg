@@ -1,6 +1,6 @@
 # Packages
  &PACKAGES
- useICEBERG=.TRUE.,
+ useICEBERG=.FALSE.,
  useSHELFICE=.FALSE.,
  useDiagnostics=.TRUE.,
  useICEPLUME=.TRUE.,
