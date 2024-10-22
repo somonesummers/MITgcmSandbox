@@ -39,13 +39,13 @@ email = 'psummers8@gatech.edu'
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
+run_config['ncpus_xy'] = [8, 1] # cpu distribution in the x and y directions
 run_config['run_name'] = 'RNK_500_0Bergs'
 run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
-run_config['Lx_m'] = 40000 # domain size in x (m)
+run_config['Lx_m'] = 60000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 
 grid_params['Nr'] = 50 # num of z-grid points
@@ -472,7 +472,7 @@ z = -np.cumsum(dz)
 
 
 # Topography
-sillStart = 25000
+sillStart = 45000
 sillHeight = 500
 sillLength = 5000
 d = np.zeros([grid_params['Ny'], grid_params['Nx']]) - domain_params['H']
