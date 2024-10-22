@@ -14,12 +14,11 @@ rm *
 ln -s ../input/* .
 cp ../build/mitgcmuv .
 
-echo "Ready to run"
+echo "Ready to run -=三(ง ˙o˙)ว"
 if [ "$MACHINE" == "Mac" ];
 then
 	./mitgcmuv > Report$TIME.txt
 else
 	./mitgcmuv
 fi
-
-echo "Done running..."
+echo "Done running  ദി(˵•̀ᴗ-˵)✧"
