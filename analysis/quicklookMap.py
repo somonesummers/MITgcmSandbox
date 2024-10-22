@@ -7,13 +7,14 @@ import cmocean
 os.system('rm -f figs/map*.png')
 os.system('rm -f figs/autoMap*.gif')
 
-depth = 100 #default value
-with open('input/plotPoint.txt', 'r') as file:
-    lines = file.readlines()
-    depth = float(lines[1]) #reads the 1st line in the doc
-    print('depth read from file', depth)
-
-
+depth = -100 #default value
+try:
+    with open('input/plotPoint.txt', 'r') as file:
+        lines = file.readlines()
+        depth = float(lines[1]) #reads the 1st line in the doc
+        print('Depth read from file', depth)
+except FileNotFoundError:
+    print('plot point file does not exist, using default')
 #Pick Depth you want to see
 
 

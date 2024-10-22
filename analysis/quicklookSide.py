@@ -6,11 +6,13 @@ import cmocean
 
 # Pick cross section to view
 crossSection = 1000
-with open('input/plotPoint.txt', 'r') as file:
-    lines = file.readlines()
-    crossSection = float(lines[2]) #reads the 3rd line in the doc
-    print('cross section read from file', crossSection)
-
+try:
+    with open('input/plotPoint.txt', 'r') as file:
+        lines = file.readlines()
+        crossSection = float(lines[2]) #reads the 3rd line in the doc
+        print('cross section read from file', crossSection)
+except FileNotFoundError:
+    print('plot point file does not exist, using default')
 
 maxStep = 0
 sizeStep = 1e10
@@ -158,13 +160,13 @@ for k in range(len(name)):
         plt.title("%s y = %i at %i" % (name[k], y[ySlice,0], i))
         j = i/startStep
         
-        str = "figs/side%s%05i.png" % (name[k],j)
+        str = "figs/side_%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png')
         plt.close()
         #plt.show()
 
-    os.system('magick -delay 5 figs/side%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(name[k], name[k]))
+    os.system('magick -delay 5 figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(name[k], name[k]))
 
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)

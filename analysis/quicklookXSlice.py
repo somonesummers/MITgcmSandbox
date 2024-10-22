@@ -5,12 +5,14 @@ import os
 import cmocean
 
 #Pick cross section
-crossSection = 700 #default
-with open('input/plotPoint.txt', 'r') as file:
-    lines = file.readlines()
-    crossSection = float(lines[3]) #reads the 3rd line in the doc
-    print('cross section read from file', crossSection)
-
+crossSection = 1000 #default
+try:
+    with open('input/plotPoint.txt', 'r') as file:
+        lines = file.readlines()
+        crossSection = float(lines[3]) #reads the 3rd line in the doc
+        print('cross section read from file', crossSection)
+except FileNotFoundError:
+    print('plot point file does not exist, using default')
 
 maxStep = 0
 sizeStep = 1e10

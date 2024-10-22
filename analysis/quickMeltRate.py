@@ -1,4 +1,4 @@
-# %%
+# %% Plots melting at bottom of ice shelf in map view, only for shelfice enabled runs
 from MITgcmutils import mds
 from matplotlib import pyplot as plt
 import numpy as np
