@@ -27,7 +27,9 @@ else:
 import build_domain_funcs as build_domain 
 import run_config_funcs as rcf # import helpter functions
 
+#Set up new folder
 makeDirs = True
+#Write input files, this lets us update the inputs with a full new run
 writeFiles = True
 
 
@@ -40,7 +42,7 @@ email = 'psummers8@gatech.edu'
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'RNK_500_0Bergs'
+run_config['run_name'] = 'RNK_plumeHeight'
 run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -235,10 +237,10 @@ params01['staggerTimeStep'] = True
 
 # diffusivity
 #params01['diffK4T'] = 0.0e4 # ?? temp diffusion
-params01['diffKhT'] = 20. # Horizontal temp diffusion
-params01['diffKhS'] = 20 # Horz salt diffusion
+params01['diffKhT'] = 0.20 # Horizontal temp diffusion
+params01['diffKhS'] = 0.20 # Horz salt diffusion
 params01['diffKzT'] = 1.0e-5 # Vertical temp diffusion
-params01['diffKzS'] = 1.0e-1 # Vert salt diffusion
+params01['diffKzS'] = 1.0e-5 # Vert salt diffusion
 #params01['diffK4S'] = 0.0e4 # ?? salt diffusion
 
 
@@ -498,23 +500,21 @@ write_bin("bathymetry.bin", d)
 
 
 # Temperature profile
-tcd = 50
+tcd = 150
 Tmin = 1
 Tmax = 3
 Tc = (Tmax + Tmin) / 2
 Trange = Tmax - Tmin
-T2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
+T = np.zeros([grid_params['Nr'],grid_params['Ny']])
 for j in np.arange(0,grid_params['Ny']):
-    T2[:,j] = Tc - Trange / 2 * np.tanh(np.pi * (z + tcd) / tcd)
-T = T2
+    T[:,j] = Tc - Trange / 2 * np.tanh(np.pi * (z + tcd) / tcd)
+
 
 Sc = 33.5
 Srange = -1
-S2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
+S = np.zeros([grid_params['Nr'],grid_params['Ny']])
 for j in np.arange(0,grid_params['Ny']):
-    S2[:,j] = Sc + Srange / 2 * np.tanh(np.pi * (z + tcd) / (tcd))
-
-S = S2
+    S[:,j] = Sc + Srange / 2 * np.tanh(np.pi * (z + tcd) / (tcd))
 
 Rref = rho0 * (1 - talpha * (T - T0) + sbeta * (S - S0))
 
@@ -539,6 +539,44 @@ if(writeFiles):
     plt.savefig("%sinitialTS" % (run_config['run_dir']+'/input/'))
 plt.show()
 plt.close()
+
+# Temp/Salt alternative initial/boundaries
+from scipy import interpolate
+t2 = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
+s2 = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
+S2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
+T2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
+z_tmp =  np.asarray([  0,  100,  200,  300,  400,  500,1000]); #must be increasing, so do depth as positive, see negs later for z[:]
+t_tmp =  np.asarray([0.2,  0.2,  0.5,  1.7,  1.5,  1.3, 1.0]);
+s_tmp =  np.asarray([ 32, 33.8, 34.2, 34.3, 34.4, 34.5,34.5]);
+print(z_tmp)
+t_int = interpolate.PchipInterpolator(z_tmp, t_tmp)
+s_int = interpolate.PchipInterpolator(z_tmp, s_tmp)
+for j in np.arange(0,grid_params['Ny']):
+    for i in np.arange(0, grid_params['Nx']):
+        t2[:, j, i] = t_int(-1 * z[:])
+        s2[:, j, i] = s_int(-1 * z[:])
+
+for j in np.arange(0,grid_params['Ny']):
+    T2[:,j] = t_int(-1 * z[:])
+    S2[:,j] = s_int(-1 * z[:])
+
+write_bin("T2.init", t2)
+write_bin("S2.init", s2)
+write_bin("EBCs2.bin", S2)
+write_bin("EBCt2.bin", T2)
+
+plt.figure()
+plt.plot(S2[:,0] - 34, z, 'b', label="Sref - 34")
+plt.plot(T2[:,0], z, 'r', label="Tref")
+plt.scatter(s_tmp - 34,-z_tmp,color='b')
+plt.scatter(t_tmp,-z_tmp,color='r')
+plt.legend()
+if(writeFiles):
+    plt.savefig("%sinitialTS2" % (run_config['run_dir']+'/input/'))
+plt.show()
+plt.close()
+
 
 
 # In[8]:
