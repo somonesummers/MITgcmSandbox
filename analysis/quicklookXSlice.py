@@ -26,7 +26,7 @@ else:
 
 for file in os.listdir('results'):
     # print(file)
-    if "dynDiag" in file:
+    if "dynDiag.0" in file:
         words = file.split(".")
         # print(words[1])  
         if int(words[1]) > maxStep:
@@ -49,8 +49,8 @@ x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
 z = mds.rdmds("results/RC")
 
-if(os.path.isfile('input/topog.slope')):
-    topo = np.fromfile('input/topog.slope', dtype='>f8')
+if(os.path.isfile('input/bathymetry.bin')):
+    topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
     topo = topo.reshape(np.shape(x))
 else:
     topo = np.zeros(np.shape(x))
@@ -111,7 +111,7 @@ for k in range(len(name)):
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
-            lvl = np.linspace(-1.5, 1.5, 128)
+            lvl = np.linspace(-0.5, 3, 128)
             cm = "cmo.thermal"
         elif k == 1:
             lvl = np.linspace(32, 34, 128)

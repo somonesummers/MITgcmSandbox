@@ -17,7 +17,7 @@ cp ../build/mitgcmuv .
 echo "Ready to run -=三(ง ˙o˙)ว"
 if [ "$MACHINE" == "Mac" ];
 then
-	./mitgcmuv > Report$TIME.txt
+	time ./mitgcmuv > Report$TIME.txt
 else
 	./mitgcmuv
 fi
