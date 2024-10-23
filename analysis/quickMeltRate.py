@@ -64,7 +64,7 @@ x = mds.rdmds("%sresults/XC" % ddir)
 z = mds.rdmds("%sresults/RC" % ddir)
 
 
-topo = np.fromfile('input/topog.slope', dtype='>f8')
+topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
 # ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
 topo = topo.reshape(np.shape(x))
 # ice = ice.reshape(np.shape(x))

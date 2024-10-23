@@ -24,7 +24,7 @@ startStep = 1e10
 
 for file in os.listdir('results'):
     # print(file)
-    if "dynDiag" in file:
+    if "dynDiag.0" in file:
         words = file.split(".")
         # print(words[1])  
         if int(words[1]) > maxStep:
@@ -52,8 +52,8 @@ z = mds.rdmds("results/RC")
 
 
 
-if(os.path.isfile('input/topog.slope')):
-    topo = np.fromfile('input/topog.slope', dtype='>f8')
+if(os.path.isfile('input/bathymetry.bin')):
+    topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
     topo = topo.reshape(np.shape(x))
 else:
     topo = np.zeros(np.shape(x))
@@ -78,11 +78,6 @@ print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 name = ["Temp", "Sal", "U", "W", "V"]
 cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
-if(maxStep/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
-    dwnScale = round((maxStep/sizeStep)/50)
-    print('Reducing time resolution by', dwnScale)
-    sizeStep = sizeStep * dwnScale
-
 if(isBerg):
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx']
     name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
@@ -96,7 +91,7 @@ for k in range(len(name)):
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
-            lvl = np.linspace(-1.5, 1.5, 128)
+            lvl = np.linspace(-0.5, 3, 128)
             cm = "cmo.thermal"
         elif k == 1:
             lvl = np.linspace(32, 34, 128)
