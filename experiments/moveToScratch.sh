@@ -8,7 +8,7 @@ fi
 
 for NAME in "$@"
 do
-	echo 'moving $NAME...'
+	echo "moving $NAME..."
 	mkdir ../../scratch/exps/$NAME
 	rsync -ah --info=progress2 $NAME ../../scratch/exps/
 	rm -r $NAME
