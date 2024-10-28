@@ -32,15 +32,17 @@ for file in os.listdir('results'):
         if int(words[1]) > maxStep:
             maxStep = int(words[1])
         if int(words[1]) < startStep and int(words[1]) > 0:
-            sizeStep = int(words[1])
             startStep = int(words[1])
+        if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
+            sizeStep = abs(int(words[1]) - startStep)
 
-if(maxStep/sizeStep > 50):  #if more than 50 frames, downscale to be less than 50
+
+if(maxStep/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
     dwnScale = round((maxStep/sizeStep)/50)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
-print(startStep,sizeStep,maxStep)
+print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 os.system('rm -f figs/sideX*.png')
 os.system('rm -f figs/autosideX*.gif')
@@ -157,7 +159,7 @@ for k in range(len(name)):
         plt.xlabel('Across Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, :, xSlice]),np.nanmax(data[kk, :, :, xSlice]),np.max(np.isnan(data[kk, :, :, xSlice]))))
         plt.ylabel('Depth [m]')
         plt.title("%s x = %i at %i" % (name[k], x[0,xSlice], i))
-        j = i/startStep
+        j = i/sizeStep + startStep
         
         str = "figs/sideX%s%05i.png" % (name[k],j)
         
@@ -165,7 +167,7 @@ for k in range(len(name)):
         plt.close()
         #plt.show()
 
-    os.system('magick -delay 5 figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%s.gif' %(name[k], name[k]))
+    os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%s.gif' %(500/(maxStep/sizeStep), name[k], name[k]))
 
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)

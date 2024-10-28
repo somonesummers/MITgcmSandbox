@@ -26,15 +26,17 @@ for file in os.listdir('results'):
         if int(words[1]) > maxStep:
             maxStep = int(words[1])
         if int(words[1]) < startStep and int(words[1]) > 0:
-            sizeStep = int(words[1])
             startStep = int(words[1])
+        if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
+            sizeStep = abs(int(words[1]) - startStep)
 
-if(maxStep/sizeStep > 50):  #if more than 50 frames, downscale to be less than 50
+
+if(maxStep/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
     dwnScale = round((maxStep/sizeStep)/50)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
-print(startStep,sizeStep,maxStep)
+print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 #Decide if iceBerg data files exist
 if(os.path.isfile('input/data.iceberg')):
@@ -154,7 +156,7 @@ for k in range(len(name)):
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, ySlice, :]),np.nanmax(data[kk, :, ySlice, :]),np.max(np.isnan(data[kk, :, ySlice, :]))))
         plt.ylabel('Depth [m]')
         plt.title("%s y = %i at %i" % (name[k], y[ySlice,0], i))
-        j = i/startStep
+        j = i/sizeStep + startStep
         
         str = "figs/sideinst_%s%05i.png" % (name[k],j)
         
@@ -162,7 +164,7 @@ for k in range(len(name)):
         plt.close()
         #plt.show()
 
-    os.system('magick -delay 5 figs/sideinst_%s*.png -colors 256 -depth 256 figs/autosideinst_%s.gif' %(name[k], name[k]))
+    os.system('magick -delay %f figs/sideinst_%s*.png -colors 256 -depth 256 figs/autosideinst_%s.gif' %(200/(maxStep/sizeStep), name[k], name[k]))
 
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)

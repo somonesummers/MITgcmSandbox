@@ -11,7 +11,7 @@ depth = -100 #default value
 try:
     with open('input/plotPoint.txt', 'r') as file:
         lines = file.readlines()
-        depth = float(lines[1]) #reads the 1st line in the doc
+        depth = float(lines[1]) #reads the 2nd line in the doc
         print('Depth read from file', depth)
 except FileNotFoundError:
     print('plot point file does not exist, using default')
@@ -30,15 +30,17 @@ for file in os.listdir('results'):
         if int(words[1]) > maxStep:
             maxStep = int(words[1])
         if int(words[1]) < startStep and int(words[1]) > 0:
-            sizeStep = int(words[1])
             startStep = int(words[1])
+        if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
+            sizeStep = abs(int(words[1]) - startStep)
+
 
 if(maxStep/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
     dwnScale = round((maxStep/sizeStep)/50)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
-print(startStep,sizeStep,maxStep)
+print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 #Decide if iceBerg data files exist
 if(os.path.isfile('input/data.iceberg')):
@@ -133,14 +135,14 @@ for k in range(len(name)):
                 cmap='cmo.gray')
             cbar2 = plt.colorbar(cp2)
             cbar2.set_label('Ocean Fraction')
-        j = i/startStep
+        j = i/sizeStep + startStep
         str = "figs/map%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png')
         plt.close()
         #plt.show()
 
-    os.system('magick -delay 5 figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(name[k], name[k]))
+    os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(500/(maxStep/sizeStep), name[k], name[k]))
 
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)

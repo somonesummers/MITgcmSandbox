@@ -13,6 +13,9 @@ do
   echo $EXP
   cd $EXP
 
+  echo '== Cross View ==' 
+  python ../crossPlot.py
+
   echo '== Side View ==' 
   python ../quicklookSide.py
 

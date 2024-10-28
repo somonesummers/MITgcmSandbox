@@ -26,15 +26,17 @@ for file in os.listdir('results'):
         if int(words[1]) > maxStep:
             maxStep = int(words[1])
         if int(words[1]) < startStep and int(words[1]) > 0:
-            sizeStep = int(words[1])
             startStep = int(words[1])
+        if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
+            sizeStep = abs(int(words[1]) - startStep)
 
-if(maxStep/sizeStep > 50):  #if more than 50 frames, downscale to be less than 50
+
+if(maxStep/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
     dwnScale = round((maxStep/sizeStep)/50)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
-print(startStep,sizeStep,maxStep)
+print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 #Decide if iceBerg data files exist
 if(os.path.isfile('input/data.iceberg')):
@@ -54,9 +56,7 @@ if(os.path.isfile('input/bathymetry.bin')):
     topo = topo.reshape(np.shape(x))
 else:
     topo = np.zeros(np.shape(x))
-# ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
 
-# ice = ice.reshape(np.shape(x))
 
 if(isBerg):
     bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
@@ -109,7 +109,6 @@ else:
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 for k in range(len(name)):
-    #print('k,',k)
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
@@ -140,7 +139,6 @@ for k in range(len(name)):
             cmap=cm,
         )
         plt.plot(x[ySlice,:],topo[ySlice,:],color='black')
-        # plt.plot(x[ySlice,:],ice[ySlice,:],color='gray')
         if(isBerg):
             plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
             cp2 = plt.contourf(
@@ -158,7 +156,7 @@ for k in range(len(name)):
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, ySlice, :]),np.nanmax(data[kk, :, ySlice, :]),np.max(np.isnan(data[kk, :, ySlice, :]))))
         plt.ylabel('Depth [m]')
         plt.title("%s y = %i at %i" % (name[k], y[ySlice,0], i))
-        j = i/startStep
+        j = i/sizeStep + startStep
         
         str = "figs/side_%s%05i.png" % (name[k],j)
         
@@ -166,7 +164,7 @@ for k in range(len(name)):
         plt.close()
         #plt.show()
 
-    os.system('magick -delay 5 figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(name[k], name[k]))
+    os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(500/(maxStep/sizeStep), name[k], name[k]))
 
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)
