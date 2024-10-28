@@ -41,13 +41,13 @@ email = 'psummers8@gatech.edu'
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [8, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'RNK_500_0Bergs'
+run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'OBCS_Test'
 run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
-run_config['Lx_m'] = 60000 # domain size in x (m)
+run_config['Lx_m'] = 80000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 
 grid_params['Nr'] = 50 # num of z-grid points
@@ -114,11 +114,11 @@ if(makeDirs):
     setupNotes.write(str(os.listdir(run_config['run_dir']))+'\n')
 
     # create new analysis sub-dir in your home directory
-    if OSX == 'Darwin':
-        analysis_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/analysis/%s'%run_config['run_name']
-    else:
-        analysis_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/analysis/%s'%run_config['run_name']
-    os.makedirs(analysis_dir, exist_ok=True)
+    # if OSX == 'Darwin':
+    #     analysis_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/analysis/%s'%run_config['run_name']
+    # else:
+    #     analysis_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/analysis/%s'%run_config['run_name']
+    # os.makedirs(analysis_dir, exist_ok=True)
     
 secsInDay = 24*60*60
 secsInYear = 365*secsInDay
@@ -128,7 +128,7 @@ secsInYear = 365*secsInDay
 domain_params = {}
 domain_params['Lx'] = run_config['Lx_m'] # domain size in x (m)
 domain_params['Ly'] = run_config['Ly_m'] # domain size in y (m)
-domain_params['L_sponge'] = 10000 # width of eastern sponge layer (m)
+domain_params['L_sponge'] = 20000 # width of eastern sponge layer (m)
 domain_params['H'] = 1000 # max domain depth (m)
 
 # NOTE: the only thing you may need to change here is the number of z-grid pointsm, which was set above)
@@ -420,12 +420,28 @@ setupNotes.write('Diagnostic Settings\n')
 setupNotes.write(str(diag_params01)+'\n')
 Ndiags = n
 
-
-# In[19]:
-
-
 diag_params02={}
 diag_params = [diag_params01, diag_params02]
+
+obcs_params01 = {}
+obcs_params02 = {}
+obcs_params03 = {}
+
+obcs_params01['OB_singleIeast'] = -1
+obcs_params01['useOBCSsponge'] = True
+obcs_params01['useOBCSprescribe']= True
+obcs_params01['OBEsFile']='EBCs.bin'
+obcs_params01['OBEtFile']='EBCt.bin'
+obcs_params01 ['OBEuFile']='EBCu.bin'
+
+# Enforces mass conservation across the northern boundary by adding a
+# barotropic inflow/outflow
+obcs_params03['spongeThickness'] = domain_params['L_sponge'] / run_config['horiz_res_m'] #grid cells
+obcs_params03['Urelaxobcsinner'] = 86400.0
+obcs_params03['Urelaxobcsbound'] = 3600.0
+obcs_params03['Vrelaxobcsinner'] = 86400.0
+obcs_params03['Vrelaxobcsbound'] = 3600.0
+obcs_params = [obcs_params01, obcs_params02, obcs_params03]
 if(makeDirs):
     rcf.write_data(run_config, diag_params, group_name='diagnostics')
     
@@ -436,6 +452,8 @@ if(makeDirs):
     # create eedata
     rcf.create_eedata(run_config, grid_params['nTx'], grid_params['nTy'])
 
+    #create data.obcs
+    rcf.write_data(run_config, obcs_params, group_name='obcs')
 
 # In[3]:
 
