@@ -436,7 +436,7 @@ obcs_params01 ['OBEuFile']='EBCu.bin'
 
 # Enforces mass conservation across the northern boundary by adding a
 # barotropic inflow/outflow
-obcs_params03['spongeThickness'] = domain_params['L_sponge'] / run_config['horiz_res_m'] #grid cells
+obcs_params03['spongeThickness'] = int(domain_params['L_sponge'] / run_config['horiz_res_m']) #grid cells
 obcs_params03['Urelaxobcsinner'] = 86400.0
 obcs_params03['Urelaxobcsbound'] = 3600.0
 obcs_params03['Vrelaxobcsinner'] = 86400.0
