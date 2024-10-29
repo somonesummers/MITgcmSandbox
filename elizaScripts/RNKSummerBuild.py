@@ -436,7 +436,7 @@ obcs_params01 ['OBEuFile']='EBCu.bin'
 
 # Enforces mass conservation across the northern boundary by adding a
 # barotropic inflow/outflow
-obcs_params03['spongeThickness'] = domain_params['L_sponge'] / run_config['horiz_res_m'] #grid cells
+obcs_params03['spongeThickness'] = int(domain_params['L_sponge'] / run_config['horiz_res_m']) #grid cells
 obcs_params03['Urelaxobcsinner'] = 86400.0
 obcs_params03['Urelaxobcsbound'] = 3600.0
 obcs_params03['Vrelaxobcsinner'] = 86400.0
@@ -518,7 +518,7 @@ write_bin("bathymetry.bin", d)
 
 
 # Temperature profile
-tcd = 150
+tcd = 300
 Tmin = 1
 Tmax = 3
 Tc = (Tmax + Tmin) / 2
@@ -564,10 +564,9 @@ t2 = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
 s2 = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
 S2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
 T2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
-z_tmp =  np.asarray([  0,  100,  200,  300,  400,  500,1000]); #must be increasing, so do depth as positive, see negs later for z[:]
-t_tmp =  np.asarray([0.2,  0.2,  0.5,  1.7,  1.5,  1.3, 1.0]);
-s_tmp =  np.asarray([ 32, 33.8, 34.2, 34.3, 34.4, 34.5,34.5]);
-print(z_tmp)
+z_tmp =  np.asarray([  0,   50,  100,  200,  300, 500,1000]); #must be increasing, so do depth as positive, see negs later for z[:]
+t_tmp =  np.asarray([0.8,  1.5,  1.8,  2.1,  2.3, 2.6,2.75]);
+s_tmp =  np.asarray([ 33, 33.8, 34.0, 34.3, 34.4,34.6,35.0]);
 t_int = interpolate.PchipInterpolator(z_tmp, t_tmp)
 s_int = interpolate.PchipInterpolator(z_tmp, s_tmp)
 for j in np.arange(0,grid_params['Ny']):
@@ -578,6 +577,9 @@ for j in np.arange(0,grid_params['Ny']):
 for j in np.arange(0,grid_params['Ny']):
     T2[:,j] = t_int(-1 * z[:])
     S2[:,j] = s_int(-1 * z[:])
+
+print('Temp',t_int(-1 * z[:]))
+print('Salt',s_int(-1 * z[:]))
 
 write_bin("T2.init", t2)
 write_bin("S2.init", s2)

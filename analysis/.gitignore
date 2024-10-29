@@ -3,4 +3,5 @@
 !visualize*.py
 !plotAll.sh
 !quick*.py
+!crossPlot.py
 *.gif

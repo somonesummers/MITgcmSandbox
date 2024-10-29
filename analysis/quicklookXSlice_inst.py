@@ -37,8 +37,8 @@ for file in os.listdir('results'):
             sizeStep = abs(int(words[1]) - startStep)
 
 
-if(maxStep/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
-    dwnScale = round((maxStep/sizeStep)/50)
+if((maxStep-startStep)/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
+    dwnScale = round(((maxStep-startStep)/sizeStep)/50)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
@@ -121,10 +121,10 @@ for k in range(len(name)):
             lvl = np.linspace(32, 34, 128)
             cm = "cmo.haline"
         elif k == 2 or k == 4:
-            lvl = np.linspace(-.5, .5, 128)
+            lvl = np.linspace(-.5, .5, 127)
             cm = "cmo.balance"
         elif k == 3:
-            lvl = np.linspace(-0.08, 0.08, 128)
+            lvl = np.linspace(-0.005, 0.005, 127)
             cm = "cmo.curl"
         elif k == 5:
             lvl = np.linspace(0, .5, 128)
@@ -169,7 +169,7 @@ for k in range(len(name)):
         plt.close()
         #plt.show()
 
-    os.system('magick -delay %f figs/sideX_inst%s*.png -colors 256 -depth 256 figs/autosideX_inst_%s.gif' %(200/(maxStep/sizeStep), name[k], name[k]))
+    os.system('magick -delay %f figs/sideX_inst%s*.png -colors 256 -depth 256 figs/autosideX_inst_%s.gif' %(200/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)
