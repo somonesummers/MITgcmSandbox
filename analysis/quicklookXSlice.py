@@ -119,10 +119,10 @@ for k in range(len(name)):
             lvl = np.linspace(32, 34, 128)
             cm = "cmo.haline"
         elif k == 2 or k == 4:
-            lvl = np.linspace(-.5, .5, 128)
+            lvl = np.linspace(-.5, .5, 127)
             cm = "cmo.balance"
         elif k == 3:
-            lvl = np.linspace(-0.08, 0.08, 128)
+            lvl = np.linspace(-0.005, 0.005, 127)
             cm = "cmo.curl"
         elif k == 5:
             lvl = np.linspace(0, .5, 128)
