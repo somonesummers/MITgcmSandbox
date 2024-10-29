@@ -164,7 +164,7 @@ for k in range(len(name)):
         plt.close()
         #plt.show()
 
-    os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(500/(maxStep/sizeStep), name[k], name[k]))
+    os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)

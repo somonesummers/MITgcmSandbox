@@ -227,7 +227,7 @@ for k in range(len(name)):
         plt.close()
         # plt.show()
 
-    os.system('magick -delay %f figs/cross_%s*.png -colors 256 -depth 256 figs/autoCross_%s.gif' %(500/(maxStep/sizeStep), name[k], name[k]))
+    os.system('magick -delay %f figs/cross_%s*.png -colors 256 -depth 256 figs/autoCross_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 
 
