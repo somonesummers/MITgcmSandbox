@@ -6,7 +6,7 @@ import numpy as np
 import os
 import cmocean
 
-# Pick cross section to view
+# Pick cross section to view from file or default
 yCrossSection = 1000
 xCrossSection = 5000
 zDepth = 50
@@ -20,10 +20,10 @@ try:
 except FileNotFoundError:
     print('plot point file does not exist, using default')
 
+#Find Diagnostic file, iterate through them
 maxStep = 0
 sizeStep = 1e10
 startStep = 1e10
-
 for file in os.listdir('results'):
     # print(file)
     if "dynDiag.0" in file:
@@ -35,13 +35,10 @@ for file in os.listdir('results'):
             startStep = int(words[1])
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
-
-
-if(maxStep/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
-    dwnScale = round((maxStep/sizeStep)/50)
+if((maxStep-startStep)/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
+    dwnScale = round(((maxStep-startStep)/sizeStep)/50)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
-
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 #Decide if iceBerg data files exist
@@ -50,19 +47,23 @@ if(os.path.isfile('input/data.iceberg')):
 else:
     isBerg = False
 
+#Clean up old gifs and pngs
 os.system('rm -f figs/cross_*.png')
 os.system('rm -f figs/autoCross_*.gif')
 
+#Import grid
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
 z = mds.rdmds("results/RC")
 
+#Import bathymetry
 if(os.path.isfile('input/bathymetry.bin')):
     topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
     topo = topo.reshape(np.shape(x))
 else:
     topo = np.zeros(np.shape(x))
                 
+# Print actual cross section values
 xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
 ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
 zSlice = np.argmin(np.abs(z[:,0,0]- zDepth))
@@ -79,8 +80,7 @@ dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
 name = ["Temp", "Sal", "U", "W", "V"]
 cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
-
-#In KM for x,y,better axis labeling
+#In KM for x,y for better axis labeling
 x = x/1000
 y = y/1000
 
@@ -93,7 +93,7 @@ for k in range(len(name)):
         # ax = fig.add_subplot(111)
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
-            lvl = np.linspace(-0.5, 3, 128)
+            lvl = np.linspace(-0.5, 3.0, 128)
             cm = "cmo.thermal"
         elif k == 1:
             lvl = np.linspace(32, 34, 128)
@@ -202,6 +202,7 @@ for k in range(len(name)):
 
         cbar = fig.colorbar(cp)
         cbar.set_label(cbarLabel[k])
+        
         #Topography along fjord
         ax.plot(x[ySlice,:xSlice],topo[ySlice,:xSlice],color='black',zdir='x',zs=y[ySlice,0],zorder=2)        
         ax.plot(x[ySlice,xSlice:],topo[ySlice,xSlice:],color='black',zdir='x',zs=y[ySlice,0],zorder=2)
@@ -210,7 +211,7 @@ for k in range(len(name)):
         ax.plot(y[ySlice:,xSlice],topo[ySlice:,xSlice],color='black',zdir='y',zs=x[0,xSlice],zorder=0)
         ax.plot(y[:ySlice+1,xSlice],topo[:ySlice+1,xSlice],color='black',zdir='y',zs=x[0,xSlice],zorder=3)
         ax.invert_xaxis()
-        plt.title("%s y = %i at %i" % (name[k], y[ySlice,0], i))
+        plt.title("%s at x,y,z (%i,%i,%i) at %i" % (name[k], x[0,xSlice]*1000,y[ySlice,0]*1000,z[zSlice,0,0], i))
         ax.set_xlabel('Width [km]')
         ax.set_ylabel('Along [km]')
         ax.set_zlabel('Depth [m]')
@@ -227,9 +228,6 @@ for k in range(len(name)):
         # plt.show()
 
     os.system('magick -delay %f figs/cross_%s*.png -colors 256 -depth 256 figs/autoCross_%s.gif' %(500/(maxStep/sizeStep), name[k], name[k]))
-
-
-# In[ ]:
 
 
 

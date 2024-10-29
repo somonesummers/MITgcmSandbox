@@ -40,8 +40,8 @@ for file in os.listdir('%sresults' % ddir):
             sizeStep = int(words[1])
             startStep = int(words[1])
 
-if(maxStep/sizeStep > 50):  #if more than 50 frames, downscale to be less than 50
-    dwnScale = round((maxStep/sizeStep)/50)
+if((maxStep-startStep)/sizeStep > 50):  #if more than 50 frames, downscale to be less than 50
+    dwnScale = round(((maxStep-startStep)/sizeStep)/50)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
