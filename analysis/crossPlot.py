@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import os
 import cmocean
+import fileinput
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
@@ -19,6 +20,12 @@ try:
         print('cross sections read from file\nx:', xCrossSection,'\ny:',yCrossSection,'\nz:',zDepth)
 except FileNotFoundError:
     print('plot point file does not exist, using default')
+
+dt = 0.0   
+for line in fileinput.input('input/data'):
+        if "deltaT=" in line:
+            dt = float(line[8:-2])
+print('dt is loaded as', dt)
 
 #Find Diagnostic file, iterate through them
 maxStep = 0
@@ -35,8 +42,8 @@ for file in os.listdir('results'):
             startStep = int(words[1])
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
-if((maxStep-startStep)/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
-    dwnScale = round(((maxStep-startStep)/sizeStep)/50)
+if((maxStep-startStep)/sizeStep > 60):   #if more than 60 frames, downscale to be less than 60
+    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
@@ -124,7 +131,7 @@ for k in range(len(name)):
             zdir='x',offset=y[ySlice,0],zorder=2
         )
 
-        #viewers top half profile
+        #viewers close width half profile
         YY,ZZ = np.meshgrid(np.squeeze(y[:,xSlice]),np.squeeze(z))    
         cp = ax.contourf(
             YY[:,0:ySlice+1],
@@ -136,7 +143,7 @@ for k in range(len(name)):
             zdir='y',offset=x[0,xSlice],zorder=3
         )
        
-        #viewer's bottom width half profile
+        #viewer's far width half profile
         YY,ZZ = np.meshgrid(np.squeeze(y[:,xSlice]),np.squeeze(z))    
         cp = ax.contourf(
             YY[:,ySlice:],
@@ -197,7 +204,7 @@ for k in range(len(name)):
             levels=lvl,
             extend="both",
             cmap=cm,
-            zdir='z',offset=z.min(),zorder=0
+            zdir='z',offset=z.min(),zorder=-1
         )
 
         cbar = fig.colorbar(cp)
@@ -211,7 +218,7 @@ for k in range(len(name)):
         ax.plot(y[ySlice:,xSlice],topo[ySlice:,xSlice],color='black',zdir='y',zs=x[0,xSlice],zorder=0)
         ax.plot(y[:ySlice+1,xSlice],topo[:ySlice+1,xSlice],color='black',zdir='y',zs=x[0,xSlice],zorder=3)
         ax.invert_xaxis()
-        plt.title("%s at x,y,z (%i,%i,%i) at %i" % (name[k], x[0,xSlice]*1000,y[ySlice,0]*1000,z[zSlice,0,0], i))
+        plt.title("%s at x,y,z (%i,%i,%i) at %.02f days" % (name[k], x[0,xSlice]*1000,y[ySlice,0]*1000,z[zSlice,0,0], i/86400.0*dt))
         ax.set_xlabel('Width [km]')
         ax.set_ylabel('Along [km]')
         ax.set_zlabel('Depth [m]')
@@ -229,6 +236,8 @@ for k in range(len(name)):
 
     os.system('magick -delay %f figs/cross_%s*.png -colors 256 -depth 256 figs/autoCross_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
+#Clean up intermediate pngs
+os.system('rm -f figs/cross_*.png')
 
 
 

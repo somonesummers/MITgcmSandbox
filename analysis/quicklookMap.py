@@ -3,9 +3,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 import os
 import cmocean
+import fileinput
 
-os.system('rm -f figs/map*.png')
-os.system('rm -f figs/autoMap*.gif')
 
 depth = -100 #default value
 try:
@@ -15,8 +14,12 @@ try:
         print('Depth read from file', depth)
 except FileNotFoundError:
     print('plot point file does not exist, using default')
-#Pick Depth you want to see
 
+dt = 0.0   
+for line in fileinput.input('input/data'):
+        if "deltaT=" in line:
+            dt = float(line[8:-2])
+print('dt is loaded as', dt)
 
 maxStep = 0
 sizeStep = 1e10
@@ -35,18 +38,23 @@ for file in os.listdir('results'):
             sizeStep = abs(int(words[1]) - startStep)
 
 
-if((maxStep-startStep)/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
-    dwnScale = round(((maxStep-startStep)/sizeStep)/50)
+if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to be less than 50
+    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 #Decide if iceBerg data files exist
-if(os.path.isfile('input/data.iceberg')):
+if(os.path.isfile('input/bergMask.bin')):
     isBerg = True
+    print('Found icebergs for this run')
 else:
     isBerg = False
+
+#Clean up old gifs and pngs
+os.system('rm -f figs/map*.png')
+os.system('rm -f figs/autoMap*.gif')
 
 y = mds.rdmds("results/YC")
 x = mds.rdmds("results/XC")
@@ -91,7 +99,15 @@ else:
 
 for k in range(len(name)):
     for i in np.arange(startStep, maxStep + 1, sizeStep):
-        data = mds.rdmds("results/%s"%(dynName[k]), i)
+        if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
+            localBergs = True
+        else:
+            localBergs = False
+        if((not localBergs) and k==5):
+            #fill melt image with 0s if bergs in run but not frame
+            data = np.zeros(np.shape(mds.rdmds("results/%s"%(dynName[k-1]), i)))
+        else:
+            data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
             lvl = np.linspace(-0.5, 3, 128)
             cm = "cmo.thermal"
@@ -124,17 +140,17 @@ for k in range(len(name)):
         cbar.set_label(cbarLabel[k])
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, zSlice, :, :]),np.nanmax(data[kk, zSlice, :, :]),np.max(np.isnan(data[kk, zSlice, :, :]))))
         plt.ylabel('Across Fjord [m]')
-        plt.title("%s depth %f at %i" % (name[k], z[zSlice,0,0] ,i))
-        if(isBerg):
+        plt.title("%s depth %f at %.02f days" % (name[k], z[zSlice,0,0] ,i/86400.0*dt))
+        if(localBergs):
             cp2 = plt.contourf(np.squeeze(x),
                 np.squeeze(y),
                 np.squeeze(openFrac[zSlice, :, :]),
                 [.1,.5,.9],
                 extend="min",
-                alpha=.2,
+                alpha=.1,
                 cmap='cmo.gray')
-            cbar2 = plt.colorbar(cp2)
-            cbar2.set_label('Ocean Fraction')
+            #cbar2 = plt.colorbar(cp2)
+            #cbar2.set_label('Ocean Fraction')
         j = i/sizeStep + startStep
         str = "figs/map%s%05i.png" % (name[k],j)
         
@@ -144,16 +160,5 @@ for k in range(len(name)):
 
     os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
-# BCT = np.fromfile("T.bound", dtype=">f8")
-# plt.plot(BCT)
-# plt.show()
-#
-# BCS = np.fromfile("S.bound", dtype=">f8")
-# plt.plot(BCS)
-# plt.show()
-#
-# BCU = np.fromfile("U.bound", dtype=">f8")
-# plt.plot(BCU)
-# plt.show()
-#
-#
+#Clean up intermediate pngs
+os.system('rm -f figs/map*.png')
