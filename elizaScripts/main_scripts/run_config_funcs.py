@@ -325,6 +325,16 @@ def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email,
     
     ncpus = run_config['ncpus_xy'][0]*run_config['ncpus_xy'][1]
     
+    loadList = ['module load python/3.10.10\n',
+                'module spider anaconda3/2023.03\n',
+                'conda init bash\n',
+                'conda activate MITgcm\nconda info --envs\n']
+    loadCommand = "".join(loadList)
+
+    try:
+        extraCommands = run_config['extraCommands']
+    except Exception as e:
+        extraCommands = '\n'
 
     if ncpus > 1:
         build_cmd = 'bash ../makeBuild.sh ../../.. -mpi\n'
@@ -350,8 +360,10 @@ def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email,
                   '\n',
                   'cd $SLURM_SUBMIT_DIR    # Change to working directory\n',
                   'set -e\n',
-                  #build_cmd,
-                   run_cmd]
+                  loadCommand,
+                  run_cmd,
+                  '\n',
+                  extraCommands]
 
 
     ### Open output script and write header text
