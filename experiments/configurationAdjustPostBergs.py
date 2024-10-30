@@ -23,22 +23,28 @@ def changeDiagnosticFreq(oldFreq, newFreq):
 
 secsInADay = 24*3600
 
-#Load dt for this model run
+#Load old data file for editing
 dt = 0.0   
+nInterOld = 0
+endTimeOld = 20*secsInADay
+pickupIterationOld = 10*secsInADay
 for line in fileinput.input('input/data'):
         if "deltaT=" in line:
-            print(line)
             dt = float(line[8:-2])
+        elif "nIter0=" in line:
+            nInterOld = float(line[8:-2])
+        elif "endTime=" in line:
+            endTimeOld = float(line[9:-2])
+        elif "pChkptFreq=" in line:
+            pickupIterationOld = float(line[12:-2])
 print('dt is loaded as', dt)
+print('nIterOld is loaded as', nInterOld)
+print('endTimeOld is loaded as', endTimeOld)
+print('pickupIterationOld is loaded as', pickupIterationOld)
 
-# Standard spin-up times
-endTimeOld = 24*secsInADay
+#New Settings
 endTimeNew = endTimeOld + 10*secsInADay
-
-nInterOld = 20*secsInADay/dt
 nInterNew = endTimeOld/dt
-
-pickupIterationOld = .5*secsInADay
 pickupIterationNew = 10*secsInADay
 
 #set new iter0 value, adjust pickupsaving to 12 hours, extend runtime of sim

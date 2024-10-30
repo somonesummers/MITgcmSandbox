@@ -14,6 +14,9 @@ import pickle
 import importlib
 import shutil
 import platform
+import fileinput
+import sys
+import glob
 
 OSX = platform.system()
 
@@ -203,6 +206,10 @@ grid_params['delZ'] = dz
 grid_params['hFacMinDr'] = dz.min()
 
 
+## Ice berg configuration
+iceBergDepth = 200 # max ice berg depth [meters], used for ICEBERG package
+iceExtent = 8000 # [meters] of extent of ice
+iceCoverage = 95 # % of ice cover in melange
 #---physical params---#
 
 params01 = {} 
@@ -672,9 +679,34 @@ if runoff > 0:
 write_bin("EBCu.bin", EBCu)
 
 
+#update iceberg gen file
+#run_config['run_dir']+'/input/'
 
-# In[ ]:
+def replaceAll(file,searchExp,replaceExp):
+    for line in fileinput.input(file, inplace=1):
+        if searchExp in line:
+            line = line.replace(searchExp,replaceExp)
+        sys.stdout.write(line)
+#Domain size
+replaceAll(run_config['run_dir']+'/input/gendata.m','deltaX = 500','deltaX = %f' % run_config['horiz_res_m'])
+replaceAll(run_config['run_dir']+'/input/gendata.m','deltaY = 500','deltaY = %f' % run_config['horiz_res_m'])
+replaceAll(run_config['run_dir']+'/input/gendata.m','deltaZ = 10' ,'deltaZ = %f' % dz[0])
 
+#Grid size
+replaceAll(run_config['run_dir']+'/input/gendata.m','nx=70','nx=%i' % grid_params['Nx'])
+replaceAll(run_config['run_dir']+'/input/gendata.m','ny=12','ny=%i' % grid_params['Ny'])
+replaceAll(run_config['run_dir']+'/input/gendata.m','nz=20','nz=%i' % grid_params['Nr'])
+
+#Max iceberg depth
+replaceAll(run_config['run_dir']+'/input/gendata.m','maxDepth = 75','maxDepth = %i' % iceBergDepth)
+
+#No Bergs should drift
+replaceAll(run_config['run_dir']+'/input/gendata.m','driftMask(2:31,2:end-1) = 1','driftMask(2:31,2:end-1) = 0')
+
+#Adjust range of Berg, Barrier,concentration masks
+replaceAll(run_config['run_dir']+'/input/gendata.m','bergMask(2:31,2:end-1)','bergMask(2:%i,2:end-1)' % np.round(iceExtent/run_config['horiz_res_m']))
+replaceAll(run_config['run_dir']+'/input/gendata.m','barrierMask(2:31,2:end-1)','barrierMask(2:%i,2:end-1)' % np.round(iceExtent/run_config['horiz_res_m']))
+replaceAll(run_config['run_dir']+'/input/gendata.m','bergConc(2:31,2:end-1) = 75','bergConc(2:%i,2:end-1) = %i' %(np.round(iceExtent/run_config['horiz_res_m']),iceCoverage))
 
 # PACE (GaTech) 
 
@@ -692,9 +724,14 @@ cluster_params['exps_dir'] = run_config['run_dir']
 cluster_params['run_dir'] = os.path.join(cluster_params['exps_dir'], run_config['run_name'])
 cluster_params['cpus_per_node'] = 10 
 
+#extra run commands for the sbatch script
+extraList = ['python ../configurationAdjustBergs.py\n',
+             'bash ../makeRunMpi.sh\n',
+             'python ../configurationAdjustPostBergs.py\n',
+             'bash ../makeRunMpi.sh']
 
-
-
+run_config['extraCommands'] = "".join(extraList)
+     
 
 # ## Estimate wall clock time
 ncpus = run_config['ncpus_xy'][0]*run_config['ncpus_xy'][1]
