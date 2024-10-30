@@ -45,7 +45,7 @@ email = 'psummers8@gatech.edu'
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [16, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'OBCS_Test'
+run_config['run_name'] = 'RNK500_1e6'
 run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -231,7 +231,7 @@ params01['vectorInvariantMomentum'] = True
 
 # viscosity parameters
 #params01['viscA4'] = 0.0000 # Biharmonic viscosity?
-params01['viscAz'] = 1.0e-5 # Vertical viscosity
+params01['viscAz'] = 1.0e-6 # Vertical viscosity
 #params01['viscAh'] = 2.5e-1 # Vertical viscosity
 params01['viscC2smag'] = 2.2 # ??? viscosity
 
@@ -246,8 +246,8 @@ params01['staggerTimeStep'] = True
 #params01['diffK4T'] = 0.0e4 # ?? temp diffusion
 params01['diffKhT'] = 0.20 # Horizontal temp diffusion
 params01['diffKhS'] = 0.20 # Horz salt diffusion
-params01['diffKzT'] = 1.0e-5 # Vertical temp diffusion
-params01['diffKzS'] = 1.0e-5 # Vert salt diffusion
+params01['diffKzT'] = 1.0e-6 # Vertical temp diffusion
+params01['diffKzS'] = 1.0e-6 # Vert salt diffusion
 #params01['diffK4S'] = 0.0e4 # ?? salt diffusion
 
 
@@ -298,7 +298,7 @@ params02['cg3dTargetResidual'] = 1e-8
 params03 = {}
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 5.0
+deltaT = 20.0
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -347,8 +347,8 @@ params04['delZ'] = dz
 # get data fnames param
 params05 = {}
 params05['bathyFile'] ='bathymetry.bin'
-params05['hydrogThetaFile'] = 'T.init'
-params05['hydrogSaltFile'] = 'S.init'
+params05['hydrogThetaFile'] = 'T2.init'
+params05['hydrogSaltFile'] = 'S2.init'
 
 if(makeDirs):
     data_params = [params01, params02, params03, params04, params05]
@@ -437,8 +437,8 @@ obcs_params03 = {}
 obcs_params01['OB_singleIeast'] = -1
 obcs_params01['useOBCSsponge'] = True
 obcs_params01['useOBCSprescribe']= True
-obcs_params01['OBEsFile']='EBCs.bin'
-obcs_params01['OBEtFile']='EBCt.bin'
+obcs_params01['OBEsFile']='EBCs2.bin'
+obcs_params01['OBEtFile']='EBCt2.bin'
 obcs_params01 ['OBEuFile']='EBCu.bin'
 
 # Enforces mass conservation across the northern boundary by adding a
