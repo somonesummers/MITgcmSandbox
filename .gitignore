@@ -41,6 +41,10 @@ davison/build/Makefile
 davison
 /doc/_build/
 
+#Paul Files to ignore
+uploadFiles
+
+#There were here
 /eesupp/src/exch_xy_r[ls48].F
 /eesupp/src/exch_3d_r[ls48].F
 /eesupp/src/exch_xyz_r[ls48].F
