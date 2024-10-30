@@ -20,7 +20,7 @@ startStep = 1e10
 
 for file in os.listdir('results'):
     # print(file)
-    if "dynDiag_inst" in file:
+    if "dynDiag.0" in file:
         words = file.split(".")
         # print(words[1])  
         if int(words[1]) > maxStep:
@@ -44,8 +44,8 @@ if(os.path.isfile('input/data.iceberg')):
 else:
     isBerg = False
 
-os.system('rm -f figs/sideinst_*.png')
-os.system('rm -f figs/autosideinst_*.gif')
+os.system('rm -f figs/compareSide_*.png')
+os.system('rm -f figs/compareSide_*.gif')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
@@ -56,9 +56,7 @@ if(os.path.isfile('input/bathymetry.bin')):
     topo = topo.reshape(np.shape(x))
 else:
     topo = np.zeros(np.shape(x))
-# ice = np.fromfile('input/icetopo.exp1', dtype='>f8')
 
-# ice = ice.reshape(np.shape(x))
 
 if(isBerg):
     bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
@@ -101,26 +99,26 @@ if(isBerg):
 ySlice = np.argmin(np.abs(y[:,0] - crossSection))
 print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
-
-dynName = ['dynDiag_inst', 'dynDiag_inst', 'dynDiag_inst', 'dynDiag_inst','dynDiag_inst']
+dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
 name = ["Temp", "Sal", "U", "W", "V"]
 cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 for k in range(len(name)):
-    #print('k,',k)
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
-        if k == 0:
-            lvl = np.linspace(-0.5, 3, 128)
-            cm = "cmo.thermal"
-        elif k == 1:
-            lvl = np.linspace(32, 35, 128)
-            cm = "cmo.haline"
-        elif k == 2 or k == 4:
-            lvl = np.linspace(-.5, .5, 127)
+        data_old = mds.rdmds("../RNK800_init/results/%s"%(dynName[k]), 345600)
+        data = data-data_old
+        if k == 0:  #T
+            lvl = np.linspace(-1.5, 1.5, 127)
+            cm = "cmo.tarn_r"
+        elif k == 1: #S
+            lvl = np.linspace(-0.5, 0.5, 127)
+            cm = "cmo.diff"
+        elif k == 2 or k == 4: #u,v
+            lvl = np.linspace(-.1, .1, 127)
             cm = "cmo.balance"
-        elif k == 3:
-            lvl = np.linspace(-0.005, 0.005, 127)
+        elif k == 3: #W
+            lvl = np.linspace(-0.01, 0.01, 127)
             cm = "cmo.curl"
         elif k == 5:
             lvl = np.linspace(0, .5, 128)
@@ -138,7 +136,6 @@ for k in range(len(name)):
             cmap=cm,
         )
         plt.plot(x[ySlice,:],topo[ySlice,:],color='black')
-        # plt.plot(x[ySlice,:],ice[ySlice,:],color='gray')
         if(isBerg):
             plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
             cp2 = plt.contourf(
@@ -158,14 +155,15 @@ for k in range(len(name)):
         plt.title("%s y = %i at %i" % (name[k], y[ySlice,0], i))
         j = i/sizeStep + startStep
         
-        str = "figs/sideinst_%s%05i.png" % (name[k],j)
+        str = "figs/compareSide_%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png')
         plt.close()
         #plt.show()
 
-    os.system('magick -delay %f figs/sideinst_%s*.png -colors 256 -depth 256 figs/autosideinst_%s.gif' %(200/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    os.system('magick -delay %f figs/compareSide_%s*.png -colors 256 -depth 256 figs/compareSide_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
+os.system('rm -f figs/compareSide_*.png')
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)
 # plt.show()

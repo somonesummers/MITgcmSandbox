@@ -3,14 +3,25 @@ from matplotlib import pyplot as plt
 import numpy as np
 import os
 import cmocean
+import argparse
 
-# Pick cross section to view
+parser = argparse.ArgumentParser(description='Compare 2 MITcgm folders.')
+parser.add_argument('directories', metavar='Dir', type=str, nargs=2,
+                    help='2 folders to compare')
+args = parser.parse_args()
+
+#folder1 controls plotting steps, any bergs, bathymetry, etc
+folder1 = args.directories[0]
+folder2 = args.directories[1]
+
+# Pick cross section to view, overriden by a plotPoint.txt file in first input folder
 crossSection = 1000
+
 try:
-    with open('input/plotPoint.txt', 'r') as file:
+    with open('%s/input/plotPoint.txt' % folder1, 'r') as file:
         lines = file.readlines()
         crossSection = float(lines[2]) #reads the 3rd line in the doc
-        print('cross section read from file', crossSection)
+        print('cross section read from file %s' % folder1, crossSection)
 except FileNotFoundError:
     print('plot point file does not exist, using default')
 
@@ -18,9 +29,9 @@ maxStep = 0
 sizeStep = 1e10
 startStep = 1e10
 
-for file in os.listdir('results'):
+for file in os.listdir('%s/results' %folder1):
     # print(file)
-    if "dynDiag_inst" in file:
+    if "dynDiag.0" in file:
         words = file.split(".")
         # print(words[1])  
         if int(words[1]) > maxStep:
@@ -31,28 +42,27 @@ for file in os.listdir('results'):
             sizeStep = abs(int(words[1]) - startStep)
 
 
-if((maxStep-startStep)/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
-    dwnScale = round(((maxStep-startStep)/sizeStep)/50)
+if(maxStep/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
+    dwnScale = round((maxStep/sizeStep)/50)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
-
 #Decide if iceBerg data files exist
-if(os.path.isfile('input/data.iceberg')):
+if(os.path.isfile('%s/input/data.iceberg' % folder1)):
     isBerg = True
 else:
     isBerg = False
 
-os.system('rm -f figs/sideinst_*.png')
-os.system('rm -f figs/autosideinst_*.gif')
+os.system('rm -f %s/figs/compareSide_*.png' % folder1)
+os.system('rm -f %s/figs/autoCompareSide_*.gif' % folder1)
 
-x = mds.rdmds("results/XC")
-y = mds.rdmds("results/YC")
-z = mds.rdmds("results/RC")
+x = mds.rdmds("%s/results/XC" % folder1)
+y = mds.rdmds("%s/results/YC" % folder1)
+z = mds.rdmds("%s/results/RC" % folder1)
 
-if(os.path.isfile('input/bathymetry.bin')):
-    topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
+if(os.path.isfile('%s/input/bathymetry.bin' % folder1)):
+    topo = np.fromfile('%s/input/bathymetry.bin' % folder1, dtype='>f8')
     topo = topo.reshape(np.shape(x))
 else:
     topo = np.zeros(np.shape(x))
@@ -61,11 +71,11 @@ else:
 # ice = ice.reshape(np.shape(x))
 
 if(isBerg):
-    bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
+    bergMask = np.fromfile('%s/input/bergMask.bin' % folder1, dtype='>f8')
     bergMask = bergMask.reshape(np.shape(x))
-    bergMaskNums = np.fromfile('input/bergMaskNums.bin', dtype='>f8')
+    bergMaskNums = np.fromfile('%s/input/bergMaskNums.bin' % folder1, dtype='>f8')
     bergMaskNums = bergMaskNums.reshape(np.shape(x))
-    bergsPerCell = np.fromfile('input/numBergsPerCell.bin', dtype='>f8')
+    bergsPerCell = np.fromfile('%s/input/numBergsPerCell.bin' % folder1, dtype='>f8')
     bergsPerCell = bergsPerCell.reshape(np.shape(x))
     bergContaingingCells = int(np.sum(bergMask))
     maxDepth = np.zeros(np.shape(x))
@@ -75,7 +85,7 @@ if(isBerg):
         for j in range(np.shape(x)[0]):
             bergCount = int(bergsPerCell[j,i])
             if(bergMask[j,i] == 1 and bergCount > 0):  #only go in if bergs here
-                depthFile = 'input/iceberg_depth_%05i.txt' % int(bergMaskNums[j,i])
+                depthFile = '%s/input/iceberg_depth_%05i.txt' % (folder1, int(bergMaskNums[j,i]))
                 depths = np.zeros(bergCount)
                 with open(depthFile,'r') as readFile:
                     ii = 0
@@ -88,9 +98,9 @@ if(isBerg):
                 readFile.close()
                 maxDepth[j,i] = np.max(depths)
     # contourf plot
-    openFrac = np.fromfile('input/openFrac.bin', dtype='>f8')
+    openFrac = np.fromfile('%s/input/openFrac.bin' % folder1, dtype='>f8')
     openFrac = openFrac.reshape((np.shape(z)[0], np.shape(x)[0], np.shape(x)[1]))
-    bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
+    bergMask = np.fromfile('%s/input/bergMask.bin' % folder1, dtype='>f8')
     bergMask = bergMask.reshape(np.shape(x))
     for j in range(np.shape(x)[0]): #clean up non-berg parts of this mask
             for i in range(np.shape(x)[1]):
@@ -101,26 +111,32 @@ if(isBerg):
 ySlice = np.argmin(np.abs(y[:,0] - crossSection))
 print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
-
-dynName = ['dynDiag_inst', 'dynDiag_inst', 'dynDiag_inst', 'dynDiag_inst','dynDiag_inst']
+# if(isBerg):
+#     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx']
+#     name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
+#     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]"]
+# else:
+dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
 name = ["Temp", "Sal", "U", "W", "V"]
-cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
+cbarLabel = ["[∆ C]", "[∆ ppt]", "[∆ m/s]", "[∆ m/s]", "[∆ m/s]"]
 
 for k in range(len(name)):
     #print('k,',k)
     for i in np.arange(startStep, maxStep + 1, sizeStep):
-        data = mds.rdmds("results/%s"%(dynName[k]), i)
-        if k == 0:
-            lvl = np.linspace(-0.5, 3, 128)
-            cm = "cmo.thermal"
-        elif k == 1:
-            lvl = np.linspace(32, 35, 128)
-            cm = "cmo.haline"
-        elif k == 2 or k == 4:
-            lvl = np.linspace(-.5, .5, 127)
+        data1 = mds.rdmds("%s/results/%s" % (folder1, dynName[k]), i)
+        data2 = mds.rdmds("%s/results/%s" % (folder2, dynName[k]), i)
+        data = data1 - data2
+        if k == 0:  #T
+            lvl = np.linspace(-1.5, 1.5, 128)
+            cm = "cmo.tarn_r"
+        elif k == 1: #S
+            lvl = np.linspace(-0.5, 0.5, 128)
+            cm = "cmo.diff"
+        elif k == 2 or k == 4: #u,v
+            lvl = np.linspace(-.1, .1, 128)
             cm = "cmo.balance"
-        elif k == 3:
-            lvl = np.linspace(-0.005, 0.005, 127)
+        elif k == 3: #W
+            lvl = np.linspace(-0.01, 0.01, 128)
             cm = "cmo.curl"
         elif k == 5:
             lvl = np.linspace(0, .5, 128)
@@ -156,15 +172,15 @@ for k in range(len(name)):
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, ySlice, :]),np.nanmax(data[kk, :, ySlice, :]),np.max(np.isnan(data[kk, :, ySlice, :]))))
         plt.ylabel('Depth [m]')
         plt.title("%s y = %i at %i" % (name[k], y[ySlice,0], i))
-        j = i/sizeStep + startStep
+        j = i/startStep
         
-        str = "figs/sideinst_%s%05i.png" % (name[k],j)
+        str = "%s/figs/compareSide_%s%05i.png" % (folder1, name[k],j)
         
         plt.savefig(str, format='png')
         plt.close()
         #plt.show()
 
-    os.system('magick -delay %f figs/sideinst_%s*.png -colors 256 -depth 256 figs/autosideinst_%s.gif' %(200/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    os.system('magick -delay %f %s/figs/compareSide_%s*.png -colors 256 -depth 256 %s/figs/autoComapreSide_%s.gif' %(500/(maxStep/sizeStep), folder1, name[k], folder1, name[k]))
 
 # BCT = np.fromfile("T.bound", dtype=">f8")
 # plt.plot(BCT)

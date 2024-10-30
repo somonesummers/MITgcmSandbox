@@ -116,7 +116,7 @@ for k in range(len(name)):
             lvl = np.linspace(-0.5, 3, 128)
             cm = "cmo.thermal"
         elif k == 1:
-            lvl = np.linspace(32, 34, 128)
+            lvl = np.linspace(32, 35, 128)
             cm = "cmo.haline"
         elif k == 2 or k == 4:
             lvl = np.linspace(-.5, .5, 127)

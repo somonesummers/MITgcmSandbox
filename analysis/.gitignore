@@ -5,3 +5,4 @@
 !quick*.py
 !crossPlot.py
 *.gif
+!*.py
