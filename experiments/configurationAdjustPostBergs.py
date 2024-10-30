@@ -68,7 +68,7 @@ os.makedirs('results')
 #Shuffle pickup file into input directory
 dest_dir = 'input/'
 for file in glob.glob('results_berg/pickup.%010i.*' % nInterNew):
-    print('Copying over pickup file:'file)
+    print('Copying over pickup file:',file)
     shutil.copy(file, dest_dir)
 
 print('Done prepping for Post Berg run 𖤓°⋆.ೃ࿔･٩(^ᗜ^ )و')
