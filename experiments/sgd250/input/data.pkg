@@ -1,6 +1,0 @@
-# Packages
- &PACKAGES
- useOBCS=.TRUE.,
- useSHELFICE=.TRUE.,
- useDiagnostics=.TRUE.,
- &
