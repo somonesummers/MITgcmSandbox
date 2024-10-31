@@ -1,0 +1,111 @@
+from MITgcmutils import mds
+from matplotlib import pyplot as plt
+import numpy as np
+import os
+import cmocean
+import fileinput
+
+#Pick cross section
+crossSection = 1000 #default
+try:
+    with open('input/plotPoint.txt', 'r') as file:
+        lines = file.readlines()
+        crossSection = float(lines[3]) #reads the 3rd line in the doc
+        print('cross section read from file', crossSection)
+except FileNotFoundError:
+    print('plot point file does not exist, using default')
+
+#look for colorbar guidance
+# try:
+#     with open('input/colormap.txt', 'r') as file:
+#         lines = file.readlines()
+#         crossSection = float(lines[3]) #reads the 3rd line in the doc
+#         print('cross section read from file', crossSection)
+# except FileNotFoundError:
+#     print('plot point file does not exist, using default')
+
+dt = 0.0   
+for line in fileinput.input('input/data'):
+        if "deltaT=" in line:
+            dt = float(line[8:-2])
+print('dt is loaded as', dt)
+
+#Find time steps to take
+maxStep = 0
+sizeStep = 1e10
+startStep = 1e10
+
+for file in os.listdir('results'):
+    # print(file)
+    if "dynDiag.0" in file:
+        words = file.split(".")
+        # print(words[1])  
+        if int(words[1]) > maxStep:
+            maxStep = int(words[1])
+        if int(words[1]) < startStep and int(words[1]) > 0:
+            startStep = int(words[1])
+        if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
+            sizeStep = abs(int(words[1]) - startStep)
+
+
+if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to be less than 50
+    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)
+    print('Reducing time resolution by', dwnScale)
+    sizeStep = sizeStep * dwnScale
+
+print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
+
+os.system('rm -f figs/depthPlotX*.png')
+os.system('rm -f figs/depthPlotX*.gif')
+
+x = mds.rdmds("results/XC")
+y = mds.rdmds("results/YC")
+z = mds.rdmds("results/RC")
+
+xSlice = np.argmin(np.abs(x[0,:] - crossSection))
+print('cross section is x =', x[0,xSlice],'index', xSlice)
+
+dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
+name = ["Temp", "Sal", "U", "W", "V"]
+units = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
+
+for k in range(len(name)):
+    for i in np.arange(startStep, maxStep + 1, sizeStep):
+        data = mds.rdmds("results/%s"%(dynName[k]), i)
+        if k == 0:
+            lvl = [1,3]
+            cm = "xkcd:raspberry"
+        elif k == 1:
+            lvl = [33.5,35]
+            cm = "xkcd:green"
+        elif k == 2 or k == 4:
+            lvl = [-0.5, 0.5]
+            cm = "xkcd:rose"
+        elif k == 4:
+            lvl = [-0.5, 0.5]
+            cm = "xkcd:violet"
+        elif k == 3:
+            lvl = [-0.005, 0.005]
+            cm = "xkcd:lavender"
+        plt.figure()
+        for j in range(np.shape(y[1:-1,:])[0]):
+            plt.plot(data[k,:,j+1,xSlice],np.squeeze(z),linewidth=.5,alpha=.5,color=cm)
+        plt.plot(np.mean(data[k,:,1:-1,xSlice],1),np.squeeze(z),linewidth=1,color=cm)
+        ax = plt.gca()
+        ax.set_xlim(lvl)
+
+        plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(data[k, :, 1:-1, xSlice]),np.nanmax(data[k, :, 1:-1, xSlice]),np.max(np.isnan(data[k, :, 1:-1, xSlice]))))
+        plt.ylabel('Depth [m]')
+        plt.title("%s x = %i at %.02f days" % (name[k], x[0,xSlice], i/86400.0*dt))
+        j = i/sizeStep + startStep
+        
+        str = "figs/depthPlotX%s%05i.png" % (name[k],j)
+        
+        plt.savefig(str, format='png')
+        plt.close()
+        plt.show()
+
+    os.system('magick -delay %f figs/depthPlotX%s*.png -colors 256 -depth 256 figs/depthPlotX%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+
+#Clean up intermediate pngs
+os.system('rm -f figs/depthPlotX*.png')
