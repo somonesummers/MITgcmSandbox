@@ -326,9 +326,7 @@ def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email,
     ncpus = run_config['ncpus_xy'][0]*run_config['ncpus_xy'][1]
     
     loadList = ['module load python/3.10.10\n',
-                'module spider anaconda3/2023.03\n',
-                'conda init bash\n',
-                'conda activate MITgcm\nconda info --envs\n']
+                'module spider anaconda3/2023.03\n']
     loadCommand = "".join(loadList)
 
     try:

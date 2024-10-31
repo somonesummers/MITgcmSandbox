@@ -42,6 +42,9 @@ setupNotes = open("setupReport.txt", "w")
 email = 'psummers8@gatech.edu'
 # set high level run configurations
 
+#========================================================================================
+#main values to imput 
+
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [16, 1] # cpu distribution in the x and y directions
@@ -56,6 +59,9 @@ run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m)
 grid_params['Nr'] = 250 # num of z-grid points
 
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
+
+#========================================================================================
+# The rest of this should take care of it self mostly
 
 #run_config['evolve_salt'] = False
 run_config['use_GMRedi'] = False # should be set to false for eddy permitting resolutions
@@ -75,7 +81,8 @@ run_config['run_dir'] = os.path.join(run_config['exps_dir'], run_config['run_nam
 print('run_config is', run_config)
 setupNotes.write('run_config is ' + str(run_config)+'\n')
 
-## Generate new experiment directory and copy over defaults
+#========================================================================================
+# Generate new experiment directory and copy over defaults
 
 # create experimentary directory on SCRATCH and copy over default configuration
 # NOTE: this step does not overwrite existing directories. 
@@ -126,7 +133,7 @@ if(makeDirs):
 secsInDay = 24*60*60
 secsInYear = 365*secsInDay
 
-
+#========================================================================================
 # set domain size
 domain_params = {}
 domain_params['Lx'] = run_config['Lx_m'] # domain size in x (m)
@@ -205,12 +212,13 @@ dz = domain_params['H']/grid_params['Nr']*np.ones(grid_params['Nr']);
 grid_params['delZ'] = dz
 grid_params['hFacMinDr'] = dz.min()
 
+#========================================================================================
+#Physical parameters
 
-## Ice berg configuration
+# Ice berg configuration
 iceBergDepth = 200 # max ice berg depth [meters], used for ICEBERG package
 iceExtent = 8000 # [meters] of extent of ice
 iceCoverage = 95 # % of ice cover in melange
-#---physical params---#
 
 params01 = {} 
 
@@ -327,14 +335,6 @@ params03['endTime'] = int(params03['nIter0']*deltaT+simTimeAct)
 params03['deltaT'] = np.round(deltaT)
 grid_params['Nt'] = nTimeSteps
 
-
-# ## Create 'data' files
-
-
-
-# NOTE: These steps generate the data text files located int the input directory
-
-
 # gather params for data file 
 params04 = {} #<-- using params04 to be consistent with ordering in Andrew's code
 params04['usingCartesianGrid'] = grid_params['usingCartesianGrid']
@@ -357,9 +357,8 @@ if(makeDirs):
     #SIZE file
     rcf.createSIZEh(run_config, grid_params)
 
-# ## Specify Diagnostics
-
-# Here we specify variables that should saved (i.e., written to disk) at various time intervals
+#========================================================================================
+# Diagnostics
 
 # adjust output frequency
 if run_config['test']:
@@ -430,6 +429,10 @@ Ndiags = n
 diag_params02={}
 diag_params = [diag_params01, diag_params02]
 
+
+#========================================================================================
+# Boundary Conditions
+
 obcs_params01 = {}
 obcs_params02 = {}
 obcs_params03 = {}
@@ -462,8 +465,8 @@ if(makeDirs):
     #create data.obcs
     rcf.write_data(run_config, obcs_params, group_name='obcs')
 
-# In[3]:
-
+#========================================================================================
+#Domain initialization and saving
 
 def write_bin(fname, data):
     print(fname, np.shape(data))
@@ -474,8 +477,7 @@ def write_bin(fname, data):
     else:
         setupNotes.write('Not saving\n')
         print('Not saving')
-
-
+#Similar params as fed into MITgcm, but redeclared here
 gravity = 9.81
 sbeta = 8.0e-4
 talpha = 0.4e-4
@@ -519,10 +521,6 @@ plt.show()
 plt.close()
 
 write_bin("bathymetry.bin", d)
-
-
-# In[4]:
-
 
 # Temperature profile
 tcd = 300
@@ -604,11 +602,6 @@ if(writeFiles):
 plt.show()
 plt.close()
 
-
-
-# In[8]:
-
-
 # Plume
 nt = 1 #if variable forcing
 runoffVel = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
@@ -678,15 +671,18 @@ if runoff > 0:
 
 write_bin("EBCu.bin", EBCu)
 
-
-#update iceberg gen file
-#run_config['run_dir']+'/input/'
+#========================================================================================
+#Update files in INPUT directory
+# a bit of a hack to adjust default values just for this exp
 
 def replaceAll(file,searchExp,replaceExp):
     for line in fileinput.input(file, inplace=1):
         if searchExp in line:
             line = line.replace(searchExp,replaceExp)
         sys.stdout.write(line)
+
+#update iceberg gen file
+
 #Domain size
 replaceAll(run_config['run_dir']+'/input/gendata.m','deltaX = 500','deltaX = %f' % run_config['horiz_res_m'])
 replaceAll(run_config['run_dir']+'/input/gendata.m','deltaY = 500','deltaY = %f' % run_config['horiz_res_m'])
@@ -708,6 +704,13 @@ replaceAll(run_config['run_dir']+'/input/gendata.m','bergMask(2:31,2:end-1)','be
 replaceAll(run_config['run_dir']+'/input/gendata.m','barrierMask(2:31,2:end-1)','barrierMask(2:%i,2:end-1)' % np.round(iceExtent/run_config['horiz_res_m']))
 replaceAll(run_config['run_dir']+'/input/gendata.m','bergConc(2:31,2:end-1) = 75','bergConc(2:%i,2:end-1) = %i' %(np.round(iceExtent/run_config['horiz_res_m']),iceCoverage))
 
+#Turn off Berg Diagnostics for intital spin up
+replaceAll(run_config['run_dir'] + 'input/data.diagnostics',' timePhase(2)', '# timePhase(2)')
+replaceAll(run_config['run_dir'] + 'input/data.diagnostics',' fields(1:3,3)', '# fields(1:3,3)')
+replaceAll(run_config['run_dir'] + 'input/data.diagnostics',' fileName(3)', '# fileName(3)')
+replaceAll(run_config['run_dir'] + 'input/data.diagnostics',' frequency(3)', '# frequency(3)')
+
+#========================================================================================
 # PACE (GaTech) 
 
 cluster_params = {}
