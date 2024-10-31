@@ -56,7 +56,7 @@ replaceAll('input/data.diagnostics','# fields(1:3,3)', ' fields(1:3,3)')
 replaceAll('input/data.diagnostics','# fileName(3)', ' fileName(3)')
 replaceAll('input/data.diagnostics','# frequency(3)', ' frequency(3)')
 
-#Make Diagnostics every hours
+#Make Diagnostics every 4 hours
 changeDiagnosticFreq(.5*secsInADay,.25*secsInADay)
 
 #This shouldn't be necessary anymore
