@@ -583,8 +583,8 @@ for j in np.arange(0,grid_params['Ny']):
     T2[:,j] = t_int(-1 * z[:])
     S2[:,j] = s_int(-1 * z[:])
 
-print('Temp',t_int(-1 * z[:]))
-print('Salt',s_int(-1 * z[:]))
+# print('Temp',t_int(-1 * z[:]))
+# print('Salt',s_int(-1 * z[:]))
 
 write_bin("T2.init", t2)
 write_bin("S2.init", s2)
@@ -705,10 +705,10 @@ replaceAll(run_config['run_dir']+'/input/gendata.m','barrierMask(2:31,2:end-1)',
 replaceAll(run_config['run_dir']+'/input/gendata.m','bergConc(2:31,2:end-1) = 75','bergConc(2:%i,2:end-1) = %i' %(np.round(iceExtent/run_config['horiz_res_m']),iceCoverage))
 
 #Turn off Berg Diagnostics for intital spin up
-replaceAll(run_config['run_dir'] + 'input/data.diagnostics',' timePhase(2)', '# timePhase(2)')
-replaceAll(run_config['run_dir'] + 'input/data.diagnostics',' fields(1:3,3)', '# fields(1:3,3)')
-replaceAll(run_config['run_dir'] + 'input/data.diagnostics',' fileName(3)', '# fileName(3)')
-replaceAll(run_config['run_dir'] + 'input/data.diagnostics',' frequency(3)', '# frequency(3)')
+replaceAll(run_config['run_dir'] + '/input/data.diagnostics',' timePhase(2)', '# timePhase(2)')
+replaceAll(run_config['run_dir'] + '/input/data.diagnostics',' fields(1:3,3)', '# fields(1:3,3)')
+replaceAll(run_config['run_dir'] + '/input/data.diagnostics',' fileName(3)', '# fileName(3)')
+replaceAll(run_config['run_dir'] + '/input/data.diagnostics',' frequency(3)', '# frequency(3)')
 
 #========================================================================================
 # PACE (GaTech) 
