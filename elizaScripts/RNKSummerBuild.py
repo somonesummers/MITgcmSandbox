@@ -48,7 +48,7 @@ email = 'psummers8@gatech.edu'
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [16, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'RNK_dx500_dz4_k1e6'
+run_config['run_name'] = 'RNK_dx500_dz10_k1e4'
 run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -56,7 +56,7 @@ run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
 run_config['Lx_m'] = 80000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 
-grid_params['Nr'] = 250 # num of z-grid points
+grid_params['Nr'] = 100 # num of z-grid points
 
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
@@ -239,7 +239,7 @@ params01['vectorInvariantMomentum'] = True
 
 # viscosity parameters
 #params01['viscA4'] = 0.0000 # Biharmonic viscosity?
-params01['viscAz'] = 1.0e-6 # Vertical viscosity
+params01['viscAz'] = 1.0e-4 # Vertical viscosity
 #params01['viscAh'] = 2.5e-1 # Vertical viscosity
 params01['viscC2smag'] = 2.2 # ??? viscosity
 
@@ -254,8 +254,8 @@ params01['staggerTimeStep'] = True
 #params01['diffK4T'] = 0.0e4 # ?? temp diffusion
 params01['diffKhT'] = 0.20 # Horizontal temp diffusion
 params01['diffKhS'] = 0.20 # Horz salt diffusion
-params01['diffKzT'] = 1.0e-6 # Vertical temp diffusion
-params01['diffKzS'] = 1.0e-6 # Vert salt diffusion
+params01['diffKzT'] = 1.0e-4 # Vertical temp diffusion
+params01['diffKzS'] = 1.0e-4 # Vert salt diffusion
 #params01['diffK4S'] = 0.0e4 # ?? salt diffusion
 
 
@@ -705,10 +705,10 @@ replaceAll(run_config['run_dir']+'/input/gendata.m','barrierMask(2:31,2:end-1)',
 replaceAll(run_config['run_dir']+'/input/gendata.m','bergConc(2:31,2:end-1) = 75','bergConc(2:%i,2:end-1) = %i' %(np.round(iceExtent/run_config['horiz_res_m']),iceCoverage))
 
 #Turn off Berg Diagnostics for intital spin up
-replaceAll(run_config['run_dir'] + 'input/data.diagnostics',' timePhase(2)', '# timePhase(2)')
-replaceAll(run_config['run_dir'] + 'input/data.diagnostics',' fields(1:3,3)', '# fields(1:3,3)')
-replaceAll(run_config['run_dir'] + 'input/data.diagnostics',' fileName(3)', '# fileName(3)')
-replaceAll(run_config['run_dir'] + 'input/data.diagnostics',' frequency(3)', '# frequency(3)')
+replaceAll(run_config['run_dir'] + '/input/data.diagnostics',' timePhase(2)', '# timePhase(2)')
+replaceAll(run_config['run_dir'] + '/input/data.diagnostics',' fields(1:3,3)', '# fields(1:3,3)')
+replaceAll(run_config['run_dir'] + '/input/data.diagnostics',' fileName(3)', '# fileName(3)')
+replaceAll(run_config['run_dir'] + '/input/data.diagnostics',' frequency(3)', '# frequency(3)')
 
 #========================================================================================
 # PACE (GaTech) 
