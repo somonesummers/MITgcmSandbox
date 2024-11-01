@@ -25,11 +25,14 @@ do
   echo '== Map View ==' 
   python ../quicklookMap.py
 
-  #echo '== Melt View ==' #This is now inside the cross sections as Berg Melt is 3D
-  #python ../quickMeltRate.py
+  echo '== Depth plots ==' 
+  python ../depthPlotXslice.py
 
-  cd ..
-  #echo 'cleaning up pngs'
-  #rm *.png
-    
+  echo '== TS plot =='
+  python ../quickTSplot.py
+  
+  echo '== Compare to 20 day snapshot =='
+  python ../compareSideAvg.py
+  
+  cd ..    
 done

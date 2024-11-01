@@ -619,7 +619,8 @@ icefront=1 # adjacent to wall at western end of domain, simulate wall of ice
 
 # plume location
 plume_loc = int(np.round(grid_params['Ny']/2))
-print(plume_loc)
+print('Plume Location:',plume_loc, 'discharge:',runnoff)
+setupNotes.write('Plume Location: %i discharge: %f\n' %(plume_loc, runoff))
 ## Define plume-type mask 
 # 1 = ice but no plume (melting only)
 # 2 = sheet plume (Jenkins)
