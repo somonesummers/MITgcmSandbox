@@ -583,8 +583,8 @@ for j in np.arange(0,grid_params['Ny']):
     T2[:,j] = t_int(-1 * z[:])
     S2[:,j] = s_int(-1 * z[:])
 
-print('Temp',t_int(-1 * z[:]))
-print('Salt',s_int(-1 * z[:]))
+# print('Temp',t_int(-1 * z[:]))
+# print('Salt',s_int(-1 * z[:]))
 
 write_bin("T2.init", t2)
 write_bin("S2.init", s2)
