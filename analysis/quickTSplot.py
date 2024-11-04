@@ -63,7 +63,7 @@ x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
 z = mds.rdmds("results/RC")
  
-xSlice = np.argmin(np.abs(x[0,:] - crossSection))
+xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
 print('cross section is x =', x[0,xSlice],'index', xSlice)
 
 # dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
