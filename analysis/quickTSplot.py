@@ -2,27 +2,28 @@ from MITgcmutils import mds
 from matplotlib import pyplot as plt
 import numpy as np
 import os
+import sys
 import cmocean
 import fileinput
 
-#Pick cross section
-crossSection = 1000 #default
-try:
-    with open('input/plotPoint.txt', 'r') as file:
-        lines = file.readlines()
-        crossSection = float(lines[3]) #reads the 3rd line in the doc
-        print('cross section read from file', crossSection)
-except FileNotFoundError:
-    print('plot point file does not exist, using default')
+# Pick cross section to view from file or default
+yCrossSection = 1000
+xCrossSection = 5000
+zDepth = -50
+plotDPI = 100
+cleanPNGs = True
 
-#look for colorbar guidance
-# try:
-#     with open('input/colormap.txt', 'r') as file:
-#         lines = file.readlines()
-#         crossSection = float(lines[3]) #reads the 3rd line in the doc
-#         print('cross section read from file', crossSection)
-# except FileNotFoundError:
-#     print('plot point file does not exist, using default')
+if(os.path.isfile('input/plotHelper.py')):
+    sys.path.append('input')
+    from plotHelper import *
+    print('Found experiment plotting settings')
+elif(os.path.isfile('../plotHelper.py')):
+    sys.path.append('../')
+    print('no custom plotting settings, using local default')
+    from plotHelper import *
+else:  
+    print('no defaults found')
+print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
@@ -88,10 +89,10 @@ for i in np.arange(startStep, maxStep + 1, sizeStep):
     sc=plt.scatter(np.mean(data_old[1,:,1:-1,xSlice],1),np.mean(data_old[0,:,1:-1,xSlice],1),
                    alpha=.5,s=25,color='black',edgecolor='none')
     for j in range(np.shape(y[1:-1,:])[0]):
-        plt.scatter(data[1,:,j+1,xSlice],data[0,:,j+1,xSlice],
-                   alpha=.25,s=25,color='gray',edgecolor='none')
+        plt.scatter(data[1,:,j+1,xSlice],data[0,:,j+1,xSlice],c=np.squeeze(z),
+                   alpha=.25,s=10,cmap='cmo.deep_r')
     sc=plt.scatter(np.mean(data[1,:,1:-1,xSlice],1),np.mean(data[0,:,1:-1,xSlice],1),c=np.squeeze(z),
-                   alpha=1.,s=25,cmap='cmo.deep_r',edgecolor='none')
+                   alpha=1.,s=25,cmap='cmo.deep_r')
     plt.plot(mixingS,mixingT,linewidth=.5,color='gray',alpha=.5,linestyle='--')
     plt.plot(meltS,meltT,linewidth=.5,color='gray',alpha=.5)
     
@@ -108,10 +109,11 @@ for i in np.arange(startStep, maxStep + 1, sizeStep):
     
     str = "figs/TSPlot%05i.png" % (j)
     
-    plt.savefig(str, format='png', dpi=150)
+    plt.savefig(str, format='png', dpi=plotDPI)
     plt.close()
     
 os.system('magick -delay %f figs/TSPlot*.png -colors 256 -depth 256 figs/TSPlot.gif' %(500/((maxStep-startStep)/sizeStep)))
 
 #Clean up intermediate pngs
-os.system('rm -f figs/TSPlot*.png')
+if(cleanPNGs):
+    os.system('rm -f figs/TSPlot*.png')

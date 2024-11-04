@@ -2,18 +2,28 @@ from MITgcmutils import mds
 from matplotlib import pyplot as plt
 import numpy as np
 import os
+import sys
 import cmocean
 import fileinput
 
-# Pick cross section to view
-crossSection = 1000
-try:
-    with open('input/plotPoint.txt', 'r') as file:
-        lines = file.readlines()
-        crossSection = float(lines[2]) #reads the 3rd line in the doc
-        print('cross section read from file', crossSection)
-except FileNotFoundError:
-    print('plot point file does not exist, using default')
+# Pick cross section to view from file or default
+yCrossSection = 1000
+xCrossSection = 5000
+zDepth = -50
+plotDPI = 100
+cleanPNGs = True
+
+if(os.path.isfile('input/plotHelper.py')):
+    sys.path.append('input/')
+    from plotHelper import *
+    print('Found experiment plotting settings')
+elif(os.path.isfile('../plotHelper.py')):
+    sys.path.append('../')
+    print('no custom plotting settings, using local default')
+    from plotHelper import *
+else:  
+    print('no defaults found')
+print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
@@ -104,7 +114,7 @@ if(isBerg):
                     openFrac[:,j,i] = 1
                     
 
-ySlice = np.argmin(np.abs(y[:,0] - crossSection))
+ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
 print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
 if(isBerg):
@@ -177,11 +187,12 @@ for k in range(len(name)):
         
         str = "figs/side_%s%05i.png" % (name[k],j)
         
-        plt.savefig(str, format='png')
+        plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
 
     os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
-os.system('rm -f figs/side_*.png')
+if(cleanPNGs):
+    os.system('rm -f figs/side_*.png')

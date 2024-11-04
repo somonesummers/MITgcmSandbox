@@ -2,17 +2,27 @@ from MITgcmutils import mds
 from matplotlib import pyplot as plt
 import numpy as np
 import os
+import sys
 import cmocean
 
-# Pick cross section to view
-crossSection = 1000
-try:
-    with open('input/plotPoint.txt', 'r') as file:
-        lines = file.readlines()
-        crossSection = float(lines[2]) #reads the 3rd line in the doc
-        print('cross section read from file', crossSection)
-except FileNotFoundError:
-    print('plot point file does not exist, using default')
+# Pick cross section to view from file or default
+yCrossSection = 1000
+xCrossSection = 5000
+zDepth = -50
+plotDPI = 100
+cleanPNGs = True
+
+if(os.path.isfile('input/plotHelper.py')):
+    sys.path.append('input')
+    from plotHelper import *
+    print('Found experiment plotting settings')
+elif(os.path.isfile('../plotHelper.py')):
+    sys.path.append('../')
+    print('no custom plotting settings, using local default')
+    from plotHelper import *
+else:  
+    print('no defaults found')
+print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
 maxStep = 0
 sizeStep = 1e10
@@ -39,8 +49,9 @@ if((maxStep-startStep)/sizeStep > 50):   #if more than 50 frames, downscale to b
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 #Decide if iceBerg data files exist
-if(os.path.isfile('input/data.iceberg')):
+if(os.path.isfile('input/bergMask.bin')):
     isBerg = True
+    print('Found icebergs for this run')
 else:
     isBerg = False
 
@@ -98,7 +109,7 @@ if(isBerg):
                     openFrac[:,j,i] = 1
                     
 
-ySlice = np.argmin(np.abs(y[:,0] - crossSection))
+ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
 print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
 
@@ -160,7 +171,7 @@ for k in range(len(name)):
         
         str = "figs/sideinst_%s%05i.png" % (name[k],j)
         
-        plt.savefig(str, format='png')
+        plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
 
@@ -179,3 +190,5 @@ for k in range(len(name)):
 # plt.show()
 #
 #
+if(cleanPNGs):
+    os.system('rm -f figs/sideinst_*.png')

@@ -2,25 +2,36 @@ from MITgcmutils import mds
 from matplotlib import pyplot as plt
 import numpy as np
 import os
+import sys
 import cmocean
 
-#Pick cross section
-crossSection = 1000 #default
-try:
-    with open('input/plotPoint.txt', 'r') as file:
-        lines = file.readlines()
-        crossSection = float(lines[3]) #reads the 3rd line in the doc
-        print('cross section read from file', crossSection)
-except FileNotFoundError:
-    print('plot point file does not exist, using default')
+# Pick cross section to view from file or default
+yCrossSection = 1000
+xCrossSection = 5000
+zDepth = -50
+plotDPI = 100
+cleanPNGs = True
+
+if(os.path.isfile('input/plotHelper.py')):
+    sys.path.append('input')
+    from plotHelper import *
+    print('Found experiment plotting settings')
+elif(os.path.isfile('../plotHelper.py')):
+    sys.path.append('../')
+    print('no custom plotting settings, using local default')
+    from plotHelper import *
+else:  
+    print('no defaults found')
+print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
 maxStep = 0
 sizeStep = 1e10
 startStep = 1e10
 
 #Decide if iceBerg data files exist
-if(os.path.isfile('input/data.iceberg')):
+if(os.path.isfile('input/bergMask.bin')):
     isBerg = True
+    print('Found icebergs for this run')
 else:
     isBerg = False
 
@@ -98,7 +109,7 @@ if(isBerg):
                     openFrac[:,j,i] = 1
 
 
-xSlice = np.argmin(np.abs(x[0,:] - crossSection))
+xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
 print('cross section is x =', x[0,xSlice],'index', xSlice)
 
 
@@ -165,7 +176,7 @@ for k in range(len(name)):
         
         str = "figs/sideX_inst%s%05i.png" % (name[k],j)
         
-        plt.savefig(str, format='png')
+        plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
 
@@ -184,3 +195,5 @@ for k in range(len(name)):
 # plt.show()
 #
 #
+if(cleanPNGs):
+    os.system('rm -f figs/sideX_inst*.png')

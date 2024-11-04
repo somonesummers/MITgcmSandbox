@@ -4,22 +4,28 @@ from MITgcmutils import mds
 from matplotlib import pyplot as plt
 import numpy as np
 import os
+import sys
 import cmocean
 import fileinput
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
 xCrossSection = 5000
-zDepth = 50
-try:
-    with open('input/plotPoint.txt', 'r') as file:
-        lines = file.readlines()
-        zDepth = float(lines[1]) #reads the 2nd line in the doc
-        yCrossSection = float(lines[2]) #reads the 3rd line in the doc
-        xCrossSection = float(lines[3]) #reads the 4th line in the doc
-        print('cross sections read from file\nx:', xCrossSection,'\ny:',yCrossSection,'\nz:',zDepth)
-except FileNotFoundError:
-    print('plot point file does not exist, using default')
+zDepth = -50
+plotDPI = 100
+cleanPNGs = True
+
+if(os.path.isfile('input/plotHelper.py')):
+    sys.path.append('input')
+    from plotHelper import *
+    print('Found experiment plotting settings')
+elif(os.path.isfile('../plotHelper.py')):
+    sys.path.append('../')
+    print('no custom plotting settings, using local default')
+    from plotHelper import *
+else:  
+    print('no defaults found')
+print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
@@ -230,14 +236,15 @@ for k in range(len(name)):
         j = i/sizeStep + startStep
 
         str = "figs/cross_%s%05i.png" % (name[k],j)
-        plt.savefig(str, format='png')
+        plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         # plt.show()
 
     os.system('magick -delay %f figs/cross_%s*.png -colors 256 -depth 256 figs/autoCross_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
-os.system('rm -f figs/cross_*.png')
+if(cleanPNGs):
+    os.system('rm -f figs/cross_*.png')
 
 
 
