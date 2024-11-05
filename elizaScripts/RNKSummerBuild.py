@@ -63,6 +63,7 @@ run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m)
 
 grid_params['Nr'] = 50 # num of z-grid points
 
+oscStrength = .3 #[m/s] peak strength of offshore current
 lengthOffShoreCurrent = 10e3 #width of offshore current [m]
 indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
@@ -600,13 +601,13 @@ for j in np.arange(0,grid_params['Ny']):
 
 #BC for V at East side
 Ve = np.zeros([grid_params['Nr'],grid_params['Ny']])
-Ve[:,:] = .5 #[m/s]
+Ve[:,:] = oscStrength #[m/s]
 
 #N/S BCs
 for i in np.arange(fjordEnd,grid_params['Nx']):
     T_ns[:,i] = t_int(-1 * z[:])
     S_ns[:,i] = s_int(-1 * z[:])
-    V_ns[:,i] = .5* (i-fjordEnd)/indexOSC #[m/s] along coast flow
+    V_ns[:,i] = oscStrength * (i-fjordEnd)/indexOSC #[m/s] along coast flow
 
 
 write_bin("T.init", t2)
