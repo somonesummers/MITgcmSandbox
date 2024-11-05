@@ -35,8 +35,13 @@ makeDirs = True
 #Write input files, this lets us update the inputs with a full new run
 writeFiles = True
 
+if(makeDirs):
+    setupNotes = open("setupReport.txt", "w") 
 
-setupNotes = open("setupReport.txt", "w") 
+def setUpPrint(msg):
+    print(msg)
+    if(makeDirs):
+        setupNotes.write(str(msg) + "\n")
 
 # ## Main run configuration
 email = 'psummers8@gatech.edu'
@@ -47,17 +52,19 @@ email = 'psummers8@gatech.edu'
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [16, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'RNK_dx500_dz10_k1e4'
-run_config['ndays'] = 20 # simulaton time (days)
+run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'RNK_coastFlow'
+run_config['ndays'] = 2 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
 run_config['Lx_m'] = 80000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 
-grid_params['Nr'] = 100 # num of z-grid points
+grid_params['Nr'] = 50 # num of z-grid points
 
+lengthOffShoreCurrent = 10e3 #width of offshore current [m]
+indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 #========================================================================================
@@ -78,8 +85,7 @@ if OSX == 'Darwin':
 else:
     run_config['exps_dir'] = os.path.join('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/experiments') 
 run_config['run_dir'] = os.path.join(run_config['exps_dir'], run_config['run_name'])
-print('run_config is', run_config)
-setupNotes.write('run_config is ' + str(run_config)+'\n')
+setUpPrint('run_config is %s' %run_config)
 
 #========================================================================================
 # Generate new experiment directory and copy over defaults
@@ -116,12 +122,9 @@ if(makeDirs):
                 src_fpath = os.path.join(default_dir, file)
                 shutil.copy2(src_fpath, dst_dir)
                 #print(src_fpath, '>', dst_dir)
-    
-    print(run_config['run_dir'])
-    print(os.listdir(run_config['run_dir']))
-    setupNotes.write('run directory and subdirectories:\n')
-    setupNotes.write(str(run_config['run_dir'])+'\n')
-    setupNotes.write(str(os.listdir(run_config['run_dir']))+'\n')
+    setUpPrint('run directory and subdirectories:')
+    setUpPrint(run_config['run_dir'])
+    setUpPrint(os.listdir(run_config['run_dir']))
 
     # create new analysis sub-dir in your home directory
     # if OSX == 'Darwin':
@@ -163,18 +166,14 @@ grid_params['nPy'] = run_config['ncpus_xy'][1] #num of processors in x-direction
 grid_params['Nx'] = domain_params['Lx']/(run_config['horiz_res_m']) # num of x points
 grid_params['Ny'] = domain_params['Ly']/(run_config['horiz_res_m']) # num of y points
 
-print("Nx: %s" %grid_params['Nx'])
-print("Ny: %s" %grid_params['Ny'])
-setupNotes.write("Nx: %s" %grid_params['Nx']+'\n')
-setupNotes.write("Ny: %s" %grid_params['Ny']+'\n')
+setUpPrint("Nx: %s" %grid_params['Nx'])
+setUpPrint("Ny: %s" %grid_params['Ny'])
 
 grid_params['sNx'] = grid_params['Nx']/grid_params['nPx']#num of x-gridpoints per tile
 grid_params['sNy'] = grid_params['Ny']/grid_params['nPy'] #num of y-gridpoints per tile
 
-print("sNx: %s" %grid_params['sNx'])
-print("sNy: %s" %grid_params['sNy'])
-setupNotes.write("sNx: %s" %grid_params['sNx']+'\n')
-setupNotes.write("sNy: %s" %grid_params['sNy']+'\n')
+setUpPrint("sNx: %s" %grid_params['sNx'])
+setUpPrint("sNy: %s" %grid_params['sNy'])
 
 # NOTE: sNx and sNy should be whole numbers/integers. As long we keep the horizontal resolution,
 # domain dimesions, and number of cpus to be multiples of five, we should be ok. 
@@ -182,11 +181,9 @@ setupNotes.write("sNy: %s" %grid_params['sNy']+'\n')
 for key, param  in grid_params.items():
     assert param%1==0, "grid parameter needs to be an integer"
     grid_params[key] = int(param)
-    
-print(grid_params)
-setupNotes.write('Grid parameters\n')
-setupNotes.write(str(grid_params)+'\n')
-#run_config['grid_params'] = grid_params
+
+setUpPrint('Grid parameters')    
+setUpPrint(grid_params)
 
 # grid_params cont'd
 grid_params['usingCartesianGrid'] = True
@@ -347,8 +344,8 @@ params04['delZ'] = dz
 # get data fnames param
 params05 = {}
 params05['bathyFile'] ='bathymetry.bin'
-params05['hydrogThetaFile'] = 'T2.init'
-params05['hydrogSaltFile'] = 'S2.init'
+params05['hydrogThetaFile'] = 'T.init'
+params05['hydrogSaltFile'] = 'S.init'
 
 if(makeDirs):
     data_params = [params01, params02, params03, params04, params05]
@@ -420,10 +417,10 @@ for ii in range(numdiags_inst):
     diag_params01['fileName(%s)'%n] = diag_fields_names[ii] + '_inst'
     diag_params01['frequency(%s)'%n] = diag_freq_inst
     diag_params01['timePhase(%s)'%n] = diag_phase_inst
-    
-print(diag_params01)
-setupNotes.write('Diagnostic Settings\n')
-setupNotes.write(str(diag_params01)+'\n')
+
+setUpPrint('Diagnostic Settings')
+setUpPrint(diag_params01)
+
 Ndiags = n
 
 diag_params02={}
@@ -438,14 +435,23 @@ obcs_params02 = {}
 obcs_params03 = {}
 
 obcs_params01['OB_singleIeast'] = -1
-obcs_params01['useOBCSsponge'] = True
+obcs_params01['OB_Jsouth(%i:%i)'%(grid_params['sNx']-indexOSC+1,grid_params['sNx'])] = np.ones(indexOSC,dtype=int)
+obcs_params01['OB_Jnorth(%i:%i)'%(grid_params['sNx']-indexOSC+1,grid_params['sNx'])] = -1*np.ones(indexOSC,dtype=int)
+obcs_params01['useOBCSsponge'] = False
 obcs_params01['useOBCSprescribe']= True
-obcs_params01['OBEsFile']='EBCs2.bin'
-obcs_params01['OBEtFile']='EBCt2.bin'
-obcs_params01 ['OBEuFile']='EBCu.bin'
+#East
+obcs_params01['OBEsFile']='EBCs.bin'
+obcs_params01['OBEtFile']='EBCt.bin'
+obcs_params01 ['OBEvFile']='EBCv.bin'
+#North
+obcs_params01['OBNsFile']='NsBCs.bin'  
+obcs_params01['OBNtFile']='NsBCt.bin'  
+obcs_params01 ['OBNvFile']='NsBCv.bin'
+#South
+obcs_params01['OBSsFile']='NsBCs.bin'
+obcs_params01['OBStFile']='NsBCt.bin'
+obcs_params01 ['OBSvFile']='NsBCv.bin'
 
-# Enforces mass conservation across the northern boundary by adding a
-# barotropic inflow/outflow
 obcs_params03['spongeThickness'] = int(domain_params['L_sponge'] / run_config['horiz_res_m']) #grid cells
 obcs_params03['Urelaxobcsinner'] = 86400.0
 obcs_params03['Urelaxobcsbound'] = 3600.0
@@ -504,11 +510,14 @@ z = -np.cumsum(dz)
 sillStart = 45000
 sillHeight = 500
 sillLength = 5000
+fjordEnd = int(grid_params['Nx'] - indexOSC)
+
 d = np.zeros([grid_params['Ny'], grid_params['Nx']]) - domain_params['H']
 d[x>sillStart] = - domain_params['H'] + (x[x>sillStart]-sillStart) * sillHeight/sillLength
 d[x>(sillStart + sillLength)] = sillHeight - domain_params['H']
-d[ 0, :] = 0  # walls of fjord
-d[-1, :] = 0
+setUpPrint('fjord end: %i' %fjordEnd)
+d[ 0, 1:fjordEnd] = 0  # walls of fjord
+d[-1, 1:fjordEnd] = 0
 d[: , 0] = 0 #cap west side
 
 plt.figure
@@ -522,53 +531,58 @@ plt.close()
 
 write_bin("bathymetry.bin", d)
 
-# Temperature profile
-tcd = 300
-Tmin = 1
-Tmax = 3
-Tc = (Tmax + Tmin) / 2
-Trange = Tmax - Tmin
-T = np.zeros([grid_params['Nr'],grid_params['Ny']])
-for j in np.arange(0,grid_params['Ny']):
-    T[:,j] = Tc - Trange / 2 * np.tanh(np.pi * (z + tcd) / tcd)
+# Temperature profile (Old version)
+# tcd = 300
+# Tmin = 1
+# Tmax = 3
+# Tc = (Tmax + Tmin) / 2
+# Trange = Tmax - Tmin
+# T = np.zeros([grid_params['Nr'],grid_params['Ny']])
+# for j in np.arange(0,grid_params['Ny']):
+#     T[:,j] = Tc - Trange / 2 * np.tanh(np.pi * (z + tcd) / tcd)
 
 
-Sc = 33.5
-Srange = -1
-S = np.zeros([grid_params['Nr'],grid_params['Ny']])
-for j in np.arange(0,grid_params['Ny']):
-    S[:,j] = Sc + Srange / 2 * np.tanh(np.pi * (z + tcd) / (tcd))
+# Sc = 33.5
+# Srange = -1
+# S = np.zeros([grid_params['Nr'],grid_params['Ny']])
+# for j in np.arange(0,grid_params['Ny']):
+#     S[:,j] = Sc + Srange / 2 * np.tanh(np.pi * (z + tcd) / (tcd))
 
-Rref = rho0 * (1 - talpha * (T - T0) + sbeta * (S - S0))
+# Rref = rho0 * (1 - talpha * (T - T0) + sbeta * (S - S0))
 
-t = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
-s = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
+# t = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
+# s = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
 
-for j in np.arange(0,grid_params['Ny']):
-    for k in np.arange(0, grid_params['Nr']):
-        t[k, j, :] = t[k, j, :] + T[k,j]
-        s[k, j, :] = s[k, j, :] + S[k,j]
+# for j in np.arange(0,grid_params['Ny']):
+#     for k in np.arange(0, grid_params['Nr']):
+#         t[k, j, :] = t[k, j, :] + T[k,j]
+#         s[k, j, :] = s[k, j, :] + S[k,j]
 
-write_bin("T.init", t)
-write_bin("S.init", s)
-write_bin("EBCs.bin", S)
-write_bin("EBCt.bin", T)
+# write_bin("T.init", t)
+# write_bin("S.init", s)
+# write_bin("EBCs.bin", S)
+# write_bin("EBCt.bin", T)
 
-plt.figure()
-plt.plot(S[:,0] - 34, z, 'b', label="Sref - 34")
-plt.plot(T[:,0], z, 'r', label="Tref")
-plt.legend()
-if(writeFiles):
-    plt.savefig("%sinitialTS" % (run_config['run_dir']+'/input/'))
-plt.show()
-plt.close()
+# plt.figure()
+# plt.plot(S[:,0] - 34, z, 'b', label="Sref - 34")
+# plt.plot(T[:,0], z, 'r', label="Tref")
+# plt.legend()
+# if(writeFiles):
+#     plt.savefig("%sinitialTS" % (run_config['run_dir']+'/input/'))
+# plt.show()
+# plt.close()
 
-# Temp/Salt alternative initial/boundaries
+# Temp/Salt/Vel  initial/boundaries
 from scipy import interpolate
 t2 = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
 s2 = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
 S2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
 T2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
+S_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
+T_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
+V_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
+W_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
+
 z_tmp =  np.asarray([  0,   50,  100,  200,  300, 500,1000]); #must be increasing, so do depth as positive, see negs later for z[:]
 t_tmp =  np.asarray([0.8,  1.5,  1.8,  2.1,  2.3, 2.6,2.75]);
 s_tmp =  np.asarray([ 33, 33.8, 34.0, 34.3, 34.4,34.6,35.0]);
@@ -579,17 +593,33 @@ for j in np.arange(0,grid_params['Ny']):
         t2[:, j, i] = t_int(-1 * z[:])
         s2[:, j, i] = s_int(-1 * z[:])
 
+#East BC
 for j in np.arange(0,grid_params['Ny']):
     T2[:,j] = t_int(-1 * z[:])
     S2[:,j] = s_int(-1 * z[:])
 
-# print('Temp',t_int(-1 * z[:]))
-# print('Salt',s_int(-1 * z[:]))
+#BC for V at East side
+Ve = np.zeros([grid_params['Nr'],grid_params['Ny']])
+Ve[:,:] = .5 #[m/s]
 
-write_bin("T2.init", t2)
-write_bin("S2.init", s2)
-write_bin("EBCs2.bin", S2)
-write_bin("EBCt2.bin", T2)
+#N/S BCs
+for i in np.arange(fjordEnd,grid_params['Nx']):
+    T_ns[:,i] = t_int(-1 * z[:])
+    S_ns[:,i] = s_int(-1 * z[:])
+    V_ns[:,i] = .5* (i-fjordEnd)/indexOSC #[m/s] along coast flow
+
+
+write_bin("T.init", t2)
+write_bin("S.init", s2)
+write_bin("EBCs.bin", S2)
+write_bin("EBCt.bin", T2)
+write_bin("EBCs.bin", S2)
+write_bin("EBCt.bin", T2)
+write_bin("EBCv.bin", Ve)
+write_bin("NsBCs.bin", S_ns)
+write_bin("NsBCt.bin", T_ns)
+write_bin("NsBCv.bin", V_ns)
+write_bin("NsBCW.bin", W_ns)
 
 plt.figure()
 plt.plot(S2[:,0] - 34, z, 'b', label="Sref - 34")
@@ -598,7 +628,7 @@ plt.scatter(s_tmp - 34,-z_tmp,color='b')
 plt.scatter(t_tmp,-z_tmp,color='r')
 plt.legend()
 if(writeFiles):
-    plt.savefig("%sinitialTS2" % (run_config['run_dir']+'/input/'))
+    plt.savefig("%sinitialTS" % (run_config['run_dir']+'/input/'))
 plt.show()
 plt.close()
 
@@ -619,8 +649,7 @@ icefront=1 # adjacent to wall at western end of domain, simulate wall of ice
 
 # plume location
 plume_loc = int(np.round(grid_params['Ny']/2))
-print('Plume Location:',plume_loc, 'discharge:',runnoff)
-setupNotes.write('Plume Location: %i discharge: %f\n' %(plume_loc, runoff))
+setUpPrint('Plume Location: %i discharge: %f\n' %(plume_loc, runoff))
 ## Define plume-type mask 
 # 1 = ice but no plume (melting only)
 # 2 = sheet plume (Jenkins)
@@ -647,8 +676,6 @@ runoffRad[plume_loc,icefront,:] = np.sqrt(2*runoff/(np.pi*wsg))
 write_bin("runoffVel.bin", runoffVel)
 write_bin("runoffRad.bin", runoffRad)
 write_bin("plumeMask.bin", plumeMask)
-
-setupNotes.write('Plume set to discharge at %i m^3/s\n' %runoff)
 
 plt.figure(1)
 plt.pcolormesh(x,y,plumeMask)
@@ -739,14 +766,11 @@ run_config['extraCommands'] = "".join(extraList)
 
 # ## Estimate wall clock time
 ncpus = run_config['ncpus_xy'][0]*run_config['ncpus_xy'][1]
-print('===== Wall Clock Time =====')
+setUpPrint('===== Wall Clock Time =====')
 estTime = int(grid_params['Ny']) * int(grid_params['Nx']) * int(grid_params['Nr']) * int(grid_params['Nt']) *2e-7
-print('Estimated run time is %.2f hours for one CPU' % (estTime/60))
-print('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/ncpus*1.2,ncpus))
+setUpPrint('Estimated run time is %.2f hours for one CPU' % (estTime/60))
+setUpPrint('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/ncpus*1.2,ncpus))
 
-setupNotes.write('===== Wall Clock Time =====\n')
-setupNotes.write('Estimated run time is %.2f hours for one CPU\n' % (estTime/60))
-setupNotes.write('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/ncpus*1.2,ncpus))
 comptime_hrs = estTime/60/ncpus*1.2 
 setupNotes.close()
 
