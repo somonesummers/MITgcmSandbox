@@ -14,16 +14,21 @@ args = parser.parse_args()
 folder1 = args.directories[0]
 folder2 = args.directories[1]
 
-# Pick cross section to view, overriden by a plotPoint.txt file in first input folder
-crossSection = 1000
+# Pick cross section to view from file or default
+yCrossSection = 1000
+xCrossSection = 5000
+zDepth = 50
+plotDPI = 100
 
-try:
-    with open('%s/input/plotPoint.txt' % folder1, 'r') as file:
-        lines = file.readlines()
-        crossSection = float(lines[2]) #reads the 3rd line in the doc
-        print('cross section read from file %s' % folder1, crossSection)
-except FileNotFoundError:
-    print('plot point file does not exist, using default')
+if(os.path.isfile('input/plotHelper.py')):
+    sys.path.append('input')
+    from plotHelper import *
+    print('Found experiment plotting settings')
+elif(os.path.isfile('plotHelper.py')):
+    print('no custom plotting settings, using local default')
+    from plotHelper import *
+else:  
+    print('no defaults found')
 
 maxStep = 0
 sizeStep = 1e10

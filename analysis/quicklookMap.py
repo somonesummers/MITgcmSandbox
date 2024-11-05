@@ -2,18 +2,29 @@ from MITgcmutils import mds
 from matplotlib import pyplot as plt
 import numpy as np
 import os
+import sys
 import cmocean
 import fileinput
 
 
-depth = -100 #default value
-try:
-    with open('input/plotPoint.txt', 'r') as file:
-        lines = file.readlines()
-        depth = float(lines[1]) #reads the 2nd line in the doc
-        print('Depth read from file', depth)
-except FileNotFoundError:
-    print('plot point file does not exist, using default')
+# Pick cross section to view from file or default
+yCrossSection = 1000
+xCrossSection = 5000
+zDepth = -50
+plotDPI = 100
+cleanPNGs = True
+
+if(os.path.isfile('input/plotHelperLocal.py')):
+    sys.path.append('input')
+    from plotHelperLocal import *
+    print('Found experiment plotting settings')
+elif(os.path.isfile('../plotHelper.py')):
+    sys.path.append('../')
+    print('no custom plotting settings, using local default')
+    from plotHelper import *
+else:  
+    print('no defaults found')
+print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
@@ -80,7 +91,7 @@ if(isBerg):
                     openFrac[:,j,i] = 1
 
 
-zSlice = np.argmin(np.abs(z[:,0,0]- depth))
+zSlice = np.argmin(np.abs(z[:,0,0]- zDepth))
 print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
 # iceEdge = np.interp(z[zSlice,0,0],ice[0,:],x[0,:])
@@ -154,11 +165,12 @@ for k in range(len(name)):
         j = i/sizeStep + startStep
         str = "figs/map%s%05i.png" % (name[k],j)
         
-        plt.savefig(str, format='png')
+        plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
 
     os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
-os.system('rm -f figs/map*.png')
+if(cleanPNGs):
+    os.system('rm -f figs/map*.png')
