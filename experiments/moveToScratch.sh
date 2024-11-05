@@ -11,9 +11,9 @@ do
 	echo "moving $NAME..."
 	mkdir ../../scratch/exps/$NAME
 	cd $NAME/build
-	make CLEAN
+	make Clean
 	cd ../..
 	rsync -ah --info=progress2 $NAME ../../scratch/exps/
 	rm -r $NAME
-	ln -s ../../scratch/exps/$NAME $NAME
+	ln -s ../../scratch/exps/$NAME .
 done
