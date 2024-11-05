@@ -52,9 +52,9 @@ email = 'psummers8@gatech.edu'
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'RNK_coastFlow'
-run_config['ndays'] = 2 # simulaton time (days)
+run_config['ncpus_xy'] = [16, 1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'RNK_dx500_dz10_PeRe'
+run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
@@ -237,7 +237,7 @@ params01['vectorInvariantMomentum'] = True
 
 # viscosity parameters
 #params01['viscA4'] = 0.0000 # Biharmonic viscosity?
-params01['viscAz'] = 1.0e-4 # Vertical viscosity
+params01['viscAz'] = 1.0e-1 # Vertical viscosity
 #params01['viscAh'] = 2.5e-1 # Vertical viscosity
 params01['viscC2smag'] = 2.2 # ??? viscosity
 
@@ -250,10 +250,10 @@ params01['staggerTimeStep'] = True
 
 # diffusivity
 #params01['diffK4T'] = 0.0e4 # ?? temp diffusion
-params01['diffKhT'] = 0.20 # Horizontal temp diffusion
-params01['diffKhS'] = 0.20 # Horz salt diffusion
-params01['diffKzT'] = 1.0e-4 # Vertical temp diffusion
-params01['diffKzS'] = 1.0e-4 # Vert salt diffusion
+params01['diffKhT'] = 5.0 # Horizontal temp diffusion
+params01['diffKhS'] = 5.0 # Horz salt diffusion
+params01['diffKzT'] = 4.0e-2 # Vertical temp diffusion
+params01['diffKzS'] = 4.0e-2 # Vert salt diffusion
 #params01['diffK4S'] = 0.0e4 # ?? salt diffusion
 
 
@@ -776,7 +776,7 @@ comptime_hrs = estTime/60/ncpus*1.2
 setupNotes.close()
 
 if(makeDirs):
-    shutil.move('setupReport.txt', run_config['run_dir'])
+    shutil.move('setupReport.txt', run_config['run_dir']+'/input')
     rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
 
 print('Done! Remember to make MATLAB files and build before you run the script, building on MPI time is very inefficient')
