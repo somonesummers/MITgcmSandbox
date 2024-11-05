@@ -13,9 +13,9 @@ zDepth = -50
 plotDPI = 100
 cleanPNGs = True
 
-if(os.path.isfile('input/plotHelper.py')):
+if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
-    from plotHelper import *
+    from plotHelperLocal import *
     print('Found experiment plotting settings')
 elif(os.path.isfile('../plotHelper.py')):
     sys.path.append('../')
@@ -84,10 +84,10 @@ meltS[1,:] = np.linspace(0,10,nMelt)+32
 
 for i in np.arange(startStep, maxStep + 1, sizeStep):
     data = mds.rdmds("results/dynDiag", i)
-    data_old = mds.rdmds("results/dynDiag", 20*86400/dt)
+    # data_old = mds.rdmds("results/dynDiag", 20*86400/dt)  #breaks if not a 20 day run, fix later
     plt.figure()
-    sc=plt.scatter(np.mean(data_old[1,:,1:-1,xSlice],1),np.mean(data_old[0,:,1:-1,xSlice],1),
-                   alpha=.5,s=25,color='black',edgecolor='none')
+    # sc=plt.scatter(np.mean(data_old[1,:,1:-1,xSlice],1),np.mean(data_old[0,:,1:-1,xSlice],1),
+    #                alpha=.5,s=25,color='black',edgecolor='none')
     for j in range(np.shape(y[1:-1,:])[0]):
         plt.scatter(data[1,:,j+1,xSlice],data[0,:,j+1,xSlice],c=np.squeeze(z),
                    alpha=.25,s=10,cmap='cmo.deep_r')

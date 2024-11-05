@@ -13,9 +13,9 @@ zDepth = -50
 plotDPI = 100
 cleanPNGs = True
 
-if(os.path.isfile('input/plotHelper.py')):
-    sys.path.append('input/')
-    from plotHelper import *
+if(os.path.isfile('input/plotHelperLocal.py')):
+    sys.path.append('input')
+    from plotHelperLocal import *
     print('Found experiment plotting settings')
 elif(os.path.isfile('../plotHelper.py')):
     sys.path.append('../')
