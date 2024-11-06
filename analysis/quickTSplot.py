@@ -84,8 +84,8 @@ meltS[1,:] = np.linspace(0,10,nMelt)+32
 
 for i in np.arange(startStep, maxStep + 1, sizeStep):
     data = mds.rdmds("results/dynDiag", i)
-    # data_old = mds.rdmds("results/dynDiag", 20*86400/dt)  #breaks if not a 20 day run, fix later
     plt.figure()
+    # data_old = mds.rdmds("results/dynDiag", 20*86400/dt)  #breaks if not a 20 day run, fix later
     # sc=plt.scatter(np.mean(data_old[1,:,1:-1,xSlice],1),np.mean(data_old[0,:,1:-1,xSlice],1),
     #                alpha=.5,s=25,color='black',edgecolor='none')
     for j in range(np.shape(y[1:-1,:])[0]):

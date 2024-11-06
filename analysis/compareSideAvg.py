@@ -114,7 +114,7 @@ if(isBerg):
                     openFrac[:,j,i] = 1
                     
 
-ySlice = np.argmin(np.abs(y[:,0] - crossSection))
+ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
 print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
 dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']

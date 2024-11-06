@@ -31,8 +31,8 @@ do
   echo '== TS plot =='
   python ../quickTSplot.py
   
-  echo '== Compare to 20 day snapshot =='
-  python ../compareSideAvg.py
+  # echo '== Compare to 20 day snapshot =='
+  # python ../compareSideAvg.py
   
   cd ..    
 done
