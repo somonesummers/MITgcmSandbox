@@ -52,16 +52,16 @@ email = 'psummers8@gatech.edu'
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [16, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'RNK_dx500_dz10_PeRe'
+run_config['ncpus_xy'] = [10, 3] # cpu distribution in the x and y directions
+run_config['run_name'] = 'RNK_dx200_dz2_PeRe-1_OSC'
 run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
+run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
 run_config['Lx_m'] = 80000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 
-grid_params['Nr'] = 50 # num of z-grid points
+grid_params['Nr'] = 500 # num of z-grid points
 
 oscStrength = .3 #[m/s] peak strength of offshore current
 lengthOffShoreCurrent = 10e3 #width of offshore current [m]
@@ -237,7 +237,7 @@ params01['vectorInvariantMomentum'] = True
 
 # viscosity parameters
 #params01['viscA4'] = 0.0000 # Biharmonic viscosity?
-params01['viscAz'] = 1.0e-1 # Vertical viscosity
+params01['viscAz'] = 1.0e-2 # Vertical viscosity
 #params01['viscAh'] = 2.5e-1 # Vertical viscosity
 params01['viscC2smag'] = 2.2 # ??? viscosity
 
@@ -250,10 +250,10 @@ params01['staggerTimeStep'] = True
 
 # diffusivity
 #params01['diffK4T'] = 0.0e4 # ?? temp diffusion
-params01['diffKhT'] = 5.0 # Horizontal temp diffusion
-params01['diffKhS'] = 5.0 # Horz salt diffusion
-params01['diffKzT'] = 4.0e-2 # Vertical temp diffusion
-params01['diffKzS'] = 4.0e-2 # Vert salt diffusion
+params01['diffKhT'] = 1.0 # Horizontal temp diffusion
+params01['diffKhS'] = 1.0 # Horz salt diffusion
+params01['diffKzT'] = 4.0e-3 # Vertical temp diffusion
+params01['diffKzS'] = 4.0e-3 # Vert salt diffusion
 #params01['diffK4S'] = 0.0e4 # ?? salt diffusion
 
 
