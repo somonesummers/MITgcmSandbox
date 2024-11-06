@@ -436,8 +436,8 @@ obcs_params02 = {}
 obcs_params03 = {}
 
 obcs_params01['OB_singleIeast'] = -1
-obcs_params01['OB_Jsouth(%i:%i)'%(grid_params['sNx']-indexOSC+1,grid_params['sNx'])] = np.ones(indexOSC,dtype=int)
-obcs_params01['OB_Jnorth(%i:%i)'%(grid_params['sNx']-indexOSC+1,grid_params['sNx'])] = -1*np.ones(indexOSC,dtype=int)
+obcs_params01['OB_Jsouth(%i:%i)'%(grid_params['Nx']-indexOSC+1,grid_params['Nx'])] = np.ones(indexOSC,dtype=int)
+obcs_params01['OB_Jnorth(%i:%i)'%(grid_params['Nx']-indexOSC+1,grid_params['Nx'])] = -1*np.ones(indexOSC,dtype=int)
 obcs_params01['useOBCSsponge'] = False
 obcs_params01['useOBCSprescribe']= True
 #East

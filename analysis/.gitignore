@@ -6,3 +6,4 @@
 !crossPlot.py
 *.gif
 !*.py
+!download.sh

@@ -53,11 +53,11 @@ email = 'psummers8@gatech.edu'
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'RNK_coastFlow'
+run_config['run_name'] = 'GridExp'
 run_config['ndays'] = 2 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
+run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
 run_config['Lx_m'] = 80000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 
@@ -607,8 +607,9 @@ for i in np.arange(fjordEnd,grid_params['Nx']):
     T_ns[:,i] = t_int(-1 * z[:])
     S_ns[:,i] = s_int(-1 * z[:])
     V_ns[:,i] = oscStrength * (i-fjordEnd)/indexOSC #[m/s] along coast flow
-
-
+plt.figure()
+plt.plot(V_ns[0,:])
+plt.show
 write_bin("T.init", t2)
 write_bin("S.init", s2)
 write_bin("EBCs.bin", S2)
