@@ -10,7 +10,7 @@ for NAME in "$@"
 do
 	echo "move in $NAME..."
 	cd $NAME
-	bash ../makeBuild ../../.. -mpi
+	bash ../makeBuild.sh ../../.. -mpi
 	echo "submitting job"
 	sbatch submitBatch.sh
 	echo "moving back"

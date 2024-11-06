@@ -52,16 +52,16 @@ email = 'psummers8@gatech.edu'
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'RNK_coastFlow'
+run_config['ncpus_xy'] = [8, 1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'Grid_dx200_dx2'
 run_config['ndays'] = 2 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
+run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
 run_config['Lx_m'] = 80000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 
-grid_params['Nr'] = 50 # num of z-grid points
+grid_params['Nr'] = 500 # num of z-grid points
 
 oscStrength = .3 #[m/s] peak strength of offshore current
 lengthOffShoreCurrent = 10e3 #width of offshore current [m]
@@ -436,8 +436,8 @@ obcs_params02 = {}
 obcs_params03 = {}
 
 obcs_params01['OB_singleIeast'] = -1
-obcs_params01['OB_Jsouth(%i:%i)'%(grid_params['sNx']-indexOSC+1,grid_params['sNx'])] = np.ones(indexOSC,dtype=int)
-obcs_params01['OB_Jnorth(%i:%i)'%(grid_params['sNx']-indexOSC+1,grid_params['sNx'])] = -1*np.ones(indexOSC,dtype=int)
+obcs_params01['OB_Jsouth(%i:%i)'%(grid_params['Nx']-indexOSC+1,grid_params['Nx'])] = np.ones(indexOSC,dtype=int)
+obcs_params01['OB_Jnorth(%i:%i)'%(grid_params['Nx']-indexOSC+1,grid_params['Nx'])] = -1*np.ones(indexOSC,dtype=int)
 obcs_params01['useOBCSsponge'] = False
 obcs_params01['useOBCSprescribe']= True
 #East
