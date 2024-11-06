@@ -7,3 +7,5 @@
 !.gitignore
 *
 Berg500*
+!*.sh
+
