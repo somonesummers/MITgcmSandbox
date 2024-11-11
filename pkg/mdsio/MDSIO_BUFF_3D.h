@@ -19,8 +19,9 @@ C           which should be enough for most applications.
 #ifdef ALLOW_FIZHI
       PARAMETER ( size3dBuf = Nr+NrPhys )
 #else
-      PARAMETER ( size3dBuf = 2*Nr )
+      PARAMETER ( size3dBuf = 501 )
 #endif
+
 
 C--   COMMON /MDS_3D_BUFFERS/  3-D Shared Local Buffers
 C     Those buffers have be in common block to be shared by all threads;
