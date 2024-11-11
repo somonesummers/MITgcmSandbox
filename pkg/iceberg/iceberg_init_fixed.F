@@ -45,7 +45,13 @@ C      Read iceberg num per cell file
         CALL READ_REC_XY_RL
      &     (ICEBERGnumPerCellFile,icebergNumBergs,1,0,myThid)
        ENDIF
-	   
+	
+C      Read melt mask
+       IF (ICEBERGmeltFile .NE. ' ' ) THEN
+        CALL READ_REC_XY_RL
+     &     (ICEBERGmeltFile,meltMask,1,0,myThid)
+       ENDIF
+
 C      Read drift mask
        IF (ICEBERGdriftFile .NE. ' ' ) THEN
         CALL READ_REC_XY_RL

@@ -371,6 +371,7 @@ C     - Estimate iceberg drift velocity
 
 C --- ENTER VERTICAL LOOP ---
 C    Loop down through water column and calculate melt rate
+      IF (meltMask(i,j,bi,bj) .EQ. 1) THEN ! only if calculating melt here
       DO K = 1,Nr
       IF ( abs(K) .LE. abs(bergBottomCell) ) THEN ! only calculate melt if a berg is in this cell
 	   
@@ -552,7 +553,7 @@ C      ENDIF ! Stop checking if time is at dumpFreq
 	 
       ENDIF ! Stop checking if berg extends to this depth
       ENDDO ! stop looping through water column
-	   
+	  ENDIF ! stop checking for melt calc 
 	  
       ENDDO ! Stop looping through icebergs
 	  
