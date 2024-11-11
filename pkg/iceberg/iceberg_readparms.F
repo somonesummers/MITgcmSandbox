@@ -48,7 +48,7 @@ CEOP
      &     brg_c_i,
      &     brg_L,
      &     brg_Cd,
-     &     ICEBERGmaskFile, ICEBERGmaskNumsFile,
+     &     ICEBERGmaskFile, ICEBERGmeltFile, ICEBERGmaskNumsFile,
      &     ICEBERGnumPerCellFile, ICEBERGdriftFile,
      &     ICEBERGbarrierFile, ICEBERGopenFracFile,
      &     ICEBERGareaFile
@@ -68,6 +68,7 @@ C Set defaults values for parameters in ICEBERG.h
       brg_L                              = 334000D0
       brg_Cd                           = 0.0025
       ICEBERGmaskFile             = ' '
+      ICEBERGmeltFile             = ' '
       ICEBERGmaskNumsFile    = ' '
       ICEBERGnumPerCellFile    = ' '
       ICEBERGdriftFile               = ' '

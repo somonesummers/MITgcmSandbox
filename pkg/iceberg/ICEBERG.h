@@ -25,7 +25,8 @@ C     ICEBERGareaFile                :: File containing total submerged iceberg 
 C     icebergMask                     :: XY Mask for iceberg cells and iceberg orientation (1 = long axis oriented east-west)
 C     icebergMaskNums            :: XY field containing numbers corresponding to each column with icebergs
 C     icebergNumBergs              :: XY field containing number of icebergs per cell
-C     driftMask                          :: XY mask of where to calculate iceber drift velocity
+C     driftMask                          :: XY mask of where to calculate iceberg drift velocity
+C     meltMask                          :: XY mask of where to calculate iceberg melt
 C     barrierMask                       :: XY mask of where to make icebergs physical barrier to water flow
 C     openFraction                     :: XYZ field specifying proportion of cell that is open
 C     icebergArea3D                   :: XYZ field of iceberg submerged surface area
@@ -95,18 +96,20 @@ CEOP
      &     icebergTendS3D,
      &     openFraction, 
      &     driftMask, 
+     &     meltMask,
      &     icebergMask,
      &     barrierMask, 
      &     icebergMaskNums, 
      &     icebergNumBergs,
      &     icebergArea3D
-      _RL icebergHeatFlux3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)		  
-      _RL icebergFWFlux3D (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)	  
-      _RL icebergMeltRate3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)	  
+      _RL icebergHeatFlux3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)  
+      _RL icebergFWFlux3D (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)  
+      _RL icebergMeltRate3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)  
       _RL icebergTendT3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL icebergTendS3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL openFraction(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
-      _RL driftMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)	
+      _RL driftMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL meltMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL icebergMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL barrierMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL icebergMaskNums(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
@@ -117,6 +120,7 @@ CEOP
       CHARACTER*(MAX_LEN_FNAM) ICEBERGmaskNumsFile
       CHARACTER*(MAX_LEN_FNAM) ICEBERGnumPerCellFile
       CHARACTER*(MAX_LEN_FNAM) ICEBERGdriftFile
+      CHARACTER*(MAX_LEN_FNAM) ICEBERGmeltFile
       CHARACTER*(MAX_LEN_FNAM) ICEBERGopenFracFile
       CHARACTER*(MAX_LEN_FNAM) ICEBERGbarrierFile
       CHARACTER*(MAX_LEN_FNAM) ICEBERGareaFile
@@ -126,6 +130,7 @@ CEOP
      &     ICEBERGmaskNumsFile,
      &     ICEBERGnumPerCellFile,
      &     ICEBERGdriftFile,
+     &     ICEBERGmeltFile,
      &     ICEBERGopenFracFile,
      &     ICEBERGbarrierFile,
      &     ICEBERGareaFile
