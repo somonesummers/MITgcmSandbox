@@ -783,9 +783,9 @@ areaResidual = 1
 # Generate the Inverse Power Law cumulative distribution function
 # over the range minBergWidth-maxBergWidth with a slope of alpha.
 setUpPrint('Making bergs, this can take a few loops...')
+loop_count = 1
 while(np.abs(areaResidual) > .01 ): # Create random power dist of bergs, ensure correct surface area
-
-    numberOfBergs = round(numberOfBergs * (1 + areaResidual))
+    numberOfBergs = round(numberOfBergs * (1 + areaResidual)/loop_count) # weight by loop number, so slowly approch moving mean
     setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
     x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
     x_depth = np.arange(minBergDepth, maxBergDepth, (maxBergDepth-minBergDepth)/(numberOfBergs*1e2))
@@ -825,7 +825,7 @@ while(np.abs(areaResidual) > .01 ): # Create random power dist of bergs, ensure 
     areaResidual = (desiredBergArea - bergTopArea)/desiredBergArea
     setUpPrint('\t\t%.2f %% Bergs' % (bergTopArea/bergMaskArea*100))
     setUpPrint('\t\tareaResidual %.2f %%' % areaResidual)
-
+    loop_count += 1
 setUpPrint('====== Success! Found our bergs =====')
 setUpPrint('Width min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_width),np.mean(inversePowerLawDistNumbers_width),np.max(inversePowerLawDistNumbers_width)))
 setUpPrint('Depth min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth)))
@@ -952,7 +952,7 @@ plt.hist(inversePowerLawDistNumbers_length,bins = 50)
 # plt.ylabel('Count')
 plt.xlabel('Length [m]')
 fig.tight_layout()
-plt.savefig('bergStatistics.png', format='png', dpi=200)
+plt.savefig(run_config['run_dir']+'/input/bergStatistics.png', format='png', dpi=200)
 plt.show()
 
 fig = plt.figure()
@@ -974,7 +974,17 @@ plt.xlabel("Cell along fjord, Ice coverage is %.2f%% - %.2f%%" % (pc_min, pc_max
 plt.ylabel('Cell across fjord')
 cbar.set_label('cover resid')
 fig.tight_layout()
-plt.savefig('bergMap.png', format='png', dpi=200)
+plt.savefig(run_config['run_dir']+'/input/bergMap.png', format='png', dpi=200)
+plt.show()
+
+fig = plt.figure()
+pc = plt.pcolor(meltMask,cmap='cmo.ice_r')
+cbar = plt.colorbar(pc)
+plt.suptitle('Melt Mask')
+plt.ylabel('Cell across fjord')
+plt.xlabel("Cell along fjord")
+fig.tight_layout()
+plt.savefig(run_config['run_dir']+'/input/meltMask.png', format='png', dpi=200)
 plt.show()
 
 # write iceberg txt files
