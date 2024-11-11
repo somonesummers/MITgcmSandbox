@@ -964,9 +964,9 @@ cbar.set_label('iceberg cover')
 plt.subplot(212)
 pc = plt.pcolor(pltHelper - bergConc/100,cmap='cmo.ice')
 cbar = plt.colorbar(pc)
-pc_min = str(np.round(np.nanmin(pltHelper),3) * 100)
-pc_max = str(np.round(np.nanmax(pltHelper),3) * 100)
-plt.xlabel("Cell along fjord, Coverage is " + pc_min + "%-" + pc_max + "%")
+pc_min = np.nanmin(pltHelper) * 100
+pc_max = np.nanmax(pltHelper) * 100
+plt.xlabel("Cell along fjord, Ice coverage is %.2f%% - %.2f%%" % (pc_min, pc_max))
 plt.ylabel('Cell across fjord')
 cbar.set_label('cover resid')
 fig.tight_layout()
