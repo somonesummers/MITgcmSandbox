@@ -55,7 +55,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'PlotTest'
+run_config['run_name'] = 'BergTest'
 run_config['ndays'] = 2 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -726,7 +726,7 @@ meltMask = np.zeros([ny,nx])
 barrierMask = np.zeros([ny,nx])
 bergConc = np.zeros([ny,nx])
 bergMaskNums = np.zeros([ny,nx])
-numBergsPerCell = np.zeros([ny,nx],dtype=np.int16)
+numBergsPerCell = np.zeros([ny,nx],dtype=np.int64)
 
 # Berg parameters
 bergType = 1 # 1 = block 2 = cone (not implemented)
@@ -785,7 +785,7 @@ areaResidual = 1
 setUpPrint('Making bergs, this can take a few loops...')
 loop_count = 1
 while(np.abs(areaResidual) > .01 ): # Create random power dist of bergs, ensure correct surface area
-    numberOfBergs = round(numberOfBergs * (1 + areaResidual)/loop_count) # weight by loop number, so slowly approch moving mean
+    numberOfBergs = round(numberOfBergs * (1 + areaResidual))
     setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
     x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
     x_depth = np.arange(minBergDepth, maxBergDepth, (maxBergDepth-minBergDepth)/(numberOfBergs*1e2))
@@ -824,7 +824,7 @@ while(np.abs(areaResidual) > .01 ): # Create random power dist of bergs, ensure 
     bergTopArea = sum(inversePowerLawDistNumbers_width*inversePowerLawDistNumbers_length)
     areaResidual = (desiredBergArea - bergTopArea)/desiredBergArea
     setUpPrint('\t\t%.2f %% Bergs' % (bergTopArea/bergMaskArea*100))
-    setUpPrint('\t\tareaResidual %.2f %%' % areaResidual)
+    setUpPrint('\t\tareaResidual %.2f %%' % (areaResidual * 100))
     loop_count += 1
 setUpPrint('====== Success! Found our bergs =====')
 setUpPrint('Width min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_width),np.mean(inversePowerLawDistNumbers_width),np.max(inversePowerLawDistNumbers_width)))
@@ -857,10 +857,10 @@ assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) # In this script, 
 
 # Need to reshuffle as it re-writes this when sorting
 # Array for bergs
-bergsPerCellLimit = 5000
+bergsPerCellLimit = 500
 icebergs_depths = np.zeros([bergMaski,bergsPerCellLimit])
 icebergs_widths = np.zeros([bergMaski,bergsPerCellLimit])
-icebergs_length = np.zeros([bergMaski,bergsPerCellLimit])
+icebergs_length = np.zeros([bergMaski,bergsPerCellLimit])  #careful, not plural as to length match
 
 assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) #every Berg has a spot
 
@@ -1001,6 +1001,17 @@ if(writeFiles):
             for item in icebergs_length[i,icebergs_length[i,:] > 0]:
                 file_handler.write("{}\n".format(item))
 
+icebergs_depths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
+icebergs_widths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
+icebergs_length2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
+
+for k in range(bergMaski):
+    j = bergDict[k+1][0]
+    i = bergDict[k+1][1]
+    icebergs_depths2D[:,j,i] = icebergs_depths[k,:]
+    icebergs_widths2D[:,j,i] = icebergs_widths[k,:]
+    icebergs_length2D[:,j,i] = icebergs_length[k,:]
+
 # write global files
 write_bin('bergMask.bin',bergMask)
 write_bin('bergMaskNums.bin',bergMaskNums)
@@ -1010,6 +1021,12 @@ write_bin('totalBergArea.bin',SA)
 write_bin('meltMask.bin',meltMask)
 write_bin('driftMask.bin',driftMask)
 write_bin('barrierMask.bin',barrierMask)
+write_bin('icebergs_depths.bin',icebergs_depths2D)
+write_bin('icebergs_widths.bin',icebergs_widths2D)
+write_bin('icebergs_length.bin',icebergs_length2D)
+
+
+
 
 setUpPrint('Berg setup is done.')
 

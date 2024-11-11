@@ -49,32 +49,36 @@ CEOP
      &     brg_L,
      &     brg_Cd,
      &     ICEBERGmaskFile, ICEBERGmeltFile, ICEBERGmaskNumsFile,
+     &     ICEBERGlengthFile, ICEBERGwidthsFile, ICEBERGdepthsFile,
      &     ICEBERGnumPerCellFile, ICEBERGdriftFile,
      &     ICEBERGbarrierFile, ICEBERGopenFracFile,
      &     ICEBERGareaFile
 
 
 C Set defaults values for parameters in ICEBERG.h
-      icebergRho                     =  917.0 _d 0
+      icebergRho                   =  917.0 _d 0
       brg_iceTemp                  = .0 _d 0
-      icebergBGvel                   = 0.06
+      icebergBGvel                 = 0.06
       brg_lambda1                  = -0.0573D0
       brg_lambda2                  = 0.0832D0
       brg_lambda3                  = 0.000761D0
-      brg_GamT                      = 0.022
-      brg_GamS                      = 0.00062
-      brg_c_w                         = 3974.D0
-      brg_c_i                           = 2000.D0
-      brg_L                              = 334000D0
-      brg_Cd                           = 0.0025
-      ICEBERGmaskFile             = ' '
-      ICEBERGmeltFile             = ' '
-      ICEBERGmaskNumsFile    = ' '
-      ICEBERGnumPerCellFile    = ' '
-      ICEBERGdriftFile               = ' '
-      ICEBERGbarrierFile            = ' '
-      ICEBERGopenFracFile        = ' '
-      ICEBERGareaFile                = ' '
+      brg_GamT                     = 0.022
+      brg_GamS                     = 0.00062
+      brg_c_w                      = 3974.D0
+      brg_c_i                      = 2000.D0
+      brg_L                        = 334000D0
+      brg_Cd                       = 0.0025
+      ICEBERGmaskFile              = ' '
+      ICEBERGmeltFile              = ' '
+      ICEBERGmaskNumsFile          = ' '
+      ICEBERGlengthFile            = ' '
+      ICEBERGwidthsFile            = ' '
+      ICEBERGdepthsFile            = ' '
+      ICEBERGnumPerCellFile        = ' '
+      ICEBERGdriftFile             = ' '
+      ICEBERGbarrierFile           = ' '
+      ICEBERGopenFracFile          = ' '
+      ICEBERGareaFile              = ' '
 
 C Open and read the data.iceberg file
       WRITE(msgBuf,'(A)') ' ICEBERG_READPARMS: opening data.iceberg'
