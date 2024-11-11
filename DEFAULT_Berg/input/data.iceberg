@@ -6,6 +6,7 @@
  ICEBERGdriftFile = 'driftMask.bin',
  ICEBERGbarrierFile = 'barrierMask.bin',
  ICEBERGmaskFile = 'bergMask.bin',
+ ICEBERGmeltFile = 'meltMask.bin',
  ICEBERGmaskNumsFile = 'bergMaskNums.bin',
  ICEBERGnumPerCellFile = 'numBergsPerCell.bin',
  ICEBERGareaFile = 'totalBergArea.bin',

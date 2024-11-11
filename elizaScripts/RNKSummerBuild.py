@@ -55,7 +55,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'BergTest'
+run_config['run_name'] = 'PlotTest'
 run_config['ndays'] = 2 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -722,6 +722,7 @@ deltaX = run_config['horiz_res_m']
 
 bergMask = np.zeros([ny,nx])
 driftMask = np.zeros([ny,nx])
+meltMask = np.zeros([ny,nx])
 barrierMask = np.zeros([ny,nx])
 bergConc = np.zeros([ny,nx])
 bergMaskNums = np.zeros([ny,nx])
@@ -743,6 +744,9 @@ bergMask[1:-1,1:iceExtentIndex] = 1 # icebergs in inner 5 km, all oriented east-
 
 # Drift mask, No drift for Melange experiments, but can toggle on here if you want
 # driftMask[1:-1,1:iceExtentIndex] = 1 # calculate effect of iceberg drift on melt rates 
+
+# Melt mask, only let bergs melt in this region (make melt water, these don't change size)
+meltMask[1:-1,1:iceExtentIndex] = 1 # Allow focus on blocking effect only
 
 # Barrier mask
 barrierMask[1:-1,1:iceExtentIndex] = 1 # make icebergs a physical barrier to water flow
@@ -993,6 +997,7 @@ write_bin('bergMaskNums.bin',bergMaskNums)
 write_bin('numBergsPerCell.bin',numBergsPerCell)
 write_bin('openFrac.bin',openFrac)
 write_bin('totalBergArea.bin',SA)
+write_bin('meltMask.bin',meltMask)
 write_bin('driftMask.bin',driftMask)
 write_bin('barrierMask.bin',barrierMask)
 
