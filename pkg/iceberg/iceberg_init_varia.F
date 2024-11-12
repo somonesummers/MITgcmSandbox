@@ -18,6 +18,7 @@ C     === Global variables ===
 #include "EEPARAMS.h"
 #include "PARAMS.h"
 #include "GRID.h"
+#include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 #ifdef ALLOW_COST
 # include "ICEBERG_COST.h"

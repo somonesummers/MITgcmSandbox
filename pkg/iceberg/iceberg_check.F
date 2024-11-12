@@ -8,12 +8,13 @@ C     | SUBROUTINE ICEBERG_CHECK                                |
 C     | o Validate basic package setup and inter-package         |
 C     | dependencies.                                            |
 C     \==========================================================/
-      IMPLICIT NONE
+      IMPLICIT NONE  
 
 C     === Global variables ===
 #include "SIZE.h"
 #include "EEPARAMS.h"
 #include "PARAMS.h"
+#include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 
 C     === Routine arguments ===
@@ -35,7 +36,7 @@ C     msgBuf      - Informational/error meesage buffer
 C     So far, ICEBERG works only with oceanic z-coordinates
       IF ( buoyancyRelation .NE. 'OCEANIC' ) THEN
          WRITE(msgBuf,'(A)')
-     &      'ICEBERG works only with buoyancyRelation = ''OCEANIC'''
+     &      'ICEBERG works only with buoyancyRelation = OCEANIC'
          CALL PRINT_ERROR( msgBuf, myThid )
          STOP 'ABNORMAL END: S/R ICEBERG_CHECK'
       ENDIF

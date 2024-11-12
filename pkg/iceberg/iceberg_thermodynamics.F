@@ -29,6 +29,7 @@ C     === Global variables ===
 #include "GRID.h"
 #include "DYNVARS.h"
 #include "FFIELDS.h"
+#include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 
 C     !INPUT/OUTPUT PARAMETERS:
@@ -126,9 +127,9 @@ C
       _RL tProf(1:Nr)
       _RL sProf(1:Nr)
       _RL pProf(1:Nr)
-      _RL depth_list(1:500)  ! again hard coded everywhere, see many locations below
-      _RL width_list(1:500)  ! again hard coded everywhere
-      _RL length_list(1:500) ! again hard coded everywhere
+      _RL depth_list(1:maxBerg)
+      _RL width_list(1:maxBerg)
+      _RL length_list(1:maxBerg)
       INTEGER r1, r2, r3, r4, r5, r6, r7, r8, r9
       PARAMETER(rho_0=1027.0D0)
       LOGICAL DIFFERENT_MULTIPLE, THERE
@@ -246,7 +247,7 @@ C      Get profiles of temperature and salinity
        ENDDO
        
 C     Pre-allocate berg geometry profiles
-      DO n = 1,500
+      DO n = 1,maxBerg
         depth_list(n) = 0. _d 0
         length_list(n) = 0. _d 0
         width_list(n) = 0. _d 0

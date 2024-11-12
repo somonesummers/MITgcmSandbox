@@ -33,9 +33,9 @@ C     meltMask                        :: XY mask of where to calculate iceberg m
 C     barrierMask                     :: XY mask of where to make icebergs physical barrier to water flow
 C     openFraction                    :: XYZ field specifying proportion of cell that is open
 C     icebergArea3D                   :: XYZ field of iceberg submerged surface area
-C     icebergLength                   :: XY[500] containing lengths of all icebergs.
-C     icebergWidths                   :: XY[500] containing widths of all icebergs.
-C     icebergDepths                   :: XY[500] containing depths of all icebergs.
+C     icebergLength                   :: XY[maxBerg] containing lengths of all icebergs.
+C     icebergWidths                   :: XY[maxBerg] containing widths of all icebergs.
+C     icebergDepths                   :: XY[maxBerg] containing depths of all icebergs.
 C
 C===============================================================================
 C-   CONSTANTS SET IN data.iceberg
@@ -124,9 +124,12 @@ CEOP
       _RL icebergMaskNums(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL icebergNumBergs(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL icebergArea3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
-      _RL icebergLength(1-OLx:sNx+OLx,1-OLy:sNy+OLy,500,nSx,nSy) !Cap on berg number is precompile option, not sure how to set this
-      _RL icebergWidths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,500,nSx,nSy) !Cap on berg number is precompile option, not sure how to set this
-      _RL icebergDepths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,500,nSx,nSy) !Cap on berg number is precompile option, not sure how to set this
+      _RL icebergLength(1-OLx:sNx+OLx,1-OLy:sNy+OLy,maxBerg,nSx,nSy)
+      _RL icebergWidths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,maxBerg,nSx,nSy)
+      _RL icebergDepths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,maxBerg,nSx,nSy)
+C      _RL icebergLength(1-OLx:sNx+OLx,1-OLy:sNy+OLy,500,nSx,nSy) !maxBerg here, not sure why but wont compile
+C      _RL icebergWidths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,500,nSx,nSy) !hardcoded here
+C      _RL icebergDepths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,500,nSx,nSy) !hardcoded here
 
       CHARACTER*(MAX_LEN_FNAM) ICEBERGmaskFile
       CHARACTER*(MAX_LEN_FNAM) ICEBERGmaskNumsFile

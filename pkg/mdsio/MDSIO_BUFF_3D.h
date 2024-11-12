@@ -13,13 +13,15 @@ CEOP
 C     size3dBuf  :: buffer 3rd dimension, corresponds to the maximum number
 C                   of levels that can be read/written at a time.
 C     Note: minimum value = Nr, but in few cases (vertical interpolation,
-C           NrPhys from Fizhi, ...)  needs to be larger. Here we pick 2*Nr
+C           NrPhys from Fizhi, ICERBERG package...)  needs to be larger. Here we pick 2*Nr
 C           which should be enough for most applications.
       INTEGER size3dBuf
 #ifdef ALLOW_FIZHI
       PARAMETER ( size3dBuf = Nr+NrPhys )
+#elif defined(ALLOW_ICEBERG)
+      PARAMETER ( size3dBuf = 500 ) !maxBerg hard coded here too
 #else
-      PARAMETER ( size3dBuf = 501 )
+      PARAMETER ( size3dBuf = 2*Nr )
 #endif
 
 

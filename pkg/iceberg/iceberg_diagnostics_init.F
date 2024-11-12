@@ -17,6 +17,7 @@ C     !USES:
       IMPLICIT NONE
 #include "EEPARAMS.h"
 #include "SIZE.h"
+#include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 
 C     !INPUT/OUTPUT PARAMETERS:

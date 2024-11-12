@@ -16,6 +16,7 @@ C !USES: ===============================================================
       IMPLICIT NONE
 #include "SIZE.h"
 #include "EEPARAMS.h"
+#include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 #include "PARAMS.h"
 

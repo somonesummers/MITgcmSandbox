@@ -26,6 +26,7 @@ C     !USES:
 #include "EEPARAMS.h"
 c#include "GRID.h"
 c#include "DYNVARS.h"
+#include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 
 C     !INPUT/OUTPUT PARAMETERS:
@@ -75,6 +76,7 @@ C     !INPUT PARAMETERS:
 #include "EEPARAMS.h"
 c#include "GRID.h"
 c#include "DYNVARS.h"
+#include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 
 C     !INPUT/OUTPUT PARAMETERS:
