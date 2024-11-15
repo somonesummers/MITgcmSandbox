@@ -86,23 +86,23 @@ if(isBerg):
     bergContaingingCells = int(np.sum(bergMask))
     maxDepth = np.zeros(np.shape(x))
 
-    #deepest contour
-    for i in range(np.shape(x)[1]):
-        for j in range(np.shape(x)[0]):
-            bergCount = int(bergsPerCell[j,i])
-            if(bergMask[j,i] == 1 and bergCount > 0):  #only go in if bergs here
-                depthFile = 'input/iceberg_depth_%05i.txt' % int(bergMaskNums[j,i])
-                depths = np.zeros(bergCount)
-                with open(depthFile,'r') as readFile:
-                    ii = 0
-                    for line in readFile:
-                        if ii >= bergCount:
-                            print('berg count mismatch in depth')
-                            break
-                        depths[ii] = float(line)
-                        ii += 1
-                readFile.close()
-                maxDepth[j,i] = np.max(depths)
+    ## deepest contour
+    # for i in range(np.shape(x)[1]):
+    #     for j in range(np.shape(x)[0]):
+    #         bergCount = int(bergsPerCell[j,i])
+    #         if(bergMask[j,i] == 1 and bergCount > 0):  #only go in if bergs here
+    #             depthFile = 'input/iceberg_depth_%05i.txt' % int(bergMaskNums[j,i])
+    #             depths = np.zeros(bergCount)
+    #             with open(depthFile,'r') as readFile:
+    #                 ii = 0
+    #                 for line in readFile:
+    #                     if ii >= bergCount:
+    #                         print('berg count mismatch in depth')
+    #                         break
+    #                     depths[ii] = float(line)
+    #                     ii += 1
+    #             readFile.close()
+    #             maxDepth[j,i] = np.max(depths)
     # contourf plot
     openFrac = np.fromfile('input/openFrac.bin', dtype='>f8')
     openFrac = openFrac.reshape((np.shape(z)[0], np.shape(x)[0], np.shape(x)[1]))
@@ -167,7 +167,7 @@ for k in range(len(name)):
         )
         plt.plot(x[ySlice,:],topo[ySlice,:],color='black')
         if(localBergs):
-            plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
+            # plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
             cp2 = plt.contourf(
                 x[ySlice,:],
                 np.squeeze(z),

@@ -15,5 +15,4 @@
  ICEBERGareaFile = 'totalBergArea.bin',
  icebergBGvel=0.06,
  brg_iceTemp=-10,
- maxBerg=500,
  &
