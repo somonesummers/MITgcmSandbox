@@ -3,4 +3,5 @@
  useOBCS=.TRUE.,
  useSHELFICE=.TRUE.,
  useDiagnostics=.TRUE.,
+ useICEPLUME=.TRUE.,
  &
