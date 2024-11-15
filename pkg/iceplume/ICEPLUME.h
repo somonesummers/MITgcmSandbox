@@ -133,6 +133,7 @@ C Header file pkg/ICEPLUME
      &     sOutPlume, tOutPlume,
      &     iceDepth,
      &     backgroundVel,
+     &     sin_beta,
      &     ptracerfluxSum,
      &     maxDepth
       _RS E_0
@@ -165,6 +166,7 @@ C Header file pkg/ICEPLUME
       _RL cd
       _RL iceDepth
       _RL backgroundVel
+      _RL sin_beta
       _RL ptracerFluxSum
       _RL maxDepth
 

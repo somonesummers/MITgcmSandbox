@@ -742,7 +742,7 @@ bergTopArea = 0
 areaResidual = 1
 # Generate the Inverse Power Law cumulative distribution function
 # over the range minBergWidth-maxBergWidth with a slope of alpha.
-setUpPrint('Making bergs, this can take a few loops...')
+setUpPrint('Making bergs to exact size')
 loop_count = 1
 while(np.abs(areaResidual) > .01 ): # Create random power dist of bergs, ensure correct surface area
     numberOfBergs = round(numberOfBergs * (1 + areaResidual))

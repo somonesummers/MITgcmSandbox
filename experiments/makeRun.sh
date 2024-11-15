@@ -18,6 +18,15 @@ echo "Ready to run -=三(ง ˙o˙)ว"
 if [ "$MACHINE" == "Mac" ];
 then
 	time ./mitgcmuv > Report$TIME.txt
+	cd ..
+	if [ -d figs ]; then
+   		echo "figs folder already made"
+   	else
+   		echo "figs folder missing, making now"
+   		mkdir figs
+   	fi	
+	python ../quicklookSide.py
+	python ../quicklookMap.py
 else
 	./mitgcmuv
 fi

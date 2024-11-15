@@ -323,7 +323,7 @@ C Interpolate from imposed ambient profiles
        CALL linint(Nr,zProfAbs,tProf,abs(T),Tambient)
        CALL linint(Nr,zProfAbs,sProf,abs(T),Sambient)
       ENDIF
-           
+
 	  Tin = T
 	  
 C Plume density
@@ -355,13 +355,14 @@ C Plume vertical velocity
      &  +(g/Y(2))*(rho_0-rho_1)/rho_ref
 
 C Plume temperature
-       YDOT(3)=E_0*Tambient/Y(1)-(Y(3)/Y(1))
-     &   *(E_0+mdot/Y(2))+(mdot/(Y(1)*Y(2)))
-     &   *(Tb-(L/c_w)-(c_i/c_w)*(Tb-iceTemp))
+      YDOT(3)=E_0*(Tambient-Y(3))/Y(1)
+     &  +mdot*(Tb-Y(3))/(Y(1)*Y(2))
+     &  -GamT*(Cd**0.5)*(Y(3)-Tb)/Y(1)
 
 C Plume salinity
-       YDOT(4)=E_0*Sambient/Y(1)-(Y(4)/Y(1))
-     &  *(E_0+mdot/Y(2));
+      YDOT(4)=E_0*(Sambient-Y(4))/Y(1)
+     &  +mdot*(Sb-Y(4))/(Y(1)*Y(2))
+     &  -GamS*(Cd**0.5)*(Y(4)-Sb)/Y(1)
 
 C along-plume integrated melt rate and contact area  - 
       YDOT(5) = Y(7)
@@ -442,9 +443,8 @@ C     Equations for Sb, Tb and mdot
      &           (Tb-Y(3))/(pi*Y(1)*Y(2))-4.*
      &           GamT*(Cd**0.5)*(Y(3)-Tb)/(pi*Y(1))
 
-      YDOT(4) = 2.*E_0*(Sambient-Y(4))/Y(1)+4.*mdot*
-     &           (Sb-Y(4))/(pi*Y(1)*Y(2))-4.*
-     &           GamS*(Cd**0.5)*(Y(4)-Sb)/(pi*Y(1))
+      YDOT(4) = 2.*E_0*(Sambient-Y(4))/Y(1)+4.*mdot*(Sb-Y(4))/
+     &          (pi*Y(1)*Y(2))-4.*GamS*(Cd**0.5)*(Y(4)-Sb)/(pi*Y(1))
 
       YDOT(5) = 2.*Y(1)
       YDOT(6) = 2.*Y(1)*mdot

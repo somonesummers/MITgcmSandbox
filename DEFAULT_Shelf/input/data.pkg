@@ -1,7 +1,8 @@
 # Packages
  &PACKAGES
- useOBCS=.TRUE.,
+ useICEBERG=.FALSE.,
  useSHELFICE=.TRUE.,
  useDiagnostics=.TRUE.,
  useICEPLUME=.TRUE.,
+ useOBCS=.TRUE.,
  &

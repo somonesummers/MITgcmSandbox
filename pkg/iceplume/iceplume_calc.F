@@ -210,16 +210,9 @@ C           Velocities
 
 C Vertical extent of domain
            maxDepth = rF(Nr+1)
+C Depth of seabed at glacer front
+           iceDepth = R_low(I,J,bi,bj)
 
-C Grounding line is in cell above deepest cell
-C to avoid interpolation issues in plume model
-
-       DO K = 1,Nr+1
-        IF ( rF(K) .LE. R_low(I,J,bi,bj) ) THEN
-         iceDepth = rF(k-1)
-         EXIT
-        ENDIF
-       ENDDO
 
       IF ( iceDepth .EQ. 0 ) THEN
                 WRITE(msgBuf,'(2A)')
@@ -541,6 +534,13 @@ C If it is not a plume cell, then no plume melting.
 
             ENDIF ! plume type
             ENDIF ! are we above sea bed?
+			
+			
+C Scaling due to angle of the ice face (sin_beta)
+			mProf(k)      = mProf(k)/sin_beta
+			mProfAv(k)    = mProfAv(k)/sin_beta
+			mProfPlume(k) = mProfPlume(k)/sin_beta
+			
 
 C Send outputs to 3D grid for diagnostics
             IF ( usePlumeDiagnostics ) THEN

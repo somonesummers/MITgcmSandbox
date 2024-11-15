@@ -65,7 +65,7 @@ run_config['Lx_m'] = 40000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 80 # num of z-grid points
+grid_params['Nr'] = 50 # num of z-grid points
 
 # Offshore current =========================
 oscStrength = .3 #[m/s] peak strength of offshore current
@@ -106,17 +106,17 @@ if(makeDirs):
      
 # copy over defaults
     if OSX == 'Darwin':
-        default_dirs = os.listdir('/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Shelf/')
+        default_dirs = os.listdir('/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg/')
     else:
-        default_dirs = os.listdir('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Shelf/')
+        default_dirs = os.listdir('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Berg/')
     for dir00 in default_dirs:
         if dir00.startswith('.'):
             continue
             
         if OSX == 'Darwin':
-            default_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Shelf/%s/'%dir00
+            default_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg/%s/'%dir00
         else:
-            default_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Shelf/%s/'%dir00    
+            default_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Berg/%s/'%dir00    
         default_files = os.listdir(default_dir)
         dst_dir = os.path.join(run_config['run_dir'], dir00)
         
@@ -649,7 +649,19 @@ if(writeFiles):
 plt.show()
 plt.close()
 
+## Boundary conditions
 
+# pre-allocate
+EBCu = np.zeros([grid_params['Nr'],grid_params['Ny']])
+
+# Apply barotropic velocity to balance input of runoff
+if runoff > 0:
+    fjordMouthCrossSection = -np.sum(d[:,-1]) * run_config['horiz_res_m']
+    fjordMouthVelocity = runoff/fjordMouthCrossSection
+    # Out-of-domain velocity is positive at eastern boundary
+    EBCu[:] = fjordMouthVelocity
+
+write_bin("EBCu.bin", EBCu)
 #========================================================================================
 ## Ice shelf
 
@@ -664,7 +676,7 @@ for j in np.arange(0, grid_params['Ny']):
     #for i in np.arange(0,nx):
     iceshelf[j,:] = np.interp(x[j,:],mX,-mH,0,0)
 
-iceshelf[:, 0] = 0  #let ice wall remain at x = 0
+# iceshelf[:, 0] = 0  #let ice wall remain at x = 0
 
 plt.plot(np.transpose(x), np.transpose(iceshelf), 'r', label="shelfice")
 plt.plot(np.transpose(x), np.transpose(d), 'b', label="bathy")
@@ -703,20 +715,6 @@ for j in np.arange(0,grid_params['Ny']):
 write_bin("phi0.exp1", pano)
 
 
-## Boundary conditions
-
-# pre-allocate
-EBCu = np.zeros([grid_params['Nr'],grid_params['Ny']])
-
-# Apply barotropic velocity to balance input of runoff
-if runoff > 0:
-    fjordMouthCrossSection = -np.sum(d[:,-1]) * run_config['horiz_res_m']
-    fjordMouthVelocity = runoff/fjordMouthCrossSection
-    # Out-of-domain velocity is positive at eastern boundary
-    EBCu[:] = fjordMouthVelocity
-
-write_bin("EBCu.bin", EBCu)
-
 #========================================================================================
 #Update files in INPUT directory
 setUpPrint('====== Cleaning up input/ files =====')
@@ -728,9 +726,9 @@ def replaceAll(file,searchExp,replaceExp):
             line = line.replace(searchExp,replaceExp)
         sys.stdout.write(line)
 
-#turn on ICEBERG if off
-# replaceAll(run_config['run_dir'] + '/input/data.pkg','ICEBERG=.FALSE.', 'ICEBERG=.TRUE.') 
-
+#turn ICEBERG off, SHELFICE on
+replaceAll(run_config['run_dir'] + '/input/data.pkg','ICEBERG=.TRUE.'  , 'ICEBERG=.FALSE.') 
+replaceAll(run_config['run_dir'] + '/input/data.pkg','SHELFICE=.FALSE.', 'SHELFICE=.TRUE.') 
 
 #========================================================================================
 # PACE (GaTech) 
