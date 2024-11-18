@@ -53,7 +53,7 @@ email = 'psummers8@gatech.edu'
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [8, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Grid_dx500_dx4'
+run_config['run_name'] = 'Grid_test'
 run_config['ndays'] = 2 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -66,6 +66,11 @@ grid_params['Nr'] = 250 # num of z-grid points
 oscStrength = .3 #[m/s] peak strength of offshore current
 lengthOffShoreCurrent = 10e3 #width of offshore current [m]
 indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
+
+PeReSet = False
+u_char = .5 #[m/s] characteristic velocity for Pe/Re
+Re = 20
+Pe = 50
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 #========================================================================================
@@ -236,10 +241,30 @@ params01['vectorInvariantMomentum'] = True
 # 12 for int
 
 # viscosity parameters
-#params01['viscA4'] = 0.0000 # Biharmonic viscosity?
-params01['viscAz'] = 1.0e-4 # Vertical viscosity
-#params01['viscAh'] = 2.5e-1 # Vertical viscosity
-params01['viscC2smag'] = 2.2 # ??? viscosity
+
+if(PeReSet):
+    # viscosity
+    params01['viscAz'] = dz[0] * u_char / Re # Vertical viscosity
+    params01['viscC2smag'] = 2.2 # SMAG horz viscosity
+
+    # diffusivity
+    params01['diffKhT'] = run_config['horiz_res_m'] * u_char / Re # Horizontal temp diffusion
+    params01['diffKhS'] = run_config['horiz_res_m'] * u_char / Re # Horz salt diffusion
+    params01['diffKzT'] = dz[0] * u_char / Pe # Vertical temp diffusion
+    params01['diffKzS'] = dz[0] * u_char / Pe # Vert salt diffusion
+else:
+    # viscosity
+    params01['viscAz'] = 1.0e-4 # Vertical viscosity
+    #params01['viscAh'] = 2.5e-1 # Vertical viscosity
+    params01['viscC2smag'] = 2.2 # ??? viscosity
+
+    # diffusivity
+    #params01['diffK4T'] = 0.0e4 # ?? temp diffusion
+    params01['diffKhT'] = 0.20 # Horizontal temp diffusion
+    params01['diffKhS'] = 0.20 # Horz salt diffusion
+    params01['diffKzT'] = 1.0e-4 # Vertical temp diffusion
+    params01['diffKzS'] = 1.0e-4 # Vert salt diffusion
+    #params01['diffK4S'] = 0.0e4 # ?? salt diffusion
 
 # advection and time stepping
 params01['tempAdvScheme'] = 33 # needs to be int
@@ -247,15 +272,6 @@ params01['saltAdvScheme'] = 33 # needs to be int
 #params01['tempStepping'] = True
 #params01['saltStepping'] = run_config['evolve_salt']
 params01['staggerTimeStep'] = True
-
-# diffusivity
-#params01['diffK4T'] = 0.0e4 # ?? temp diffusion
-params01['diffKhT'] = 0.20 # Horizontal temp diffusion
-params01['diffKhS'] = 0.20 # Horz salt diffusion
-params01['diffKzT'] = 1.0e-4 # Vertical temp diffusion
-params01['diffKzS'] = 1.0e-4 # Vert salt diffusion
-#params01['diffK4S'] = 0.0e4 # ?? salt diffusion
-
 
 # equation of state
 params01['eosType'] = 'JMD95Z'
@@ -354,6 +370,14 @@ if(makeDirs):
     rcf.write_data(run_config, data_params, group_name='data', lf=run_config['lf'])
     #SIZE file
     rcf.createSIZEh(run_config, grid_params)
+
+#========================================================================================
+# Stability Check 
+S_adv = 2 * (u_char * deltaT)/run_config['horiz_res_m']  # < 0.5 (Courant–Friedrichs–Lewy)
+S_in = params01['f0'] * deltaT # < 0.5 (adams bashforth II)
+S_lv = 4 * params01['viscAz'] * deltaT /(dz[0]**2) # < 0.6 
+
+setUpPrint("S_adv: %.04f, S_in: %.04f, S_lv: %.04f" % (S_adv, S_in, S_lv))
 
 #========================================================================================
 # Diagnostics

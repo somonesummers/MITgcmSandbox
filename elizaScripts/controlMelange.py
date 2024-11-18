@@ -49,13 +49,14 @@ email = 'psummers8@gatech.edu'
 # set high level run configurations
 
 setUpPrint('====== Welcome to the mélange building script =====')
+setUpPrint('\tMaking experiment to compare mélange realizations')
 #========================================================================================
 #main values to imput 
 
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'BergTest'
+run_config['run_name'] = 'melangeTest'
 run_config['ndays'] = 2 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -64,15 +65,15 @@ run_config['Lx_m'] = 40000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 50 # num of z-grid points
+grid_params['Nr'] = 80 # num of z-grid points
 
 # Offshore current =========================
 oscStrength = .3 #[m/s] peak strength of offshore current
-lengthOffShoreCurrent = 10e3 #width of offshore current [m]
+lengthOffShoreCurrent = 5e3 #width of offshore current [m]
 indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
-iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
+iceBergDepth = 250 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 8000 # [meters] of extent of ice
 iceCoverage = 95 # % of ice cover in melange, stay under 97% probably
 
@@ -153,7 +154,7 @@ domain_params = {}
 domain_params['Lx'] = run_config['Lx_m'] # domain size in x (m)
 domain_params['Ly'] = run_config['Ly_m'] # domain size in y (m)
 domain_params['L_sponge'] = 20000 # width of eastern sponge layer (m)
-domain_params['H'] = 1000 # max domain depth (m)
+domain_params['H'] = 500 # max domain depth (m)
 
 # NOTE: the only thing you may need to change here is the number of z-grid pointsm, which was set above)
 
@@ -516,7 +517,7 @@ z = -np.cumsum(dz)
 
 # Topography
 sillStart = 45000
-sillHeight = 500
+sillHeight = 0  #no sill
 sillLength = 5000
 fjordEnd = int(grid_params['Nx'] - indexOSC)
 
@@ -591,9 +592,9 @@ T_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 V_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 W_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 
-z_tmp =  np.asarray([  0,   50,  100,  200,  300, 500,1000]); #must be increasing, so do depth as positive, see negs later for z[:]
-t_tmp =  np.asarray([0.8,  1.5,  1.8,  2.1,  2.3, 2.6,2.75]);
-s_tmp =  np.asarray([ 33, 33.8, 34.0, 34.3, 34.4,34.6,35.0]);
+z_tmp =  np.asarray([  0,  10,   50,  100,  200,  300, 500]); #must be increasing, so do depth as positive, see negs later for z[:]
+t_tmp =  np.asarray([  1,   1,  1.5,  1.8,  2.1,  2.3, 2.6]);
+s_tmp =  np.asarray([ 33,33.2, 33.8, 34.0, 34.3, 34.4,34.6]);
 t_int = interpolate.PchipInterpolator(z_tmp, t_tmp)
 s_int = interpolate.PchipInterpolator(z_tmp, s_tmp)
 for j in np.arange(0,grid_params['Ny']):
@@ -647,7 +648,7 @@ runoffRad = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
 plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 # Total runoff (m^3/s)
-runoff = 500
+runoff = 100
 
 # velocity (m/s) of subglacial runoff
 wsg = 1
@@ -813,7 +814,7 @@ while(np.abs(areaResidual) > .01 ): # Create random power dist of bergs, ensure 
     inversePowerLawDistNumbers_width = x_width[nearestIndex_width];
     inversePowerLawDistNumbers_length = inversePowerLawDistNumbers_width/1.62 # Widths are bigger 
     tooWide = np.count_nonzero(inversePowerLawDistNumbers_width > deltaX)
-    tooLong = np.count_nonzero(inversePowerLawDistNumbers_width > deltaX)
+    tooLong = np.count_nonzero(inversePowerLawDistNumbers_length > deltaX)
     inversePowerLawDistNumbers_width[inversePowerLawDistNumbers_width > deltaX] = deltaX # Max width is grid cell (assumed square)
     inversePowerLawDistNumbers_length[inversePowerLawDistNumbers_length > deltaX] = deltaX # Max length is grid cell (assumed square)
     if(tooLong + tooWide > 0):
@@ -939,7 +940,7 @@ plt.ylabel('Depth [m]')
 
 plt.subplot(2,2,2)
 plt.hist(inversePowerLawDistNumbers_depth,bins = 50)
-# plt.ylabel('Count')
+plt.ylabel('Count')
 plt.xlabel('Depth [m]')
 
 plt.subplot(2,2,3)
@@ -949,7 +950,7 @@ plt.xlabel('Width [m]')
 
 plt.subplot(2,2,4)
 plt.hist(inversePowerLawDistNumbers_length,bins = 50)
-# plt.ylabel('Count')
+plt.ylabel('Count')
 plt.xlabel('Length [m]')
 fig.tight_layout()
 plt.savefig(run_config['run_dir']+'/input/bergStatistics.png', format='png', dpi=200)
@@ -987,19 +988,19 @@ fig.tight_layout()
 plt.savefig(run_config['run_dir']+'/input/meltMask.png', format='png', dpi=200)
 plt.show()
 
-# write iceberg txt files
-setUpPrint('Saving text files for bergs...')
-if(writeFiles):
-    for i in range(bergMaski):
-        with open(run_config['run_dir'] + '/input/iceberg_depth_%05i.txt' % (i+1) , 'w') as file_handler:
-            for item in icebergs_depths[i,icebergs_depths[i,:] > 0]:
-                file_handler.write("{}\n".format(item))
-        with open(run_config['run_dir']+'/input/iceberg_width_%05i.txt' % (i+1) , 'w') as file_handler:
-            for item in icebergs_widths[i,icebergs_widths[i,:] > 0]:
-                file_handler.write("{}\n".format(item))
-        with open(run_config['run_dir'] + '/input/iceberg_length_%05i.txt' % (i+1) , 'w') as file_handler:
-            for item in icebergs_length[i,icebergs_length[i,:] > 0]:
-                file_handler.write("{}\n".format(item))
+## write iceberg txt files
+# setUpPrint('Saving text files for bergs...')
+# if(writeFiles):
+#     for i in range(bergMaski):
+#         with open(run_config['run_dir'] + '/input/iceberg_depth_%05i.txt' % (i+1) , 'w') as file_handler:
+#             for item in icebergs_depths[i,icebergs_depths[i,:] > 0]:
+#                 file_handler.write("{}\n".format(item))
+#         with open(run_config['run_dir']+'/input/iceberg_width_%05i.txt' % (i+1) , 'w') as file_handler:
+#             for item in icebergs_widths[i,icebergs_widths[i,:] > 0]:
+#                 file_handler.write("{}\n".format(item))
+#         with open(run_config['run_dir'] + '/input/iceberg_length_%05i.txt' % (i+1) , 'w') as file_handler:
+#             for item in icebergs_length[i,icebergs_length[i,:] > 0]:
+#                 file_handler.write("{}\n".format(item))
 
 icebergs_depths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
 icebergs_widths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
@@ -1027,7 +1028,6 @@ write_bin('icebergs_length.bin',icebergs_length2D)
 
 
 
-
 setUpPrint('Berg setup is done.')
 
 
@@ -1042,11 +1042,10 @@ def replaceAll(file,searchExp,replaceExp):
             line = line.replace(searchExp,replaceExp)
         sys.stdout.write(line)
 
-#Turn off Berg Diagnostics for intital spin up
-replaceAll(run_config['run_dir'] + '/input/data.diagnostics',' timePhase(2)', '# timePhase(2)')
-replaceAll(run_config['run_dir'] + '/input/data.diagnostics',' fields(1:3,3)', '# fields(1:3,3)')
-replaceAll(run_config['run_dir'] + '/input/data.diagnostics',' fileName(3)', '# fileName(3)')
-replaceAll(run_config['run_dir'] + '/input/data.diagnostics',' frequency(3)', '# frequency(3)')
+#turn on ICEBERG if off
+replaceAll(run_config['run_dir'] + '/input/data.pkg','ICEBERG=.FALSE.', 'ICEBERG=.TRUE.') 
+
+
 
 #========================================================================================
 # PACE (GaTech) 
@@ -1067,10 +1066,7 @@ cluster_params['run_dir'] = os.path.join(cluster_params['exps_dir'], run_config[
 cluster_params['cpus_per_node'] = 10 
 
 #extra run commands for the sbatch script
-extraList = ['python ../configurationAdjustBergs.py\n',
-             'bash ../makeRunMpi.sh\n',
-             'python ../configurationAdjustPostBergs.py\n',
-             'bash ../makeRunMpi.sh']
+extraList = []
 
 run_config['extraCommands'] = "".join(extraList)
      

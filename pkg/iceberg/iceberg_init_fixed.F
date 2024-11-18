@@ -17,6 +17,7 @@ C     === Global variables ===
 #include "EEPARAMS.h"
 #include "PARAMS.h"
 #include "GRID.h"
+#include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 
 C     === Routine arguments ===
@@ -39,42 +40,66 @@ C      Read iceberg numbers file
         CALL READ_REC_XY_RL
      &     (ICEBERGmaskNumsFile,icebergMaskNums,1,0,myThid)
        ENDIF
-	   
+   
 C      Read iceberg num per cell file
        IF (ICEBERGnumPerCellFile .NE. ' ' ) THEN
         CALL READ_REC_XY_RL
      &     (ICEBERGnumPerCellFile,icebergNumBergs,1,0,myThid)
        ENDIF
-	   
+
+C      Read melt mask
+       IF (ICEBERGmeltFile .NE. ' ' ) THEN
+        CALL READ_REC_XY_RL
+     &     (ICEBERGmeltFile,meltMask,1,0,myThid)
+       ENDIF
+
 C      Read drift mask
        IF (ICEBERGdriftFile .NE. ' ' ) THEN
         CALL READ_REC_XY_RL
      &     (ICEBERGdriftFile,driftMask,1,0,myThid)
        ENDIF
-	   
+   
 C      Read barrier mask
        IF (ICEBERGbarrierFile .NE. ' ' ) THEN
         CALL READ_REC_XY_RL
      &     (ICEBERGbarrierFile,barrierMask,1,0,myThid)
        ENDIF
-	   
+   
 C      Read iceberg area
        IF (ICEBERGareaFile .NE. ' ' ) THEN
         CALL READ_REC_XYZ_RL
      &     (ICEBERGareaFile,icebergArea3D,1,0,myThid)
        ENDIF
-	   
+
+C      Read iceberg lengths
+       IF (ICEBERGlengthFile .NE. ' ' ) THEN
+        CALL READ_REC_3D_RL
+     &     (ICEBERGlengthFile,precFloat64,500,icebergLength,1,0,myThid) !maxberg hard coded here
+       ENDIF
+
+C      Read iceberg widths
+       IF (ICEBERGwidthsFile .NE. ' ' ) THEN
+        CALL READ_REC_3D_RL
+     &     (ICEBERGwidthsFile,precFloat64,500,icebergWidths,1,0,myThid) !maxberg hard coded here
+       ENDIF
+
+C      Read iceberg depths
+       IF (ICEBERGdepthsFile .NE. ' ' ) THEN
+        CALL READ_REC_3D_RL
+     &     (ICEBERGdepthsFile,precFloat64,500,icebergDepths,1,0,myThid) !maxberg hard coded here
+       ENDIF
+
 C      Read open fraction file
        IF ( ICEBERGopenFracFile .NE. ' ' ) THEN
         CALL READ_REC_XYZ_RL
      &     (ICEBERGopenFracFile,openFraction,1,0,myThid)  
-	 
+ 
 C          Partially block cells filled by icebergs
            DO bj = myByLo(myThid), myByHi(myThid)
             DO bi = myBxLo(myThid), myBxHi(myThid)
              DO J = 1, sNy
               DO I = 1, sNx
-			  
+  
 C             If we want to make icebergs physical barriers
                IF ( barrierMask(I,J,bi,bj) .GT. 0. _d 0 ) THEN
 C              Loop through water column
@@ -82,13 +107,13 @@ C              Loop through water column
                   hFacC(I,J,K,bi,bj) = openFraction(I,J,K,bi,bj)
                 ENDDO
                ENDIF
-			   
+   
               ENDDO
              ENDDO
             ENDDO
            ENDDO
        ENDIF
-	   
+   
 
 
 #ifdef ALLOW_DIAGNOSTICS

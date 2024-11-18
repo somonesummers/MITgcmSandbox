@@ -84,23 +84,23 @@ if(isBerg):
     bergsPerCell = bergsPerCell.reshape(np.shape(x))
     maxDepth = np.zeros(np.shape(x))
 
-    #deepest contour
-    for i in range(np.shape(x)[1]):
-        for j in range(np.shape(x)[0]):
-            bergCount = int(bergsPerCell[j,i])
-            if(bergMask[j,i] == 1 and bergCount > 0):  #only go in if bergs here
-                depthFile = 'input/iceberg_depth_%05i.txt' % int(bergMaskNums[j,i])
-                depths = np.zeros(bergCount)
-                with open(depthFile,'r') as readFile:
-                    ii = 0
-                    for line in readFile:
-                        if ii >= bergCount:
-                            print('berg count mismatch in depth')
-                            break
-                        depths[ii] = float(line)
-                        ii += 1
-                readFile.close()
-                maxDepth[j,i] = np.max(depths)
+    ## deepest contour
+    # for i in range(np.shape(x)[1]):
+    #     for j in range(np.shape(x)[0]):
+    #         bergCount = int(bergsPerCell[j,i])
+    #         if(bergMask[j,i] == 1 and bergCount > 0):  #only go in if bergs here
+    #             depthFile = 'input/iceberg_depth_%05i.txt' % int(bergMaskNums[j,i])
+    #             depths = np.zeros(bergCount)
+    #             with open(depthFile,'r') as readFile:
+    #                 ii = 0
+    #                 for line in readFile:
+    #                     if ii >= bergCount:
+    #                         print('berg count mismatch in depth')
+    #                         break
+    #                     depths[ii] = float(line)
+    #                     ii += 1
+    #             readFile.close()
+    #             maxDepth[j,i] = np.max(depths)
 
 
     # contourf plot
@@ -171,7 +171,7 @@ for k in range(len(name)):
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
         if(localBergs):
-            plt.plot(y[:,xSlice],-np.max(maxDepth,axis=1),color='gray',linestyle='dotted')
+            # plt.plot(y[:,xSlice],-np.max(maxDepth,axis=1),color='gray',linestyle='dotted')
             cp2 = plt.contourf(
                 np.squeeze(y[:,xSlice]),
                 np.squeeze(z),
