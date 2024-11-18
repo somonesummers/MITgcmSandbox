@@ -5,7 +5,7 @@
 *iceberg_*.txt
 *.mat
 !.gitignore
-*
 Berg500*
 !*.sh
-
+!batchBuildRun.sh
+*
