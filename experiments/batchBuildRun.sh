@@ -8,7 +8,7 @@ fi
 
 for NAME in "$@"
 do
-	echo "move in $NAME..."
+	echo "move in directory $NAME..."
 	cd $NAME
 	bash ../makeBuild.sh ../../.. -mpi
 	echo "submitting job"
