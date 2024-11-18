@@ -53,15 +53,15 @@ email = 'psummers8@gatech.edu'
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [8, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Grid_dx200_dx2'
+run_config['run_name'] = 'Grid_dx500_dx4'
 run_config['ndays'] = 2 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
+run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
 run_config['Lx_m'] = 80000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 
-grid_params['Nr'] = 500 # num of z-grid points
+grid_params['Nr'] = 250 # num of z-grid points
 
 oscStrength = .3 #[m/s] peak strength of offshore current
 lengthOffShoreCurrent = 10e3 #width of offshore current [m]
