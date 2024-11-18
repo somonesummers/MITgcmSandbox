@@ -29,7 +29,7 @@ email = 'psummers8@gatech.edu'
 
 run_config = {}
 run_config['ncpus_xy'] = [7, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'MIPshelf'
+run_config['run_name'] = 'shelfshelfdeleteme'
 run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -658,6 +658,7 @@ write_bin("icetopo.exp1", iceshelf)
 
 # Phi 0
 
+print('z',z)
 pano = np.zeros([grid_params['Ny'], grid_params['Nx']])
 for j in np.arange(0,grid_params['Ny']):
     for i in np.arange(0, grid_params['Nx']):
@@ -676,6 +677,13 @@ for j in np.arange(0,grid_params['Ny']):
             panoex = pextra - abs(z[k] - iceshelf[j,i]) * gravity * Rref[k,j]
 
         pano[j, i] = panoex + ptopano
+
+plt.figure()
+pc = plt.pcolor(pano)
+plt.colorbar(pc)
+plt.title('Ice Pressure Load Anomaly')
+
+plt.show()
 
 
 write_bin("phi0.exp1", pano)

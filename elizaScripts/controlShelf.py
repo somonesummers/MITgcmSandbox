@@ -32,7 +32,7 @@ import build_domain_funcs as build_domain
 import run_config_funcs as rcf # import helpter functions
 
 #Set up new folder
-makeDirs = True
+makeDirs = False
 #Write input files, this lets us update the inputs with a full new run
 writeFiles = True
 
@@ -43,6 +43,13 @@ def setUpPrint(msg):
     print(msg)
     if(makeDirs):
         setupNotes.write(str(msg) + "\n")
+
+def write_bin(fname, data):
+    setUpPrint(fname + " " + str(np.shape(data)))
+    if(writeFiles):
+        data.astype(">f8").tofile(run_config['run_dir']+'/input/'+fname)
+    else:
+        setUpPrint('\tNot saving')
 
 # ## Main run configuration
 email = 'psummers8@gatech.edu'
@@ -479,15 +486,6 @@ if(makeDirs):
 #Domain initialization and saving
 setUpPrint('====== Domain Initialization =====')
 
-def write_bin(fname, data):
-    print(fname, np.shape(data))
-    setupNotes.write(fname + " " + str(np.shape(data))+'\n')
-    if(writeFiles):
-        setupNotes.write(fname + " " + str(np.shape(data))+'\n')
-        data.astype(">f8").tofile(run_config['run_dir']+'/input/'+fname)
-    else:
-        setupNotes.write('Not saving\n')
-        print('Not saving')
 #Similar params as fed into MITgcm, but redeclared here
 gravity = 9.81
 sbeta = 8.0e-4
@@ -603,7 +601,7 @@ runoffRad = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
 plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 # Total runoff (m^3/s)
-runoff = 100
+runoff = 10
 
 # velocity (m/s) of subglacial runoff
 wsg = 1
@@ -676,7 +674,7 @@ for j in np.arange(0, grid_params['Ny']):
     #for i in np.arange(0,nx):
     iceshelf[j,:] = np.interp(x[j,:],mX,-mH,0,0)
 
-# iceshelf[:, 0] = 0  #let ice wall remain at x = 0
+iceshelf[:, 0] = 0  #let ice wall remain at x = 0
 
 plt.plot(np.transpose(x), np.transpose(iceshelf), 'r', label="shelfice")
 plt.plot(np.transpose(x), np.transpose(d), 'b', label="bathy")
@@ -690,29 +688,46 @@ write_bin("icetopo.exp1", iceshelf)
 
 Rref = rho0 * (1 - talpha * (T2 - T0) + sbeta * (S2 - S0))
 
-
 pano = np.zeros([grid_params['Ny'], grid_params['Nx']])
+shelfMass = np.zeros([grid_params['Ny'], grid_params['Nx']])
 for j in np.arange(0,grid_params['Ny']):
     for i in np.arange(0, grid_params['Nx']):
         ki = np.where(z >= iceshelf[j,i])[0]
+        # print(ki)
         if not ki.size > 0:
+            # print('zero part of loop')
             pextra = 0
             panoex = 0
             ptop = 0
             ptopano = 0
         else:
-            #need to ensure Paul did this correctly for arbitraty dz spacing
-            print(' in loop')
             k = np.nanmax(ki)
+            # print(' in loop')
+            shelfMass[j,i] = np.sum((rho0) * gravity * dz[0:k])
             ptop = np.sum(Rref[0:k,j] * gravity * dz[0:k])  # Ice pressure
-            ptopano = ptop - np.sum(rho0 * gravity * dz[0:k+1])  # Ice pressure anomaly
+            ptopano = ptop - np.sum(rho0 * gravity * dz[0:k])  # Ice pressure anomaly
             pextra = abs(z[k] - iceshelf[j,i]) * gravity * rho0
             panoex = pextra - abs(z[k] - iceshelf[j,i]) * gravity * Rref[k,j]
 
-        pano[j, i] = panoex + ptopano
+        # pano[j, i] = panoex + ptopano
+        pano[j, i] = ptopano
 
+plt.figure()
+pc = plt.pcolor(pano)
+plt.colorbar(pc)
+plt.title('Ice Pressure Load Anomaly')
+
+plt.show()
+
+plt.figure()
+pc = plt.pcolor(shelfMass)
+plt.colorbar(pc)
+plt.title('Iceshelf Mass')
+
+plt.show()
 
 write_bin("phi0.exp1", pano)
+write_bin("iceShelfMass.bin", shelfMass)
 
 
 #========================================================================================
@@ -762,7 +777,8 @@ setUpPrint('Estimated run time is %.2f hours for one CPU' % (estTime/60))
 setUpPrint('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/ncpus*1.2,ncpus))
 
 comptime_hrs = estTime/60/ncpus*1.2 
-setupNotes.close()
+if(makeDirs):
+    setupNotes.close()
 
 if(makeDirs):
     shutil.move('setupReport.txt', run_config['run_dir']+'/input')

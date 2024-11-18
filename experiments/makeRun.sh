@@ -26,7 +26,7 @@ then
    		mkdir figs
    	fi	
 	python ../quicklookSide.py
-	python ../quicklookMap.py
+	#python ../quicklookMap.py
 else
 	./mitgcmuv
 fi
