@@ -64,6 +64,13 @@ C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
       CALL DIAGNOSTICS_ADDTOLIST( diagNum,
      I     diagName, diagCode, diagUnits, diagTitle, 0, myThid )
 
+      diagName  = 'BRGhFacC'
+      diagTitle = 'hFacC open frac of cell center                    '
+      diagUnits = '[ ]             '
+      diagCode  = 'SM      MR      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I     diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+
 #endif /* ALLOW_DIAGNOSTICS */
 
       RETURN
