@@ -376,9 +376,9 @@ else:
 
 #---------specify time averaged fields------#
 # NOTE: many more options available see mitgcm docs
-diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],['UVELSLT ','UVELTH  ','WVELSLT ','WVELTH  '],['BRGfwFlx','BRGhtFlx','BRGmltRt']]
+diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],['UVELSLT ','UVELTH  ','WVELSLT ','WVELTH  '],['BRGfwFlx','BRGhtFlx','BRGmltRt'],['icefrntW','icefrntT','icefrntS','icefrntR','icefrntM']]
 diag_fields_max = 0
-diag_fields_avg_name = ['dynDiag','fluxDiag','BRGFlx']
+diag_fields_avg_name = ['dynDiag','fluxDiag','BRGFlx','plumeDiag']
 # diag_fields_avg = ['UVEL', 'VVEL', 'WVEL', 'UVELSQ', 'VVELSQ', 'WVELSQ',
 #                   'UVELTH', 'VVELTH', 'WVELTH', 'THETA', 'THETASQ',
 #                   'PHIHYD', 'LaUH1TH', 'LaVH1TH', 'LaHw1TH','LaHs1TH']

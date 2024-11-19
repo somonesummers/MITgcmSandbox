@@ -25,8 +25,9 @@ then
    		echo "figs folder missing, making now"
    		mkdir figs
    	fi	
+   	python ../quickBergPlot.py
 	python ../quicklookSide.py
-	#python ../quicklookMap.py
+	python ../quicklookMap.py
 else
 	./mitgcmuv
 fi

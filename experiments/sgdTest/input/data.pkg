@@ -1,5 +1,6 @@
 # Packages
  &PACKAGES
+ useICEPLUME=.FALSE.,
  useOBCS=.TRUE.,
  useSHELFICE=.TRUE.,
  useDiagnostics=.TRUE.,

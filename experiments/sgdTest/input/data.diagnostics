@@ -7,7 +7,7 @@
  diag_mnc=.FALSE.,
  fields(1:5,1)='THETA','SALT','UVEL','WVEL','VVEL',
  fileName(1)='dynDiag',
- frequency(1)=8640,
+ frequency(1)=200,
  timePhase(1)=0.00000000e+00,
  fields(1:4,2)='UVELSLT ','UVELTH  ','WVELSLT ','WVELTH  ',
  fileName(2)='fluxDiag',

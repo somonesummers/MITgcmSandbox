@@ -28,8 +28,8 @@
       3.40000000e+01, 3.40000000e+01, 3.40000000e+01, 3.40000000e+01, 3.40000000e+01, 3.40000000e+01, 3.40000000e+01, 3.40000000e+01, 3.40000000e+01, 3.40000000e+01,
  no_slip_sides=.TRUE.,
  no_slip_bottom=.TRUE.,
- rigidLid=.TRUE.,
- implicitFreeSurface=.FALSE.,
+ rigidLid=.FALSE.,
+ implicitFreeSurface=.TRUE.,
  implicitViscosity=.TRUE.,
  implicitDiffusion=.TRUE.,
  f0=1.36000000e-04,
@@ -40,6 +40,7 @@
  nonHydrostatic=.TRUE.,
  readBinaryPrec=64,
  plotLevel=0,
+ selectAddFluid=1,
  &
 
 # Elliptic solver parameters
@@ -63,7 +64,7 @@
  periodicExternalForcing=.FALSE.,
  ExternForcingPeriod=1.00000000e+02,
  ExternForcingCycle=1.00000000e+03,
- endTime=864000,
+ endTime=4000,
  deltaT=2.00000000e+01,
  &
 
