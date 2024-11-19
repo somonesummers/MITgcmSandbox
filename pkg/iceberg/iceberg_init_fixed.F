@@ -107,12 +107,12 @@ C              Loop through water column
                   hFacC(I,J,K,bi,bj) = openFraction(I,J,K,bi,bj)
                 ENDDO
                ENDIF
-   
               ENDDO
              ENDDO
             ENDDO
            ENDDO
-       ENDIF
+           CALL UPDATE_MASKS_ETC(myThid)
+       ENDIF 
    
 
 

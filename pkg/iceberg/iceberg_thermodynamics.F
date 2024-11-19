@@ -182,54 +182,6 @@ C     Get iceberg cell number and number of icebergs in this cell
        
        IF ( numBergs .GT. 0 ) THEN
         
-C C     Create text file names for reading
-C        IF ( cellNum .LT. 10 ) THEN
-C          write(cellNumStr, '(I1)') cellNum ! Convert cell number to a string
-C          cellNumStub = "0000" // cellNumStr
-C          dummy1 = "iceberg_depth_0000" // cellNumStr
-C          depthName = dummy1 // ".txt"
-C          dummy2 = "iceberg_length_0000" // cellNumStr
-C          lengthName = dummy2 // ".txt"
-C          dummy3 = "iceberg_width_0000" // cellNumStr
-C          widthName = dummy3 // ".txt"
-C        ELSEIF ( cellNum .GE. 10 .AND. cellNum .LT. 100 ) THEN
-C          write(cellNumStr, '(I2)') cellNum ! Convert cell number to a string
-C          cellNumStub = "000" // cellNumStr
-C          dummy1 = "iceberg_depth_000" // cellNumStr
-C          depthName = dummy1 // ".txt"
-C          dummy2 = "iceberg_length_000" // cellNumStr
-C          lengthName = dummy2 // ".txt"
-C          dummy3 = "iceberg_width_000" // cellNumStr
-C          widthName = dummy3 // ".txt"
-C        ELSEIF ( cellNum .GE. 100 .AND. cellNum .LT. 1000 ) THEN
-C          write(cellNumStr, '(I3)') cellNum ! Convert cell number to a string
-C          cellNumStub = "00" // cellNumStr
-C          dummy1 = "iceberg_depth_00" // cellNumStr
-C          depthName = dummy1 // ".txt"
-C          dummy2 = "iceberg_length_00" // cellNumStr
-C          lengthName = dummy2 // ".txt"
-C          dummy3 = "iceberg_width_00" // cellNumStr
-C          widthName = dummy3 // ".txt"
-C        ELSEIF ( cellNum .GE. 1000 .AND. cellNum .LT. 10000 ) THEN
-C          write(cellNumStr, '(I4)') cellNum ! Convert cell number to a string
-C          cellNumStub = "0" // cellNumStr
-C          dummy1 = "iceberg_depth_0" // cellNumStr
-C          depthName = dummy1 // ".txt"
-C          dummy2 = "iceberg_length_0" // cellNumStr
-C          lengthName = dummy2 // ".txt"
-C          dummy3 = "iceberg_width_0" // cellNumStr
-C          widthName = dummy3 // ".txt"
-C        ELSE 
-C          write(cellNumStr, '(I5)') cellNum ! Convert cell number to a string
-C          cellNumStub = cellNumStr
-C          dummy1 = "iceberg_depth_" // cellNumStr
-C          depthName = dummy1 // ".txt"
-C          dummy2 = "iceberg_length_" // cellNumStr
-C          lengthName = dummy2 // ".txt"
-C          dummy3 = "iceberg_width_" // cellNumStr
-C          widthName = dummy3 // ".txt"
-C        ENDIF
-       
 C      Pre-allocate profile output
        DO K = 1,Nr
         fwProf(K) = 0. _d 0
@@ -258,68 +210,6 @@ C     Pre-allocate berg geometry profiles
         length_list(n) = icebergLength(I,J,n,bi,bj)
         width_list(n) = icebergWidths(I,J,n,bi,bj)
       ENDDO 
-C C     Create unique numbers for reading berg geometry text files
-C       r1 = 7
-C       r2 = 8
-C       r3 = 9
-C C     Loop through bergs and make profiles of iceberg depth
-C       open (UNIT=r1, FILE=depthName)
-C       open (UNIT=r2, FILE=lengthName)
-C       open (UNIT=r3, FILE=widthName)
-C       DO n = 1,numBergs
-C C      - iceberg depth
-C         read(r1,*) bergDepth
-C         depth_list(n) = bergDepth
-C C      - iceberg length
-C         read(r2,*) bergLength
-C         length_list(n) = bergLength
-C C      - iceberg width
-C         read(r3,*) bergWidth
-C         width_list(n) = bergWidth
-C       ENDDO
-C C     Close berg geometry text files
-C       close(r1)
-C       close(r2)
-C       close(r3)
-
-
-      
-C     Make output text files for this cell
-C
-C       fileName_melt = fileName1 // ".txt"
-C       fileName2 = "iceberg_fwFlx_" // cellNumStub
-C       fileName_fw = fileName2 // ".txt"   
-C       fileName3 = "iceberg_htFlx_" // cellNumStub
-C       fileName_hf = fileName3 // ".txt"
-C       fileName4 = "iceberg_spdla_" // cellNumStub
-C       fileName_spd1 = fileName4 // ".txt"
-C       fileName5 = "iceberg_spdsa_" // cellNumStub
-C       fileName_spd2 = fileName5 // ".txt"
-C       fileName6 = "iceberg_spdba_" // cellNumStub
-C       fileName_spd3 = fileName6 // ".txt"
-       
-C      Assign units for reading text files (must be specific to each cell
-C        r4 = i + j + bi + bj + 10
-C        r5 = i + j + bi + bj + 11
-C        r6 = i + j + bi + bj + 12
-C        r7 = i + j + bi + bj + 13
-C        r8 = i + j + bi + bj + 14
-C        r9 = i + j + bi + bj + 15
-        
-C     Open text files for writing - open once per cell
-C        open (UNIT=r4, FILE=fileName_melt, 
-C     &          FORM='FORMATTED', ACCESS='APPEND')
-C        open (UNIT=r5, FILE=fileName_fw, 
-C     &          FORM='FORMATTED', ACCESS='APPEND')
-C        open (UNIT=r6, FILE=fileName_hf, 
-C     &          FORM='FORMATTED', ACCESS='APPEND')
-C        open (UNIT=r7, FILE=fileName_spd1, 
-C     &          FORM='FORMATTED', ACCESS='APPEND')
-C        open (UNIT=r8, FILE=fileName_spd2, 
-C     &          FORM='FORMATTED', ACCESS='APPEND')
-C        open (UNIT=r9, FILE=fileName_spd3, 
-C     &          FORM='FORMATTED', ACCESS='APPEND')
-
 
 C --- ENTER BERG LOOPS ---
       DO n = 1,numBergs
@@ -510,25 +400,6 @@ C     Heat required to melt that much ice (W m^-2)
 C     Get cell-totals and cell-averages
       fwProf(K) = fwProf(K) + fw_berg_cumecs
       
-      
-C     Write berg output to text files
-C       IF ( DIFFERENT_MULTIPLE(dumpFreq, myTime, deltaTClock) ) THEN   
-C      Print iceberg geometry data to text file
-C        write(r4,*) melt_rate_berg, bergDepth, bergLength,
-C     &          bergWidth, cellNum, myIter, k
-C        write(r5,*) fw_berg_cumecs, bergDepth, bergLength,
-C     &          bergWidth, cellNum, myIter, k
-C        write(r6,*) hf_berg, bergDepth, bergLength,
-C     &          bergWidth, cellNum, myIter, k
-C        write(r7,*) rel_speed_la, bergDepth, bergLength,
-C     &          bergWidth, cellNum, myIter, k
-C        write(r8,*) rel_speed_sa, bergDepth, bergLength,
-C     &          bergWidth, cellNum, myIter, k
-C        write(r9,*) rel_speed_base, bergDepth, bergLength,
-C     &          bergWidth, cellNum, myIter, k
-C      ENDIF ! Stop checking if time is at dumpFreq   
-       
-       
        
       ELSE ! berg doesn't reach this far down the water column
        
@@ -540,23 +411,6 @@ C     Set variables to 0
       rel_speed_sa = 0.D0
       rel_speed_base = 0.D0
       fwProf(K) = fwProf(K)
-        
-C     Write zeros to text file
-C     Write berg output to text files
-C       IF ( DIFFERENT_MULTIPLE(dumpFreq, myTime, deltaTClock) ) THEN
-C        write(r4,*) melt_rate_berg, bergDepth, bergLength,
-C     &          bergWidth, cellNum, myIter, k
-C        write(r5,*) fw_berg_cumecs, bergDepth, bergLength,
-C     &          bergWidth, cellNum, myIter, k
-C        write(r6,*) hf_berg, bergDepth, bergLength,
-C     &          bergWidth, cellNum, myIter, k
-C        write(r7,*) rel_speed_la, bergDepth, bergLength,
-C     &          bergWidth, cellNum,  myIter, k
-C        write(r8,*) rel_speed_sa, bergDepth, bergLength,
-C     &          bergWidth, cellNum, myIter, k
-C        write(r9,*) rel_speed_base, bergDepth, bergLength,
-C     &          bergWidth, cellNum, myIter, k
-C      ENDIF ! Stop checking if time is at dumpFreq
      
      
       ENDIF ! Stop checking if berg extends to this depth
@@ -565,13 +419,18 @@ C      ENDIF ! Stop checking if time is at dumpFreq
       
       ENDDO ! Stop looping through icebergs
       
-C     Close output text files
-C      close(r4)
-C      close(r5)
-C      close(r6)
-C      close(r7)
-C     close(r8)
-C     close(r9) 
+C C     Probably wrong place, but force update hfacC
+C        IF ( ICEBERGopenFracFile .NE. ' ' ) THEN
+C         CALL READ_REC_XYZ_RL
+C      &     (ICEBERGopenFracFile,openFraction,1,0,myThid)  
+C C             If we want to make icebergs physical barriers
+C                IF ( barrierMask(I,J,bi,bj) .GT. 0. _d 0 ) THEN
+C C              Loop through water column
+C                 DO K = 1, Nr
+C                   hFacC(I,J,K,bi,bj) = openFraction(I,J,K,bi,bj)
+C                 ENDDO
+C                ENDIF
+C        ENDIF 
       
 
 C -----------------------------------------------------------------
@@ -610,12 +469,11 @@ C     (icefrontlength = dy/dxdy = 1/dx)
 C     Or simply the area of ice in the cell divided by the volume of the cell
       icebergTendT3D(I,J,K,bi,bj) = tendT_berg 
      &      * ( icebergArea3D(I,J,K,bi,bj)
-     &     / (dxG(I,J,bi,bj) * dyG(I,J,bi,bj) * abs(drF(K))) )
+     &     / (dxG(I,J,bi,bj) * dyG(I,J,bi,bj) * abs(drF(K))) )  ! volume of cell
       icebergTendS3D(I,J,K,bi,bj) = tendS_berg 
      &      * ( icebergArea3D(I,J,K,bi,bj)
      &     / (dxG(I,J,bi,bj) * dyG(I,J,bi,bj) * abs(drF(K))) )
      
-
       ENDIF ! stop checking for freshwater (if not, then these variables are already set to 0)
 
       ENDDO ! stop looping through water column
@@ -628,7 +486,8 @@ C     Or simply the area of ice in the cell divided by the volume of the cell
       ENDDO
       ENDDO
       ENDDO
-      
+C     update hfacC and other
+      CALL UPDATE_MASKS_ETC(myThid)
       
 
 C     Write to diagnostics
@@ -640,8 +499,35 @@ C     Write to diagnostics
      &      0,Nr,0,1,1,myThid)
           CALL DIAGNOSTICS_FILL_RS(icebergHeatFlux3D,'BRGhtFlx',
      &      0,Nr,0,1,1,myThid)
+          CALL DIAGNOSTICS_FILL_RS(hFacC,'BRGhFacC',
+     &      0,Nr,0,1,1,myThid)
          ENDIF
 #endif /* ALLOW_DIAGNOSTICS */
+
+
+      IF ( ICEBERGopenFracFile .NE. ' ' ) THEN
+        CALL READ_REC_XYZ_RL
+     &     (ICEBERGopenFracFile,openFraction,1,0,myThid)  
+C          Partially block cells filled by icebergs
+           DO bj = myByLo(myThid), myByHi(myThid)
+            DO bi = myBxLo(myThid), myBxHi(myThid)
+             DO J = 1, sNy
+              DO I = 1, sNx
+  
+C             If we want to make icebergs physical barriers
+               IF ( barrierMask(I,J,bi,bj) .GT. 0. _d 0 ) THEN
+C              Loop through water column
+                DO K = 1, Nr
+                  hFacC(I,J,K,bi,bj) = openFraction(I,J,K,bi,bj)
+                ENDDO
+               ENDIF
+              ENDDO
+             ENDDO
+            ENDDO
+           ENDDO
+        CALL UPDATE_MASKS_ETC(myThid)
+      ENDIF 
+
 
 
 #endif /* ALLOW_ICEBERG */

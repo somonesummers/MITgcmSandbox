@@ -194,7 +194,7 @@ C at this level. This generally occurs because plume has reached neutral buoyanc
 C run out of momentum, and so is no longer rising. At this point, we therefore end
 C the call to the plume model.
 C Our aim is to catch the plume at the point of neutral buoyancy. We therefore perform
-C a manual comparrison of ambient and plume density. If plume density >= ambient density
+C a manual comparison of ambient and plume density. If plume density >= ambient density
 C we assign ISTATE = -1, again ending the call to the plume model.
 
         temperature = Y(3)
