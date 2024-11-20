@@ -486,9 +486,6 @@ C     Or simply the area of ice in the cell divided by the volume of the cell
       ENDDO
       ENDDO
       ENDDO
-C     update hfacC and other
-      CALL UPDATE_MASKS_ETC(myThid)
-      
 
 C     Write to diagnostics
 #ifdef ALLOW_DIAGNOSTICS
@@ -505,28 +502,28 @@ C     Write to diagnostics
 #endif /* ALLOW_DIAGNOSTICS */
 
 
-      IF ( ICEBERGopenFracFile .NE. ' ' ) THEN
-        CALL READ_REC_XYZ_RL
-     &     (ICEBERGopenFracFile,openFraction,1,0,myThid)  
-C          Partially block cells filled by icebergs
-           DO bj = myByLo(myThid), myByHi(myThid)
-            DO bi = myBxLo(myThid), myBxHi(myThid)
-             DO J = 1, sNy
-              DO I = 1, sNx
+C       IF ( ICEBERGopenFracFile .NE. ' ' ) THEN
+C         CALL READ_REC_XYZ_RL
+C      &     (ICEBERGopenFracFile,openFraction,1,0,myThid)  
+C C          Partially block cells filled by icebergs
+C            DO bj = myByLo(myThid), myByHi(myThid)
+C             DO bi = myBxLo(myThid), myBxHi(myThid)
+C              DO J = 1, sNy
+C               DO I = 1, sNx
   
-C             If we want to make icebergs physical barriers
-               IF ( barrierMask(I,J,bi,bj) .GT. 0. _d 0 ) THEN
-C              Loop through water column
-                DO K = 1, Nr
-                  hFacC(I,J,K,bi,bj) = openFraction(I,J,K,bi,bj)
-                ENDDO
-               ENDIF
-              ENDDO
-             ENDDO
-            ENDDO
-           ENDDO
-        CALL UPDATE_MASKS_ETC(myThid)
-      ENDIF 
+C C             If we want to make icebergs physical barriers
+C                IF ( barrierMask(I,J,bi,bj) .GT. 0. _d 0 ) THEN
+C C              Loop through water column
+C                 DO K = 1, Nr
+C                   hFacC(I,J,K,bi,bj) = openFraction(I,J,K,bi,bj)
+C                 ENDDO
+C                ENDIF
+C               ENDDO
+C              ENDDO
+C             ENDDO
+C            ENDDO
+C         CALL UPDATE_MASKS_ETC(myThid)
+C       ENDIF 
 
 
 

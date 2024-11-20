@@ -32,7 +32,7 @@ import build_domain_funcs as build_domain
 import run_config_funcs as rcf # import helpter functions
 
 #Set up new folder
-makeDirs = True
+makeDirs = False
 #Write input files, this lets us update the inputs with a full new run
 writeFiles = True
 
@@ -57,10 +57,10 @@ run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
 run_config['run_name'] = 'solidTest'
-run_config['ndays'] = 2 # simulaton time (days)
+run_config['ndays'] = 1 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
+run_config['horiz_res_m'] = 250 # horizontal grid spacing (m)
 run_config['Lx_m'] = 10000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
@@ -74,8 +74,8 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 8000 # [meters] of extent of ice
-iceCoverage = 95 # % of ice cover in melange, stay under 97% probably
+iceExtent = 4000 # [meters] of extent of ice
+iceCoverage = 90 # % of ice cover in melange, stay under 97% probably
 
 #========================================================================================
 # The rest of this should take care of it self mostly
@@ -371,7 +371,7 @@ if run_config['test']:
     
 else:
     run_config['inst_freq'] = 12 # multiples of hours
-    run_config['tavg_freq'] = 12 # multiples of hours
+    run_config['tavg_freq'] = 1 # multiples of hours
 
 
 #---------specify time averaged fields------#
@@ -708,19 +708,19 @@ minBergWidth = 20 # (m)
 iceExtentIndex = int(np.round(iceExtent/run_config['horiz_res_m']))
 
 # Iceberg mask
-bergMask[1:-1,1:iceExtentIndex:2] = 1 # icebergs in inner 5 km, all oriented east-west
+bergMask[2:-2,1:iceExtentIndex:1] = 1 # icebergs in inner 5 km, all oriented east-west
 
 # Drift mask, No drift for Melange experiments, but can toggle on here if you want
 # driftMask[1:-1,1:iceExtentIndex] = 1 # calculate effect of iceberg drift on melt rates 
 
 # Melt mask, only let bergs melt in this region (make melt water, these don't change size)
-meltMask[1:-1,1:iceExtentIndex:2] = 0 # Allow focus on blocking effect only
+meltMask[2:-2,1:iceExtentIndex:1] = 0 # Allow focus on blocking effect only
 
 # Barrier mask
-barrierMask[1:-1,1:iceExtentIndex:2] = 1 # make icebergs a physical barrier to water flow
+barrierMask[2:-2,1:iceExtentIndex:1] = 1 # make icebergs a physical barrier to water flow
 
 # Iceberg concentration (# of each surface cell that is filled in plan view)
-bergConc[1:-1,1:iceExtentIndex:2] = iceCoverage # iceberg concentration set at top
+bergConc[2:-2,1:iceExtentIndex:1] = iceCoverage # iceberg concentration set at top
 
 desiredBergArea = np.sum(bergConc/100.0*deltaX*deltaY)
 bergMaskArea = np.sum(bergMask*deltaX*deltaY)
@@ -747,8 +747,8 @@ setUpPrint('%i cells with bergs' % bergMaski)
 
 # make bergs, all identical
 sorted_depth = np.ones(numberOfBergs) * 199.11#  if exact at cell boundry causes issues
-sorted_width = np.ones(numberOfBergs) * 500 * np.sqrt(iceCoverage/100/bergsCell) # cannot be 100% full
-sorted_length = np.ones(numberOfBergs) * 500 * np.sqrt(iceCoverage/100/bergsCell) # cannot be 100% full
+sorted_width = np.ones(numberOfBergs) * run_config['horiz_res_m'] * np.sqrt(iceCoverage/100/bergsCell) # cannot be 100% full
+sorted_length = np.ones(numberOfBergs) * run_config['horiz_res_m'] * np.sqrt(iceCoverage/100/bergsCell) # cannot be 100% full
 # assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) # In this script, every berg has a home
 
 # Need to reshuffle as it re-writes this when sorting
@@ -777,7 +777,7 @@ for i in range(numberOfBergs):
         assignedCell += 1
 setUpPrint('Bergs per cell and filled faction at surface for spot check, should be uniform')     
 setUpPrint(icebergs_per_cell)
-setUpPrint(np.round(icebergs_area_per_cell/(500*500),2))
+setUpPrint(np.round(icebergs_area_per_cell/(run_config['horiz_res_m']*run_config['horiz_res_m']),2))
 
 # All bergs now sorted 
 openFrac = np.zeros([nz,ny,nx])
@@ -893,7 +893,7 @@ plt.savefig(run_config['run_dir']+'/input/bergStatistics.png', format='png', dpi
 plt.show()
 
 plt.figure()
-pc = plt.pcolor(np.nanmax(icebergs_depths2D,0),cmap='cmo.ice_r')
+pc = plt.pcolomesh(np.nanmax(icebergs_depths2D,0),cmap='cmo.ice_r')
 cbar = plt.colorbar(pc)
 plt.title('Max Iceberg Depths')
 plt.show()
@@ -902,14 +902,14 @@ fig = plt.figure()
 pltHelper = 1-openFrac[0,:,:]
 pltHelper[bergMask == 0] = np.nan
 plt.subplot(211)
-pc = plt.pcolor(pltHelper,cmap='cmo.ice_r')
+pc = plt.pcolormesh(pltHelper,cmap='cmo.ice_r')
 cbar = plt.colorbar(pc)
 plt.suptitle('Iceberg Cover and Residual')
 plt.ylabel('Cell across fjord')
 cbar.set_label('iceberg cover')
 
 plt.subplot(212)
-pc = plt.pcolor(pltHelper - bergConc/100,cmap='cmo.ice')
+pc = plt.pcolormesh(pltHelper - bergConc/100,cmap='cmo.ice')
 cbar = plt.colorbar(pc)
 pc_min = np.nanmin(pltHelper) * 100
 pc_max = np.nanmax(pltHelper) * 100
@@ -921,7 +921,7 @@ plt.savefig(run_config['run_dir']+'/input/bergMap.png', format='png', dpi=200)
 plt.show()
 
 fig = plt.figure()
-pc = plt.pcolor(meltMask,cmap='cmo.ice_r')
+pc = plt.pcolormesh(meltMask,cmap='cmo.ice_r')
 cbar = plt.colorbar(pc)
 plt.suptitle('Melt Mask')
 plt.ylabel('Cell across fjord')
@@ -931,18 +931,18 @@ plt.savefig(run_config['run_dir']+'/input/meltMask.png', format='png', dpi=200)
 plt.show()
 
 ## write iceberg txt files
-setUpPrint('Saving text files for bergs...')
-if(writeFiles):
-    for i in range(bergMaski):
-        with open(run_config['run_dir'] + '/input/iceberg_depth_%05i.txt' % (i+1) , 'w') as file_handler:
-            for item in icebergs_depths[i,icebergs_depths[i,:] > 0]:
-                file_handler.write("{}\n".format(item))
-        with open(run_config['run_dir']+'/input/iceberg_width_%05i.txt' % (i+1) , 'w') as file_handler:
-            for item in icebergs_widths[i,icebergs_widths[i,:] > 0]:
-                file_handler.write("{}\n".format(item))
-        with open(run_config['run_dir'] + '/input/iceberg_length_%05i.txt' % (i+1) , 'w') as file_handler:
-            for item in icebergs_length[i,icebergs_length[i,:] > 0]:
-                file_handler.write("{}\n".format(item))
+# setUpPrint('Saving text files for bergs...')
+# if(writeFiles):
+#     for i in range(bergMaski):
+#         with open(run_config['run_dir'] + '/input/iceberg_depth_%05i.txt' % (i+1) , 'w') as file_handler:
+#             for item in icebergs_depths[i,icebergs_depths[i,:] > 0]:
+#                 file_handler.write("{}\n".format(item))
+#         with open(run_config['run_dir']+'/input/iceberg_width_%05i.txt' % (i+1) , 'w') as file_handler:
+#             for item in icebergs_widths[i,icebergs_widths[i,:] > 0]:
+#                 file_handler.write("{}\n".format(item))
+#         with open(run_config['run_dir'] + '/input/iceberg_length_%05i.txt' % (i+1) , 'w') as file_handler:
+#             for item in icebergs_length[i,icebergs_length[i,:] > 0]:
+#                 file_handler.write("{}\n".format(item))
 
 
 # write global files

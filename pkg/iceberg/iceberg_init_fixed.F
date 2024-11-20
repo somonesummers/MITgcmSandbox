@@ -26,8 +26,8 @@ C     myThid -  Number of this instance of ICEBERG_INIT_FIXED
 
 #ifdef ALLOW_ICEBERG
 C     === Local variables ===
-C     I,J,K,bi,bj - Loop counters
-      INTEGER I, J, K, bi, bj
+C     I,J,K,bi,bj - Loop counters, helpers for hFactors
+      INTEGER I, J, K, bi, bj, Im1, Jm1
 
 C      Read iceberg mask
        IF (ICEBERGmaskFile .NE. ' ' ) THEN
@@ -90,29 +90,80 @@ C      Read iceberg depths
        ENDIF
 
 C      Read open fraction file
-       IF ( ICEBERGopenFracFile .NE. ' ' ) THEN
+      IF ( ICEBERGopenFracFile .NE. ' ' ) THEN
         CALL READ_REC_XYZ_RL
      &     (ICEBERGopenFracFile,openFraction,1,0,myThid)  
  
-C          Partially block cells filled by icebergs
+C          Partially block cells filled by icebergs, hFacC cell center
            DO bj = myByLo(myThid), myByHi(myThid)
             DO bi = myBxLo(myThid), myBxHi(myThid)
              DO J = 1, sNy
               DO I = 1, sNx
   
-C             If we want to make icebergs physical barriers
+C             If we want to make icebergs physical barriers,
+C             set both hFacC and recip_hFacC.
+C               REQUIRES CPP_OPTIONS.h: #undef NONLIN_FRSURF
+C             otherwise this is overwritten everytimestep.
                IF ( barrierMask(I,J,bi,bj) .GT. 0. _d 0 ) THEN
 C              Loop through water column
                 DO K = 1, Nr
                   hFacC(I,J,K,bi,bj) = openFraction(I,J,K,bi,bj)
-                ENDDO
+                  recip_hFacC(I,J,K,bi,bj) = 
+     &                             1. _d 0 / openFraction(I,J,K,bi,bj)
+                ENDDO  ! end k
                ENDIF
-              ENDDO
-             ENDDO
-            ENDDO
-           ENDDO
-           CALL UPDATE_MASKS_ETC(myThid)
-       ENDIF 
+              ENDDO ! end I
+             ENDDO ! end J
+            ENDDO ! end bi
+           ENDDO !end bj
+
+C     Partially block cells filled by icebergs, hFacS,hFacW, cell edges
+C     largely copied from UPDATE_MASKS_ETC.F in CTRL pkg.
+C     Smoothing might be desired, but not implemented here, see CTRL pkg 
+C     for a way to do that.
+
+      DO bj=myByLo(myThid), myByHi(myThid)
+       DO bi=myBxLo(myThid), myBxHi(myThid)
+        DO K=1, Nr
+         DO J=1-OLy,sNy+OLy
+          DO I=1-OLx,sNx+OLx
+           Im1=MAX(I-1,1-OLx)
+           Jm1=MAX(J-1,1-OLy)
+           IF (DYG(I,J,bi,bj).EQ.0.) THEN
+C     Dealing with thin walls, cribbed from CTRL pkg
+              hFacW(I,J,K,bi,bj)=0.
+              recip_hFacW(I,J,K,bi,bj)=0.
+           ELSE
+              hFacW(I,J,K,bi,bj)=
+     &                  MIN(hFacC(I,J,K,bi,bj),hFacC(Im1,J,K,bi,bj))
+C     &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(Im1,J,K,bi,bj))
+              IF(hFacW(I,J,K,bi,bj).EQ.0.) THEN
+                recip_hFacW(I,J,K,bi,bj) = 0. _d 0
+              ELSE
+                recip_hFacW(I,J,K,bi,bj) = 1. _d 0 / hFacW(I,J,K,bi,bj)
+              ENDIF
+           ENDIF
+           IF (DXG(I,J,bi,bj).EQ.0.) THEN
+              hFacS(I,J,K,bi,bj)=0.
+              recip_hFacS(I,J,K,bi,bj)=0.
+           ELSE
+              hFacS(I,J,K,bi,bj)= 
+     &                 MIN(hFacC(I,J,K,bi,bj),hFacC(I,Jm1,K,bi,bj))
+C     &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(I,Jm1,K,bi,bj))
+              recip_hFacS = 1. _d 0 / hFacS(I,J,K,bi,bj)
+              IF(hFacS(I,J,K,bi,bj).EQ.0.) THEN
+                recip_hFacS(I,J,K,bi,bj) = 0. _d 0
+              ELSE
+                recip_hFacS(I,J,K,bi,bj) = 1. _d 0 / hFacS(I,J,K,bi,bj)
+              ENDIF
+           ENDIF
+          ENDDO
+         ENDDO
+        ENDDO
+       ENDDO
+      ENDDO         
+
+      ENDIF !endif Berg OpenFrac file exists
    
 
 
