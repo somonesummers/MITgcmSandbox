@@ -14,6 +14,7 @@ xCrossSection = 5000
 zDepth = -50
 plotDPI = 100
 cleanPNGs = True
+usePcolor = False
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
@@ -55,8 +56,9 @@ if((maxStep-startStep)/sizeStep > 60):   #if more than 60 frames, downscale to b
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 #Decide if iceBerg data files exist
-if(os.path.isfile('input/data.iceberg')):
+if(os.path.isfile('input/bergMask.bin')):
     isBerg = True
+    print('Found icebergs for this run')
 else:
     isBerg = False
 
@@ -75,7 +77,21 @@ if(os.path.isfile('input/bathymetry.bin')):
     topo = topo.reshape(np.shape(x))
 else:
     topo = np.zeros(np.shape(x))
-                
+   
+#Import Berg Locations        
+if(isBerg):
+    # prep for contour plot of icebergs
+    openFrac = np.fromfile('input/openFrac.bin', dtype='>f8')
+    openFrac = openFrac.reshape((np.shape(z)[0], np.shape(x)[0], np.shape(x)[1]))
+    bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
+    bergMask = bergMask.reshape(np.shape(x))
+    for j in range(np.shape(x)[0]): #clean up non-berg parts of this mask
+            for i in range(np.shape(x)[1]):
+                if bergMask[j,i] == 0:
+                    openFrac[:,j,i] = 1
+
+
+
 # Print actual cross section values
 xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
 ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
@@ -97,21 +113,31 @@ cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 x = x/1000
 y = y/1000
 
+if(usePcolor):
+    print('pcolor not supported for this function yet, using contourf')
+
 #NOTE matplotlib x and y and MITgcm x,y are FLIPPED below. Be careful.
-for k in range(len(name)):
+for k in [1]:#range(len(name)):
     #print('k,',k)
-    for i in np.arange(startStep, maxStep + 1, sizeStep):
+    for i in [180]:#np.arange(startStep, maxStep + 1, sizeStep):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d',computed_zorder=False)
-        # ax = fig.add_subplot(111)
-        data = mds.rdmds("results/%s"%(dynName[k]), i)
+        if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
+            localBergs = True
+        else:
+            localBergs = False
+        if((not localBergs) and k==5):
+            #fill melt image with 0s if bergs in run but not frame
+            data = np.zeros(np.shape(mds.rdmds("results/%s"%(dynName[k-1]), i)))
+        else:
+            data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
             lvl = tempRange
             cm = tempCmap
         elif k == 1:
             lvl = saltRange
             cm = saltCmap
-        elif k == 2 
+        elif k == 2:
             lvl = uRange
             cm = uCmap
         elif k == 3:
@@ -131,14 +157,25 @@ for k in range(len(name)):
         #Long profile
         XX,ZZ = np.meshgrid(np.squeeze(x[ySlice,:]),np.squeeze(z))
         cp = ax.contourf(
-            np.squeeze(data[kk, :, ySlice, :]),
-            XX,
-            ZZ,
-            levels=lvl,
-            extend="both",
-            cmap=cm,
-            zdir='x',offset=y[ySlice,0],zorder=2
+        np.squeeze(data[kk, :, ySlice, :]),
+        XX,
+        ZZ,
+        levels=lvl,
+        extend="both",
+        cmap=cm,
+        alpha= .9,
+        zdir='x',offset=y[ySlice,0],zorder=2
         )
+        if(localBergs):
+            cp2 = plt.contourf(
+                np.squeeze(openFrac[:, ySlice, :]),
+                XX,
+                ZZ,
+                [.1,.5,.9],
+                extend="min",
+                alpha=.1,
+                cmap='cmo.gray',
+                zdir='x',offset=y[ySlice,0],zorder=2)
 
         #viewers close width half profile
         YY,ZZ = np.meshgrid(np.squeeze(y[:,xSlice]),np.squeeze(z))    
@@ -149,8 +186,19 @@ for k in range(len(name)):
             levels=lvl,
             extend="both",
             cmap=cm,
+            alpha= .9,
             zdir='y',offset=x[0,xSlice],zorder=3
         )
+        if(localBergs):
+            cp2 = plt.contourf(
+                YY[:,0:ySlice+1],
+                np.squeeze(openFrac[:, 0:ySlice+1, xSlice]),
+                ZZ[:,0:ySlice+1],
+                [.1,.5,.9],
+                extend="min",
+                alpha=.1,
+                cmap='cmo.gray',
+                zdir='y',offset=x[0,xSlice],zorder=3)
        
         #viewer's far width half profile
         YY,ZZ = np.meshgrid(np.squeeze(y[:,xSlice]),np.squeeze(z))    
@@ -161,8 +209,19 @@ for k in range(len(name)):
             levels=lvl,
             extend="both",
             cmap=cm,
+            alpha= .9,
             zdir='y',offset=x[0,xSlice],zorder=0
         )
+        if(localBergs):
+            cp2 = plt.contourf(
+                YY[:,ySlice:],
+                np.squeeze(openFrac[:, ySlice:, xSlice]),
+                ZZ[:,ySlice:],
+                [.1,.5,.9],
+                extend="min",
+                alpha=.1,
+                cmap='cmo.gray',
+                zdir='y',offset=x[0,xSlice],zorder=0)
         
         #map view ghost
         #Front
@@ -171,7 +230,7 @@ for k in range(len(name)):
             np.squeeze(x[0:ySlice+1,0:xSlice+1]),
             np.ones(np.shape(x[0:ySlice+1,0:xSlice+1])),
             levels=[0, 1, 2],
-            alpha=.1,
+            alpha=.05,
             cmap='cmo.gray',
             zdir='z',offset=z[zSlice,0,0],zorder=4
         )
@@ -181,7 +240,7 @@ for k in range(len(name)):
             np.squeeze(x[ySlice:,xSlice:]),
             np.ones(np.shape(x[ySlice:,xSlice:])),
             levels=[0, 1, 2],
-            alpha=.1,
+            alpha=.05,
             cmap='cmo.gray',
             zdir='z',offset=z[zSlice,0,0],zorder=-1
         )
@@ -191,7 +250,7 @@ for k in range(len(name)):
             np.squeeze(x[ySlice:,0:xSlice]),
             np.ones(np.shape(x[ySlice:,0:xSlice])),
             levels=[0, 1, 2],
-            alpha=.1,
+            alpha=.05,
             cmap='cmo.gray',
             zdir='z',offset=z[zSlice,0,0],zorder=1
         )
@@ -201,11 +260,11 @@ for k in range(len(name)):
             np.squeeze(x[0:ySlice+1,xSlice:]),
             np.ones(np.shape(x[0:ySlice+1:,xSlice:])),
             levels=[0, 1, 2],
-            alpha=.1,
+            alpha=.05,
             cmap='cmo.gray',
             zdir='z',offset=z[zSlice,0,0],zorder=2
         )
-        #map view, projected onto bottom of frame
+        #Map view, projected onto bottom of frame
         cp = ax.contourf(
             np.squeeze(y),
             np.squeeze(x),
@@ -213,8 +272,19 @@ for k in range(len(name)):
             levels=lvl,
             extend="both",
             cmap=cm,
+            alpha= .9,
             zdir='z',offset=z.min(),zorder=-1
         )
+        if(localBergs):
+            cp2 = plt.contourf(
+                np.squeeze(y),
+                np.squeeze(x),
+                np.squeeze(openFrac[zSlice, :, :]),
+                [.1,.5,.9],
+                extend="min",
+                alpha=.1,
+                cmap='cmo.gray',
+                zdir='z',offset=z.min(),zorder=-1)
 
         cbar = fig.colorbar(cp)
         cbar.set_label(cbarLabel[k])

@@ -8,7 +8,7 @@ plotDPI = 175
 usePcolor = False
 
 # Color Maps
-saltCmap = "cmo.thermal"
+saltCmap = "cmo.haline"
 tempCmap = "cmo.thermal"
 uCmap = "cmo.balance"
 vCmap = "cmo.balance"
@@ -20,5 +20,5 @@ saltRange = np.linspace(32, 35, 128)
 tempRange = np.linspace(-0.5, 3.0, 128)
 uRange = np.linspace(-.5, .5, 127)
 vRange = np.linspace(-.5, .5, 127)
-wRange = np.linspace(-.5, .5, 127)
+wRange = np.linspace(-.05, .05, 127)
 meltRange = np.linspace(0,.5,128)
