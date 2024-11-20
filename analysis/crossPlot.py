@@ -117,9 +117,9 @@ if(usePcolor):
     print('pcolor not supported for this function yet, using contourf')
 
 #NOTE matplotlib x and y and MITgcm x,y are FLIPPED below. Be careful.
-for k in [1]:#range(len(name)):
+for k in range(len(name)):
     #print('k,',k)
-    for i in [180]:#np.arange(startStep, maxStep + 1, sizeStep):
+    for i in np.arange(startStep, maxStep + 1, sizeStep):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d',computed_zorder=False)
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):

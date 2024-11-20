@@ -67,7 +67,18 @@ dynName = ['plumeDiag', 'plumeDiag', 'plumeDiag', 'plumeDiag','plumeDiag']
 name = ["W", "Temp", "Sal", "Radius", "MeltRate"]
 units = ["[m/s]", "[C]", "[PSU]", "[m]", "[m/day]"]
 
-plumeLoc = [6,1]
+
+if(os.path.isfile('input/plumeMask.bin')):
+    plumeMask = np.fromfile('input/plumeMask.bin', dtype='>f8')
+    plumeMask = plumeMask.reshape(np.shape(x))
+    plumeLocations = np.where(plumeMask == 3)
+
+else:
+    print('No Plumes Found, exiting PlumePlot')
+    exit()
+
+plumeLoc = [plumeLocations[0][0],plumeLocations[1][0]]
+print('Plume Locaion is grid', plumeLoc )
 
 for k in range(len(name)):
     for i in np.arange(startStep, maxStep + 1, sizeStep):

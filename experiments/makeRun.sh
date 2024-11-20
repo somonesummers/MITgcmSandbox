@@ -26,8 +26,7 @@ then
    		mkdir figs
    	fi	
    	python ../quickhFactorPlot.py
-	python ../quicklookSide.py
-	python ../quicklookMap.py
+	python ../crossPlot.py
 else
 	./mitgcmuv
 fi

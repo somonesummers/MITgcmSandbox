@@ -75,7 +75,7 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 # Iceberg configuration =========================
 iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 4000 # [meters] of extent of ice
-iceCoverage = 90 # % of ice cover in melange, stay under 97% probably
+iceCoverage = 1 # % of ice cover in melange, stay under 97% probably
 
 #========================================================================================
 # The rest of this should take care of it self mostly
@@ -872,7 +872,7 @@ plt.plot([0,1],[-maxBergDepth,-maxBergDepth],color = 'xkcd:red',linestyle=':', l
 plt.plot([1-np.max(bergConc)/100,1-np.max(bergConc)/100],[-nz*deltaZ,0],color = 'xkcd:gray',linestyle=':',label='Target Max Berg Conc')
 plt.xlabel('Open Fraction of Cells')
 plt.ylabel('Depth [m]')
-# plt.legend()  #not quite room so off for now
+plt.legend()  #not quite room so off for now
 
 # plt.subplot(2,2,2)
 # plt.hist(inversePowerLawDistNumbers_depth,bins = 50)
@@ -893,7 +893,7 @@ plt.savefig(run_config['run_dir']+'/input/bergStatistics.png', format='png', dpi
 plt.show()
 
 plt.figure()
-pc = plt.pcolomesh(np.nanmax(icebergs_depths2D,0),cmap='cmo.ice_r')
+pc = plt.pcolormesh(np.nanmax(icebergs_depths2D,0),cmap='cmo.ice_r')
 cbar = plt.colorbar(pc)
 plt.title('Max Iceberg Depths')
 plt.show()
