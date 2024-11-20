@@ -13,6 +13,7 @@ xCrossSection = 5000
 zDepth = -50
 plotDPI = 100
 cleanPNGs = True
+usePcolor = True
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
@@ -24,7 +25,7 @@ elif(os.path.isfile('../plotHelper.py')):
     from plotHelper import *
 else:  
     print('no defaults found')
-print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
+print('Plot DPI:',plotDPI,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
@@ -120,33 +121,45 @@ for k in range(len(name)):
         else:
             data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
-            lvl = np.linspace(-0.5, 3, 128)
-            cm = "cmo.thermal"
+            lvl = tempRange
+            cm = tempCmap
         elif k == 1:
-            lvl = np.linspace(32, 35, 128)
-            cm = "cmo.haline"
-        elif k == 2 or k == 4:
-            lvl = np.linspace(-.5, .5, 127)
-            cm = "cmo.balance"
+            lvl = saltRange
+            cm = saltCmap
+        elif k == 2:
+            lvl = uRange
+            cm = uCmap
         elif k == 3:
-            lvl = np.linspace(-0.005, 0.005, 127)
-            cm = "cmo.curl"
+            lvl = wRange
+            cm = wCmap
+        elif k == 4:
+            lvl = vRange
+            cm = vCmap
         elif k == 5:
-            lvl = np.linspace(0, .5, 128)
-            cm = "cmo.rain"
+            lvl = meltRange
+            cm = meltCmap
         if(k == 5):
             kk = 2
         else:
             kk = k
-        cp = plt.contourf(
-            np.squeeze(x),
-            np.squeeze(y),
-            np.squeeze(data[kk, zSlice, :, :]),
-            lvl,
-            extend="both",
-            cmap=cm,
-        )
-        # plt.plot(iceEdge*np.ones(np.shape(x)),np.squeeze(y[:,0]),color='gray')
+        if(usePcolor):
+            cp = plt.pcolormesh(
+                np.squeeze(x),
+                np.squeeze(y),
+                np.squeeze(data[kk, zSlice, :, :]),
+                cmap=cm,
+                vmin=np.min(lvl),
+                vmax=np.max(lvl),
+            )
+        else:
+            cp = plt.contourf(
+                np.squeeze(x),
+                np.squeeze(y),
+                np.squeeze(data[kk, zSlice, :, :]),
+                lvl,
+                extend="both",
+                cmap=cm,
+            )
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, zSlice, :, :]),np.nanmax(data[kk, zSlice, :, :]),np.max(np.isnan(data[kk, zSlice, :, :]))))
@@ -162,6 +175,7 @@ for k in range(len(name)):
                 cmap='cmo.gray')
             #cbar2 = plt.colorbar(cp2)
             #cbar2.set_label('Ocean Fraction')
+
         j = i/sizeStep + startStep
         str = "figs/map%s%05i.png" % (name[k],j)
         

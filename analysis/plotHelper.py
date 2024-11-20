@@ -1,4 +1,23 @@
+import numpy as np
+import cmocean
+
 yCrossSection = 3000
 xCrossSection = 12000
 zDepth = -50
 plotDPI = 125
+
+# Color Maps
+saltCmap = "cmo.thermal"
+tempCmap = "cmo.thermal"
+uCmap = "cmo.balance"
+vCmap = "cmo.balance"
+wCmap = "cmo.curl"
+meltCmap = "cmo.rain"
+
+# Color Ranges
+saltRange = np.linspace(32, 35, 128)
+tempRange = np.linspace(-0.5, 3.0, 128)
+uRange = np.linspace(-.5, .5, 127)
+vRange = np.linspace(-.5, .5, 127)
+wRange = np.linspace(-.5, .5, 127)
+meltRange = np.linspace(0,.5,128)

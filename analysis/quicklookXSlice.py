@@ -139,20 +139,23 @@ for k in range(len(name)):
         else:
             data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
-            lvl = np.linspace(-0.5, 3, 128)
-            cm = "cmo.thermal"
+            lvl = tempRange
+            cm = tempCmap
         elif k == 1:
-            lvl = np.linspace(32, 35, 128)
-            cm = "cmo.haline"
-        elif k == 2 or k == 4:
-            lvl = np.linspace(-.5, .5, 127)
-            cm = "cmo.balance"
+            lvl = saltRange
+            cm = saltCmap
+        elif k == 2: 
+            lvl = uRange
+            cm = uCmap
         elif k == 3:
-            lvl = np.linspace(-0.005, 0.005, 127)
-            cm = "cmo.curl"
+            lvl = wRange
+            cm = wCmap
+        elif k == 4:
+            lvl = vRange
+            cm = vCmap
         elif k == 5:
-            lvl = np.linspace(0, .5, 128)
-            cm = "cmo.rain"
+            lvl = meltRange
+            cm = meltCmap
         if(k == 5):
             kk = 2
         else:
