@@ -56,7 +56,7 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [5, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Alpha_m1_b0'
+run_config['run_name'] = 'Alpha_m1_b1'
 run_config['ndays'] = 5 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -65,7 +65,7 @@ run_config['Lx_m'] = 50000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 80 # num of z-grid points
+grid_params['Nr'] = 50 # num of z-grid points
 
 # Offshore current =========================
 oscStrength = .3 #[m/s] peak strength of offshore current
@@ -706,7 +706,7 @@ bergMask[1:-1,1:iceExtentIndex] = 1 # icebergs in inner 5 km, all oriented east-
 meltMask[1:-1,1:iceExtentIndex] = 1 # Allow focus on blocking effect only
 
 # Barrier mask
-barrierMask[1:-1,1:iceExtentIndex] = 0 # make icebergs a physical barrier to water flow
+barrierMask[1:-1,1:iceExtentIndex] = 1 # make icebergs a physical barrier to water flow
 barrierMask[plume_loc,icefront] = 0 #Plume code struggles with hFac adjustments
 
 # Iceberg concentration (# of each surface cell that is filled in plan view)
