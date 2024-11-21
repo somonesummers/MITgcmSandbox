@@ -11,7 +11,7 @@ yCrossSection = 1000
 xCrossSection = 5000
 zDepth = -50
 plotDPI = 100
-cleanPNGs = False
+cleanPNGs = True
 
 
 if(os.path.isfile('input/plotHelperLocal.py')):

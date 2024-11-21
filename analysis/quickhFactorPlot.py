@@ -37,11 +37,13 @@ for k in range(len(hfactorName)):
     lvl = [0,.01, 0.04, 0.05, 0.09, 0.10, 0.20, 0.30, 0.40, 0.50, 1.00]
     cm = "cmo.gray"
     plt.figure()
-    cp = plt.pcolor(
+    cp = plt.pcolormesh(
         np.squeeze(x),
         np.squeeze(y),
         np.squeeze(data[zSlice, :, :]),
         cmap=cm,
+        vmin = 0.0,
+        vmax = 1.0,
     )
     cbar = plt.colorbar(cp)
     # cbar.set_label(units[k])

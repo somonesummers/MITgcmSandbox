@@ -61,7 +61,7 @@ run_config['ndays'] = 2 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
-run_config['Lx_m'] = 40000 # domain size in x (m)
+run_config['Lx_m'] = 10000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
@@ -73,9 +73,9 @@ lengthOffShoreCurrent = 5e3 #width of offshore current [m]
 indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
-iceBergDepth = 250 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 8000 # [meters] of extent of ice
-iceCoverage = 95 # % of ice cover in melange, stay under 97% probably
+iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
+iceExtent = 5000 # [meters] of extent of ice
+iceCoverage = 90 # % of ice cover in melange, stay under 97% probably
 
 #========================================================================================
 # The rest of this should take care of it self mostly
@@ -484,14 +484,11 @@ if(makeDirs):
 setUpPrint('====== Domain Initialization =====')
 
 def write_bin(fname, data):
-    print(fname, np.shape(data))
-    setupNotes.write(fname + " " + str(np.shape(data))+'\n')
+    setUpPrint(fname + " " + str(np.shape(data)))
     if(writeFiles):
-        setupNotes.write(fname + " " + str(np.shape(data))+'\n')
         data.astype(">f8").tofile(run_config['run_dir']+'/input/'+fname)
     else:
-        setupNotes.write('Not saving\n')
-        print('Not saving')
+        setUpPrint('Not saving')
 #Similar params as fed into MITgcm, but redeclared here
 gravity = 9.81
 sbeta = 8.0e-4
@@ -706,10 +703,11 @@ bergMask[1:-1,1:iceExtentIndex] = 1 # icebergs in inner 5 km, all oriented east-
 # driftMask[1:-1,1:iceExtentIndex] = 1 # calculate effect of iceberg drift on melt rates 
 
 # Melt mask, only let bergs melt in this region (make melt water, these don't change size)
-meltMask[1:-1,1:iceExtentIndex] = 1 # Allow focus on blocking effect only
+meltMask[1:-1,1:iceExtentIndex] = 0 # Allow focus on blocking effect only
 
 # Barrier mask
 barrierMask[1:-1,1:iceExtentIndex] = 1 # make icebergs a physical barrier to water flow
+barrierMask[plume_loc,icefront] = 0 #Plume code struggles with hFac adjustments
 
 # Iceberg concentration (# of each surface cell that is filled in plan view)
 bergConc[1:-1,1:iceExtentIndex] = iceCoverage # iceberg concentration set at top
@@ -745,7 +743,7 @@ areaResidual = 1
 setUpPrint('Making bergs, this can take a few loops...')
 loop_count = 1
 while(np.abs(areaResidual) > .01 ): # Create random power dist of bergs, ensure correct surface area
-    numberOfBergs = round(numberOfBergs * (1 + areaResidual))
+    numberOfBergs = round(numberOfBergs * (1 + .5*areaResidual))  #relax correction a bit
     setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
     x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
     x_depth = np.arange(minBergDepth, maxBergDepth, (maxBergDepth-minBergDepth)/(numberOfBergs*1e2))
@@ -833,14 +831,21 @@ for i in range(numberOfBergs):
     # print('Berg number', icebergs_per_cell[j],'in this cell')
     bergArea = sorted_width[i] * sorted_length[i]
     loopLimiter = 0
-    while(bergArea > (deltaX * deltaY  * (bergConc[bergDict[j+1][0],bergDict[j+1][1]]/100 + .02) - icebergs_area_per_cell[j])): #if too full, pick random new cell
+    while(bergArea > (deltaX * deltaY  * (bergConc[bergDict[j+1][0],bergDict[j+1][1]]/100) - icebergs_area_per_cell[j])): #if above 'full', pick random new cell, accept with decreasing probability
         j_old = j
         j = np.random.randint(0,bergMaski)
         assignedCell[i] = j
         loopLimiter += 1
+        if((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY) < 0.94): #only consider accepting if under 95
+            odds = np.abs(np.random.normal(0,.5,1))
+            overFull = ((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY)*100 - bergConc[bergDict[j+1][0],bergDict[j+1][1]])
+            if(odds > overFull):
+                if(overFull > 0):
+                    # print('\taccepted overfill, odds:',odds, 'ask',overFull,'now:',(bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY))
+                break
         # print(j_old, "is full, trying",j, "attempt", loopLimiter)
-        if(loopLimiter > bergMaski):
-            setUpPrint('no more empty cells... giving up')
+        if(loopLimiter > bergMaski*100):
+            setUpPrint('no more empty cells... giving up THIS IS BAD')
             break
     icebergs_depths[j,icebergs_per_cell[j]] = sorted_depth[i]
     icebergs_widths[j,icebergs_per_cell[j]] = sorted_width[i]
@@ -919,14 +924,14 @@ fig = plt.figure()
 pltHelper = 1-openFrac[0,:,:]
 pltHelper[bergMask == 0] = np.nan
 plt.subplot(211)
-pc = plt.pcolor(pltHelper,cmap='cmo.ice_r')
+pc = plt.pcolormesh(pltHelper,cmap='cmo.ice_r')
 cbar = plt.colorbar(pc)
 plt.suptitle('Iceberg Cover and Residual')
 plt.ylabel('Cell across fjord')
 cbar.set_label('iceberg cover')
 
 plt.subplot(212)
-pc = plt.pcolor(pltHelper - bergConc/100,cmap='cmo.ice')
+pc = plt.pcolormesh(pltHelper - bergConc/100,cmap='cmo.ice')
 cbar = plt.colorbar(pc)
 pc_min = np.nanmin(pltHelper) * 100
 pc_max = np.nanmax(pltHelper) * 100
@@ -938,7 +943,7 @@ plt.savefig(run_config['run_dir']+'/input/bergMap.png', format='png', dpi=200)
 plt.show()
 
 fig = plt.figure()
-pc = plt.pcolor(meltMask,cmap='cmo.ice_r')
+pc = plt.pcolormesh(meltMask,cmap='cmo.ice_r')
 cbar = plt.colorbar(pc)
 plt.suptitle('Melt Mask')
 plt.ylabel('Cell across fjord')
@@ -1038,12 +1043,11 @@ setUpPrint('Estimated run time is %.2f hours for one CPU' % (estTime/60))
 setUpPrint('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/ncpus*1.2,ncpus))
 
 comptime_hrs = estTime/60/ncpus*1.2 
-setupNotes.close()
 
 if(makeDirs):
     shutil.move('setupReport.txt', run_config['run_dir']+'/input')
     rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
-
+    setupNotes.close()
 print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
 
 

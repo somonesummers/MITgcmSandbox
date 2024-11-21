@@ -31,7 +31,7 @@ else:
 import build_domain_funcs as build_domain 
 import run_config_funcs as rcf # import helpter functions
 
-#Set up new folder
+#Set up new folder, copy over files from DEFAULT directory, will overwrite if existing experiment
 makeDirs = False
 #Write input files, this lets us update the inputs with a full new run
 writeFiles = True
@@ -48,7 +48,7 @@ def setUpPrint(msg):
 email = 'psummers8@gatech.edu'
 # set high level run configurations
 
-setUpPrint('====== Welcome to the mélange building script =====')
+setUpPrint('\n====== Welcome to the mélange building script =====')
 setUpPrint('\tMaking experiment to compare mélange realizations')
 #========================================================================================
 #main values to imput 
@@ -74,8 +74,8 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 4000 # [meters] of extent of ice
-iceCoverage = 1 # % of ice cover in melange, stay under 97% probably
+iceExtent = 5000 # [meters] of extent of ice
+iceCoverage = 80 # % of ice cover in melange, stay under 97% probably (below hFacMin means no barrier effect)
 
 #========================================================================================
 # The rest of this should take care of it self mostly
@@ -708,19 +708,20 @@ minBergWidth = 20 # (m)
 iceExtentIndex = int(np.round(iceExtent/run_config['horiz_res_m']))
 
 # Iceberg mask
-bergMask[2:-2,1:iceExtentIndex:1] = 1 # icebergs in inner 5 km, all oriented east-west
+bergMask[1:-1,1:iceExtentIndex:1] = 1 # icebergs in inner 5 km, all oriented east-west
 
 # Drift mask, No drift for Melange experiments, but can toggle on here if you want
 # driftMask[1:-1,1:iceExtentIndex] = 1 # calculate effect of iceberg drift on melt rates 
 
 # Melt mask, only let bergs melt in this region (make melt water, these don't change size)
-meltMask[2:-2,1:iceExtentIndex:1] = 0 # Allow focus on blocking effect only
+meltMask[1:-1,1:iceExtentIndex:1] = 0 # Allow focus on blocking effect only
 
 # Barrier mask
-barrierMask[2:-2,1:iceExtentIndex:1] = 1 # make icebergs a physical barrier to water flow
+barrierMask[1:-1,1:iceExtentIndex:1] = 1 # make icebergs a physical barrier to water flow
+barrierMask[plume_loc,icefront] = 0 #Plume code 
 
 # Iceberg concentration (# of each surface cell that is filled in plan view)
-bergConc[2:-2,1:iceExtentIndex:1] = iceCoverage # iceberg concentration set at top
+bergConc[1:-1,1:iceExtentIndex:1] = iceCoverage # iceberg concentration set at top
 
 desiredBergArea = np.sum(bergConc/100.0*deltaX*deltaY)
 bergMaskArea = np.sum(bergMask*deltaX*deltaY)
@@ -746,7 +747,7 @@ numberOfBergs = bergMaski * bergsCell
 setUpPrint('%i cells with bergs' % bergMaski)
 
 # make bergs, all identical
-sorted_depth = np.ones(numberOfBergs) * 199.11#  if exact at cell boundry causes issues
+sorted_depth = np.ones(numberOfBergs) * np.random.normal(iceBergDepth,20,numberOfBergs)#  if exact at cell boundry causes issues
 sorted_width = np.ones(numberOfBergs) * run_config['horiz_res_m'] * np.sqrt(iceCoverage/100/bergsCell) # cannot be 100% full
 sorted_length = np.ones(numberOfBergs) * run_config['horiz_res_m'] * np.sqrt(iceCoverage/100/bergsCell) # cannot be 100% full
 # assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) # In this script, every berg has a home
