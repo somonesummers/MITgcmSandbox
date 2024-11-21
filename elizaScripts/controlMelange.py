@@ -32,9 +32,9 @@ import build_domain_funcs as build_domain
 import run_config_funcs as rcf # import helpter functions
 
 #Set up new folder
-makeDirs = True
+makeDirs = False
 #Write input files, this lets us update the inputs with a full new run
-writeFiles = True
+writeFiles = False
 
 if(makeDirs):
     setupNotes = open("setupReport.txt", "w") 
@@ -742,6 +742,10 @@ areaResidual = 1
 # over the range minBergWidth-maxBergWidth with a slope of alpha.
 setUpPrint('Making bergs, this can take a few loops...')
 loop_count = 1
+
+np.random.seed(2)
+setUpPrint('random seed set, not really random anymore')
+
 while(np.abs(areaResidual) > .01 ): # Create random power dist of bergs, ensure correct surface area
     numberOfBergs = round(numberOfBergs * (1 + .5*areaResidual))  #relax correction a bit
     setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
@@ -840,8 +844,8 @@ for i in range(numberOfBergs):
             odds = np.abs(np.random.normal(0,.5,1))
             overFull = ((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY)*100 - bergConc[bergDict[j+1][0],bergDict[j+1][1]])
             if(odds > overFull):
-                if(overFull > 0):
-                    # print('\taccepted overfill, odds:',odds, 'ask',overFull,'now:',(bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY))
+                # if(overFull > 0):
+                #      print('\taccepted overfill, odds:',odds, 'ask',overFull,'now:',(bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY))
                 break
         # print(j_old, "is full, trying",j, "attempt", loopLimiter)
         if(loopLimiter > bergMaski*100):
