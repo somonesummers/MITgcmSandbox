@@ -27,6 +27,7 @@ then
    	fi	
    	python ../quickhFactorPlot.py
 	python ../crossPlot.py
+	afplay /System/Library/Sounds/Funk.aiff
 else
 	./mitgcmuv
 fi

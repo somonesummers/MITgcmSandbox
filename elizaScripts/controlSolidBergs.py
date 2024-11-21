@@ -742,12 +742,14 @@ for j in range(ny):
             bergMaskNums[j,i] = bergMaski #Assign Mask Nums, not random as we'll randomly place bergs in cells
             bergDict[bergMaski] = [j,i] #This lets us do 1-D loops for the whole grid
 
-bergsCell = 10
+bergsCell = 25
 numberOfBergs = bergMaski * bergsCell
 setUpPrint('%i cells with bergs' % bergMaski)
 
 # make bergs, all identical
-sorted_depth = np.ones(numberOfBergs) * np.random.normal(iceBergDepth,20,numberOfBergs)#  if exact at cell boundry causes issues
+bergVariation = 50 #[m]
+sorted_depth = np.ones(numberOfBergs) * (np.random.normal(maxBergDepth - bergVariation,bergVariation,numberOfBergs))#  STD + 1 is 'max depth'
+sorted_depth[sorted_depth < minBergDepth] = minBergDepth + .1 # Code doesn't like clean numbers (ie berg on perfect cell bottom), disallow small/neg bergs 
 sorted_width = np.ones(numberOfBergs) * run_config['horiz_res_m'] * np.sqrt(iceCoverage/100/bergsCell) # cannot be 100% full
 sorted_length = np.ones(numberOfBergs) * run_config['horiz_res_m'] * np.sqrt(iceCoverage/100/bergsCell) # cannot be 100% full
 # assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) # In this script, every berg has a home
@@ -868,6 +870,8 @@ for k in range(bergMaski):
 # Plots for reference on whats happening berg-wise
 fig = plt.figure()
 # plt.subplot(2,2,1)
+for i in range(bergMaski):
+    plt.plot(openFrac[:,bergDict[i+1][0],bergDict[i+1][1]],-np.cumsum(dz),alpha=.5,color='xkcd:gray',linewidth=.5)
 plt.plot(np.mean(openFrac[:,bergMask==1],1),-np.cumsum(dz),alpha=1,color='xkcd:black',linewidth=1,linestyle='--',label='Average Bergs')
 plt.plot([0,1],[-maxBergDepth,-maxBergDepth],color = 'xkcd:red',linestyle=':', label='Target Max Depth')
 plt.plot([1-np.max(bergConc)/100,1-np.max(bergConc)/100],[-nz*deltaZ,0],color = 'xkcd:gray',linestyle=':',label='Target Max Berg Conc')

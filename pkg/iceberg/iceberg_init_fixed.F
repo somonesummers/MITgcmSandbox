@@ -159,7 +159,6 @@ C      &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(Im1,J,K,bi,bj))
               hFacS(I,J,K,bi,bj)= 
      &                 MIN(hFacC(I,J,K,bi,bj),hFacC(I,Jm1,K,bi,bj))
 C      &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(I,Jm1,K,bi,bj))
-              recip_hFacS = 1. _d 0 / hFacS(I,J,K,bi,bj)
               IF(hFacS(I,J,K,bi,bj).EQ.0.) THEN
                 recip_hFacS(I,J,K,bi,bj) = 0. _d 0
               ELSE
