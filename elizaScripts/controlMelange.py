@@ -32,9 +32,9 @@ import build_domain_funcs as build_domain
 import run_config_funcs as rcf # import helpter functions
 
 #Set up new folder
-makeDirs = False
+makeDirs = True
 #Write input files, this lets us update the inputs with a full new run
-writeFiles = False
+writeFiles = True
 
 if(makeDirs):
     setupNotes = open("setupReport.txt", "w") 
@@ -55,13 +55,13 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'melangeTest'
-run_config['ndays'] = 2 # simulaton time (days)
+run_config['ncpus_xy'] = [5, 1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'Alpha_m1_b0'
+run_config['ndays'] = 5 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
-run_config['Lx_m'] = 10000 # domain size in x (m)
+run_config['Lx_m'] = 50000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
@@ -74,7 +74,7 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 5000 # [meters] of extent of ice
+iceExtent = 10000 # [meters] of extent of ice
 iceCoverage = 90 # % of ice cover in melange, stay under 97% probably
 
 #========================================================================================
@@ -703,10 +703,10 @@ bergMask[1:-1,1:iceExtentIndex] = 1 # icebergs in inner 5 km, all oriented east-
 # driftMask[1:-1,1:iceExtentIndex] = 1 # calculate effect of iceberg drift on melt rates 
 
 # Melt mask, only let bergs melt in this region (make melt water, these don't change size)
-meltMask[1:-1,1:iceExtentIndex] = 0 # Allow focus on blocking effect only
+meltMask[1:-1,1:iceExtentIndex] = 1 # Allow focus on blocking effect only
 
 # Barrier mask
-barrierMask[1:-1,1:iceExtentIndex] = 1 # make icebergs a physical barrier to water flow
+barrierMask[1:-1,1:iceExtentIndex] = 0 # make icebergs a physical barrier to water flow
 barrierMask[plume_loc,icefront] = 0 #Plume code struggles with hFac adjustments
 
 # Iceberg concentration (# of each surface cell that is filled in plan view)
@@ -735,7 +735,7 @@ elif(scaling == 2): # Then use Barker04 width-depth relationship
         maxBergDepth = 2.91*maxBergWidth^0.71
         minBergDepth = 2.91*minBergWidth^0.71
 
-numberOfBergs = 1000 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
+numberOfBergs = 3500 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
 bergTopArea = 0
 areaResidual = 1
 # Generate the Inverse Power Law cumulative distribution function
@@ -743,11 +743,12 @@ areaResidual = 1
 setUpPrint('Making bergs, this can take a few loops...')
 loop_count = 1
 
-np.random.seed(2)
+#np.random.seed(2)
 setUpPrint('random seed set, not really random anymore')
 
 while(np.abs(areaResidual) > .01 ): # Create random power dist of bergs, ensure correct surface area
-    numberOfBergs = round(numberOfBergs * (1 + .5*areaResidual))  #relax correction a bit
+    np.random.seed(2)
+    numberOfBergs = round(numberOfBergs * (1 + areaResidual))  #relax correction a bit
     setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
     x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
     x_depth = np.arange(minBergDepth, maxBergDepth, (maxBergDepth-minBergDepth)/(numberOfBergs*1e2))
