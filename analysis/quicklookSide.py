@@ -26,7 +26,7 @@ else:
     print('no defaults found')
 
 #Overwrite local settings here if desired
-usePcolor = True
+# usePcolor = True
 
 print('Plot DPI:',plotDPI,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
 

@@ -2,7 +2,7 @@ import numpy as np
 import cmocean
 
 yCrossSection = 3000
-xCrossSection = 65000
+xCrossSection = 8000
 zDepth = -50
 plotDPI = 175
 usePcolor = False

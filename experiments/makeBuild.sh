@@ -56,4 +56,10 @@ echo " Done compiling, moving to make depend..."
 make depend -s
 echo " Done with make depend, moving to make..."
 make -sj 4
+
+if [ "$MACHINE" == "Mac" ];
+then
+   afplay /System/Library/Sounds/Funk.aiff
+fi 
+
 echo "(⌐■_■) Done building"
