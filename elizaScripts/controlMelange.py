@@ -1053,6 +1053,7 @@ if(makeDirs):
     shutil.move('setupReport.txt', run_config['run_dir']+'/input')
     rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
     setupNotes.close()
-print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
-
+    print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
+else:
+    print("Done! You shouldn't have to rebuild as we only changed run time options here")
 
