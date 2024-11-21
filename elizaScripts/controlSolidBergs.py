@@ -32,7 +32,7 @@ import build_domain_funcs as build_domain
 import run_config_funcs as rcf # import helpter functions
 
 #Set up new folder, copy over files from DEFAULT directory, will overwrite if existing experiment
-makeDirs = False
+makeDirs = True
 #Write input files, this lets us update the inputs with a full new run
 writeFiles = True
 
@@ -55,17 +55,17 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'solidTest'
-run_config['ndays'] = 1 # simulaton time (days)
+run_config['ncpus_xy'] = [5, 1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'solidTest_m0_b1'
+run_config['ndays'] = 5 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 250 # horizontal grid spacing (m)
-run_config['Lx_m'] = 10000 # domain size in x (m)
+run_config['Lx_m'] = 40000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 50 # num of z-grid points
+grid_params['Nr'] = 80 # num of z-grid points
 
 # Offshore current =========================
 oscStrength = .3 #[m/s] peak strength of offshore current
