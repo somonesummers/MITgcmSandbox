@@ -108,8 +108,13 @@ C             otherwise this is overwritten everytimestep.
 C              Loop through water column
                 DO K = 1, Nr
                   hFacC(I,J,K,bi,bj) = openFraction(I,J,K,bi,bj)
-                  recip_hFacC(I,J,K,bi,bj) = 
+                 IF(hFacW(I,J,K,bi,bj).LT.hFacMin) THEN
+                    hFacW(I,J,K,bi,bj) = 0 0. _d 0
+                    recip_hFacC(I,J,K,bi,bj) = 0 0. _d 0
+                 ELSE
+                    recip_hFacC(I,J,K,bi,bj) = 
      &                             1. _d 0 / openFraction(I,J,K,bi,bj)
+                 ENDIF
                 ENDDO  ! end k
                ENDIF
               ENDDO ! end I
@@ -129,33 +134,38 @@ C     for a way to do that.
           DO I=1-OLx,sNx+OLx
            Im1=MAX(I-1,1-OLx)
            Jm1=MAX(J-1,1-OLy)
-           IF (DYG(I,J,bi,bj).EQ.0.) THEN
-C     Dealing with thin walls, cribbed from CTRL pkg
+C          only update if you are in barrierMask 
+           IF (barrierMask(I,J,bi,bj) 
+C      &      + barrierMask(Im1,J,bi,bj) + barrierMask(I,Jm1,bi,bj)) 
+     &      .GT. 0. _d 0 ) THEN
+            IF (DYG(I,J,bi,bj).EQ.0.) THEN
+C      Dealing with thin walls, cribbed from CTRL pkg
               hFacW(I,J,K,bi,bj)=0.
               recip_hFacW(I,J,K,bi,bj)=0.
-           ELSE
+            ELSE
               hFacW(I,J,K,bi,bj)=
      &                  MIN(hFacC(I,J,K,bi,bj),hFacC(Im1,J,K,bi,bj))
-C     &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(Im1,J,K,bi,bj))
+C      &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(Im1,J,K,bi,bj))
               IF(hFacW(I,J,K,bi,bj).EQ.0.) THEN
                 recip_hFacW(I,J,K,bi,bj) = 0. _d 0
               ELSE
                 recip_hFacW(I,J,K,bi,bj) = 1. _d 0 / hFacW(I,J,K,bi,bj)
               ENDIF
-           ENDIF
-           IF (DXG(I,J,bi,bj).EQ.0.) THEN
+            ENDIF
+            IF (DXG(I,J,bi,bj).EQ.0.) THEN
               hFacS(I,J,K,bi,bj)=0.
               recip_hFacS(I,J,K,bi,bj)=0.
-           ELSE
+            ELSE
               hFacS(I,J,K,bi,bj)= 
      &                 MIN(hFacC(I,J,K,bi,bj),hFacC(I,Jm1,K,bi,bj))
-C     &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(I,Jm1,K,bi,bj))
+C      &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(I,Jm1,K,bi,bj))
               recip_hFacS = 1. _d 0 / hFacS(I,J,K,bi,bj)
               IF(hFacS(I,J,K,bi,bj).EQ.0.) THEN
                 recip_hFacS(I,J,K,bi,bj) = 0. _d 0
               ELSE
                 recip_hFacS(I,J,K,bi,bj) = 1. _d 0 / hFacS(I,J,K,bi,bj)
               ENDIF
+             ENDIF
            ENDIF
           ENDDO
          ENDDO
