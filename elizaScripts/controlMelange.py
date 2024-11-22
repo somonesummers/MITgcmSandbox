@@ -765,8 +765,8 @@ loop_count = 1
 np.random.seed(2)
 setUpPrint('random seed set, not really random anymore')
 
-while(np.abs(areaResidual) > .01 ): # Create random power dist of bergs, ensure correct surface area
-    numberOfBergs = round(numberOfBergs * (1 + areaResidual))  #relax correction a bit
+while(np.abs(areaResidual) > .005 ): # Create random power dist of bergs, ensure correct surface area
+    numberOfBergs = round(numberOfBergs * (1 + areaResidual))  
     setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
     x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
     x_depth = np.arange(minBergDepth, maxBergDepth, (maxBergDepth-minBergDepth)/(numberOfBergs*1e2))

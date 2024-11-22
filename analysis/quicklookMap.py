@@ -14,6 +14,7 @@ zDepth = -50
 plotDPI = 100
 cleanPNGs = True
 usePcolor = True
+showQuiver = True
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
@@ -111,6 +112,8 @@ else:
 
 for k in range(len(name)):
     for i in np.arange(startStep, maxStep + 1, sizeStep):
+        if(showQuiver):
+            dataQuiv = mds.rdmds("results/dynDiag", i)
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
             localBergs = True
         else:
@@ -165,6 +168,16 @@ for k in range(len(name)):
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, zSlice, :, :]),np.nanmax(data[kk, zSlice, :, :]),np.max(np.isnan(data[kk, zSlice, :, :]))))
         plt.ylabel('Across Fjord [m]')
         plt.title("%s depth %f at %.02f days" % (name[k], z[zSlice,0,0] ,i/86400.0*dt))
+        if(showQuiver):
+            u = np.squeeze(dataQuiv[2, zSlice, :, :])
+            v = np.squeeze(dataQuiv[4, zSlice, :, :])
+            plt.quiver(
+                np.squeeze(x),
+                np.squeeze(y),
+                u/np.sqrt(u**2 + v**2 + 1e-12),
+                v/np.sqrt(u**2 + v**2 + 1e-12),
+                alpha=.5
+                )
         if(localBergs):
             cp2 = plt.contourf(np.squeeze(x),
                 np.squeeze(y),

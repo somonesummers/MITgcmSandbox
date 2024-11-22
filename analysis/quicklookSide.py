@@ -12,6 +12,7 @@ xCrossSection = 5000
 zDepth = -50
 plotDPI = 100
 cleanPNGs = True
+showQuiver = False
 
 
 if(os.path.isfile('input/plotHelperLocal.py')):
@@ -133,6 +134,8 @@ else:
 
 for k in range(len(name)):
     for i in np.arange(startStep, maxStep + 1, sizeStep):
+        if(showQuiver):
+            dataQuiv = mds.rdmds("results/dynDiag", i)
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
             localBergs = True
         else:
@@ -199,6 +202,18 @@ for k in range(len(name)):
             #cbar2.set_label('Ocean Fraction')
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
+        if(showQuiver):
+            u = np.squeeze(dataQuiv[2, :, ySlice, :])
+            w = np.squeeze(dataQuiv[3, :, ySlice, :])
+            plt.quiver(
+                x[ySlice,:],
+                np.squeeze(z),
+                u/np.sqrt(u**2 + w**2 + 1e-12),
+                w/np.sqrt(u**2 + w**2 + 1e-12),
+                alpha=.5
+                )
+
+
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, ySlice, :]),np.nanmax(data[kk, :, ySlice, :]),np.max(np.isnan(data[kk, :, ySlice, :]))))
         plt.ylabel('Depth [m]')
         plt.title("%s y = %i at %.02f days" % (name[k], y[ySlice,0], i/86400.0*dt))

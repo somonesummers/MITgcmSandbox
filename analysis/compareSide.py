@@ -25,7 +25,7 @@ if(os.path.isfile('input/plotHelper.py')):
     sys.path.append('input')
     from plotHelper import *
     print('Found experiment plotting settings')
-elif(os.path.isfile('plotHelper.py')):
+elif(os.path.isfile('../plotHelper.py')):
     print('no custom plotting settings, using local default')
     from plotHelper import *
 else:  
@@ -169,6 +169,6 @@ for k in range(len(name)):
         plt.close()
         #plt.show()
 
-    os.system('magick -delay %f figs/compareSide_%s*.png -colors 256 -depth 256 figs/autoComapreSide_%s.gif' %(500/(maxStep/sizeStep), name[k], name[k]))
+    os.system('magick -delay %f figs/compareSide_%s*.png -colors 256 -depth 256 figs/autoCompareSide_%s.gif' %(500/(maxStep/sizeStep), name[k], name[k]))
 if(cleanPNGs):
     os.system('rm -f figs/compareSide_*.png')
