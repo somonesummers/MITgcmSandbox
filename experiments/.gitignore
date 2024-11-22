@@ -8,4 +8,6 @@
 Berg500*
 !*.sh
 !batchBuildRun.sh
+!BJD_idealised_setup-3/*
 *
+
