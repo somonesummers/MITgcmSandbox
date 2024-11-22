@@ -114,9 +114,9 @@ C              Loop through water column
                  ELSE
                     recip_hFacC(I,J,K,bi,bj) = 
      &                             1. _d 0 / openFraction(I,J,K,bi,bj)
-                 ENDIF
-                ENDDO  ! end k
-               ENDIF
+                 ENDIF !hFacC.LT.hFacMin
+                ENDDO ! end k
+               ENDIF !BarrierMask.GT.0
               ENDDO ! end I
              ENDDO ! end J
             ENDDO ! end bi
@@ -134,28 +134,32 @@ C     for a way to do that.
           DO I=1-OLx,sNx+OLx
            Im1=MAX(I-1,1-OLx)
            Jm1=MAX(J-1,1-OLy)
-C          only update if you are in barrierMask 
-           IF (barrierMask(I,J,bi,bj) 
-C      &      + barrierMask(Im1,J,bi,bj) + barrierMask(I,Jm1,bi,bj)) 
+C          only update if you are in barrierMask or a neighbor,
+C            and not boundary tile or face
+           IF ((barrierMask(I,J,bi,bj) 
+     &      + barrierMask(Im1,J,bi,bj) + barrierMask(I,Jm1,bi,bj)) 
      &      .GT. 0. _d 0 ) THEN
-            IF (DYG(I,J,bi,bj).EQ.0.) THEN
-C      Dealing with thin walls, cribbed from CTRL pkg
-              hFacW(I,J,K,bi,bj)=0.
-              recip_hFacW(I,J,K,bi,bj)=0.
-            ELSE
-              hFacW(I,J,K,bi,bj)=
-     &                  MIN(hFacC(I,J,K,bi,bj),hFacC(Im1,J,K,bi,bj))
-C      &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(Im1,J,K,bi,bj))
-              IF(hFacW(I,J,K,bi,bj).EQ.0.) THEN
+            IF(maskInW(I,J,bi,bj).NE.0) THEN !only if not boundary
+             IF (DYG(I,J,bi,bj).EQ.0.) THEN
+C              Dealing with thin walls, cribbed from CTRL pkg
+               hFacW(I,J,K,bi,bj)=0.
+               recip_hFacW(I,J,K,bi,bj)=0.
+             ELSE
+               hFacW(I,J,K,bi,bj)=
+     &                   MIN(hFacC(I,J,K,bi,bj),hFacC(Im1,J,K,bi,bj))
+C      &               0.5 * (hFacC(I,J,K,bi,bj) + hFacC(Im1,J,K,bi,bj))
+               IF(hFacW(I,J,K,bi,bj).EQ.0.) THEN
                 recip_hFacW(I,J,K,bi,bj) = 0. _d 0
               ELSE
                 recip_hFacW(I,J,K,bi,bj) = 1. _d 0 / hFacW(I,J,K,bi,bj)
-              ENDIF
-            ENDIF
-            IF (DXG(I,J,bi,bj).EQ.0.) THEN
+              ENDIF !hFacW.EQ.0
+             ENDIF !GYF.EQ.0
+            ENDIF !MaskInW.EQ.0
+            IF(maskInS(I,J,bi,bj).NE.0) THEN 
+             IF (DXG(I,J,bi,bj).EQ.0.) THEN
               hFacS(I,J,K,bi,bj)=0.
               recip_hFacS(I,J,K,bi,bj)=0.
-            ELSE
+             ELSE
               hFacS(I,J,K,bi,bj)= 
      &                 MIN(hFacC(I,J,K,bi,bj),hFacC(I,Jm1,K,bi,bj))
 C      &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(I,Jm1,K,bi,bj))
@@ -163,14 +167,15 @@ C      &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(I,Jm1,K,bi,bj))
                 recip_hFacS(I,J,K,bi,bj) = 0. _d 0
               ELSE
                 recip_hFacS(I,J,K,bi,bj) = 1. _d 0 / hFacS(I,J,K,bi,bj)
-              ENDIF
-             ENDIF
-           ENDIF
-          ENDDO
-         ENDDO
-        ENDDO
-       ENDDO
-      ENDDO         
+              ENDIF !hFacS.EQ.0
+             ENDIF !GXG.EQ.0
+            ENDIF !maskInW.NE.0
+           ENDIF !barrierMask.GT.0
+          ENDDO !I 
+         ENDDO !J
+        ENDDO !K
+       ENDDO !bi
+      ENDDO !bj        
 
       ENDIF !endif Berg OpenFrac file exists
    
