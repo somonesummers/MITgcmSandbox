@@ -5,9 +5,9 @@ import os
 import cmocean
 import argparse
 
-parser = argparse.ArgumentParser(description='Compare 2 MITcgm folders.')
+parser = argparse.ArgumentParser(description='Compare 2 MITcgm folders, point to results folders.')
 parser.add_argument('directories', metavar='Dir', type=str, nargs=2,
-                    help='2 folders to compare')
+                    help='2 results folders to compare')
 args = parser.parse_args()
 
 #folder1 controls plotting steps, any bergs, bathymetry, etc
@@ -19,6 +19,7 @@ yCrossSection = 1000
 xCrossSection = 5000
 zDepth = 50
 plotDPI = 100
+cleanPNGs = True
 
 if(os.path.isfile('input/plotHelper.py')):
     sys.path.append('input')
@@ -34,7 +35,7 @@ maxStep = 0
 sizeStep = 1e10
 startStep = 1e10
 
-for file in os.listdir('%s/results' %folder1):
+for file in os.listdir(folder1):
     # print(file)
     if "dynDiag.0" in file:
         words = file.split(".")
@@ -54,20 +55,20 @@ if(maxStep/sizeStep > 50):   #if more than 50 frames, downscale to be less than 
 
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 #Decide if iceBerg data files exist
-if(os.path.isfile('%s/input/data.iceberg' % folder1)):
+if(os.path.isfile('input/data.iceberg')):
     isBerg = True
 else:
     isBerg = False
 
-os.system('rm -f %s/figs/compareSide_*.png' % folder1)
-os.system('rm -f %s/figs/autoCompareSide_*.gif' % folder1)
+os.system('rm -f figs/compareSide_*.png')
+os.system('rm -f figs/autoCompareSide_*.gif')
 
-x = mds.rdmds("%s/results/XC" % folder1)
-y = mds.rdmds("%s/results/YC" % folder1)
-z = mds.rdmds("%s/results/RC" % folder1)
+x = mds.rdmds("%s/XC" % folder1)
+y = mds.rdmds("%s/YC" % folder1)
+z = mds.rdmds("%s/RC" % folder1)
 
-if(os.path.isfile('%s/input/bathymetry.bin' % folder1)):
-    topo = np.fromfile('%s/input/bathymetry.bin' % folder1, dtype='>f8')
+if(os.path.isfile('input/bathymetry.bin')):
+    topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
     topo = topo.reshape(np.shape(x))
 else:
     topo = np.zeros(np.shape(x))
@@ -76,36 +77,19 @@ else:
 # ice = ice.reshape(np.shape(x))
 
 if(isBerg):
-    bergMask = np.fromfile('%s/input/bergMask.bin' % folder1, dtype='>f8')
+    bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
     bergMask = bergMask.reshape(np.shape(x))
-    bergMaskNums = np.fromfile('%s/input/bergMaskNums.bin' % folder1, dtype='>f8')
+    bergMaskNums = np.fromfile('input/bergMaskNums.bin', dtype='>f8')
     bergMaskNums = bergMaskNums.reshape(np.shape(x))
-    bergsPerCell = np.fromfile('%s/input/numBergsPerCell.bin' % folder1, dtype='>f8')
+    bergsPerCell = np.fromfile('input/numBergsPerCell.bin', dtype='>f8')
     bergsPerCell = bergsPerCell.reshape(np.shape(x))
     bergContaingingCells = int(np.sum(bergMask))
     maxDepth = np.zeros(np.shape(x))
 
-    #deepest contour
-    for i in range(np.shape(x)[1]):
-        for j in range(np.shape(x)[0]):
-            bergCount = int(bergsPerCell[j,i])
-            if(bergMask[j,i] == 1 and bergCount > 0):  #only go in if bergs here
-                depthFile = '%s/input/iceberg_depth_%05i.txt' % (folder1, int(bergMaskNums[j,i]))
-                depths = np.zeros(bergCount)
-                with open(depthFile,'r') as readFile:
-                    ii = 0
-                    for line in readFile:
-                        if ii >= bergCount:
-                            print('berg count mismatch in depth')
-                            break
-                        depths[ii] = float(line)
-                        ii += 1
-                readFile.close()
-                maxDepth[j,i] = np.max(depths)
     # contourf plot
-    openFrac = np.fromfile('%s/input/openFrac.bin' % folder1, dtype='>f8')
+    openFrac = np.fromfile('input/openFrac.bin', dtype='>f8')
     openFrac = openFrac.reshape((np.shape(z)[0], np.shape(x)[0], np.shape(x)[1]))
-    bergMask = np.fromfile('%s/input/bergMask.bin' % folder1, dtype='>f8')
+    bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
     bergMask = bergMask.reshape(np.shape(x))
     for j in range(np.shape(x)[0]): #clean up non-berg parts of this mask
             for i in range(np.shape(x)[1]):
@@ -113,7 +97,7 @@ if(isBerg):
                     openFrac[:,j,i] = 1
                     
 
-ySlice = np.argmin(np.abs(y[:,0] - crossSection))
+ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
 print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
 # if(isBerg):
@@ -128,8 +112,8 @@ cbarLabel = ["[∆ C]", "[∆ ppt]", "[∆ m/s]", "[∆ m/s]", "[∆ m/s]"]
 for k in range(len(name)):
     #print('k,',k)
     for i in np.arange(startStep, maxStep + 1, sizeStep):
-        data1 = mds.rdmds("%s/results/%s" % (folder1, dynName[k]), i)
-        data2 = mds.rdmds("%s/results/%s" % (folder2, dynName[k]), i)
+        data1 = mds.rdmds("%s/%s" % (folder1, dynName[k]), i)
+        data2 = mds.rdmds("%s/%s" % (folder2, dynName[k]), i)
         data = data1 - data2
         if k == 0:  #T
             lvl = np.linspace(-1.5, 1.5, 128)
@@ -179,24 +163,12 @@ for k in range(len(name)):
         plt.title("%s y = %i at %i" % (name[k], y[ySlice,0], i))
         j = i/startStep
         
-        str = "%s/figs/compareSide_%s%05i.png" % (folder1, name[k],j)
+        str = "figs/compareSide_%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png')
         plt.close()
         #plt.show()
 
-    os.system('magick -delay %f %s/figs/compareSide_%s*.png -colors 256 -depth 256 %s/figs/autoComapreSide_%s.gif' %(500/(maxStep/sizeStep), folder1, name[k], folder1, name[k]))
-
-# BCT = np.fromfile("T.bound", dtype=">f8")
-# plt.plot(BCT)
-# plt.show()
-#
-# BCS = np.fromfile("S.bound", dtype=">f8")
-# plt.plot(BCS)
-# plt.show()
-#
-# BCU = np.fromfile("U.bound", dtype=">f8")
-# plt.plot(BCU)
-# plt.show()
-#
-#
+    os.system('magick -delay %f figs/compareSide_%s*.png -colors 256 -depth 256 figs/autoComapreSide_%s.gif' %(500/(maxStep/sizeStep), name[k], name[k]))
+if(cleanPNGs):
+    os.system('rm -f figs/compareSide_*.png')
