@@ -74,9 +74,9 @@ bergConc = zeros(nx,ny);
 
 % Berg parameters
 bergType = 1; % 1 = block; 2 = cone
-alpha = 1.9; % slope of power law size frequency distribution
+alpha = 1.8; % slope of power law size frequency distribution
 scaling = 2; % 1 = Sulak 2017; 2 = Barker 2004
-maxDepth = 300;
+maxDepth = 200;
 minDepth= 10; 
 maxWidth = 0;
 minWidth = 20;
@@ -91,7 +91,7 @@ driftMask(3:end-20,2:end-1) = 1; % calculate effect of iceberg drift on melt rat
 % barrierMask(3:end-20,2:end-1) = 1; % make icebergs a physical barrier to water flow
 
 % Iceberg concentration (% of each surface cell that is filled in plan view)
-conc_linear = linspace(80,5,77); % iceberg concentration declines linearly from 40% adjacent to the glacier to 5 %, over ~40 km.
+conc_linear = linspace(40,1,77); % iceberg concentration declines linearly from 40% adjacent to the glacier to 5 %, over ~40 km.
 bergConc(3:length(conc_linear)+2,2:end-1) = repmat(conc_linear(:),[1,10]); % iceberg concentration is uniform across fjord
 
 % Generate iceberg size-frequency distribution
