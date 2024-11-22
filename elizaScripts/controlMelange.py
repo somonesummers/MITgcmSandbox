@@ -18,6 +18,7 @@ import fileinput
 import sys
 import glob
 import cmocean
+from bisect import bisect_left
 
 OSX = platform.system()
 
@@ -32,12 +33,27 @@ import build_domain_funcs as build_domain
 import run_config_funcs as rcf # import helpter functions
 
 #Set up new folder
-makeDirs = True
+makeDirs = False
 #Write input files, this lets us update the inputs with a full new run
-writeFiles = True
+writeFiles = False
 
 if(makeDirs):
     setupNotes = open("setupReport.txt", "w") 
+
+def find_closest_indices(sorted_A, sorted_B):
+    closest_indices = []
+    for a in sorted_A:
+        pos = bisect_left(sorted_B, a)  # Find position in B where a would fit
+        # Compare neighbors to find the closest
+        if pos == 0:
+            closest_indices.append(0)
+        elif pos == len(sorted_B):
+            closest_indices.append(len(sorted_B) - 1)
+        else:
+            before = pos - 1
+            after = pos
+            closest_indices.append(before if abs(sorted_B[before] - a) <= abs(sorted_B[after] - a) else after)
+    return closest_indices
 
 def setUpPrint(msg):
     print(msg)
@@ -55,8 +71,8 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [5, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Alpha_m1_b1'
+run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'Alpha_drag'
 run_config['ndays'] = 5 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -74,8 +90,8 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 10000 # [meters] of extent of ice
-iceCoverage = 90 # % of ice cover in melange, stay under 97% probably
+iceExtent = 8000 # [meters] of extent of ice
+iceCoverage = 90 # % of ice cover in melange, stay under 90% ideally
 
 #========================================================================================
 # The rest of this should take care of it self mostly
@@ -281,6 +297,7 @@ params01['implicitFreeSurface'] = True
 params01['selectAddFluid'] = 1
 #params01['implicitViscosity'] = True
 #params01['implicitDiffusion'] = True
+params01['bottomVisc_pCell'] = True
 
 # physical parameters
 #params01['f0'] = -1.36e-4
@@ -669,6 +686,8 @@ write_bin("EBCu.bin", EBCu)
 setUpPrint('====== Making mélange =====')
 #Make Masks
 
+hfacThreshold = .95
+
 nz = grid_params['Nr']
 ny = grid_params['Ny']
 nx = grid_params['Nx']
@@ -735,7 +754,7 @@ elif(scaling == 2): # Then use Barker04 width-depth relationship
         maxBergDepth = 2.91*maxBergWidth^0.71
         minBergDepth = 2.91*minBergWidth^0.71
 
-numberOfBergs = 3500 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
+numberOfBergs = 1500 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
 bergTopArea = 0
 areaResidual = 1
 # Generate the Inverse Power Law cumulative distribution function
@@ -743,11 +762,10 @@ areaResidual = 1
 setUpPrint('Making bergs, this can take a few loops...')
 loop_count = 1
 
-#np.random.seed(2)
+np.random.seed(2)
 setUpPrint('random seed set, not really random anymore')
 
 while(np.abs(areaResidual) > .01 ): # Create random power dist of bergs, ensure correct surface area
-    np.random.seed(2)
     numberOfBergs = round(numberOfBergs * (1 + areaResidual))  #relax correction a bit
     setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
     x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
@@ -769,16 +787,20 @@ while(np.abs(areaResidual) > .01 ): # Create random power dist of bergs, ensure 
     nearestIndex_width = [0] * uniformlyDistributedRandomNumbers.size
     nearestIndex_depth = [0] * uniformlyDistributedRandomNumbers.size
     
-    for i in range(uniformlyDistributedRandomNumbers.size):  #this is pretty slow, not sure if vectorized exists
-        nearestIndex_width[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_width).argmin();
-        nearestIndex_depth[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_depth).argmin();
-    
+    # for i in range(uniformlyDistributedRandomNumbers.size):  #this is pretty slow 
+    #     nearestIndex_width[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_width).argmin();
+    #     nearestIndex_depth[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_depth).argmin();
+    # This works by leaveraging that inversPowerLaw is sorted
+    nearestIndex_width = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_width)
+    nearestIndex_depth = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_depth)
+
+
     inversePowerLawDistNumbers_width = x_width[nearestIndex_width];
     inversePowerLawDistNumbers_length = inversePowerLawDistNumbers_width/1.62 # Widths are bigger 
-    tooWide = np.count_nonzero(inversePowerLawDistNumbers_width > deltaX)
-    tooLong = np.count_nonzero(inversePowerLawDistNumbers_length > deltaX)
-    inversePowerLawDistNumbers_width[inversePowerLawDistNumbers_width > deltaX] = deltaX # Max width is grid cell (assumed square)
-    inversePowerLawDistNumbers_length[inversePowerLawDistNumbers_length > deltaX] = deltaX # Max length is grid cell (assumed square)
+    tooWide = np.count_nonzero(inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold))  #disallow completely full cells
+    tooLong = np.count_nonzero(inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold))
+    inversePowerLawDistNumbers_width[inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max width is grid cell (assumed square)
+    inversePowerLawDistNumbers_length[inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max length is grid cell (assumed square)
     if(tooLong + tooWide > 0):
         setUpPrint('\t\tBergs clipped: %i for width, %i for length' % (tooWide, tooLong))
     
@@ -796,7 +818,6 @@ setUpPrint('Total Berg Area %f' % bergTopArea)
 setUpPrint('Total Berg fract: %.2f %%' % (bergTopArea/bergMaskArea*100))
 
 # Now we sort these berg into cell, randomly 
-
 bergMaski = 0  #Bad name, but this is the count of cells that will recieve bergs
 bergDict = {}
 
@@ -807,9 +828,7 @@ for j in range(ny):
             bergMaski = 1 + bergMaski #Needs to start at 1, as non-bergs will be 0
             bergMaskNums[j,i] = bergMaski #Assign Mask Nums, not random as we'll randomly place bergs in cells
             bergDict[bergMaski] = [j,i] #This lets us do 1-D loops for the whole grid
-
 setUpPrint('%i cells with bergs' % bergMaski)
-# print(bergDict)
 
 # Sort my bergs
 sorted_indices = np.argsort(-inversePowerLawDistNumbers_depth) # Sort backwards to get descending from big to small bergs 
@@ -818,13 +837,13 @@ sorted_width = inversePowerLawDistNumbers_width[sorted_indices]
 sorted_length = inversePowerLawDistNumbers_length[sorted_indices]
 assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) # In this script, every berg has a home
 
-# Need to reshuffle as it re-writes this when sorting
 # Array for bergs
 bergsPerCellLimit = 500
 icebergs_depths = np.zeros([bergMaski,bergsPerCellLimit])
 icebergs_widths = np.zeros([bergMaski,bergsPerCellLimit])
 icebergs_length = np.zeros([bergMaski,bergsPerCellLimit])  #careful, not plural as to length match
 
+np.random.seed(2)
 assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) #every Berg has a spot
 
 icebergs_per_cell = np.zeros([bergMaski],dtype=np.int16)
@@ -839,19 +858,24 @@ for i in range(numberOfBergs):
     while(bergArea > (deltaX * deltaY  * (bergConc[bergDict[j+1][0],bergDict[j+1][1]]/100) - icebergs_area_per_cell[j])): #if above 'full', pick random new cell, accept with decreasing probability
         j_old = j
         j = np.random.randint(0,bergMaski)
-        assignedCell[i] = j
         loopLimiter += 1
-        if((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY) < 0.94): #only consider accepting if under 95
-            odds = np.abs(np.random.normal(0,.5,1))
+        if((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY) < hfacThreshold - .01): #only consider accepting if under 95
+            odds = np.abs(np.random.normal(0,.5,1))  #randomly accepts those that are big in overfull cells, but at decreasing frequency
             overFull = ((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY)*100 - bergConc[bergDict[j+1][0],bergDict[j+1][1]])
             if(odds > overFull):
-                # if(overFull > 0):
-                #      print('\taccepted overfill, odds:',odds, 'ask',overFull,'now:',(bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY))
-                break
-        # print(j_old, "is full, trying",j, "attempt", loopLimiter)
-        if(loopLimiter > bergMaski*100):
-            setUpPrint('no more empty cells... giving up THIS IS BAD')
+                 # print('accepting overfull')
+                 assignedCell[i] = j  #if we it a shuffling critera
+                 break
+        if(loopLimiter > bergMaski*20): #eventually we have to force some in
+            indexesAllowed = np.where((deltaX * deltaY * hfacThreshold - icebergs_area_per_cell)  > bergArea)
+            randi = np.random.randint(0,len(indexesAllowed[0]))
+            j = indexesAllowed[0][randi]
+            assignedCell[i] = j  #if we it a shuffling critera, must line up for calculation below
+            # setUpPrint('\t Randomly missed, will force into cell with room: %i' % j)
+            if((np.min(icebergs_area_per_cell) + bergArea)/(deltaX * deltaY) > hfacThreshold):
+                setUpPrint('WARNING cell very full: %.2f%%' %((np.min(icebergs_area_per_cell) + bergArea)*100/(deltaX * deltaY)))
             break
+     
     icebergs_depths[j,icebergs_per_cell[j]] = sorted_depth[i]
     icebergs_widths[j,icebergs_per_cell[j]] = sorted_width[i]
     icebergs_length[j,icebergs_per_cell[j]] = sorted_length[i]
@@ -860,7 +884,8 @@ for i in range(numberOfBergs):
     icebergs_area_per_cell[j] += bergArea
 setUpPrint('Bergs per cell and filled faction at surface for spot check')     
 setUpPrint(icebergs_per_cell)
-setUpPrint(np.round(icebergs_area_per_cell/(500*500),2))
+setUpPrint(np.round(icebergs_area_per_cell/(deltaX*deltaY),2))
+setUpPrint('Max fill is: %.2f%%' % (np.nanmax(icebergs_area_per_cell/(deltaX*deltaY))*100))
 
 # All bergs now sorted 
 openFrac = np.zeros([nz,ny,nx])
@@ -872,7 +897,7 @@ cellVolume = deltaX*deltaY*deltaZ
 for i in range(bergMaski):
     bergCount = icebergs_per_cell[i]
     numBergsPerCell[bergDict[i+1][0],bergDict[i+1][1]] = bergCount
-    if(bergCount > 1):
+    if(bergCount > 0):
         lengths = icebergs_length[i,icebergs_length[i,:] > 0] #return only non-zeros
         widths = icebergs_widths[i,icebergs_widths[i,:] > 0] #return only non-zeros
         depths = icebergs_depths[i,icebergs_depths[i,:] > 0] #return only non-zeros
