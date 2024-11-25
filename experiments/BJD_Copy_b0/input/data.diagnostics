@@ -1,0 +1,37 @@
+# ========================== 
+# | DIAGNOSTICS parameters | 
+# ========================== 
+
+# Diagnostics package choices
+ &DIAGNOSTICS_LIST
+ diag_mnc=.FALSE.,
+ fields(1:5,1)='THETA','SALT','UVEL','WVEL','VVEL',
+ fileName(1)='dynDiag',
+ frequency(1)=432000,
+ timePhase(1)=0.00000000e+00,
+ fields(1:5,2)='THETA','SALT','UVELMASS','VVELMASS','WVELMASS',
+ fileName(2)='dynMassDiag',
+ frequency(2)=432000,
+ timePhase(2)=0.00000000e+00,
+ fields(1:6,3)='UTHMASS ','USLTMASS','VTHMASS ','VSLTMASS','WTHMASS ','WSLTMASS',
+ fileName(3)='fluxMassDiag',
+ frequency(3)=432000,
+ timePhase(3)=0.00000000e+00,
+ fields(1:3,4)='BRGfwFlx','BRGhtFlx','BRGmltRt',
+ fileName(4)='BRGFlx',
+ frequency(4)=432000,
+ timePhase(4)=0.00000000e+00,
+ fields(1:5,5)='icefrntW','icefrntT','icefrntS','icefrntR','icefrntM',
+ fileName(5)='plumeDiag',
+ frequency(5)=432000,
+ timePhase(5)=0.00000000e+00,
+ fields(1:5,6)='THETA','SALT','UVEL','WVEL','VVEL',
+ fileName(6)='dynDiag_inst',
+ frequency(6)=-432000,
+ timePhase(6)=0.00000000e+00,
+ &
+
+# Statistics package choices
+ &DIAG_STATIS_PARMS
+ &
+
