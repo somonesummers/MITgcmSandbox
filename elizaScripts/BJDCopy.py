@@ -33,9 +33,9 @@ import build_domain_funcs as build_domain
 import run_config_funcs as rcf # import helpter functions
 
 #Set up new folder
-makeDirs = False
+makeDirs = True
 #Write input files, this lets us update the inputs with a full new run
-writeFiles = False
+writeFiles = True
 
 if(makeDirs):
     setupNotes = open("setupReport.txt", "w") 
@@ -71,8 +71,8 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Alpha_drag'
+run_config['ncpus_xy'] = [10, 1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'BJD_Copy_b0'
 run_config['ndays'] = 5 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -84,14 +84,14 @@ run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m)
 grid_params['Nr'] = 50 # num of z-grid points
 
 # Offshore current =========================
-oscStrength = .3 #[m/s] peak strength of offshore current
+oscStrength = .1 #[m/s] peak strength of offshore current
 lengthOffShoreCurrent = 5e3 #width of offshore current [m]
 indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 8000 # [meters] of extent of ice
-iceCoverage = 90 # % of ice cover in melange, stay under 90% ideally
+iceExtent = 40000 # [meters] of extent of ice
+iceCoverage = 40 # % of ice cover in melange, stay under 90% ideally
 
 #========================================================================================
 # The rest of this should take care of it self mostly
@@ -387,8 +387,8 @@ if run_config['test']:
     run_config['tavg_freq'] = 1 # multiples of timestep
     
 else:
-    run_config['inst_freq'] = 12 # multiples of hours
-    run_config['tavg_freq'] = 12 # multiples of hours
+    run_config['inst_freq'] = 120 # multiples of hours
+    run_config['tavg_freq'] = 120 # multiples of hours
 
 
 #---------specify time averaged fields------#
@@ -557,7 +557,7 @@ if(writeFiles):
 plt.show()
 plt.close()
 
-write_bin("bathymetry.bin", d)
+# write_bin("bathymetry.bin", d)
 
 # Temp/Salt/Vel  initial/boundaries
 from scipy import interpolate
@@ -596,17 +596,17 @@ for i in np.arange(fjordEnd,grid_params['Nx']):
     V_ns[:,i] = oscStrength * (i-fjordEnd)/indexOSC #[m/s] along coast flow
 
 
-write_bin("T.init", t2)
-write_bin("S.init", s2)
-write_bin("EBCs.bin", S2)
-write_bin("EBCt.bin", T2)
-write_bin("EBCs.bin", S2)
-write_bin("EBCt.bin", T2)
-write_bin("EBCv.bin", Ve)
-write_bin("NsBCs.bin", S_ns)
-write_bin("NsBCt.bin", T_ns)
-write_bin("NsBCv.bin", V_ns)
-write_bin("NsBCW.bin", W_ns)
+# write_bin("T.init", t2)
+# write_bin("S.init", s2)
+# write_bin("EBCs.bin", S2)
+# write_bin("EBCt.bin", T2)
+# write_bin("EBCs.bin", S2)
+# write_bin("EBCt.bin", T2)
+# write_bin("EBCv.bin", Ve)
+# write_bin("NsBCs.bin", S_ns)
+# write_bin("NsBCt.bin", T_ns)
+# write_bin("NsBCv.bin", V_ns)
+# write_bin("NsBCW.bin", W_ns)
 
 plt.figure()
 plt.plot(S2[:,0] - 34, z, 'b', label="Sref - 34")
@@ -660,9 +660,9 @@ runoffVel[plume_loc,icefront,:] = wsg
 runoffRad[plume_loc,icefront,:] = np.sqrt(2*runoff/(np.pi*wsg))
 
 # Write files
-write_bin("runoffVel.bin", runoffVel)
-write_bin("runoffRad.bin", runoffRad)
-write_bin("plumeMask.bin", plumeMask)
+# write_bin("runoffVel.bin", runoffVel)
+# write_bin("runoffRad.bin", runoffRad)
+# write_bin("plumeMask.bin", plumeMask)
 
 plt.figure(1)
 plt.pcolormesh(x,y,plumeMask)
@@ -684,7 +684,7 @@ if runoff > 0:
     # Out-of-domain velocity is positive at eastern boundary
     EBCu[:] = fjordMouthVelocity
 
-write_bin("EBCu.bin", EBCu)
+# write_bin("EBCu.bin", EBCu)
 
 #=======================================================================================
 # Make Bergs, now all in python
@@ -711,7 +711,7 @@ numBergsPerCell = np.zeros([ny,nx],dtype=np.int64)
 
 # Berg parameters
 bergType = 1 # 1 = block 2 = cone (not implemented)
-alpha = 1.8 # slope of inverse power law size frequency distribution
+alpha = 1.9 # slope of inverse power law size frequency distribution
 scaling = 2 # 1 = Sulak 2017 2 = Barker 2004
 maxBergDepth = iceBergDepth # (m) - set to zero if 'prescribing' max iceberg width, set at top here
 minBergDepth= 20 # (m)
@@ -730,11 +730,11 @@ bergMask[1:-1,1:iceExtentIndex] = 1 # icebergs in inner 5 km, all oriented east-
 meltMask[1:-1,1:iceExtentIndex] = 1 # Allow focus on blocking effect only
 
 # Barrier mask
-barrierMask[1:-1,1:iceExtentIndex] = 1 # make icebergs a physical barrier to water flow
+barrierMask[1:-1,1:iceExtentIndex] = 0 # make icebergs a physical barrier to water flow
 barrierMask[plume_loc,icefront] = 0 #Plume code struggles with hFac adjustments
 
 # Iceberg concentration (# of each surface cell that is filled in plan view)
-bergConc[1:-1,1:iceExtentIndex] = np.linspace(iceCoverage,10,(iceExtentIndex-1)) # iceberg concentration set at top
+bergConc[1:-1,1:iceExtentIndex] = np.linspace(iceCoverage,1,(iceExtentIndex-1)) # iceberg concentration set at top
 # print(bergConc[1:-1,1:iceExtentIndex])
 
 desiredBergArea = np.sum(bergConc/100.0*deltaX*deltaY)

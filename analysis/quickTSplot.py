@@ -99,8 +99,8 @@ for i in np.arange(startStep, maxStep + 1, sizeStep):
     cbar = plt.colorbar(sc)
     cbar.set_label('Depth [m]')
     ax = plt.gca()
-    ax.set_xlim([32.5, 35.5])
-    ax.set_ylim([0,3])
+    ax.set_xlim([np.min(saltRange), np.max(saltRange)])
+    ax.set_ylim([np.min(tempRange), np.max(tempRange)])
     
     plt.xlabel('Salt [ppt]')
     plt.ylabel('Temperature [C]')

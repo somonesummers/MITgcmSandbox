@@ -71,23 +71,21 @@ name = ["Temp", "Sal", "U", "W", "V"]
 units = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 for k in range(len(name)):
+    print('\t' + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
-            lvl = [1,3]
+            lvl = [np.min(tempRange),np.max(tempRange)]
             cm = "xkcd:raspberry"
         elif k == 1:
-            lvl = [33.5,35]
+            lvl = [np.min(saltRange),np.max(saltRange)]
             cm = "xkcd:green"
         elif k == 2 or k == 4:
-            lvl = [-0.5, 0.5]
+            lvl = [np.min(uRange),np.max(uRange)]
             cm = "xkcd:rose"
-        elif k == 4:
-            lvl = [-0.5, 0.5]
-            cm = "xkcd:violet"
         elif k == 3:
-            lvl = [-0.005, 0.005]
-            cm = "xkcd:lavender"
+            lvl = [np.min(wRange),np.max(wRange)]
+            cm = "xkcd:violet"
         plt.figure()
         for j in range(np.shape(y[1:-1,:])[0]):
             plt.plot(data[k,:,j+1,xSlice],np.squeeze(z),linewidth=.5,alpha=.5,color=cm)
@@ -109,5 +107,5 @@ for k in range(len(name)):
     os.system('magick -delay %f figs/depthPlotX%s*.png -colors 256 -depth 256 figs/depthPlotX%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
-if(cleanPNGs):
-    os.system('rm -f figs/depthPlotX*.png')
+    if(cleanPNGs):
+        os.system('rm -f figs/depthPlotX*.png')

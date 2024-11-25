@@ -6,15 +6,14 @@ import sys
 import cmocean
 import fileinput
 
-
 # Pick cross section to view from file or default
 yCrossSection = 1000
 xCrossSection = 5000
 zDepth = -50
 plotDPI = 100
 cleanPNGs = True
-usePcolor = True
-showQuiver = True
+showQuiver = False
+
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
@@ -26,6 +25,10 @@ elif(os.path.isfile('../plotHelper.py')):
     from plotHelper import *
 else:  
     print('no defaults found')
+
+#Overwrite local settings here if desired
+# usePcolor = True
+
 print('Plot DPI:',plotDPI,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
 
 dt = 0.0   
@@ -40,7 +43,7 @@ startStep = 1e10
 
 for file in os.listdir('results'):
     # print(file)
-    if "dynDiag.0" in file:
+    if "PH.0" in file:
         words = file.split(".")
         # print(words[1])  
         if int(words[1]) > maxStep:
@@ -65,15 +68,12 @@ if(os.path.isfile('input/bergMask.bin')):
 else:
     isBerg = False
 
-#Clean up old gifs and pngs
-os.system('rm -f figs/map*.png')
-os.system('rm -f figs/autoMap*.gif')
+os.system('rm -f figs/state*.png')
+os.system('rm -f figs/state*.gif')
 
-y = mds.rdmds("results/YC")
 x = mds.rdmds("results/XC")
+y = mds.rdmds("results/YC")
 z = mds.rdmds("results/RC")
-
-
 
 if(os.path.isfile('input/bathymetry.bin')):
     topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
@@ -81,7 +81,34 @@ if(os.path.isfile('input/bathymetry.bin')):
 else:
     topo = np.zeros(np.shape(x))
 
+
 if(isBerg):
+    bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
+    bergMask = bergMask.reshape(np.shape(x))
+    bergMaskNums = np.fromfile('input/bergMaskNums.bin', dtype='>f8')
+    bergMaskNums = bergMaskNums.reshape(np.shape(x))
+    bergsPerCell = np.fromfile('input/numBergsPerCell.bin', dtype='>f8')
+    bergsPerCell = bergsPerCell.reshape(np.shape(x))
+    bergContaingingCells = int(np.sum(bergMask))
+    maxDepth = np.zeros(np.shape(x))
+
+    ## deepest contour
+    # for i in range(np.shape(x)[1]):
+    #     for j in range(np.shape(x)[0]):
+    #         bergCount = int(bergsPerCell[j,i])
+    #         if(bergMask[j,i] == 1 and bergCount > 0):  #only go in if bergs here
+    #             depthFile = 'input/iceberg_depth_%05i.txt' % int(bergMaskNums[j,i])
+    #             depths = np.zeros(bergCount)
+    #             with open(depthFile,'r') as readFile:
+    #                 ii = 0
+    #                 for line in readFile:
+    #                     if ii >= bergCount:
+    #                         print('berg count mismatch in depth')
+    #                         break
+    #                     depths[ii] = float(line)
+    #                     ii += 1
+    #             readFile.close()
+    #             maxDepth[j,i] = np.max(depths)
     # contourf plot
     openFrac = np.fromfile('input/openFrac.bin', dtype='>f8')
     openFrac = openFrac.reshape((np.shape(z)[0], np.shape(x)[0], np.shape(x)[1]))
@@ -91,122 +118,96 @@ if(isBerg):
             for i in range(np.shape(x)[1]):
                 if bergMask[j,i] == 0:
                     openFrac[:,j,i] = 1
+                    
 
-
-zSlice = np.argmin(np.abs(z[:,0,0]- zDepth))
-print('depth is z =', z[zSlice,0,0], 'index', zSlice)
-
-# iceEdge = np.interp(z[zSlice,0,0],ice[0,:],x[0,:])
-
-name = ["Temp", "Sal", "U", "W", "V"]
-cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
+ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
+print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
 if(isBerg):
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag', 'BRGFlx']
-    name = ["Temp", "Sal", "U", "W", "V","SDP","BRGmltRt"]
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]","[m/s]", "[m/d]"]
+    dynName = ['PH','PNH']
+    name = ['PH','PNH']
+    cbarLabel = ["[Pa]","[Pa]"]
 else:
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
-    name = ["Temp", "Sal", "U", "W", "V","SDP"]
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]","[m/s]"]
+    dynName = ['PH','PNH']
+    name = ['PH','PNH']
+    cbarLabel = ["[Pa]","[Pa]"]
 
 for k in range(len(name)):
-    print("\t" + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         if(showQuiver):
-            dataQuiv = mds.rdmds("results/dynDiag", i)
+            dataQuiv = mds.rdmds("results/dynDiag", i)  #only works if same time steps for dynDiag and state vars
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
             localBergs = True
         else:
             localBergs = False
-        if((not localBergs) and dynName[k]=='BRGFlx'):
+        if((not localBergs) and k==5):
             #fill melt image with 0s if bergs in run but not frame
             data = np.zeros(np.shape(mds.rdmds("results/%s"%(dynName[k-1]), i)))
         else:
             data = mds.rdmds("results/%s"%(dynName[k]), i)
+        
         if k == 0:
-            lvl = tempRange
-            cm = tempCmap
-        elif k == 1:
-            lvl = saltRange
-            cm = saltCmap
-        elif k == 2:
-            lvl = uRange
-            cm = uCmap
-        elif k == 3:
-            lvl = wRange
-            cm = wCmap
-        elif k == 4:
-            lvl = vRange
-            cm = vCmap
-        elif k == 5:
-            lvl = np.linspace(0,.5,128)
-            cm = 'cmo.speed'
-        elif k == 6:
-            lvl = meltRange
-            cm = meltCmap
-        if(k == 6):
-            kk = 2
-        else:
-            kk = k
+            lvl = np.linspace(-500, 500,127)
+            cm = 'cmo.turbid'
 
-        if(name[k] == "SDP"):
-            dataPlot = np.sqrt(data[2, zSlice, :, :]**2 + data[3, zSlice, :, :]**2 + + data[4, zSlice, :, :]**2)
-        else:
-            dataPlot = data[kk, zSlice, :, :]
         if(usePcolor):
             cp = plt.pcolormesh(
-                np.squeeze(x),
-                np.squeeze(y),
-                np.squeeze(dataPlot),
+                np.squeeze(x[ySlice,:]),
+                np.squeeze(z),
+                np.squeeze(data[ :, ySlice, :]),
                 cmap=cm,
                 vmin=np.min(lvl),
                 vmax=np.max(lvl),
             )
         else:
             cp = plt.contourf(
-                np.squeeze(x),
-                np.squeeze(y),
-                np.squeeze(dataPlot),
+                np.squeeze(x[ySlice,:]),
+                np.squeeze(z),
+                np.squeeze(data[ :, ySlice, :]),
                 lvl,
                 extend="both",
                 cmap=cm,
             )
-        cbar = plt.colorbar(cp)
-        cbar.set_label(cbarLabel[k])
-        plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(dataPlot),np.nanmax(dataPlot),np.max(np.isnan(dataPlot))))
-        plt.ylabel('Across Fjord [m]')
-        plt.title("%s depth %f at %.02f days" % (name[k], z[zSlice,0,0] ,i/86400.0*dt))
-        if(showQuiver):
-            u = np.squeeze(dataQuiv[2, zSlice, :, :])
-            v = np.squeeze(dataQuiv[4, zSlice, :, :])
-            plt.quiver(
-                np.squeeze(x),
-                np.squeeze(y),
-                u/np.sqrt(u**2 + v**2 + 1e-12),
-                v/np.sqrt(u**2 + v**2 + 1e-12),
-                alpha=.5
-                )
+        plt.plot(x[ySlice,:],topo[ySlice,:],color='black')
         if(localBergs):
-            cp2 = plt.contourf(np.squeeze(x),
-                np.squeeze(y),
-                np.squeeze(openFrac[zSlice, :, :]),
+            # plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
+            cp2 = plt.contourf(
+                x[ySlice,:],
+                np.squeeze(z),
+                np.squeeze(openFrac[:, ySlice, :]),
                 [.1,.5,.9],
                 extend="min",
                 alpha=.1,
                 cmap='cmo.gray')
             #cbar2 = plt.colorbar(cp2)
             #cbar2.set_label('Ocean Fraction')
+        cbar = plt.colorbar(cp)
+        cbar.set_label(cbarLabel[k])
+        if(showQuiver):
+            u = np.squeeze(dataQuiv[2, :, ySlice, :])
+            w = np.squeeze(dataQuiv[3, :, ySlice, :])
+            plt.quiver(
+                x[ySlice,:],
+                np.squeeze(z),
+                u/np.sqrt(u**2 + w**2 + 1e-12),
+                w/np.sqrt(u**2 + w**2 + 1e-12),
+                alpha=.5
+                )
 
+
+        plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[ :, ySlice, :]),np.nanmax(data[ :, ySlice, :]),np.max(np.isnan(data[ :, ySlice, :]))))
+        plt.ylabel('Depth [m]')
+        plt.title("%s y = %i at %.02f days" % (name[k], y[ySlice,0], i/86400.0*dt))
         j = i/sizeStep + startStep
-        str = "figs/map%s%05i.png" % (name[k],j)
+        
+        str = "figs/state%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
 
-    os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    os.system('magick -delay %f figs/state%s*.png -colors 256 -depth 256 figs/state%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
 if(cleanPNGs):
-    os.system('rm -f figs/map*.png')
+    os.system('rm -f figs/state*.png')

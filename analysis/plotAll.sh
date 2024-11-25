@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-set -e
-
-set -e
+# No set -e as we want every script to run
 
 if [ $# -lt 1 ]; then
   echo 1>&2 "$0: not enough arguments, need to specifiy experiment name"
@@ -30,9 +28,9 @@ do
 
   echo '== TS plot =='
   python ../quickTSplot.py
-  
-  # echo '== Compare to 20 day snapshot =='
-  # python ../compareSideAvg.py
+
+  echo '== Plume plot =='
+  python ../quickPlumePlot.py
   
   cd ..    
 done
