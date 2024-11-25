@@ -72,7 +72,7 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [10, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'BJD_Copy_b0'
+run_config['run_name'] = 'BJD_Bergs'
 run_config['ndays'] = 5 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -989,18 +989,18 @@ plt.savefig(run_config['run_dir']+'/input/meltMask.png', format='png', dpi=200)
 plt.show()
 
 ## write iceberg txt files
-# setUpPrint('Saving text files for bergs...')
-# if(writeFiles):
-#     for i in range(bergMaski):
-#         with open(run_config['run_dir'] + '/input/iceberg_depth_%05i.txt' % (i+1) , 'w') as file_handler:
-#             for item in icebergs_depths[i,icebergs_depths[i,:] > 0]:
-#                 file_handler.write("{}\n".format(item))
-#         with open(run_config['run_dir']+'/input/iceberg_width_%05i.txt' % (i+1) , 'w') as file_handler:
-#             for item in icebergs_widths[i,icebergs_widths[i,:] > 0]:
-#                 file_handler.write("{}\n".format(item))
-#         with open(run_config['run_dir'] + '/input/iceberg_length_%05i.txt' % (i+1) , 'w') as file_handler:
-#             for item in icebergs_length[i,icebergs_length[i,:] > 0]:
-#                 file_handler.write("{}\n".format(item))
+setUpPrint('Saving text files for bergs...')
+if(writeFiles):
+    for i in range(bergMaski):
+        with open(run_config['run_dir'] + '/input/iceberg_depth_%05i.txt' % (i+1) , 'w') as file_handler:
+            for item in icebergs_depths[i,icebergs_depths[i,:] > 0]:
+                file_handler.write("{}\n".format(item))
+        with open(run_config['run_dir']+'/input/iceberg_width_%05i.txt' % (i+1) , 'w') as file_handler:
+            for item in icebergs_widths[i,icebergs_widths[i,:] > 0]:
+                file_handler.write("{}\n".format(item))
+        with open(run_config['run_dir'] + '/input/iceberg_length_%05i.txt' % (i+1) , 'w') as file_handler:
+            for item in icebergs_length[i,icebergs_length[i,:] > 0]:
+                file_handler.write("{}\n".format(item))
 
 icebergs_depths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
 icebergs_widths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
