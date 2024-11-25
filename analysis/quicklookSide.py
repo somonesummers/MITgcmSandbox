@@ -133,6 +133,7 @@ else:
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 for k in range(len(name)):
+    print("\t" + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
