@@ -182,7 +182,7 @@ def createDIAGSIZEh(run_config, numdiags, numLevels, lf='\r\n'):
                      '      INTEGER    nRegions, sizRegMsk, nStats ',
                      '      INTEGER    diagSt_size ',
                      '      PARAMETER( ndiagMax = 500 ) ',
-                     '      PARAMETER( numlists = %s, numperlist = 5, numLevels=%s ) '%(numdiags, numLevels),
+                     '      PARAMETER( numlists = %s, numperlist = 6, numLevels=%s ) '%(numdiags, numLevels),
                      '      PARAMETER( numDiags = %s*%s*5 ) '%(numdiags, numLevels),
                      '      PARAMETER( nRegions = 0 , sizRegMsk = 1 , nStats = 4 ) ',
                      '      PARAMETER( diagSt_size = 9*Nr ) ',

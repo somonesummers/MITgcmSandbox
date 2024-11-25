@@ -1,0 +1,108 @@
+from MITgcmutils import mds
+from matplotlib import pyplot as plt
+import numpy as np
+import os
+import sys
+import cmocean
+import fileinput
+
+# Pick cross section to view from file or default
+yCrossSection = 1000
+xCrossSection = 5000
+zDepth = -50
+plotDPI = 100
+cleanPNGs = True
+
+if(os.path.isfile('input/plotHelperLocal.py')):
+    sys.path.append('input')
+    from plotHelperLocal import *
+    print('Found experiment plotting settings')
+elif(os.path.isfile('../plotHelper.py')):
+    sys.path.append('../')
+    print('no custom plotting settings, using local default')
+    from plotHelper import *
+else:  
+    print('no defaults found')
+print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
+
+dt = 0.0   
+for line in fileinput.input('input/data'):
+        if "deltaT=" in line:
+            dt = float(line[8:-2])
+print('dt is loaded as', dt)
+
+#Find time steps to take
+maxStep = 0
+sizeStep = 1e10
+startStep = 1e10
+
+for file in os.listdir('results'):
+    # print(file)
+    if "dynDiag.0" in file:
+        words = file.split(".")
+        # print(words[1])  
+        if int(words[1]) > maxStep:
+            maxStep = int(words[1])
+        if int(words[1]) < startStep and int(words[1]) > 0:
+            startStep = int(words[1])
+        if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
+            sizeStep = abs(int(words[1]) - startStep)
+
+
+if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to be less than 50
+    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)
+    print('Reducing time resolution by', dwnScale)
+    sizeStep = sizeStep * dwnScale
+
+print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
+
+os.system('rm -f figs/fluxPlot*.png')
+os.system('rm -f figs/fluxPlot*.gif')
+
+x = mds.rdmds("results/XC")
+y = mds.rdmds("results/YC")
+z = mds.rdmds("results/RC")
+
+xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
+print('cross section is x =', x[0,xSlice],'index', xSlice)
+
+dynName = ['fluxMassDiag', 'fluxMassDiag', 'fluxMassDiag', 'fluxMassDiag','fluxMassDiag','fluxMassDiag']
+name = ['UTHMASS','USLTMASS','VTHMASS','VSLTMASS','WTHMASS','WSLTMASS']
+units = ["[˙C m/s]", "[PSU m/s]", "[˙C m/s]", "[PSU m/s]", "[˙C m/s]", "[PSU m/s]"]
+
+for k in range(2):
+    print('\t' + name[k])
+    for i in np.arange(startStep, maxStep + 1, sizeStep):
+        data = mds.rdmds("results/%s"%(dynName[k]), i)
+        if k == 0:
+            lvl = [-.05,.05]
+            cm = "xkcd:raspberry"
+        elif k == 1:
+            lvl = [-2,2]
+            cm = "xkcd:green"
+        plt.figure()
+        for j in range(np.shape(y[1:-1,:])[0]):
+            plt.plot(data[k,:,j+1,xSlice],np.squeeze(z),linewidth=.5,alpha=.5,color=cm)
+        plt.plot(np.mean(data[k,:,1:-1,xSlice],1),np.squeeze(z),linewidth=1,color=cm)
+        fullMean = np.nanmean(data[k,:,1:-1,xSlice])
+        print(np.shape(fullMean))
+        plt.plot([fullMean,fullMean],np.squeeze([z[0],z[-1]]),linewidth=1,color='black',linestyle='--')
+        ax = plt.gca()
+        ax.set_xlim(lvl)
+
+        plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(data[k, :, 1:-1, xSlice]),np.nanmax(data[k, :, 1:-1, xSlice]),np.max(np.isnan(data[k, :, 1:-1, xSlice]))))
+        plt.ylabel('Depth [m]')
+        plt.title("%s x = %i at %.02f days" % (name[k], x[0,xSlice], i/86400.0*dt))
+        j = i/sizeStep + startStep
+        
+        str = "figs/fluxPlot%s%05i.png" % (name[k],j)
+        
+        plt.savefig(str, format='png',dpi=plotDPI)
+        plt.close()
+        plt.show()
+
+    os.system('magick -delay %f figs/fluxPlot%s*.png -colors 256 -depth 256 figs/fluxPlot%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+
+#Clean up intermediate pngs
+    if(cleanPNGs):
+        os.system('rm -f figs/fluxPlot*.png')

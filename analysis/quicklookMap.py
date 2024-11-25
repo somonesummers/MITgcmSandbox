@@ -103,11 +103,11 @@ cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 if(isBerg):
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag', 'BRGFlx']
-    name = ["Temp", "Sal", "U", "W", "V","SDP","BRGmltRt"]
+    name = ["Temp", "Sal", "U", "W", "V","SPD","BRGmltRt"]
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]","[m/s]", "[m/d]"]
 else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
-    name = ["Temp", "Sal", "U", "W", "V","SDP"]
+    name = ["Temp", "Sal", "U", "W", "V","SPD"]
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]","[m/s]"]
 
 for k in range(len(name)):
@@ -150,7 +150,7 @@ for k in range(len(name)):
         else:
             kk = k
 
-        if(name[k] == "SDP"):
+        if(name[k] == "SPD"):
             dataPlot = np.sqrt(data[2, zSlice, :, :]**2 + data[3, zSlice, :, :]**2 + + data[4, zSlice, :, :]**2)
         else:
             dataPlot = data[kk, zSlice, :, :]

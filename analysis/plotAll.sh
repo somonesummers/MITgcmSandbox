@@ -29,8 +29,8 @@ do
   echo '== TS plot =='
   python ../quickTSplot.py
 
-  echo '== Plume plot =='
-  python ../quickPlumePlot.py
+  # echo '== Plume plot =='
+  # python ../quickPlumePlot.py
   
   cd ..    
 done

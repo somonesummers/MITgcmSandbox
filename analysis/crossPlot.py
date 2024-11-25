@@ -118,7 +118,7 @@ if(usePcolor):
 
 #NOTE matplotlib x and y and MITgcm x,y are FLIPPED below. Be careful.
 for k in range(len(name)):
-    #print('k,',k)
+    print('\t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d',computed_zorder=False)
@@ -189,6 +189,7 @@ for k in range(len(name)):
             alpha= .9,
             zdir='y',offset=x[0,xSlice],zorder=3
         )
+
         if(localBergs):
             cp2 = plt.contourf(
                 YY[:,0:ySlice+1],
@@ -299,7 +300,7 @@ for k in range(len(name)):
         ax.invert_xaxis()
         plt.title("%s at x,y,z (%i,%i,%i) at %.02f days" % (name[k], x[0,xSlice]*1000,y[ySlice,0]*1000,z[zSlice,0,0], i/86400.0*dt))
         ax.set_xlabel('Width [km]')
-        ax.set_ylabel('Along [km]')
+        ax.set_ylabel('Along [km] %.3f %.3f nan: %i' %(np.nanmin(data[kk,:,:,:]),np.nanmax(data[kk,:,:,:]),np.max(np.isnan(data[kk, :, :, :]))))
         ax.set_zlabel('Depth [m]')
         ax.axes.set_xlim3d(left=y.max(), right=y.min())
         ax.axes.set_ylim3d(bottom=x.min(), top=x.max()) 

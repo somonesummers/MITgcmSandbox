@@ -110,7 +110,7 @@ name = ["Temp", "Sal", "U", "W", "V"]
 cbarLabel = ["[∆ C]", "[∆ ppt]", "[∆ m/s]", "[∆ m/s]", "[∆ m/s]"]
 
 for k in range(len(name)):
-    #print('k,',k)
+    print('\t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data1 = mds.rdmds("%s/%s" % (folder1, dynName[k]), i)
         data2 = mds.rdmds("%s/%s" % (folder2, dynName[k]), i)
@@ -154,8 +154,8 @@ for k in range(len(name)):
                 extend="min",
                 alpha=.2,
                 cmap='cmo.gray')
-            cbar2 = plt.colorbar(cp2)
-            cbar2.set_label('Ocean Fraction')
+            # cbar2 = plt.colorbar(cp2)
+            # cbar2.set_label('Ocean Fraction')
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, ySlice, :]),np.nanmax(data[kk, :, ySlice, :]),np.max(np.isnan(data[kk, :, ySlice, :]))))
