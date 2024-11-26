@@ -63,14 +63,19 @@ x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
 z = mds.rdmds("results/RC")
 
+# Print actual cross section values
 xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
-print('cross section is x =', x[0,xSlice],'index', xSlice)
+ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
+zSlice = np.argmin(np.abs(z[:,0,0]- zDepth))
+print('cross section is x =', x[0,xSlice], 'index', xSlice)
+print('cross section is y =', y[ySlice,0], 'index', ySlice)
+print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
 dynName = ['fluxMassDiag', 'fluxMassDiag', 'fluxMassDiag', 'fluxMassDiag','fluxMassDiag','fluxMassDiag']
 name = ['UTHMASS','USLTMASS','VTHMASS','VSLTMASS','WTHMASS','WSLTMASS']
 units = ["[˙C m/s]", "[PSU m/s]", "[˙C m/s]", "[PSU m/s]", "[˙C m/s]", "[PSU m/s]"]
 
-for k in range(2):
+for k in range(6):
     print('\t' + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
@@ -80,19 +85,54 @@ for k in range(2):
         elif k == 1:
             lvl = [-2,2]
             cm = "xkcd:green"
+        elif k == 2:
+            lvl = [-.05,.05]
+            cm = "xkcd:raspberry"
+        elif k == 3:
+            lvl = [-2,2]
+            cm = "xkcd:green"
+        elif k == 4:
+            lvl = [-.05,.05]
+            cm = "xkcd:raspberry"
+        elif k == 5:
+            lvl = [-2,2]
+            cm = "xkcd:green"
         plt.figure()
-        for j in range(np.shape(y[1:-1,:])[0]):
-            plt.plot(data[k,:,j+1,xSlice],np.squeeze(z),linewidth=.5,alpha=.5,color=cm)
-        plt.plot(np.mean(data[k,:,1:-1,xSlice],1),np.squeeze(z),linewidth=1,color=cm)
-        fullMean = np.nanmean(data[k,:,1:-1,xSlice])
-        print(np.shape(fullMean))
-        plt.plot([fullMean,fullMean],np.squeeze([z[0],z[-1]]),linewidth=1,color='black',linestyle='--')
+        if(k == 0 or k ==1): # U values
+            dataPlot = data[k,:,1:-1,xSlice]
+            yPlot = np.squeeze(z)
+            yStr = 'Depth [m]'
+            avgDirection = 1
+            dirStr = 'x='
+            sliceVal = x[0,xSlice]
+        elif(k==2 or k==3): # V fluxes
+            dataPlot = data[k,:,ySlice,1:]
+            yPlot = np.squeeze(z)
+            yStr = 'Depth [m]'
+            avgDirection = 1
+            dirStr = 'y='
+            sliceVal = y[ySlice,0]
+        elif(k==4 or k==5): # W fluxes
+            dataPlot = data[k,zSlice,1:-1,:]
+            yPlot = np.squeeze(x[0,:])
+            yStr = 'Along Fjord [m]'
+            avgDirection = 0
+            dirStr = 'z='
+            sliceVal = z[zSlice,0,0]
+        for j in range(np.shape(dataPlot)[avgDirection]):
+            if(avgDirection == 1):
+                plt.plot(dataPlot[:,j],yPlot,linewidth=.5,alpha=.5,color=cm)
+            else:
+                plt.plot(dataPlot[j,:],yPlot,linewidth=.5,alpha=.5,color=cm)
+        plt.plot(np.mean(dataPlot,avgDirection),yPlot,linewidth=1,color=cm)
+        fullMean = np.nanmean(dataPlot)
+        plt.plot([fullMean,fullMean],[yPlot[0],yPlot[-1]],linewidth=1,color='black',linestyle='--')
         ax = plt.gca()
         ax.set_xlim(lvl)
 
-        plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(data[k, :, 1:-1, xSlice]),np.nanmax(data[k, :, 1:-1, xSlice]),np.max(np.isnan(data[k, :, 1:-1, xSlice]))))
-        plt.ylabel('Depth [m]')
-        plt.title("%s x = %i at %.02f days" % (name[k], x[0,xSlice], i/86400.0*dt))
+        plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(dataPlot),np.nanmax(dataPlot),np.max(np.isnan(dataPlot))))
+        plt.ylabel(yStr)
+        plt.title("%s %s %i at %.02f days" % (name[k], dirStr, sliceVal, i/86400.0*dt))
         j = i/sizeStep + startStep
         
         str = "figs/fluxPlot%s%05i.png" % (name[k],j)

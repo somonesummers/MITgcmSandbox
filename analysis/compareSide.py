@@ -2,7 +2,9 @@ from MITgcmutils import mds
 from matplotlib import pyplot as plt
 import numpy as np
 import os
+import sys
 import cmocean
+import fileinput
 import argparse
 
 parser = argparse.ArgumentParser(description='Compare 2 MITcgm folders, point to results folders.')
@@ -21,15 +23,17 @@ zDepth = 50
 plotDPI = 100
 cleanPNGs = True
 
-if(os.path.isfile('input/plotHelper.py')):
+if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
-    from plotHelper import *
+    from plotHelperLocal import *
     print('Found experiment plotting settings')
 elif(os.path.isfile('../plotHelper.py')):
     print('no custom plotting settings, using local default')
     from plotHelper import *
 else:  
     print('no defaults found')
+
+print('Plot DPI:',plotDPI,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
 
 maxStep = 0
 sizeStep = 1e10
@@ -105,9 +109,9 @@ print('cross section is y =', y[ySlice,0], 'index', ySlice)
 #     name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
 #     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]"]
 # else:
-dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
-name = ["Temp", "Sal", "U", "W", "V"]
-cbarLabel = ["[∆ C]", "[∆ ppt]", "[∆ m/s]", "[∆ m/s]", "[∆ m/s]"]
+dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag','BRGFlx']
+name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
+cbarLabel = ["[∆ C]", "[∆ ppt]", "[∆ m/s]", "[∆ m/s]", "[∆ m/s]","m/d"]
 
 for k in range(len(name)):
     print('\t',name[k])
@@ -116,32 +120,42 @@ for k in range(len(name)):
         data2 = mds.rdmds("%s/%s" % (folder2, dynName[k]), i)
         data = data1 - data2
         if k == 0:  #T
-            lvl = np.linspace(-1.5, 1.5, 128)
+            lvl = np.linspace(-1.5, 1.5, 127)
             cm = "cmo.tarn_r"
         elif k == 1: #S
-            lvl = np.linspace(-0.5, 0.5, 128)
+            lvl = np.linspace(-0.5, 0.5, 127)
             cm = "cmo.diff"
         elif k == 2 or k == 4: #u,v
-            lvl = np.linspace(-.1, .1, 128)
+            lvl = np.linspace(-.1, .1, 127)
             cm = "cmo.balance"
         elif k == 3: #W
-            lvl = np.linspace(-0.01, 0.01, 128)
+            lvl = np.linspace(-0.01, 0.01, 127)
             cm = "cmo.curl"
         elif k == 5:
-            lvl = np.linspace(0, .5, 128)
-            cm = "cmo.rain"
+            lvl = np.linspace(-.1, .1, 127)
+            cm = "cmo.curl"
         if(k == 5):
             kk = 2
         else:
             kk = k
-        cp = plt.contourf(
-            np.squeeze(x[ySlice,:]),
-            np.squeeze(z),
-            np.squeeze(data[kk, :, ySlice, :]),
-            lvl,
-            extend="both",
-            cmap=cm,
-        )
+        if(usePcolor):
+            cp = plt.pcolormesh(
+                np.squeeze(x[ySlice,:]),
+                np.squeeze(z),
+                np.squeeze(data[kk, :, ySlice, :]),
+                cmap=cm,
+                vmin=np.min(lvl),
+                vmax=np.max(lvl),
+            )
+        else:
+            cp = plt.contourf(
+                np.squeeze(x[ySlice,:]),
+                np.squeeze(z),
+                np.squeeze(data[kk, :, ySlice, :]),
+                lvl,
+                extend="both",
+                cmap=cm,
+            )
         plt.plot(x[ySlice,:],topo[ySlice,:],color='black')
         # plt.plot(x[ySlice,:],ice[ySlice,:],color='gray')
         if(isBerg):
