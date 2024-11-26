@@ -49,6 +49,10 @@ CEOP
      &     brg_c_i,
      &     brg_L,
      &     brg_Cd,
+     &     brg_DragLinear,
+     &     brg_DragQuadratic,
+     &     brg_SelectDragQuad,           
+     &     brg_NoSlip, 
      &     ICEBERGmaskFile, ICEBERGmeltFile, ICEBERGmaskNumsFile,
      &     ICEBERGlengthFile, ICEBERGwidthsFile, ICEBERGdepthsFile,
      &     ICEBERGnumPerCellFile, ICEBERGdriftFile,
@@ -69,6 +73,10 @@ C Set defaults values for parameters in ICEBERG.h
       brg_c_i                      = 2000.D0
       brg_L                        = 334000D0
       brg_Cd                       = 0.0025
+      brg_DragLinear               = bottomDragLinear
+      brg_DragQuadratic            = UNSET_RL
+      brg_SelectDragQuad           = 0 !0 is on
+      brg_NoSlip                   = .FALSE. 
       ICEBERGmaskFile              = ' '
       ICEBERGmeltFile              = ' '
       ICEBERGmaskNumsFile          = ' '
@@ -97,6 +105,15 @@ C Open and read the data.iceberg file
 
 C Close the open data file
       CLOSE(iUnit)
+
+C Set quadratic bottom drag depending on choices:
+      IF ( brg_DragQuadratic .EQ. UNSET_RL) THEN
+        brg_DragQuadratic = brg_Cd
+      ENDIF
+      IF ( brg_DragQuadratic.EQ.0. _d 0 ) THEN
+        brg_SelectDragQuad = -1
+      ENDIF
+
 
 C Everyone else must wait for the parameters to be loaded
       _BARRIER

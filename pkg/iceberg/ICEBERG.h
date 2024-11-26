@@ -51,22 +51,40 @@ C     lambda3                         :: Freezing point depth (def: -7.61*10^-4)
 C     brg_GamT                        :: Thermal turbulent transfer coeffcient (def: 0.022)
 C     brg_GamS                        :: Salt turbulent transfer coefficient (def: 0.00062)
 C     brg_c_w                         :: Heat capacity of water (def: 3974 J kg^-1 degC^-1)
-C
+C     brg_DragLinear                  :: linear drag at bottom shelfice (1/s)
+C     brg_SelectDragQuad              :: select how quad drag is computed
+C     brg_DragQuadratic               :: quadratic drag at bottom shelfice (default
+C                                          = brg_Cd)
+C     brg_NoSlip                      :: set slip conditions for shelfice separately,
+C                                        (by default the same as no_slip_bottom, but
+C                                         really should be false when there is linear
+C                                         or quadratic drag)
+
 C=============================================================================
 C     FIELDS
+C     kBergBotC               :: index of the bottom "berg cell" (2D)
 C     icebergHeatFlux3D       :: upward heat flux (W/m^2)
 C     icebergFWFlux3D         :: upward fresh water flux (virt. salt flux) (kg/m^2/s)
 C     icebergMeltRate3D       :: Melt rate (m/d)
 C     icebergTendT3D          :: Temperature tendency (Kelvin/s)
 C     icebergTendS3D          :: Salinity tendency (psu/s)
-C
+#ifdef ALLOW_DIAGNOSTICS
+C     icebergDragU          :: Ice-Shelf stress (for diagnostics), Zonal comp.
+C                               Units are N/m^2 ;   > 0 increase top uVel
+C     icebergDragV          :: Ice-Shelf stress (for diagnostics), Merid. comp.
+C                               Units are N/m^2 ;   > 0 increase top vVel
+#endif /* ALLOW_DIAGNOSTICS */
 C==============================================================================
 C \ev
 CEOP
 
+      COMMON /ICEBERG_PARMS_L/
+     &     brg_NoSlip
+      LOGICAL brg_NoSlip
+
       COMMON /ICEBERG_PARMS_I/
-     &     ICEBERGselectDragQuadr
-      INTEGER ICEBERGselectDragQuadr
+     &     brg_SelectDragQuad
+      INTEGER brg_SelectDragQuad
 
       COMMON /ICEBERG_PARMS_R/
      &     icebergRho,
@@ -80,7 +98,10 @@ CEOP
      &     brg_c_w,
      &     brg_c_i,
      &     brg_L,
-     &     brg_Cd
+     &     brg_Cd,
+     &     brg_DragLinear,
+     &     brg_DragQuadratic,
+     &     brg_NoSlip
       _RL icebergRho
       _RL brg_iceTemp
       _RL icebergBGvel
@@ -93,6 +114,11 @@ CEOP
       _RL brg_c_i
       _RL brg_L
       _RL brg_Cd
+      _RL brg_DragLinear
+      _RL brg_DragQuadratic
+
+      COMMON /ICEBERG_FIELDS_I/ kBergBotC
+      INTEGER kBergBotC (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 
       COMMON /ICEBERG_FIELDS_RL/
      &     icebergHeatFlux3D,
@@ -110,7 +136,9 @@ CEOP
      &     icebergArea3D,
      &     icebergLength,
      &     icebergWidths,
-     &     icebergDepths
+     &     icebergDepths,
+     &     brgCDragFld,
+     &     brgDragQuadFld
       _RL icebergHeatFlux3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)  
       _RL icebergFWFlux3D (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)  
       _RL icebergMeltRate3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)  
@@ -127,21 +155,8 @@ CEOP
       _RL icebergLength(1-OLx:sNx+OLx,1-OLy:sNy+OLy,maxBerg,nSx,nSy)
       _RL icebergWidths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,maxBerg,nSx,nSy)
       _RL icebergDepths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,maxBerg,nSx,nSy)
-C      _RL icebergLength(1-OLx:sNx+OLx,1-OLy:sNy+OLy,500,nSx,nSy) !maxBerg here, not sure why but wont compile
-C      _RL icebergWidths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,500,nSx,nSy) !hardcoded here
-C      _RL icebergDepths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,500,nSx,nSy) !hardcoded here
-
-      CHARACTER*(MAX_LEN_FNAM) ICEBERGmaskFile
-      CHARACTER*(MAX_LEN_FNAM) ICEBERGmaskNumsFile
-      CHARACTER*(MAX_LEN_FNAM) ICEBERGnumPerCellFile
-      CHARACTER*(MAX_LEN_FNAM) ICEBERGmeltFile
-      CHARACTER*(MAX_LEN_FNAM) ICEBERGdriftFile
-      CHARACTER*(MAX_LEN_FNAM) ICEBERGopenFracFile
-      CHARACTER*(MAX_LEN_FNAM) ICEBERGbarrierFile
-      CHARACTER*(MAX_LEN_FNAM) ICEBERGareaFile
-      CHARACTER*(MAX_LEN_FNAM) ICEBERGlengthFile
-      CHARACTER*(MAX_LEN_FNAM) ICEBERGwidthsFile
-      CHARACTER*(MAX_LEN_FNAM) ICEBERGdepthsFile
+      _RL brgCDragFld(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL brgDragQuadFld(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 
       COMMON /ICEBERG_PARM_C/
      &     ICEBERGmaskFile,
@@ -155,6 +170,22 @@ C      _RL icebergDepths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,500,nSx,nSy) !hardcoded her
      &     ICEBERGlengthFile,
      &     ICEBERGwidthsFile,
      &     ICEBERGdepthsFile
+      CHARACTER*(MAX_LEN_FNAM) ICEBERGmaskFile
+      CHARACTER*(MAX_LEN_FNAM) ICEBERGmaskNumsFile
+      CHARACTER*(MAX_LEN_FNAM) ICEBERGnumPerCellFile
+      CHARACTER*(MAX_LEN_FNAM) ICEBERGmeltFile
+      CHARACTER*(MAX_LEN_FNAM) ICEBERGdriftFile
+      CHARACTER*(MAX_LEN_FNAM) ICEBERGopenFracFile
+      CHARACTER*(MAX_LEN_FNAM) ICEBERGbarrierFile
+      CHARACTER*(MAX_LEN_FNAM) ICEBERGareaFile
+      CHARACTER*(MAX_LEN_FNAM) ICEBERGlengthFile
+      CHARACTER*(MAX_LEN_FNAM) ICEBERGwidthsFile
+      CHARACTER*(MAX_LEN_FNAM) ICEBERGdepthsFile
 
+#ifdef ALLOW_DIAGNOSTICS
+      COMMON /ICEBERG_DIAG_DRAG/ shelficeDragU, shelficeDragV
+      _RS icebergDragU(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RS icebergDragV(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+#endif /* ALLOW_DIAGNOSTICS */
 
 #endif /* ALLOW_ICEBERG */

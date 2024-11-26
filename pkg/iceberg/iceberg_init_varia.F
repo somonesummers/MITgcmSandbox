@@ -31,25 +31,30 @@ CEndOfInterface
 
 #ifdef ALLOW_ICEBERG
 C     === Local variables ===
-C     i,j,bi,bj - Loop counters
+C     i,j,bi,bj,K - Loop counters
       INTEGER i, j, bi, bj, K
 CEOP
 
+C     Update the spatially varying version of the drag coefficient
+C     brg_CDragFld used in shelfice_thermodynamics
+C     brg_CDragQuadFld used in shelfice_u/v_drag_coeff
       DO bj = myByLo(myThid), myByHi(myThid)
        DO bi = myBxLo(myThid), myBxHi(myThid)
         DO j = 1-OLy, sNy+OLy
          DO i = 1-OLx, sNx+OLx
           DO K = 1,Nr
            icebergHeatFlux3D      (i,j,K,bi,bj) = 0. _d 0
-           icebergFWFlux3D        (i,j,K,bi,bj) = 0. _d 0	
-           icebergMeltRate3D      (i,j,k,bi,bj) = 0. _d 0
-           icebergTendT3D         (i,j,K,bi,bj) = 0. _d 0	
-           icebergTendS3D         (i,j,K,bi,bj) = 0. _d 0	
-          ENDDO
-         ENDDO
-        ENDDO
-       ENDDO
-      ENDDO
+           icebergFWFlux3D        (i,j,K,bi,bj) = 0. _d 0
+           icebergMeltRate3D      (i,j,K,bi,bj) = 0. _d 0
+           icebergTendT3D         (i,j,K,bi,bj) = 0. _d 0
+           icebergTendS3D         (i,j,K,bi,bj) = 0. _d 0
+          ENDDO !k
+          brgCDragFld            (i,j,bi,bj) = brg_Cd  !not implemented
+          brgDragQuadFld         (i,j,bi,bj) = brg_DragQuadratic
+         ENDDO !i
+        ENDDO !j
+       ENDDO !bi
+      ENDDO !bj
 
 
 

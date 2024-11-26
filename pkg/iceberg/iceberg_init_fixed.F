@@ -106,7 +106,7 @@ C               REQUIRES CPP_OPTIONS.h: #undef NONLIN_FRSURF
 C             otherwise this is overwritten everytimestep.
                IF ( barrierMask(I,J,bi,bj) .GT. 0. _d 0 ) THEN
 C              Loop through water column
-                DO K = 1, Nr
+                DO K = 1, Nr !1 is the surface
                   hFacC(I,J,K,bi,bj) = openFraction(I,J,K,bi,bj)
                  IF(hFacC(I,J,K,bi,bj).LT.hFacMin) THEN
                     hFacC(I,J,K,bi,bj) = 0. _d 0
@@ -115,7 +115,13 @@ C              Loop through water column
                     recip_hFacC(I,J,K,bi,bj) = 
      &                             1. _d 0 / openFraction(I,J,K,bi,bj)
                  ENDIF !hFacC.LT.hFacMin
+                 IF(hFacC(I,J,K,bi,bj).LT. 1. _d 0 .AND. 
+    &              kBergBotC(I,J,bi,bk) .LT. K) THEN
+                    kBergBotC(I,J,bi,bk) = K !finding deepest berg
+                 ENDIF ! hFacC.LT.1
                 ENDDO ! end k
+               ELSE !BarrierMask.GT.0
+                kBergBotC(i,j,bi,bj) = 0
                ENDIF !BarrierMask.GT.0
               ENDDO ! end I
              ENDDO ! end J
