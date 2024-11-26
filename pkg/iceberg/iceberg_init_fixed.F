@@ -116,8 +116,8 @@ C              Loop through water column
      &                             1. _d 0 / openFraction(I,J,K,bi,bj)
                  ENDIF !hFacC.LT.hFacMin
                  IF(hFacC(I,J,K,bi,bj).LT. 1. _d 0 .AND. 
-    &              kBergBotC(I,J,bi,bk) .LT. K) THEN
-                    kBergBotC(I,J,bi,bk) = K !finding deepest berg
+     &              kBergBotC(I,J,bi,bj) .LT. K) THEN
+                    kBergBotC(I,J,bi,bj) = K !finding deepest berg
                  ENDIF ! hFacC.LT.1
                 ENDDO ! end k
                ELSE !BarrierMask.GT.0

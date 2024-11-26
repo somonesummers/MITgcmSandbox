@@ -9,7 +9,7 @@ C    ----------------------------
 C    maxBerg   :: maximum total number of bergs per cell
 C
 CEOP 
-      INTEGER maxBerg 
-      PARAMETER ( maxBerg = 500 ) 
+      INTEGER maxBergCt 
+      PARAMETER ( maxBergCt = 500 ) 
 
  

@@ -84,26 +84,6 @@ C     icebergTendS3D :: salt tendency from all icebergs (psy s^-1)
 C     icebergMeltRate3D :: cell-average melt rate from all icebergs (m d^-1)
 C
       INTEGER I,J,K,bi,bj,n, cellNum, numBergs, bergBottomCell
-      CHARACTER*19 dummy1
-      CHARACTER*20 dummy2
-      CHARACTER*19 dummy3
-      CHARACTER*23 depthName
-      CHARACTER*23 widthName
-      CHARACTER*24 lengthName
-      CHARACTER*5 cellNumStr
-      CHARACTER*5 cellNumStub
-      CHARACTER*19 fileName1
-      CHARACTER*19 fileName2
-      CHARACTER*19 fileName3
-      CHARACTER*19 fileName4
-      CHARACTER*19 fileName5
-      CHARACTER*19 fileName6
-      CHARACTER*23 fileName_melt
-      CHARACTER*23 fileName_fw
-      CHARACTER*23 fileName_hf
-      CHARACTER*23 fileName_spd1
-      CHARACTER*23 fileName_spd2
-      CHARACTER*23 fileName_spd3
       _RL bergDepth, bergLength, bergWidth
       _RL cellBottomDepth
       _RL remainder
@@ -114,7 +94,6 @@ C
       _RL a, b, c, Sb, Tb
       _RL mdot_long_axis, mdot_short_axis, mdot_base
       _RL fw_long_axis, fw_short_axis, fw_base
-      _RL hf_long_axis, hf_short_axis, hf_base
       _RL fw_berg, fw_cell
       _RL fw_berg_cumecs
       _RL melt_rate_berg
@@ -127,10 +106,9 @@ C
       _RL tProf(1:Nr)
       _RL sProf(1:Nr)
       _RL pProf(1:Nr)
-      _RL depth_list(1:maxBerg)
-      _RL width_list(1:maxBerg)
-      _RL length_list(1:maxBerg)
-      INTEGER r1, r2, r3, r4, r5, r6, r7, r8, r9
+      _RL depth_list(1:maxBergCt)
+      _RL width_list(1:maxBergCt)
+      _RL length_list(1:maxBergCt)
       PARAMETER(rho_0=1027.0D0)
       LOGICAL DIFFERENT_MULTIPLE, THERE
 
@@ -199,7 +177,7 @@ C      Get profiles of temperature and salinity
        ENDDO
        
 C     Pre-allocate berg geometry profiles
-      DO n = 1,maxBerg
+      DO n = 1,maxBergCt
         depth_list(n) = 0. _d 0
         length_list(n) = 0. _d 0
         width_list(n) = 0. _d 0

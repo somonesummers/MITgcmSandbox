@@ -69,9 +69,9 @@ C     icebergMeltRate3D       :: Melt rate (m/d)
 C     icebergTendT3D          :: Temperature tendency (Kelvin/s)
 C     icebergTendS3D          :: Salinity tendency (psu/s)
 #ifdef ALLOW_DIAGNOSTICS
-C     icebergDragU          :: Ice-Shelf stress (for diagnostics), Zonal comp.
+C     icebergDragU          :: Ice-Shelf stress (for diagnostics), Zonal comp. need to be extended to 3D
 C                               Units are N/m^2 ;   > 0 increase top uVel
-C     icebergDragV          :: Ice-Shelf stress (for diagnostics), Merid. comp.
+C     icebergDragV          :: Ice-Shelf stress (for diagnostics), Merid. comp. need to be extended to 3D
 C                               Units are N/m^2 ;   > 0 increase top vVel
 #endif /* ALLOW_DIAGNOSTICS */
 C==============================================================================
@@ -100,8 +100,7 @@ CEOP
      &     brg_L,
      &     brg_Cd,
      &     brg_DragLinear,
-     &     brg_DragQuadratic,
-     &     brg_NoSlip
+     &     brg_DragQuadratic
       _RL icebergRho
       _RL brg_iceTemp
       _RL icebergBGvel
@@ -152,9 +151,12 @@ CEOP
       _RL icebergMaskNums(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL icebergNumBergs(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL icebergArea3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
-      _RL icebergLength(1-OLx:sNx+OLx,1-OLy:sNy+OLy,maxBerg,nSx,nSy)
-      _RL icebergWidths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,maxBerg,nSx,nSy)
-      _RL icebergDepths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,maxBerg,nSx,nSy)
+      _RL icebergLength(1-OLx:sNx+OLx,1-OLy:sNy+OLy,
+     &       500,nSx,nSy) !maxbergct hardcorded
+      _RL icebergWidths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,
+     &       500,nSx,nSy)
+      _RL icebergDepths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,
+     &       500,nSx,nSy)
       _RL brgCDragFld(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL brgDragQuadFld(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 
@@ -183,7 +185,7 @@ CEOP
       CHARACTER*(MAX_LEN_FNAM) ICEBERGdepthsFile
 
 #ifdef ALLOW_DIAGNOSTICS
-      COMMON /ICEBERG_DIAG_DRAG/ shelficeDragU, shelficeDragV
+      COMMON /ICEBERG_DIAG_DRAG/ icebergDragU, icebergDragV
       _RS icebergDragU(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RS icebergDragV(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 #endif /* ALLOW_DIAGNOSTICS */

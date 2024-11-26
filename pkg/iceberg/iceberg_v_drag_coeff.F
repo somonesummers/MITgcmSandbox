@@ -23,6 +23,7 @@ C !USES: ===============================================================
 #include "PARAMS.h"
 #include "GRID.h"
 #include "ICEBERG.h"
+#include "ICEBERG_SIZE.h"
 
 C !INPUT PARAMETERS: ===================================================
 C  bi,bj          :: tile indices
@@ -85,7 +86,8 @@ C--   Friction at the bottom of ice-shelf (no-slip BC)
 C-    friction accounts for true distance (including hFac) to the surface
        DO j=1-OLy+1,sNy+OLy-1
         DO i=1-OLx,sNx+OLx-1
-         IF ( k.LE.MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+         IF ( k.LE.
+     &       MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
            cDrag(i,j) = cDrag(i,j)
      &                + kappaRV(i,j,kUpC)*rDrCkp1*viscFac
      &                        * _recip_hFacS(i,j,k,bi,bj)
@@ -98,7 +100,8 @@ C--   Add Linear drag contribution:
       IF ( brg_DragLinear.NE.zeroRL ) THEN
        DO j=1-OLy+1,sNy+OLy
         DO i=1-OLx,sNx+OLx
-         IF ( k.LE.MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+         IF ( k.LE.
+     &       MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
           cDrag(i,j) = cDrag(i,j) + brg_DragLinear*dragFac
          ENDIF
         ENDDO
@@ -123,7 +126,8 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
         DO j=1-OLy+1,sNy+OLy-1
          DO i=1-OLx,sNx+OLx-1
           vSq = 0. _d 0
-          IF ( k.LE.MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+          IF ( k.LE.
+     &       MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
            vSq = KE(i,j)+KE(i,j-1)
           ENDIF
           IF ( vSq.GT.zeroRL ) THEN
@@ -137,7 +141,8 @@ C-    calculate locally velocity norm @ U.pt (local U & 4 V averaged)
        DO j=1-OLy+1,sNy+OLy-1
         DO i=1-OLx,sNx+OLx-1
           vSq = 0. _d 0
-          IF ( k.LE.MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+          IF ( k.LE.
+     &       MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
            vSq = vFld(i,j)*vFld(i,j)
      &       + ( (uFld( i ,j-1)*uFld( i ,j-1)*hFacW( i ,j-1,k,bi,bj)
      &           +uFld( i , j )*uFld( i , j )*hFacW( i , j ,k,bi,bj))
@@ -156,7 +161,8 @@ C-    same as above but using wet-point method to average 4 V
        DO j=1-OLy+1,sNy+OLy-1
         DO i=1-OLx,sNx+OLx-1
           vSq = 0. _d 0
-          IF ( k.LE.MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+          IF ( k.LE.
+     &       MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
            vSq = ( hFacW( i ,j-1,k,bi,bj) + hFacW( i , j ,k,bi,bj) )
      &         + ( hFacW(i+1,j-1,k,bi,bj) + hFacW(i+1, j ,k,bi,bj) )
            IF ( vSq.GT.zeroRL ) THEN
@@ -180,7 +186,7 @@ C-    same as above but using wet-point method to average 4 V
 
 #ifdef ALLOW_DIAGNOSTICS
       IF ( useDiagnostics .AND.
-     &     ( berg_NoSlip .OR. brg_DragLinear.NE.zeroRL
+     &     ( brg_NoSlip .OR. brg_DragLinear.NE.zeroRL
      &                        .OR. brg_SelectDragQuad.GE.0 )
      &   ) THEN
        IF ( selectImplicitDrag.EQ.0 ) THEN
