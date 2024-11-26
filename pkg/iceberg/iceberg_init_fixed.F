@@ -74,19 +74,22 @@ C      Read iceberg area
 C      Read iceberg lengths
        IF (ICEBERGlengthFile .NE. ' ' ) THEN
         CALL READ_REC_3D_RL
-     &     (ICEBERGlengthFile,precFloat64,500,icebergLength,1,0,myThid) !maxberg hard coded here
+     &     (ICEBERGlengthFile,precFloat64,
+     &         maxBergCt,icebergLength,1,0,myThid) 
        ENDIF
 
 C      Read iceberg widths
        IF (ICEBERGwidthsFile .NE. ' ' ) THEN
         CALL READ_REC_3D_RL
-     &     (ICEBERGwidthsFile,precFloat64,500,icebergWidths,1,0,myThid) !maxberg hard coded here
+     &     (ICEBERGwidthsFile,precFloat64,
+     &         maxBergCt,icebergWidths,1,0,myThid)
        ENDIF
 
 C      Read iceberg depths
        IF (ICEBERGdepthsFile .NE. ' ' ) THEN
         CALL READ_REC_3D_RL
-     &     (ICEBERGdepthsFile,precFloat64,500,icebergDepths,1,0,myThid) !maxberg hard coded here
+     &     (ICEBERGdepthsFile,precFloat64,
+     &         maxBergCt,icebergDepths,1,0,myThid)
        ENDIF
 
 C      Read open fraction file

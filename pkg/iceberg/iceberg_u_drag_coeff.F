@@ -22,8 +22,9 @@ C !USES: ===============================================================
 #include "EEPARAMS.h"
 #include "PARAMS.h"
 #include "GRID.h"
-#include "ICEBERG.h"
 #include "ICEBERG_SIZE.h"
+#include "ICEBERG.h"
+
 
 C !INPUT PARAMETERS: ===================================================
 C  bi,bj          :: tile indices

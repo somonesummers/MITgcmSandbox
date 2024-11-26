@@ -152,11 +152,11 @@ CEOP
       _RL icebergNumBergs(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL icebergArea3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL icebergLength(1-OLx:sNx+OLx,1-OLy:sNy+OLy,
-     &       500,nSx,nSy) !maxbergct hardcorded
+     &       maxBergCt,nSx,nSy) !maxbergct hardcorded
       _RL icebergWidths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,
-     &       500,nSx,nSy)
+     &       maxBergCt,nSx,nSy)
       _RL icebergDepths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,
-     &       500,nSx,nSy)
+     &       maxBergCt,nSx,nSy)
       _RL brgCDragFld(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL brgDragQuadFld(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 
