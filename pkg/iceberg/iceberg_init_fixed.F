@@ -108,9 +108,9 @@ C             otherwise this is overwritten everytimestep.
 C              Loop through water column
                 DO K = 1, Nr
                   hFacC(I,J,K,bi,bj) = openFraction(I,J,K,bi,bj)
-                 IF(hFacW(I,J,K,bi,bj).LT.hFacMin) THEN
-                    hFacW(I,J,K,bi,bj) = 0 0. _d 0
-                    recip_hFacC(I,J,K,bi,bj) = 0 0. _d 0
+                 IF(hFacC(I,J,K,bi,bj).LT.hFacMin) THEN
+                    hFacC(I,J,K,bi,bj) = 0. _d 0
+                    recip_hFacC(I,J,K,bi,bj) = 0. _d 0
                  ELSE
                     recip_hFacC(I,J,K,bi,bj) = 
      &                             1. _d 0 / openFraction(I,J,K,bi,bj)
