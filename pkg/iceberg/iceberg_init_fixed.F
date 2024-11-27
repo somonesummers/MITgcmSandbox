@@ -124,7 +124,7 @@ C              Loop through water column
                  ENDIF ! hFacC.LT.1
                 ENDDO ! end k
                ELSE !BarrierMask.GT.0
-                kBergBotC(i,j,bi,bj) = 0
+                kBergBotC(i,j,bi,bj) = 0  
                ENDIF !BarrierMask.GT.0
               ENDDO ! end I
              ENDDO ! end J

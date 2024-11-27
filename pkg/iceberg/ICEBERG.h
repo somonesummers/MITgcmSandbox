@@ -62,7 +62,7 @@ C                                         or quadratic drag)
 
 C=============================================================================
 C     FIELDS
-C     kBergBotC               :: index of the bottom "berg cell" (2D)
+C     kBergBotC               :: index of the bottom "berg cell" (2D), if 0 no berg drag
 C     icebergHeatFlux3D       :: upward heat flux (W/m^2)
 C     icebergFWFlux3D         :: upward fresh water flux (virt. salt flux) (kg/m^2/s)
 C     icebergMeltRate3D       :: Melt rate (m/d)
