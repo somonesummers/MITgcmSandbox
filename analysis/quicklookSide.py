@@ -163,7 +163,7 @@ for k in range(len(name)):
             lvl = vRange
             cm = vCmap
         elif k == 5:
-            lvl = np.linspace(-500,500,127)
+            lvl = np.linspace(-5e4,5e4,127)
             cm = 'cmo.balance'
         if(k == 5):
             kk = 3
