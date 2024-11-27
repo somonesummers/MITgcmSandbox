@@ -118,7 +118,6 @@ for k in range(len(name)):
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data1 = mds.rdmds("%s/%s" % (folder1, dynName[k]), i)
         data2 = mds.rdmds("%s/%s" % (folder2, dynName[k]), i)
-        data = data1 - data2
         if k == 0:  #T
             lvl = np.linspace(-1.5, 1.5, 127)
             cm = "cmo.tarn_r"
@@ -138,11 +137,12 @@ for k in range(len(name)):
             kk = 2
         else:
             kk = k
+        data = data1[kk,:,:,:] - data2[kk,:,:,:]
         if(usePcolor):
             cp = plt.pcolormesh(
                 np.squeeze(x[ySlice,:]),
                 np.squeeze(z),
-                np.squeeze(data[kk, :, ySlice, :]),
+                np.squeeze(data[ :, ySlice, :]),
                 cmap=cm,
                 vmin=np.min(lvl),
                 vmax=np.max(lvl),
@@ -151,7 +151,7 @@ for k in range(len(name)):
             cp = plt.contourf(
                 np.squeeze(x[ySlice,:]),
                 np.squeeze(z),
-                np.squeeze(data[kk, :, ySlice, :]),
+                np.squeeze(data[ :, ySlice, :]),
                 lvl,
                 extend="both",
                 cmap=cm,
@@ -172,7 +172,7 @@ for k in range(len(name)):
             # cbar2.set_label('Ocean Fraction')
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
-        plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, ySlice, :]),np.nanmax(data[kk, :, ySlice, :]),np.max(np.isnan(data[kk, :, ySlice, :]))))
+        plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[ :, ySlice, :]),np.nanmax(data[ :, ySlice, :]),np.max(np.isnan(data[ :, ySlice, :]))))
         plt.ylabel('Depth [m]')
         plt.title("%s y = %i at %i" % (name[k], y[ySlice,0], i))
         j = i/startStep

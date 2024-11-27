@@ -128,6 +128,7 @@ else:
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 for k in range(len(name)):
+    print('/t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
             localBergs = True

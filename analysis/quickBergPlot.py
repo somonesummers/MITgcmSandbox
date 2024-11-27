@@ -84,10 +84,10 @@ for k in range(len(name)):
             lvl = np.linspace(0,2,32)
             cm = "cmo.speed"
         elif k == 3:
-            lvl = np.linspace(-500,500,127)
+            lvl = np.linspace(-3e4,3e4,127)
             cm = "cmo.balance"
         elif k == 4:
-            lvl = np.linspace(-500,500,127)
+            lvl = np.linspace(-3e4,3e4,127)
             cm = "cmo.balance"
         plt.figure()
         cp = plt.contourf(
