@@ -51,7 +51,8 @@ CEOP
      &     brg_Cd,
      &     brg_DragLinear,
      &     brg_DragQuadratic,
-     &     brg_SelectDragQuad,           
+     &     brg_SelectDragQuad,  
+     &     brg_DragForm,         
      &     brg_NoSlip, 
      &     ICEBERGmaskFile, ICEBERGmeltFile, ICEBERGmaskNumsFile,
      &     ICEBERGlengthFile, ICEBERGwidthsFile, ICEBERGdepthsFile,
@@ -74,7 +75,8 @@ C Set defaults values for parameters in ICEBERG.h
       brg_L                        = 334000D0
       brg_Cd                       = 0.0025
       brg_DragLinear               = bottomDragLinear
-      brg_DragQuadratic            = UNSET_RL
+      brg_DragQuadratic            = brg_Cd
+      brg_DragForm                 = 1.0 _d 0
       brg_SelectDragQuad           = 0 !0 is on
       brg_NoSlip                   = .FALSE. 
       ICEBERGmaskFile              = ' '
