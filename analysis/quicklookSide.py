@@ -125,8 +125,8 @@ print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
 if(isBerg):
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx']
-    name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]"]
+    name = ["Temp", "Sal", "U", "W", "V","BRG_TauX"]
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[N/m^2]"]
 else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
     name = ["Temp", "Sal", "U", "W", "V"]
@@ -163,10 +163,10 @@ for k in range(len(name)):
             lvl = vRange
             cm = vCmap
         elif k == 5:
-            lvl = meltRange
-            cm = meltCmap
+            lvl = np.linspace(-500,500,127)
+            cm = 'cmo.balance'
         if(k == 5):
-            kk = 2
+            kk = 3
         else:
             kk = k
 

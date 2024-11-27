@@ -131,8 +131,9 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
            vSq = KE(i,j)+KE(i,j-1)
           ENDIF
           IF ( vSq.GT.zeroRL ) THEN
-           cDrag(i,j) = cDrag(i,j)
+           cDrag(i,j) = cDrag(i,j)  !only bottom drag
      &                + brgDragQuadFld(i,j,bi,bj)*SQRT(vSq)*dragFac
+     &            + 0.5 * dragFac * (0.5 * vSq) * _hFacC(i,j,k,bi,bj)
           ENDIF
          ENDDO
         ENDDO

@@ -64,27 +64,31 @@ z = mds.rdmds("results/RC")
 
 
 dynName = ['BRGFlx', 'BRGFlx', 'BRGFlx', 'BRGFlx','BRGFlx']
-name = ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRGhFacC']
-units = ["[kg/m^2/s]", "[W/m^2]", "[m/d]", "[]"]
+name = ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY']
+units = ["[kg/m^2/s]", "[W/m^2]", "[m/d]", "[N/m^2]","[N/m^2]"]
 
 zSlice = np.argmin(np.abs(z[:,0,0]- zDepth))
 print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
-for k in [3]:#range(len(name)):
+for k in range(len(name)):
+    print('\t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
-            lvl = np.linspace(0,2,32)
+            lvl = np.linspace(0,0.1,64)
             cm = "cmo.deep"
         elif k == 1:
-            lvl = np.linspace(-10,10,32)
+            lvl = np.linspace(0,1000,64)
             cm = "cmo.amp"
         elif k == 2:
             lvl = np.linspace(0,2,32)
             cm = "cmo.speed"
         elif k == 3:
-            lvl = np.linspace(0,1,64)
-            cm = "cmo.gray"
+            lvl = np.linspace(-500,500,127)
+            cm = "cmo.balance"
+        elif k == 4:
+            lvl = np.linspace(-500,500,127)
+            cm = "cmo.balance"
         plt.figure()
         cp = plt.contourf(
             np.squeeze(x),

@@ -108,7 +108,7 @@ C--   Add Linear drag contribution:
        ENDDO
       ENDIF
 
-C--   Add quadratic drag, default to -1
+C--   Add quadratic drag, off is -1
       IF ( brg_SelectDragQuad.EQ.0 ) THEN
        IF ( .NOT.inp_KE ) THEN
          DO j=1-OLy,sNy+OLy-1
@@ -121,7 +121,7 @@ C--   Add quadratic drag, default to -1
      &                     )*_recip_hFacC(i,j,k,bi,bj)
           ENDDO
          ENDDO
-       ENDIF
+       ENDIF !.not.inp_KE
 C-    average grid-cell-center KE to get velocity norm @ U.pt
        DO j=1-OLy,sNy+OLy-1
         DO i=1-OLx+1,sNx+OLx-1
@@ -131,8 +131,9 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
            uSq = KE(i,j)+KE(i-1,j)
           ENDIF
           IF ( uSq.GT.zeroRL ) THEN
-           cDrag(i,j) = cDrag(i,j)
+           cDrag(i,j) = cDrag(i,j)  !this is bottom drag only
      &                + brgDragQuadFld(i,j,bi,bj)*SQRT(uSq)*dragFac
+     &            + 0.5 * dragFac * (0.5 * uSq) * _hFacC(i,j,k,bi,bj)
           ENDIF
         ENDDO
        ENDDO
