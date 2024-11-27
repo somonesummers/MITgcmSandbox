@@ -5,7 +5,7 @@
 #SBATCH -N1 --ntasks-per-node=10   #total number of nodes,CPUs requested
 #SBATCH --mem-per-cpu=1G
 #SBATCH -qinferno
-#SBATCH -t 00:37:19 # run time (hh:mm:ss)
+#SBATCH -t 20:37:19 # run time (hh:mm:ss)
 #SBATCH --mail-user=psummers8@gatech.edu
 #SBATCH --mail-type=end,fail  # email me when the job finishes/fails
 

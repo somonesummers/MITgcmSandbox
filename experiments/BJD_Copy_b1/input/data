@@ -15,6 +15,7 @@
  diffKhS=30,
  no_slip_sides=.FALSE.,
  no_slip_bottom=.TRUE.,
+ bottomVisc_pCell=.TRUE.,
  rigidLid=.FALSE.,
  implicitFreeSurface=.TRUE.,
  staggerTimeStep=.TRUE.,
@@ -39,7 +40,7 @@
  &PARM03
  nIter0=0,
  endTime=86400000.,
- deltaT=250.,
+ deltaT=20.,
  abEps=0.1,
  pChkptFreq=0.0,
  chkptFreq=8640000.,

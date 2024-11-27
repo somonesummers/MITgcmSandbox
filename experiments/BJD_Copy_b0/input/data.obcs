@@ -1,35 +1,23 @@
-# =================== 
-# | OBCS parameters | 
-# =================== 
-
-# Open boundary types and locations
+# ***************
+# Open boundaries
+# ***************
  &OBCS_PARM01
- OB_singleIeast=-1,
- OB_Jsouth(91:100)=1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
- OB_Jnorth(91:100)=-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
- useOBCSsponge=.FALSE.,
  useOBCSprescribe=.TRUE.,
- OBEsFile='EBCs.bin',
+ useOBCSsponge=.TRUE.,
+# turn off obcs output
+ OBCS_monitorFreq=0,
+
+ OB_Ieast  =   12*-1,
  OBEtFile='EBCt.bin',
- OBEvFile='EBCv.bin',
- OBNsFile='NsBCs.bin',
- OBNtFile='NsBCt.bin',
- OBNvFile='NsBCv.bin',
- OBSsFile='NsBCs.bin',
- OBStFile='NsBCt.bin',
- OBSvFile='NsBCv.bin',
+ OBEsFile='EBCs.bin',
+ OBEuFile='EBCu.bin',
  &
 
-# Orlanski parameters
- &OBCS_PARM02
- &
-
-# Sponge-layer parameters
+# sponge layer
  &OBCS_PARM03
- spongeThickness=40,
- Urelaxobcsinner=8.64000000e+04,
- Urelaxobcsbound=3.60000000e+03,
- Vrelaxobcsinner=8.64000000e+04,
- Vrelaxobcsbound=3.60000000e+03,
+ spongeThickness=10,
+ Urelaxobcsbound=200.
+ Urelaxobcsinner=5000.,
+ Vrelaxobcsbound=200.
+ Vrelaxobcsinner=5000.,
  &
-

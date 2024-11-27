@@ -1,11 +1,11 @@
 #!/bin/bash 
-#SBATCH -J BJD_Copy_b0 # job name 
+#SBATCH -J BJD_Copy_b1 # job name 
 #SBATCH -o output_%j.txt # output and error file name (%j expands to jobID)
 #SBATCH --account=gts-arobel3    #charge account
 #SBATCH -N1 --ntasks-per-node=10   #total number of nodes,CPUs requested
 #SBATCH --mem-per-cpu=1G
 #SBATCH -qinferno
-#SBATCH -t 00:37:19 # run time (hh:mm:ss)
+#SBATCH -t 20:00:19 # run time (hh:mm:ss)
 #SBATCH --mail-user=psummers8@gatech.edu
 #SBATCH --mail-type=end,fail  # email me when the job finishes/fails
 
