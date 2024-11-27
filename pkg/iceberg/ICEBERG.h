@@ -51,11 +51,11 @@ C     lambda3                         :: Freezing point depth (def: -7.61*10^-4)
 C     brg_GamT                        :: Thermal turbulent transfer coeffcient (def: 0.022)
 C     brg_GamS                        :: Salt turbulent transfer coefficient (def: 0.00062)
 C     brg_c_w                         :: Heat capacity of water (def: 3974 J kg^-1 degC^-1)
-C     brg_DragLinear                  :: linear drag at bottom shelfice (1/s)
+C     brg_DragLinear                  :: linear drag at bottom of icebergs (1/s)
 C     brg_SelectDragQuad              :: select how quad drag is computed
-C     brg_DragQuadratic               :: quadratic drag at bottom shelfice (default
+C     brg_DragQuadratic               :: quadratic drag at bottom iceberg (default
 C                                          = brg_Cd)
-C     brg_NoSlip                      :: set slip conditions for shelfice separately,
+C     brg_NoSlip                      :: set slip conditions for iceberg separately,
 C                                        (by default the same as no_slip_bottom, but
 C                                         really should be false when there is linear
 C                                         or quadratic drag)
@@ -69,9 +69,9 @@ C     icebergMeltRate3D       :: Melt rate (m/d)
 C     icebergTendT3D          :: Temperature tendency (Kelvin/s)
 C     icebergTendS3D          :: Salinity tendency (psu/s)
 #ifdef ALLOW_DIAGNOSTICS
-C     icebergDragU          :: Ice-Shelf stress (for diagnostics), Zonal comp. need to be extended to 3D
+C     icebergDragU          :: iceberg stress (for diagnostics), Zonal comp. 
 C                               Units are N/m^2 ;   > 0 increase top uVel
-C     icebergDragV          :: Ice-Shelf stress (for diagnostics), Merid. comp. need to be extended to 3D
+C     icebergDragV          :: iceberg stress (for diagnostics), Merid. comp. 
 C                               Units are N/m^2 ;   > 0 increase top vVel
 #endif /* ALLOW_DIAGNOSTICS */
 C==============================================================================
@@ -152,7 +152,7 @@ CEOP
       _RL icebergNumBergs(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL icebergArea3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL icebergLength(1-OLx:sNx+OLx,1-OLy:sNy+OLy,
-     &       maxBergCt,nSx,nSy) !maxbergct hardcorded
+     &       maxBergCt,nSx,nSy) 
       _RL icebergWidths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,
      &       maxBergCt,nSx,nSy)
       _RL icebergDepths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,
@@ -186,8 +186,8 @@ CEOP
 
 #ifdef ALLOW_DIAGNOSTICS
       COMMON /ICEBERG_DIAG_DRAG/ icebergDragU, icebergDragV
-      _RS icebergDragU(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RS icebergDragV(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RS icebergDragU(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RS icebergDragV(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
 #endif /* ALLOW_DIAGNOSTICS */
 
 #endif /* ALLOW_ICEBERG */

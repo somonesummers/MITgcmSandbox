@@ -56,7 +56,7 @@ C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
       diagCode  = 'SM      MR      '
       CALL DIAGNOSTICS_ADDTOLIST( diagNum,
      I     diagName, diagCode, diagUnits, diagTitle, 0, myThid )
-	 
+ 
       diagName  = 'BRGmltRt'
       diagTitle = 'Iceberg melt rate  (+ve cools ocean)              '
       diagUnits = 'm/d             '
@@ -64,10 +64,21 @@ C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
       CALL DIAGNOSTICS_ADDTOLIST( diagNum,
      I     diagName, diagCode, diagUnits, diagTitle, 0, myThid )
 
-      diagName  = 'BRGhFacC'
-      diagTitle = 'hFacC open frac of cell center                    '
-      diagUnits = '[ ]             '
-      diagCode  = 'SM      MR      '
+      diagName  = 'BRG_TauX'
+      diagTitle = 
+     &     'Iceberg bottom stress, zonal. comp., >0 ++uVel'
+      diagUnits = 'N/m^2           '
+      diagCode  = 'UU      MR      '
+      diagMate  = diagNum + 2
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I     diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+
+      diagName  = 'BRG_TauY'
+      diagTitle = 
+     &     'Iceberg bottom stress, merid. comp., >0 ++vVel'
+      diagUnits = 'N/m^2           '
+      diagCode  = 'VV      MR      '
+      diagMate  = diagNum
       CALL DIAGNOSTICS_ADDTOLIST( diagNum,
      I     diagName, diagCode, diagUnits, diagTitle, 0, myThid )
 

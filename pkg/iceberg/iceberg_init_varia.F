@@ -36,8 +36,8 @@ C     i,j,bi,bj,K - Loop counters
 CEOP
 
 C     Update the spatially varying version of the drag coefficient
-C     brg_CDragFld used in shelfice_thermodynamics
-C     brg_CDragQuadFld used in shelfice_u/v_drag_coeff
+C     brg_CDragFld could be used in iceberg_thermodynamics
+C     brg_CDragQuadFld used in iceberg_u/v_drag_coeff
       DO bj = myByLo(myThid), myByHi(myThid)
        DO bi = myBxLo(myThid), myBxHi(myThid)
         DO j = 1-OLy, sNy+OLy
@@ -48,6 +48,12 @@ C     brg_CDragQuadFld used in shelfice_u/v_drag_coeff
            icebergMeltRate3D      (i,j,K,bi,bj) = 0. _d 0
            icebergTendT3D         (i,j,K,bi,bj) = 0. _d 0
            icebergTendS3D         (i,j,K,bi,bj) = 0. _d 0
+#ifdef ALLOW_DIAGNOSTICS
+            IF ( useDiagnostics ) THEN
+             icebergDragU(i,j,k,bi,bj) = 0.
+             icebergDragV(i,j,k,bi,bj) = 0.
+            ENDIF
+#endif /* ALLOW_DIAGNOSTICS */
           ENDDO !k
           brgCDragFld            (i,j,bi,bj) = brg_Cd  !not implemented
           brgDragQuadFld         (i,j,bi,bj) = brg_DragQuadratic

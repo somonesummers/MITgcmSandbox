@@ -13,8 +13,8 @@ C !INTERFACE: ==========================================================
 
 C !DESCRIPTION:
 C Calculates the drag coefficient due to friction and the no-slip condition
-C at the bottom of the shelf-ice (in analogy to bottom drag)
-C such as the ice-shelf stress: tauy_{ice} = -Cd * V_{top} * rUnit2mass ;
+C at the bottom of the iceberg (in analogy to bottom drag)
+C such as the iceberg stress: tauy_{ice} = -Cd * V_{top} * rUnit2mass ;
 
 C !USES: ===============================================================
       IMPLICIT NONE
@@ -81,7 +81,7 @@ C--   Initialise drag-coeff
        ENDDO
       ENDDO
 
-C--   Friction at the bottom of ice-shelf (no-slip BC)
+C--   Friction at the bottom of iceberg (no-slip BC)
       IF ( brg_NoSlip ) THEN
 C-    friction accounts for true distance (including hFac) to the surface
        DO j=1-OLy+1,sNy+OLy-1
@@ -189,23 +189,17 @@ C-    same as above but using wet-point method to average 4 V
      &     ( brg_NoSlip .OR. brg_DragLinear.NE.zeroRL
      &                        .OR. brg_SelectDragQuad.GE.0 )
      &   ) THEN
-       IF ( selectImplicitDrag.EQ.0 ) THEN
-C-     Explicit case: diagnose directly the Ice-Shelf stress
+       IF ( selectImplicitDrag.EQ.0 ) THEN !this is default
+C-     xplicit case: diagnose directly the Iceberg stress, only implemented case
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
-           icebergDragV(i,j,bi,bj) = icebergDragV(i,j,bi,bj)
+           icebergDragV(i,j,k,bi,bj) = icebergDragV(i,j,k,bi,bj)
      &                              - cDrag(i,j)*vFld(i,j)*rUnit2mass
           ENDDO
          ENDDO
-       ELSE
-C-     Implicit case: save drag-coeff for diagnostics of the Ice-Shelf stress
-         DO j=1-OLy,sNy+OLy
-          DO i=1-OLx,sNx+OLx
-           icebergDragV(i,j,bi,bj) = icebergDragV(i,j,bi,bj)
-     &                              + cDrag(i,j)*rUnit2mass
-          ENDDO
-         ENDDO
        ENDIF
+       CALL DIAGNOSTICS_FILL_RS( icebergDragV, 'BRG_TauY',
+     &                          0, Nr, 1, bi, bj, myThid )
       ENDIF
 #endif /* ALLOW_DIAGNOSTICS */
 #endif /* ALLOW_ICEBERG */
