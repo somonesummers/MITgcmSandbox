@@ -41,6 +41,16 @@ C     So far, ICEBERG works only with oceanic z-coordinates
          STOP 'ABNORMAL END: S/R ICEBERG_CHECK'
       ENDIF
 
+C     So far, ICEBERG is not compatible with nonlinear surface, 
+C     specifically the blocking effect is incompatible
+#ifdef NONLIN_FRSURF    
+      WRITE(msgBuf,'(A)')
+     &  'ICEBERG works only with #undef NONLIN_FRSURF in CPP_OPTIONS'
+         CALL PRINT_ERROR( msgBuf, myThid )
+         STOP 'ABNORMAL END: S/R ICEBERG_CHECK'
+#endif 
+     
+
 
 CML#ifdef ALLOW_NONHYDROSTATIC
 CML      IF ( nonHydrostatic ) THEN
