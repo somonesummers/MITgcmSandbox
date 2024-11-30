@@ -72,12 +72,12 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Alpha_drag'
-run_config['ndays'] = 5 # simulaton time (days)
+run_config['run_name'] = 'Charlie_50'
+run_config['ndays'] = 1 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
-run_config['Lx_m'] = 50000 # domain size in x (m)
+run_config['Lx_m'] = 40000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
@@ -90,7 +90,7 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 8000 # [meters] of extent of ice
+iceExtent = 10000 # [meters] of extent of ice
 iceCoverage = 90 # % of ice cover in melange, stay under 90% ideally
 
 #========================================================================================
@@ -310,9 +310,6 @@ params01['hFacMin'] = 0.05
 params01['nonHydrostatic'] = True
 params01['readBinaryPrec'] = 64
 
-
-# ## Check for numericl stability?
-
 # ## Numeric solvers and I/O controls
 
 # numeric solver parameters 
@@ -327,7 +324,7 @@ params02['cg3dTargetResidual'] = 1e-8
 params03 = {}
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 20.0
+deltaT = 25
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -379,6 +376,22 @@ if(makeDirs):
     rcf.createSIZEh(run_config, grid_params)
 
 #========================================================================================
+# Stability Check 
+u_char = .5 #[m/s]
+S_adv = 2 * (u_char * deltaT)/run_config['horiz_res_m']  # < 0.5 (Courant–Friedrichs–Lewy)
+S_in = params01['f0'] * deltaT # < 0.5 (adams bashforth II)
+# S_lh = 8 * params01['viscAh'] * deltaT /(run_config['horiz_res_m']**2) # < 0.6 
+S_lv = 4 * params01['viscAz'] * deltaT /(dz[0]**2) # < 0.6 
+
+S_adv_brg = 2 * (u_char * deltaT)/(run_config['horiz_res_m']*(1 - iceCoverage/100))  # < 0.5 (Courant–Friedrichs–Lewy)
+S_in = params01['f0'] * deltaT # < 0.5 (adams bashforth II)
+S_lv_brg = 4 * params01['viscAz'] * deltaT /((dz[0]*(1 - iceCoverage/100))**2) # < 0.6
+setUpPrint('====== Stability Check =====')
+setUpPrint("S_adv: <0.5 , S_in: <0.5 , S_lv: <0.6")
+setUpPrint("S_adv: %.04f, S_in: %.04f, S_lv: %.04f" % (S_adv, S_in, S_lv))
+setUpPrint("S_adv: %.04f, S_in: %.04f, S_lv: %.04f" % (S_adv_brg, S_in, S_lv_brg))
+
+#========================================================================================
 # Diagnostics
 
 # adjust output frequency
@@ -396,7 +409,7 @@ else:
 diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
                     ['THETA','SALT','UVELMASS','VVELMASS','WVELMASS'],
                     ['UTHMASS ','USLTMASS','VTHMASS ','VSLTMASS','WTHMASS ','WSLTMASS',],
-                    ['BRGfwFlx','BRGhtFlx','BRGmltRt'],
+                    ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY'],
                     ['icefrntW','icefrntT','icefrntS','icefrntR','icefrntM']
                     ]
 diag_fields_max = 0
@@ -734,7 +747,9 @@ barrierMask[1:-1,1:iceExtentIndex] = 1 # make icebergs a physical barrier to wat
 barrierMask[plume_loc,icefront] = 0 #Plume code struggles with hFac adjustments
 
 # Iceberg concentration (# of each surface cell that is filled in plan view)
-bergConc[1:-1,1:iceExtentIndex] = np.linspace(iceCoverage,10,(iceExtentIndex-1)) # iceberg concentration set at top
+# bergConc[1:-1,1:iceExtentIndex] = np.linspace(iceCoverage,20,(iceExtentIndex-1)) # iceberg concentration set at top
+bergConc[1:-1,1:iceExtentIndex] = iceCoverage # iceberg concentration set at top
+
 # print(bergConc[1:-1,1:iceExtentIndex])
 
 desiredBergArea = np.sum(bergConc/100.0*deltaX*deltaY)
@@ -953,7 +968,8 @@ plt.hist(inversePowerLawDistNumbers_length,bins = 50)
 plt.ylabel('Count')
 plt.xlabel('Length [m]')
 fig.tight_layout()
-plt.savefig(run_config['run_dir']+'/input/bergStatistics.png', format='png', dpi=200)
+if(writeFiles):
+    plt.savefig(run_config['run_dir']+'/input/bergStatistics.png', format='png', dpi=200)
 plt.show()
 
 fig = plt.figure()
@@ -975,7 +991,8 @@ plt.xlabel("Cell along fjord, Ice coverage is %.2f%% - %.2f%%" % (pc_min, pc_max
 plt.ylabel('Cell across fjord')
 cbar.set_label('cover resid')
 fig.tight_layout()
-plt.savefig(run_config['run_dir']+'/input/bergMap.png', format='png', dpi=200)
+if(writeFiles):
+    plt.savefig(run_config['run_dir']+'/input/bergMap.png', format='png', dpi=200)
 plt.show()
 
 fig = plt.figure()
@@ -985,7 +1002,8 @@ plt.suptitle('Melt Mask')
 plt.ylabel('Cell across fjord')
 plt.xlabel("Cell along fjord")
 fig.tight_layout()
-plt.savefig(run_config['run_dir']+'/input/meltMask.png', format='png', dpi=200)
+if(writeFiles):
+    plt.savefig(run_config['run_dir']+'/input/meltMask.png', format='png', dpi=200)
 plt.show()
 
 ## write iceberg txt files

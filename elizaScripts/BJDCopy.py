@@ -396,7 +396,7 @@ else:
 diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
                     ['THETA','SALT','UVELMASS','VVELMASS','WVELMASS'],
                     ['UTHMASS ','USLTMASS','VTHMASS ','VSLTMASS','WTHMASS ','WSLTMASS',],
-                    ['BRGfwFlx','BRGhtFlx','BRGmltRt'],
+                    ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY'],
                     ['icefrntW','icefrntT','icefrntS','icefrntR','icefrntM']
                     ]
 diag_fields_max = 0

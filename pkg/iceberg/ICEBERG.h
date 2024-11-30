@@ -55,6 +55,8 @@ C     brg_DragLinear                  :: linear drag at bottom of icebergs (1/s)
 C     brg_SelectDragQuad              :: select how quad drag is computed
 C     brg_DragQuadratic               :: quadratic drag at bottom iceberg (default
 C                                          = brg_Cd)
+C     brg_DragForm                    :: quadratic form drag across iceberg (default
+C                                          = 1)
 C     brg_NoSlip                      :: set slip conditions for iceberg separately,
 C                                        (by default the same as no_slip_bottom, but
 C                                         really should be false when there is linear
@@ -100,7 +102,8 @@ CEOP
      &     brg_L,
      &     brg_Cd,
      &     brg_DragLinear,
-     &     brg_DragQuadratic
+     &     brg_DragQuadratic,
+     &     brg_DragForm
       _RL icebergRho
       _RL brg_iceTemp
       _RL icebergBGvel
@@ -115,6 +118,7 @@ CEOP
       _RL brg_Cd
       _RL brg_DragLinear
       _RL brg_DragQuadratic
+      _RL brg_DragForm
 
       COMMON /ICEBERG_FIELDS_I/ kBergBotC
       INTEGER kBergBotC (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)

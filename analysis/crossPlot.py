@@ -317,8 +317,8 @@ for k in range(len(name)):
     os.system('magick -delay %f figs/cross_%s*.png -colors 256 -depth 256 figs/autoCross_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
-if(cleanPNGs):
-    os.system('rm -f figs/cross_*.png')
+    if(cleanPNGs):
+        os.system('rm -f figs/cross_*.png')
 
 
 

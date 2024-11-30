@@ -184,5 +184,5 @@ for k in range(len(name)):
         #plt.show()
 
     os.system('magick -delay %f figs/compareSide_%s*.png -colors 256 -depth 256 figs/autoCompareSide_%s.gif' %(500/(maxStep/sizeStep), name[k], name[k]))
-if(cleanPNGs):
-    os.system('rm -f figs/compareSide_*.png')
+    if(cleanPNGs):
+        os.system('rm -f figs/compareSide_*.png')

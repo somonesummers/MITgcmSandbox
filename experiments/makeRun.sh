@@ -25,8 +25,11 @@ then
    		echo "figs folder missing, making now"
    		mkdir figs
    	fi	
-   	python ../quickhFactorPlot.py
-	python ../crossPlot.py
+   	for NAME in "$@"
+		do
+			python $NAME
+		done
+	# python ../crossPlot.py
 	afplay /System/Library/Sounds/Funk.aiff
 else
 	./mitgcmuv
