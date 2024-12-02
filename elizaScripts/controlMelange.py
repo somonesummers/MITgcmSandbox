@@ -64,20 +64,25 @@ def setUpPrint(msg):
 email = 'psummers8@gatech.edu'
 # set high level run configurations
 
+briefSummaryOfExp = """Comparison of on/off for blocking and melt in control domain, 4 experiments total.
+    slightly lower berg conc(80%) and larger dz (10m) to keep dt reasonable"""
+
+
 setUpPrint('====== Welcome to the mélange building script =====')
+setUpPrint(briefSummaryOfExp)
 setUpPrint('\tMaking experiment to compare mélange realizations')
 #========================================================================================
 #main values to imput 
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Charlie_50'
-run_config['ndays'] = 1 # simulaton time (days)
+run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
+run_config['run_name'] = 'Delta_m0_b0'
+run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
-run_config['Lx_m'] = 40000 # domain size in x (m)
+run_config['Lx_m'] = 50000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
@@ -91,8 +96,9 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 # Iceberg configuration =========================
 iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 10000 # [meters] of extent of ice
-iceCoverage = 90 # % of ice cover in melange, stay under 90% ideally
-
+iceCoverage = 80 # % of ice cover in melange, stay under 90% ideally
+doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
+doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 #========================================================================================
 # The rest of this should take care of it self mostly
 
@@ -324,7 +330,7 @@ params02['cg3dTargetResidual'] = 1e-8
 params03 = {}
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 25
+deltaT = 20
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -740,10 +746,10 @@ bergMask[1:-1,1:iceExtentIndex] = 1 # icebergs in inner 5 km, all oriented east-
 # driftMask[1:-1,1:iceExtentIndex] = 1 # calculate effect of iceberg drift on melt rates 
 
 # Melt mask, only let bergs melt in this region (make melt water, these don't change size)
-meltMask[1:-1,1:iceExtentIndex] = 1 # Allow focus on blocking effect only
+meltMask[1:-1,1:iceExtentIndex] = doMelt # Allow focus on blocking effect only
 
 # Barrier mask
-barrierMask[1:-1,1:iceExtentIndex] = 1 # make icebergs a physical barrier to water flow
+barrierMask[1:-1,1:iceExtentIndex] = doBlock # make icebergs a physical barrier to water flow
 barrierMask[plume_loc,icefront] = 0 #Plume code struggles with hFac adjustments
 
 # Iceberg concentration (# of each surface cell that is filled in plan view)

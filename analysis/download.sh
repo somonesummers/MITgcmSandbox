@@ -20,8 +20,8 @@ do
   fi
   
   rsync -ah --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/output* $EXP/
-  rsync -ah --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/results/ $EXP/results
   rsync -ah --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/input/ $EXP/input
+  rsync -ah --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/results/ $EXP/results
 
   echo "===== Running plotting now ====="
   bash plotAll.sh $EXP

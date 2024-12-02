@@ -38,6 +38,7 @@ print('dt is loaded as', dt)
 maxStep = 0
 sizeStep = 1e10
 startStep = 1e10
+
 for file in os.listdir('results'):
     # print(file)
     if "dynDiag.0" in file:
@@ -50,7 +51,7 @@ for file in os.listdir('results'):
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
 if((maxStep-startStep)/sizeStep > 60):   #if more than 60 frames, downscale to be less than 60
-    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)
+    dwnScale = int(np.ceil(((maxStep-startStep)/sizeStep)/60))
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
