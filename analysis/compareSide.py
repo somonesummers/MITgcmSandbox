@@ -109,9 +109,9 @@ print('cross section is y =', y[ySlice,0], 'index', ySlice)
 #     name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
 #     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]"]
 # else:
-dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag','BRGFlx']
-name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
-cbarLabel = ["[∆ C]", "[∆ ppt]", "[∆ m/s]", "[∆ m/s]", "[∆ m/s]","m/d"]
+dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag','BRGFlx','dynDiag']
+name = ["Temp", "Sal", "U", "W", "V","BRGmltRt","SPD_h"]
+cbarLabel = ["[∆ C]", "[∆ ppt]", "[∆ m/s]", "[∆ m/s]", "[∆ m/s]","[∆ m/d]",'[∆ m/s]']
 
 for k in range(len(name)):
     print('\t',name[k])
@@ -133,11 +133,17 @@ for k in range(len(name)):
         elif k == 5:
             lvl = np.linspace(-.1, .1, 127)
             cm = "cmo.curl"
+        elif k == 6:
+            lvl = np.linspace(-.1, .1, 127)
+            cm = "cmo.curl"
         if(k == 5):
             kk = 2
         else:
             kk = k
-        data = data1[kk,:,:,:] - data2[kk,:,:,:]
+        if(k == 6): #speed plot
+            data = np.sqrt(data1[2,:,:,:]**2 + data1[4,:,:,:]**2) - np.sqrt(data2[2,:,:,:]**2 + data2[4,:,:,:]**2)
+        else:
+            data = data1[kk,:,:,:] - data2[kk,:,:,:]
         if(usePcolor):
             cp = plt.pcolormesh(
                 np.squeeze(x[ySlice,:]),

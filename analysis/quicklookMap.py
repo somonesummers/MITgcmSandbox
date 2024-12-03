@@ -140,7 +140,7 @@ for k in range(len(name)):
             lvl = vRange
             cm = vCmap
         elif k == 5:
-            lvl = np.linspace(0,.5,128)
+            lvl = np.linspace(0,np.max(uRange),128)
             cm = 'cmo.speed'
         elif k == 6:
             lvl = meltRange

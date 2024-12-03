@@ -31,8 +31,12 @@ do
 
   echo '== Flux plot =='
   python ../fluxPlot.py
-  # echo '== Plume plot =='
-  # python ../quickPlumePlot.py
+
+  echo '== Plume plot =='
+  python ../quickPlumePlot.py
+
+  echo '== Berg plot =='
+  python ../quickBergPlot.py
   
   cd ..    
 done
