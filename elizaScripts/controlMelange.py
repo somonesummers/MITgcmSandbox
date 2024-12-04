@@ -77,7 +77,7 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'testTest'
+run_config['run_name'] = 'Delta_m0_b1'
 run_config['ndays'] = 20 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -97,7 +97,7 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 10000 # [meters] of extent of ice
 iceCoverage = 80 # % of ice cover in melange, stay under 90% ideally
-doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
+doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 #========================================================================================
 # The rest of this should take care of it self mostly
