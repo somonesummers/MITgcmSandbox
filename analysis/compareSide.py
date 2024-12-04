@@ -51,6 +51,19 @@ for file in os.listdir(folder1):
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
 
+dt1 = 0.0   
+for line in fileinput.input('input/data'):
+    if "deltaT=" in line:
+        dt1 = float(line[8:-2])
+
+dt2 = 0.0   
+for line in fileinput.input(folder2 + '/../input/data'):
+    if "deltaT=" in line:
+        dt2 = float(line[8:-2])
+print('dt 1 is loaded as', dt1,'dt 2 is loaded as', dt2)
+
+if(dt1 != dt2):
+    print("\tUneven timesteps detected, will attempt to find same timestep diagnostic files")
 
 if(maxStep/sizeStep > 50):   #if more than 50 frames, downscale to be less than 50
     dwnScale = round((maxStep/sizeStep)/50)
@@ -117,7 +130,7 @@ for k in range(len(name)):
     print('\t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data1 = mds.rdmds("%s/%s" % (folder1, dynName[k]), i)
-        data2 = mds.rdmds("%s/%s" % (folder2, dynName[k]), i)
+        data2 = mds.rdmds("%s/%s" % (folder2, dynName[k]), i * dt1/dt2)
         if k == 0:  #T
             lvl = np.linspace(-1.5, 1.5, 127)
             cm = "cmo.tarn_r"
