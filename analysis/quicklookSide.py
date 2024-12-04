@@ -124,9 +124,9 @@ ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
 print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
 if(isBerg):
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx']
-    name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]"]
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx', 'BRGFlx', 'BRGFlx']
+    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt", 'BRG_TauX', 'BRG_TauY']
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]", "[kN/m^2]", "[kN/m^2]"]
 else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
     name = ["Temp", "Sal", "U", "W", "V"]
@@ -165,8 +165,16 @@ for k in range(len(name)):
         elif k == 5:
             lvl = meltRange
             cm = meltCmap
-        if(k == 5):
-            kk = 2
+        elif k == 6:
+            lvl = np.linspace(-10,10,127)
+            data = data/1000 # Pa to kPa
+            cm = "cmo.balance"
+        elif k == 7:
+            lvl = np.linspace(-10,10,127)
+            data = data/1000 # Pa to kPa
+            cm = "cmo.balance"
+        if(k > 4):
+            kk = k - 3
         else:
             kk = k
 

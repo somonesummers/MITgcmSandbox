@@ -5,7 +5,16 @@ import os
 import sys
 import cmocean
 import fileinput
+import argparse
 
+parser = argparse.ArgumentParser(description='Compare 2 MITcgm folders, point to results folders.')
+parser.add_argument('directories', metavar='Dir', type=str, nargs=2,
+                    help='2 results folders to compare')
+args = parser.parse_args()
+
+#folder1 controls plotting steps, any bergs, bathymetry, etc
+folder1 = args.directories[0]
+folder2 = args.directories[1]
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
@@ -28,11 +37,19 @@ else:
     print('no defaults found')
 print('Plot DPI:',plotDPI,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
 
-dt = 0.0   
+dt1 = 0.0   
 for line in fileinput.input('input/data'):
-        if "deltaT=" in line:
-            dt = float(line[8:-2])
-print('dt is loaded as', dt)
+    if "deltaT=" in line:
+        dt1 = float(line[8:-2])
+
+dt2 = 0.0   
+for line in fileinput.input(folder2 + '/../input/data'):
+    if "deltaT=" in line:
+        dt2 = float(line[8:-2])
+print('dt 1 is loaded as', dt1,'dt 2 is loaded as', dt2)
+
+if(dt1 != dt2):
+    print("\tUneven timesteps detected, will attempt to find same timestep diagnostic files")
 
 maxStep = 0
 sizeStep = 1e10
@@ -66,8 +83,8 @@ else:
     isBerg = False
 
 #Clean up old gifs and pngs
-os.system('rm -f figs/map*.png')
-os.system('rm -f figs/autoMap*.gif')
+os.system('rm -f figs/compareMap*.png')
+os.system('rm -f figs/compareMap*.gif')
 
 y = mds.rdmds("results/YC")
 x = mds.rdmds("results/XC")
@@ -103,57 +120,58 @@ cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 if(isBerg):
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag', 'BRGFlx']
-    name = ["Temp", "Sal", "U", "W", "V","SPD","BRGmltRt"]
+    name = ["Temp", "Sal", "U", "W", "V", "SPD", "BRGmltRt"]
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]","[m/s]", "[m/d]"]
 else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
-    name = ["Temp", "Sal", "U", "W", "V","SPD"]
+    name = ["Temp", "Sal", "U", "W", "V", "SPD"]
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]","[m/s]"]
 
 for k in range(len(name)):
     print("\t" + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         if(showQuiver):
-            dataQuiv = mds.rdmds("results/dynDiag", i)
-        if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
+            dataQuiv = mds.rdmds(folder1 + "/dynDiag", i)
+        if(isBerg and os.path.isfile(folder1 + '/BRGFlx.%010i.001.001.data' % i)):
             localBergs = True
         else:
             localBergs = False
         if((not localBergs) and dynName[k]=='BRGFlx'):
             #fill melt image with 0s if bergs in run but not frame
-            data = np.zeros(np.shape(mds.rdmds("results/%s"%(dynName[k-1]), i)))
+            data1 = np.zeros(np.shape(mds.rdmds(folder1 + "/%s"%(dynName[k-1]), i)))
+            data2 = np.zeros(np.shape(mds.rdmds(folder2 + "/%s"%(dynName[k-1]), i * dt1 / dt2)))
         else:
-            data = mds.rdmds("results/%s"%(dynName[k]), i)
-        if k == 0:
-            lvl = tempRange
-            cm = tempCmap
-        elif k == 1:
-            lvl = saltRange
-            cm = saltCmap
-        elif k == 2:
-            lvl = uRange
-            cm = uCmap
-        elif k == 3:
-            lvl = wRange
-            cm = wCmap
-        elif k == 4:
-            lvl = vRange
-            cm = vCmap
-        elif k == 5:
-            lvl = np.linspace(0,np.max(uRange),128)
-            cm = 'cmo.speed'
-        elif k == 6:
-            lvl = meltRange
-            cm = meltCmap
+            data1 = mds.rdmds(folder1 + "/%s"%(dynName[k]), i)
+            data2 = mds.rdmds(folder2 + "/%s"%(dynName[k]), i * dt1 / dt2)
+        if k == 0:  #T
+            lvl = np.linspace(-1.5, 1.5, 127)
+            cm = "cmo.tarn_r"
+        elif k == 1: #S
+            lvl = np.linspace(-0.5, 0.5, 127)
+            cm = "cmo.diff"
+        elif k == 2 or k == 4: #u,v
+            lvl = np.linspace(-.1, .1, 127)
+            cm = "cmo.balance"
+        elif k == 3: #W
+            lvl = np.linspace(-0.01, 0.01, 127)
+            cm = "cmo.curl"
+        elif k == 6: #meltRate
+            lvl = np.linspace(-.1, .1, 127)
+            cm = "cmo.curl"
+        elif k == 5: #speed
+            lvl = np.linspace(-.1, .1, 127)
+            cm = "cmo.curl"
         if(k == 6):
             kk = 2
         else:
             kk = k
 
         if(name[k] == "SPD"):
-            dataPlot = np.sqrt(data[2, zSlice, :, :]**2 + data[3, zSlice, :, :]**2 + data[4, zSlice, :, :]**2)
+            spd1 = np.sqrt(data1[2, zSlice, :, :]**2 + data1[3, zSlice, :, :]**2 + data1[4, zSlice, :, :]**2)
+            spd2 = np.sqrt(data2[2, zSlice, :, :]**2 + data2[3, zSlice, :, :]**2 + data2[4, zSlice, :, :]**2)
+            dataPlot = spd1 - spd2
         else:
-            dataPlot = data[kk, zSlice, :, :]
+            dataPlot = data1[kk, zSlice, :, :] - data2[kk, zSlice, :, :]
         if(usePcolor):
             cp = plt.pcolormesh(
                 np.squeeze(x),
@@ -176,7 +194,7 @@ for k in range(len(name)):
         cbar.set_label(cbarLabel[k])
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(dataPlot),np.nanmax(dataPlot),np.max(np.isnan(dataPlot))))
         plt.ylabel('Across Fjord [m]')
-        plt.title("%s depth %f at %.02f days" % (name[k], z[zSlice,0,0] ,i/86400.0*dt))
+        plt.title("%s depth %f at %.02f days" % (name[k], z[zSlice,0,0] ,i/86400.0*dt1))
         if(showQuiver):
             u = np.squeeze(dataQuiv[2, zSlice, :, :])
             v = np.squeeze(dataQuiv[4, zSlice, :, :])
@@ -199,14 +217,14 @@ for k in range(len(name)):
             #cbar2.set_label('Ocean Fraction')
 
         j = i/sizeStep + startStep
-        str = "figs/map%s%05i.png" % (name[k],j)
+        str = "figs/compareMap%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
 
-    os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    os.system('magick -delay %f figs/compareMap%s*.png -colors 256 -depth 256 figs/compareMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
-#Clean up intermediate pngs
-if(cleanPNGs):
-    os.system('rm -f figs/map*.png')
+    #Clean up intermediate pngs
+    if(cleanPNGs):
+        os.system('rm -f figs/compareMap*.png')

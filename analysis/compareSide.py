@@ -143,10 +143,10 @@ for k in range(len(name)):
         elif k == 3: #W
             lvl = np.linspace(-0.01, 0.01, 127)
             cm = "cmo.curl"
-        elif k == 5:
+        elif k == 5: #meltRate
             lvl = np.linspace(-.1, .1, 127)
             cm = "cmo.curl"
-        elif k == 6:
+        elif k == 6: #speed
             lvl = np.linspace(-.1, .1, 127)
             cm = "cmo.curl"
         if(k == 5):
@@ -193,7 +193,7 @@ for k in range(len(name)):
         cbar.set_label(cbarLabel[k])
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[ :, ySlice, :]),np.nanmax(data[ :, ySlice, :]),np.max(np.isnan(data[ :, ySlice, :]))))
         plt.ylabel('Depth [m]')
-        plt.title("%s y = %i at %i" % (name[k], y[ySlice,0], i))
+        plt.title("%s y = %i at %i days" % (name[k], y[ySlice,0], i/86400*dt1))
         j = i/startStep
         
         str = "figs/compareSide_%s%05i.png" % (name[k],j)
