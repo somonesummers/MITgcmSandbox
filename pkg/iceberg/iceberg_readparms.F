@@ -105,14 +105,15 @@ C Open and read the data.iceberg file
       CALL PRINT_MESSAGE(msgBuf, standardMessageUnit,
      &                   SQUEEZE_RIGHT, myThid )
 
-C Close the open data file
-      CLOSE(iUnit)
+
 
 C Set quadratic bottom drag depending on choices:
       IF ( brg_DragQuadratic.EQ.0. _d 0 ) THEN
         brg_SelectDragQuad = -1
       ENDIF
-
+      
+C Close the open data file
+      CLOSE(iUnit)
 
 C Everyone else must wait for the parameters to be loaded
       _BARRIER
