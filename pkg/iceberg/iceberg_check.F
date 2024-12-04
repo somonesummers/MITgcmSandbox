@@ -41,6 +41,14 @@ C     So far, ICEBERG works only with oceanic z-coordinates
          STOP 'ABNORMAL END: S/R ICEBERG_CHECK'
       ENDIF
 
+C     Only implimented so far with explicit drag, likely easy to update
+      IF ( selectImplicitDrag .NE. 0 ) THEN
+         WRITE(msgBuf,'(A)')
+     &      'ICEBERG works only with selectImplicitDrag = 0'
+         CALL PRINT_ERROR( msgBuf, myThid )
+         STOP 'ABNORMAL END: S/R ICEBERG_CHECK'
+      ENDIF
+
 C     So far, ICEBERG is not compatible with nonlinear surface, 
 C     specifically the blocking effect is incompatible
 #ifdef NONLIN_FRSURF    
