@@ -191,12 +191,9 @@ C-    same as above but using wet-point method to average 4 V
       ENDIF
 
 #ifdef ALLOW_DIAGNOSTICS
-      IF ( useDiagnostics .AND.
-     &     ( brg_NoSlip .OR. brg_DragLinear.NE.zeroRL
-     &                        .OR. brg_SelectDragQuad.GE.0 )
-     &   ) THEN
+      IF ( useDiagnostics ) THEN
        IF ( selectImplicitDrag.EQ.0 ) THEN !this is default
-C-     xplicit case: diagnose directly the Iceberg stress, only implemented case
+C-     Explicit case: diagnose directly the Iceberg stress, only implemented case
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
            icebergDragV(i,j,k,bi,bj) = icebergDragV(i,j,k,bi,bj)
@@ -206,7 +203,7 @@ C-     xplicit case: diagnose directly the Iceberg stress, only implemented case
        ENDIF
        CALL DIAGNOSTICS_FILL_RS( icebergDragV, 'BRG_TauY',
      &                          0, Nr, 1, bi, bj, myThid )
-      ENDIF
+      ENDIF !useDiagnostics+ 
 #endif /* ALLOW_DIAGNOSTICS */
 #endif /* ALLOW_ICEBERG */
 

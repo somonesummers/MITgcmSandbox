@@ -1067,7 +1067,8 @@ def replaceAll(file,searchExp,replaceExp):
         sys.stdout.write(line)
 
 #turn on ICEBERG if off
-replaceAll(run_config['run_dir'] + '/input/data.pkg','ICEBERG=.FALSE.', 'ICEBERG=.TRUE.') 
+if(makeDirs):
+    replaceAll(run_config['run_dir'] + '/input/data.pkg','ICEBERG=.FALSE.', 'ICEBERG=.TRUE.') 
 
 
 
@@ -1105,10 +1106,16 @@ setUpPrint('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/ncpus*
 comptime_hrs = estTime/60/ncpus*1.2 
 
 if(makeDirs):
+    if os.path.isfile(run_config['run_dir']+'/input/setupReport.txt'):   
+        os.remove(run_config['run_dir']+'/input/setupReport.txt')
+        setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')
     shutil.move('setupReport.txt', run_config['run_dir']+'/input')
+    shutil.copy('controlMelange.py', run_config['run_dir']+'/input/buildScript.py')
     rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
     setupNotes.close()
     print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
-else:
+elif(writeFiles):
     print("Done! You shouldn't have to rebuild as we only changed run time options here")
-
+    shutil.move('controlMelange.py', run_config['run_dir']+'/input/buildScriptUpdate.py')
+else:
+    print('Nothing was saved, I hope you liked the pretty plots at least')

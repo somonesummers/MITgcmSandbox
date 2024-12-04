@@ -29,7 +29,6 @@ then
 		do
 			python $NAME
 		done
-	# python ../crossPlot.py
 	afplay /System/Library/Sounds/Funk.aiff
 else
 	./mitgcmuv

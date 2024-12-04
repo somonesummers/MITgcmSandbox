@@ -109,9 +109,6 @@ C Close the open data file
       CLOSE(iUnit)
 
 C Set quadratic bottom drag depending on choices:
-      IF ( brg_DragQuadratic .EQ. UNSET_RL) THEN
-        brg_DragQuadratic = brg_Cd
-      ENDIF
       IF ( brg_DragQuadratic.EQ.0. _d 0 ) THEN
         brg_SelectDragQuad = -1
       ENDIF

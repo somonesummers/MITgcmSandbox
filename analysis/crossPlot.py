@@ -247,15 +247,16 @@ for k in range(len(name)):
             zdir='z',offset=z[zSlice,0,0],zorder=-1
         )
         #Left
-        ghost = ax.contourf(
-            np.squeeze(y[ySlice:,0:xSlice]),
-            np.squeeze(x[ySlice:,0:xSlice]),
-            np.ones(np.shape(x[ySlice:,0:xSlice])),
-            levels=[0, 1, 2],
-            alpha=.05,
-            cmap='cmo.gray',
-            zdir='z',offset=z[zSlice,0,0],zorder=1
-        )
+        if(xSlice > 1): #skip if slice is forward most slice
+            ghost = ax.contourf(
+                np.squeeze(y[ySlice:,0:xSlice]),
+                np.squeeze(x[ySlice:,0:xSlice]),
+                np.ones(np.shape(x[ySlice:,0:xSlice])),
+                levels=[0, 1, 2],
+                alpha=.05,
+                cmap='cmo.gray',
+                zdir='z',offset=z[zSlice,0,0],zorder=1
+            )
         #Right
         ghost = ax.contourf(
             np.squeeze(y[0:ySlice+1,xSlice:]),
