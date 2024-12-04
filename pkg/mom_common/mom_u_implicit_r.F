@@ -206,7 +206,7 @@ C-   End k loop
 
 #ifdef ALLOW_ICEBERG
        IF ( useIceberg ) THEN
-C--   Add shelfice drag coeff to main diagonal "c5d":
+C--   Add iceberg drag coeff to main diagonal "c5d":
         DO k=1,Nr
           CALL ICEBERG_U_DRAG_COEFF( bi, bj, k, .FALSE.,
      I                     uVel(1-OLx,1-OLy,k,bi,bj),
