@@ -96,13 +96,16 @@ C-    friction accounts for true distance (including hFac) to the surface
        ENDDO
       ENDIF
 
-C--   Add Linear drag contribution: (NOT IMPLEMENTED)
+C--   Add Linear drag contribution: 
       IF ( brg_DragLinear.NE.zeroRL ) THEN
        DO j=1-OLy+1,sNy+OLy
         DO i=1-OLx,sNx+OLx
          IF ( k.LE.
      &       MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
-          cDrag(i,j) = cDrag(i,j) + brg_DragLinear*dragFac
+          cDrag(i,j) = cDrag(i,j) 
+     &       + brg_DragLinear * dragFac * (1 - _hFacC(i,j,k,bi,bj))
+     &       + brg_DragForm * dragFac * recip_dyF(i,j,bi,bj) * drF(k) *
+     &                   (1 - _hFacC(i,j,k,bi,bj)**2)
          ENDIF
         ENDDO
        ENDDO
