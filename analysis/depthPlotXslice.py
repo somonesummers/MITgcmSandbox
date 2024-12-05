@@ -86,14 +86,15 @@ for k in range(len(name)):
         elif k == 3:
             lvl = [np.min(wRange),np.max(wRange)]
             cm = "xkcd:violet"
+        plotData = np.squeeze(data[k,:,:,xSlice])     
         plt.figure()
         for j in range(np.shape(y[1:-1,:])[0]):
-            plt.plot(data[k,:,j+1,xSlice],np.squeeze(z),linewidth=.5,alpha=.5,color=cm)
-        plt.plot(np.mean(data[k,:,1:-1,xSlice],1),np.squeeze(z),linewidth=1,color=cm)
+            plt.plot(plotData[:,j+1],np.squeeze(z),linewidth=.5,alpha=.5,color=cm)
+        plt.plot(np.mean(plotData[:,1:-1],1),np.squeeze(z),linewidth=1,color=cm)
         ax = plt.gca()
         ax.set_xlim(lvl)
 
-        plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(data[k, :, 1:-1, xSlice]),np.nanmax(data[k, :, 1:-1, xSlice]),np.max(np.isnan(data[k, :, 1:-1, xSlice]))))
+        plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(plotData[:,1:-1]),np.nanmax(plotData[:,1:-1]),np.max(np.isnan(plotData[:,1:-1]))))
         plt.ylabel('Depth [m]')
         plt.title("%s x = %i at %.02f days" % (name[k], x[0,xSlice], i/86400.0*dt))
         j = i/sizeStep + startStep

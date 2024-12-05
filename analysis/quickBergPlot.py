@@ -74,6 +74,10 @@ for k in range(len(name)):
     print('\t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
+        if(data.shape[0] < (k + 1) ):
+            if(i == startStep):
+                print("\t\t%s not available, skipping" % name[k])
+            break
         if k == 0:
             lvl = np.linspace(0,0.1,64)
             cm = "cmo.deep"
@@ -112,9 +116,9 @@ for k in range(len(name)):
         plt.savefig(str, format='png',dpi=plotDPI)
         plt.close()
         plt.show()
-
-    os.system('magick -delay %f figs/bergMap%s*.png -colors 256 -depth 256 figs/bergMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(not data.shape[0] < (k + 1) ):    
+        os.system('magick -delay %f figs/bergMap%s*.png -colors 256 -depth 256 figs/bergMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
-if(cleanPNGs):
-    os.system('rm -f figs/bergMap*.png')
+    if(cleanPNGs):
+        os.system('rm -f figs/bergMap*.png')
