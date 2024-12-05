@@ -5,6 +5,12 @@ import os
 import sys
 import cmocean
 import fileinput
+import argparse
+
+parser = argparse.ArgumentParser(description='Plot dynamics at yCrossSection')
+parser.add_argument('yCrossSection', nargs='?', const=0.0, type=float,
+                    help='optional y location [m]')
+args = parser.parse_args()
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
@@ -24,6 +30,10 @@ elif(os.path.isfile('../plotHelper.py')):
 else:  
     print('no defaults found')
 print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
+
+if(args.yCrossSection != None):
+    print('** Manual yCrossSection detected **')
+    yCrossSection = args.yCrossSection
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
@@ -196,8 +206,10 @@ for k in range(len(name)):
         plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
-
-    os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(args.yCrossSection != None):
+        os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.yCrossSection, name[k]))
+    else:
+        os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
     if(cleanPNGs):

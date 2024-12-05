@@ -22,6 +22,7 @@ xCrossSection = 5000
 zDepth = 50
 plotDPI = 100
 cleanPNGs = True
+showZeros = True
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
@@ -189,6 +190,16 @@ for k in range(len(name)):
                 cmap='cmo.gray')
             # cbar2 = plt.colorbar(cp2)
             # cbar2.set_label('Ocean Fraction')
+        if(showZeros):
+            cc = plt.contour(
+                np.squeeze(x[ySlice,:]),
+                np.squeeze(z),
+                np.squeeze(data[ :, ySlice, :]),
+                [0],
+                colors='gray',
+                linewidths=0.5
+            )
+            plt.clabel(cc, inline=3, fontsize=8)
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[ :, ySlice, :]),np.nanmax(data[ :, ySlice, :]),np.max(np.isnan(data[ :, ySlice, :]))))

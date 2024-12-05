@@ -5,7 +5,12 @@ import os
 import sys
 import cmocean
 import fileinput
+import argparse
 
+parser = argparse.ArgumentParser(description='Plot dynamics at zDepth')
+parser.add_argument('zDepth', nargs='?', const=0.0, type=float,
+                    help='optional depth location [m]')
+args = parser.parse_args()
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
@@ -15,6 +20,7 @@ plotDPI = 100
 cleanPNGs = True
 usePcolor = True
 showQuiver = True
+showZeros = True
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
@@ -27,6 +33,10 @@ elif(os.path.isfile('../plotHelper.py')):
 else:  
     print('no defaults found')
 print('Plot DPI:',plotDPI,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
+
+if(args.zDepth != None):
+    print('** Manual zDepth detected **')
+    zDepth = args.zDepth
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
@@ -67,7 +77,7 @@ else:
 
 #Clean up old gifs and pngs
 os.system('rm -f figs/map*.png')
-os.system('rm -f figs/autoMap*.gif')
+# os.system('rm -f figs/autoMap*.gif')
 
 y = mds.rdmds("results/YC")
 x = mds.rdmds("results/XC")
@@ -110,7 +120,7 @@ else:
     name = ["Temp", "Sal", "U", "W", "V","SPD"]
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]","[m/s]"]
 
-for k in range(len(name)):
+for k in [2]:#range(len(name)):
     print("\t" + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         if(showQuiver):
@@ -187,6 +197,16 @@ for k in range(len(name)):
                 v/np.sqrt(u**2 + v**2 + 1e-12),
                 alpha=.5
                 )
+        if(showZeros and (k == 2 or k == 3 or k == 4)):
+            cc = plt.contour(
+                np.squeeze(x),
+                np.squeeze(y),
+                np.squeeze(dataPlot),
+                [0],
+                colors='gray',
+                linewidths=0.5
+            )
+            plt.clabel(cc, inline=3, fontsize=8)
         if(localBergs):
             cp2 = plt.contourf(np.squeeze(x),
                 np.squeeze(y),
@@ -205,7 +225,10 @@ for k in range(len(name)):
         plt.close()
         #plt.show()
 
-    os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(args.zDepth != None):
+        os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], np.abs(args.zDepth), name[k]))
+    else:
+        os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
 if(cleanPNGs):

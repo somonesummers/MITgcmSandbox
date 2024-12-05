@@ -5,6 +5,12 @@ import os
 import sys
 import cmocean
 import fileinput
+import argparse
+
+parser = argparse.ArgumentParser(description='Plot TS at one xCrossSection')
+parser.add_argument('xCrossSection', nargs='?', const=0.0, type=float,
+                    help='optional cross section location [m]')
+args = parser.parse_args()
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
@@ -24,6 +30,10 @@ elif(os.path.isfile('../plotHelper.py')):
 else:  
     print('no defaults found')
 print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
+
+if(args.xCrossSection != None):
+    print('** Manual xCrossSection detected **')
+    xCrossSection = args.xCrossSection
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
@@ -48,7 +58,6 @@ for file in os.listdir('results'):
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
 
-
 if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to be less than 50
     dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)
     print('Reducing time resolution by', dwnScale)
@@ -57,7 +66,7 @@ if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to b
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 os.system('rm -f figs/TSPlot*.png')
-os.system('rm -f figs/TSPlot*.gif')
+# os.system('rm -f figs/TSPlot*.gif')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
@@ -111,8 +120,10 @@ for i in np.arange(startStep, maxStep + 1, sizeStep):
     
     plt.savefig(str, format='png', dpi=plotDPI)
     plt.close()
-    
-os.system('magick -delay %f figs/TSPlot*.png -colors 256 -depth 256 figs/TSPlot.gif' %(500/((maxStep-startStep)/sizeStep)))
+if(args.xCrossSection != None):
+    os.system('magick -delay %f figs/TSPlot*.png -colors 256 -depth 256 figs/TSPlot%i.gif' %(500/((maxStep-startStep)/sizeStep),args.xCrossSection))
+else:
+    os.system('magick -delay %f figs/TSPlot*.png -colors 256 -depth 256 figs/TSPlot.gif' %(500/((maxStep-startStep)/sizeStep)))
 
 #Clean up intermediate pngs
 if(cleanPNGs):

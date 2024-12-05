@@ -5,6 +5,13 @@ import os
 import sys
 import cmocean
 import fileinput
+import gsw
+import argparse
+
+parser = argparse.ArgumentParser(description='Plot Properties as function of depth at one xCrossSection')
+parser.add_argument('xCrossSection', nargs='?', const=0.0, type=float,
+                    help='optional cross section location [m]')
+args = parser.parse_args()
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
@@ -24,6 +31,10 @@ elif(os.path.isfile('../plotHelper.py')):
 else:  
     print('no defaults found')
 print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
+
+if(args.xCrossSection != None):
+    print('** Manual xCrossSection detected **')
+    xCrossSection = args.xCrossSection
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
@@ -57,18 +68,18 @@ if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to b
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 os.system('rm -f figs/depthPlotX*.png')
-os.system('rm -f figs/depthPlotX*.gif')
+# os.system('rm -f figs/depthPlotX*.gif')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
-z = mds.rdmds("results/RC")
+z = np.squeeze(mds.rdmds("results/RC"))
 
 xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
 print('cross section is x =', x[0,xSlice],'index', xSlice)
 
-dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
-name = ["Temp", "Sal", "U", "W", "V"]
-units = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
+dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag','dynDiag']
+name = ["Temp", "Sal", "U", "W", "V", "N2"]
+units = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[rad^2 s^-2 ]"]
 
 for k in range(len(name)):
     print('\t' + name[k])
@@ -77,20 +88,34 @@ for k in range(len(name)):
         if k == 0:
             lvl = [np.min(tempRange),np.max(tempRange)]
             cm = "xkcd:raspberry"
+            plotData = np.squeeze(data[k,:,:,xSlice]) 
         elif k == 1:
             lvl = [np.min(saltRange),np.max(saltRange)]
             cm = "xkcd:green"
+            plotData = np.squeeze(data[k,:,:,xSlice]) 
         elif k == 2 or k == 4:
             lvl = [np.min(uRange),np.max(uRange)]
             cm = "xkcd:rose"
+            plotData = np.squeeze(data[k,:,:,xSlice]) 
         elif k == 3:
             lvl = [np.min(wRange),np.max(wRange)]
             cm = "xkcd:violet"
-        plotData = np.squeeze(data[k,:,:,xSlice])     
+            plotData = np.squeeze(data[k,:,:,xSlice]) 
+        elif k == 5:
+            lvl = [0,1e-3]
+            cm = "xkcd:olive green"
+            salt = np.squeeze(data[1,:,:,xSlice])
+            if(i == startStep): #only calc pressure once
+                pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), 12, axis=1) /10e3
+            CT = gsw.CT_from_t(salt, data[0,:,:,xSlice], pressure)
+            tmp = gsw.Nsquared(salt, CT, pressure) 
+            plotData = tmp[0]
+            if(i == startStep):
+                z = -1 * tmp[1] * 10e3 / (1020 * 9.81) # defined at midpoints, so new z here on first i loop
         plt.figure()
         for j in range(np.shape(y[1:-1,:])[0]):
-            plt.plot(plotData[:,j+1],np.squeeze(z),linewidth=.5,alpha=.5,color=cm)
-        plt.plot(np.mean(plotData[:,1:-1],1),np.squeeze(z),linewidth=1,color=cm)
+            plt.plot(plotData[:,j+1],z,linewidth=.5,alpha=.5,color=cm)
+        plt.plot(np.mean(plotData[:,1:-1],1),z,linewidth=2,color=cm)
         ax = plt.gca()
         ax.set_xlim(lvl)
 
@@ -100,12 +125,13 @@ for k in range(len(name)):
         j = i/sizeStep + startStep
         
         str = "figs/depthPlotX%s%05i.png" % (name[k],j)
-        
         plt.savefig(str, format='png',dpi=plotDPI)
         plt.close()
-        plt.show()
-
-    os.system('magick -delay %f figs/depthPlotX%s*.png -colors 256 -depth 256 figs/depthPlotX%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+        # plt.show()
+    if(args.xCrossSection != None):
+        os.system('magick -delay %f figs/depthPlotX%s*.png -colors 256 -depth 256 figs/depthPlotX%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.xCrossSection, name[k]))
+    else:
+        os.system('magick -delay %f figs/depthPlotX%s*.png -colors 256 -depth 256 figs/depthPlotX%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
     if(cleanPNGs):

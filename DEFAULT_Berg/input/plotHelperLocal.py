@@ -6,6 +6,7 @@ xCrossSection = 8000
 zDepth = -50
 plotDPI = 175
 usePcolor = False
+showZeros = True
 
 # Color Maps
 saltCmap = "cmo.haline"

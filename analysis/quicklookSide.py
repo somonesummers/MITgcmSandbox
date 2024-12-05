@@ -13,7 +13,7 @@ zDepth = -50
 plotDPI = 100
 cleanPNGs = True
 showQuiver = False
-
+showZeros = True
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
@@ -211,6 +211,17 @@ for k in range(len(name)):
             #cbar2.set_label('Ocean Fraction')
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
+        if(showZeros):
+            if( k == 2 or k == 6 or k == 7):
+                cc = plt.contour(
+                    np.squeeze(x[ySlice,:]),
+                    np.squeeze(z),
+                    np.squeeze(data[kk, :, ySlice, :]),
+                    [0],
+                    colors='gray',
+                    linewidths=0.5
+                )
+                plt.clabel(cc, inline=3, fontsize=8)
         if(showQuiver):
             u = np.squeeze(dataQuiv[2, :, ySlice, :])
             w = np.squeeze(dataQuiv[3, :, ySlice, :])

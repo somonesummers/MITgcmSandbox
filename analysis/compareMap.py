@@ -24,6 +24,7 @@ plotDPI = 100
 cleanPNGs = True
 usePcolor = True
 showQuiver = True
+showZeros = True
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
@@ -195,6 +196,16 @@ for k in range(len(name)):
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(dataPlot),np.nanmax(dataPlot),np.max(np.isnan(dataPlot))))
         plt.ylabel('Across Fjord [m]')
         plt.title("%s depth %f at %.02f days" % (name[k], z[zSlice,0,0] ,i/86400.0*dt1))
+        if(showZeros):
+            cc = plt.contour(
+                np.squeeze(x),
+                np.squeeze(y),
+                np.squeeze(dataPlot),
+                [0],
+                colors='gray',
+                linewidths=0.5
+            )
+            plt.clabel(cc, inline=3, fontsize=8)
         if(showQuiver):
             u = np.squeeze(dataQuiv[2, zSlice, :, :])
             v = np.squeeze(dataQuiv[4, zSlice, :, :])
