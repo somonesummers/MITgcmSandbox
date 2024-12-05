@@ -81,7 +81,7 @@ C--   Initialise drag-coeff
        ENDDO
       ENDDO
 
-C--   Friction at the bottom of iceberg (no-slip BC)
+C--   Friction at the bottom of iceberg (no-slip BC) (NOT IMPLEMENTED)
       IF ( brg_NoSlip ) THEN
 C-    friction accounts for true distance (including hFac) to the surface
        DO j=1-OLy,sNy+OLy-1
@@ -96,7 +96,7 @@ C-    friction accounts for true distance (including hFac) to the surface
        ENDDO
       ENDIF
 
-C--   Add Linear drag contribution:
+C--   Add Linear drag contribution: (NOT IMPLEMENTED)
       IF ( brg_DragLinear.NE.zeroRL ) THEN
        DO j=1-OLy,sNy+OLy
         DO i=1-OLx+1,sNx+OLx
@@ -131,11 +131,12 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
            uSq = KE(i,j)+KE(i-1,j)
           ENDIF
           IF ( uSq.GT.zeroRL ) THEN
-           cDrag(i,j) = cDrag(i,j)  !this is bottom drag only
-     &                + brgDragQuadFld(i,j,bi,bj)*SQRT(uSq)*dragFac
+           cDrag(i,j) = cDrag(i,j)  !Bot drag and form drag here
+     &            + brgDragQuadFld(i,j,bi,bj)*SQRT(uSq)*dragFac * 
+     &                   (1 - recip_hFacC(i,j,k,bi,bj))
      &            + brg_DragForm * dragFac * SQRT(uSq) * 
      &                   recip_dxF(i,j,bi,bj) * drF(k) *
-     &                   (1 - _hFacC(i,j,k,bi,bj**2))
+     &                   (1 - _hFacC(i,j,k,bi,bj)**2)
           ENDIF
         ENDDO
        ENDDO
@@ -154,11 +155,12 @@ C-    calculate locally velocity norm @ U.pt (local U & 4 V averaged)
      &         )*recip_hFacW(i,j,k,bi,bj)*0.25 _d 0
           ENDIF
           IF ( uSq.GT.zeroRL ) THEN
-           cDrag(i,j) = cDrag(i,j)
-     &                + brgDragQuadFld(i,j,bi,bj)*SQRT(uSq)*dragFac
-     &          + brg_DragForm * dragFac * SQRT(uSq) * 
-     &                 recip_dxF(i,j,bi,bj) * drF(k) *
-     &                 (1 - _hFacC(i,j,k,bi,bj**2))
+           cDrag(i,j) = cDrag(i,j) !Bot drag and form drag here
+     &            + brgDragQuadFld(i,j,bi,bj)*SQRT(uSq)*dragFac * 
+     &                   (1 - recip_hFacC(i,j,k,bi,bj))
+     &            + brg_DragForm * dragFac * SQRT(uSq) * 
+     &                   recip_dxF(i,j,bi,bj) * drF(k) *
+     &                   (1 - _hFacC(i,j,k,bi,bj)**2)
           ENDIF
         ENDDO
        ENDDO
@@ -183,11 +185,12 @@ C-    same as above but using wet-point method to average 4 V
            ENDIF
           ENDIF
           IF ( uSq.GT.zeroRL ) THEN
-           cDrag(i,j) = cDrag(i,j)
-     &                + brgDragQuadFld(i,j,bi,bj)*SQRT(uSq)*dragFac
+           cDrag(i,j) = cDrag(i,j) !Bot drag and form drag here
+     &            + brgDragQuadFld(i,j,bi,bj)*SQRT(uSq)*dragFac * 
+     &                   (1 - recip_hFacC(i,j,k,bi,bj))
      &            + brg_DragForm * dragFac * SQRT(uSq) * 
      &                   recip_dxF(i,j,bi,bj) * drF(k) *
-     &                   (1 - _hFacC(i,j,k,bi,bj**2))
+     &                   (1 - _hFacC(i,j,k,bi,bj)**2)
           ENDIF
         ENDDO
        ENDDO
