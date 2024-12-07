@@ -5,11 +5,12 @@ import os
 import sys
 import cmocean
 import fileinput
+import gsw
 import argparse
 
-parser = argparse.ArgumentParser(description='Plot dynamics at yCrossSection')
-parser.add_argument('yCrossSection', nargs='?', const=0.0, type=float,
-                    help='optional y location [m]')
+parser = argparse.ArgumentParser(description='Plot dynamics at xCrossSection')
+parser.add_argument('xCrossSection', nargs='?', const=0.0, type=float,
+                    help='optional x location [m]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -18,6 +19,8 @@ xCrossSection = 5000
 zDepth = -50
 plotDPI = 100
 cleanPNGs = True
+showDensity = True
+usePcolor = False
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
@@ -31,9 +34,9 @@ else:
     print('no defaults found')
 print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
-if(args.yCrossSection != None):
-    print('** Manual yCrossSection detected **')
-    yCrossSection = args.yCrossSection
+if(args.xCrossSection != None):
+    print('** Manual xCrossSection detected **')
+    xCrossSection = args.xCrossSection
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
@@ -73,11 +76,11 @@ if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to b
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 os.system('rm -f figs/sideX*.png')
-os.system('rm -f figs/autosideX*.gif')
+# os.system('rm -f figs/autosideX*.gif')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
-z = mds.rdmds("results/RC")
+z = np.squeeze(mds.rdmds("results/RC"))
 
 if(os.path.isfile('input/bathymetry.bin')):
     topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
@@ -171,15 +174,41 @@ for k in range(len(name)):
             kk = 2
         else:
             kk = k
-        cp = plt.contourf(
-            np.squeeze(y[:,xSlice]),
-            np.squeeze(z),
-            np.squeeze(data[kk, :, :, xSlice]),
-            lvl,
-            extend="both",
-            cmap=cm,
-        )
-
+        if(usePcolor):
+            cp = plt.pcolormesh(
+                np.squeeze(y[:,xSlice]),
+                np.squeeze(z),
+                np.squeeze(data[kk, :, :, xSlice]),
+                cmap=cm,
+                vmin=np.min(lvl),
+                vmax=np.max(lvl),
+            )
+        else:
+            cp = plt.contourf(
+                np.squeeze(y[:,xSlice]),
+                np.squeeze(z),
+                np.squeeze(data[kk, :, :, xSlice]),
+                lvl,
+                extend="both",
+                cmap=cm,
+            )
+        if(showDensity and (dynName[k] == 'dynDiag')):
+            salt = np.squeeze(data[1,:,:,xSlice])
+            if(i == startStep): #only calc pressure once
+                pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
+            CT = gsw.CT_from_t(salt, data[0,:,:,xSlice], pressure)
+            density = gsw.rho(salt, CT, pressure) - 1000 #in-stu density less 1000
+            densityLevels = np.linspace(25,30,26)
+            cc = plt.contour(
+                np.squeeze(y[:,xSlice]),
+                np.squeeze(z),
+                np.squeeze(density),
+                densityLevels,
+                colors='black',
+                linewidths=0.5,
+                alpha=0.5
+            )
+            plt.clabel(cc, inline=3, fontsize=8)
         plt.plot(y[:,xSlice],topo[:,xSlice],color='black')
         # plt.plot(y[:,xSlice],ice[:,xSlice],color='gray')
         cbar = plt.colorbar(cp)
@@ -206,8 +235,8 @@ for k in range(len(name)):
         plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
-    if(args.yCrossSection != None):
-        os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.yCrossSection, name[k]))
+    if(args.xCrossSection != None):
+        os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.xCrossSection, name[k]))
     else:
         os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 

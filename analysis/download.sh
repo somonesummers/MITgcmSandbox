@@ -30,6 +30,6 @@ do
   # rsync -ah --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/input/ $EXP/input
   # rsync -ah --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/results/ $EXP/results
 
-  echo "===== Running plotting now ====="
-  bash plotAll.sh $EXP
+  # echo "===== Running plotting now ====="
+  # bash plotAll.sh $EXP
 done

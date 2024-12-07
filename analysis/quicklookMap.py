@@ -120,7 +120,7 @@ else:
     name = ["Temp", "Sal", "U", "W", "V","SPD"]
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]","[m/s]"]
 
-for k in [2]:#range(len(name)):
+for k in range(len(name)):
     print("\t" + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         if(showQuiver):

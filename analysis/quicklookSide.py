@@ -5,6 +5,7 @@ import os
 import sys
 import cmocean
 import fileinput
+import gsw
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
@@ -14,6 +15,7 @@ plotDPI = 100
 cleanPNGs = True
 showQuiver = False
 showZeros = True
+showDensity = True
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
@@ -73,7 +75,7 @@ os.system('rm -f figs/autoside_*.gif')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
-z = mds.rdmds("results/RC")
+z = np.squeeze(mds.rdmds("results/RC"))
 
 if(os.path.isfile('input/bathymetry.bin')):
     topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
@@ -167,17 +169,16 @@ for k in range(len(name)):
             cm = meltCmap
         elif k == 6:
             lvl = np.linspace(-10,10,127)
-            data = data/1000 # Pa to kPa
             cm = "cmo.balance"
         elif k == 7:
             lvl = np.linspace(-10,10,127)
-            data = data/1000 # Pa to kPa
             cm = "cmo.balance"
         if(k > 4):
             kk = k - 3
+            if(k > 5):
+                data = data/1000 #Pa to kPa
         else:
             kk = k
-
         if(usePcolor):
             cp = plt.pcolormesh(
                 np.squeeze(x[ySlice,:]),
@@ -211,6 +212,23 @@ for k in range(len(name)):
             #cbar2.set_label('Ocean Fraction')
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
+        if(showDensity and (dynName[k] == 'dynDiag')):
+            salt = np.squeeze(data[1,:,ySlice,:])
+            if(i == startStep): #only calc pressure once
+                pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
+            CT = gsw.CT_from_t(salt, data[0,:,ySlice,:], pressure)
+            density = gsw.rho(salt, CT, pressure) - 1000 #in-stu density less 1000
+            densityLevels = np.linspace(25,30,26)
+            cc = plt.contour(
+                np.squeeze(x[ySlice,:]),
+                np.squeeze(z),
+                np.squeeze(density),
+                densityLevels,
+                colors='black',
+                linewidths=0.5,
+                alpha=0.5
+            )
+            plt.clabel(cc, inline=3, fontsize=8)
         if(showZeros):
             if( k == 2 or k == 6 or k == 7):
                 cc = plt.contour(
@@ -219,7 +237,8 @@ for k in range(len(name)):
                     np.squeeze(data[kk, :, ySlice, :]),
                     [0],
                     colors='gray',
-                    linewidths=0.5
+                    linewidths=0.5,
+                    alpha=0.5
                 )
                 plt.clabel(cc, inline=3, fontsize=8)
         if(showQuiver):

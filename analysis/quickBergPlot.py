@@ -55,7 +55,7 @@ if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to b
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 os.system('rm -f figs/bergMap*.png')
-os.system('rm -f figs/bergMap*.gif')
+# os.system('rm -f figs/bergMap*.gif')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
@@ -63,9 +63,9 @@ z = mds.rdmds("results/RC")
 
 
 
-dynName = ['BRGFlx', 'BRGFlx', 'BRGFlx', 'BRGFlx','BRGFlx']
-name = ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY']
-units = ["[kg/m^2/s]", "[W/m^2]", "[m/d]", "[kN/m^2]","[kN/m^2]"]
+dynName = ['BRGFlx', 'BRGFlx', 'BRGFlx', 'BRGFlx','BRGFlx','BRGFlx']
+name = ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY','BRGfwFlxSum']
+units = ["[m^3/s]", "[W/m^2]", "[m/d]", "[kN/m^2]","[kN/m^2]","[m^3/s]"]
 
 zSlice = np.argmin(np.abs(z[:,0,0]- zDepth))
 print('depth is z =', z[zSlice,0,0], 'index', zSlice)
@@ -74,39 +74,46 @@ for k in range(len(name)):
     print('\t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
-        if(data.shape[0] < (k + 1) ):
+        if(data.shape[0] < 4 and (k == 3 or k == 4)):
             if(i == startStep):
                 print("\t\t%s not available, skipping" % name[k])
             break
-        if k == 0:
-            lvl = np.linspace(0,0.1,64)
+        if k == 0: #
+            lvl = np.linspace(0,0.2,64)
             cm = "cmo.deep"
+            plotData = data[k, zSlice, :, :]
         elif k == 1:
             lvl = np.linspace(0,1000,64)
             cm = "cmo.amp"
+            plotData = data[k, zSlice, :, :]
         elif k == 2:
-            lvl = np.linspace(0,2,32)
+            lvl = np.linspace(0,.5,32)
             cm = "cmo.speed"
+            plotData = data[k, zSlice, :, :]
         elif k == 3:
             lvl = np.linspace(-10,10,127)
-            data = data/1000 # Pa to kPa
+            plotData = data[k, zSlice, :, :]/1000 # Pa to kPa
             cm = "cmo.balance"
         elif k == 4:
             lvl = np.linspace(-10,10,127)
-            data = data/1000 # Pa to kPa
+            plotData = data[k, zSlice, :, :]/1000 # Pa to kPa
             cm = "cmo.balance"
+        elif k == 5:
+            lvl = np.linspace(0,5,127)
+            cm = "cmo.tempo"
+            plotData = np.sum(data[0, :, :, :],0)
         plt.figure()
         cp = plt.contourf(
             np.squeeze(x),
             np.squeeze(y),
-            np.squeeze(data[k, zSlice, :, :]),
+            np.squeeze(plotData),
             lvl,
             extend="both",
             cmap=cm,
         )
         cbar = plt.colorbar(cp)
         cbar.set_label(units[k])
-        plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[k, zSlice, :, :]),np.nanmax(data[k, zSlice, :, :]),np.max(np.isnan(data[k, zSlice, :, :]))))
+        plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(plotData),np.nanmax(plotData),np.max(np.isnan(plotData))))
         plt.ylabel('Depth [m]')
         plt.title("%s depth %f at %.02f days" % (name[k], z[zSlice,0,0] ,i/86400.0*dt))
         j = i/sizeStep + startStep
@@ -114,9 +121,9 @@ for k in range(len(name)):
         str = "figs/bergMap%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png',dpi=plotDPI)
+        # plt.show()
         plt.close()
-        plt.show()
-    if(not data.shape[0] < (k + 1) ):    
+    if(not (data.shape[0] < 4 and (k == 3 or k == 4))):    
         os.system('magick -delay %f figs/bergMap%s*.png -colors 256 -depth 256 figs/bergMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs

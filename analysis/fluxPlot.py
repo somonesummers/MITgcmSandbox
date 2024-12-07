@@ -5,6 +5,13 @@ import os
 import sys
 import cmocean
 import fileinput
+import argparse
+
+parser = argparse.ArgumentParser(description='Plot fluxes as function of depth at CrossSections')
+parser.add_argument('xCrossSection', nargs='?', const=0.0, type=float,
+                    help='optional x cross section location [m]')
+
+args = parser.parse_args()
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
@@ -24,6 +31,10 @@ elif(os.path.isfile('../plotHelper.py')):
 else:  
     print('no defaults found')
 print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
+
+if(args.xCrossSection != None):
+    print('** Manual xCrossSection detected **')
+    xCrossSection = args.xCrossSection
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
@@ -140,8 +151,10 @@ for k in range(6):
         plt.savefig(str, format='png',dpi=plotDPI)
         plt.close()
         plt.show()
-
-    os.system('magick -delay %f figs/fluxPlot%s*.png -colors 256 -depth 256 figs/fluxPlot%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(args.xCrossSection != None):
+        os.system('magick -delay %f figs/fluxPlot%s*.png -colors 256 -depth 256 figs/fluxPlot%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.xCrossSection, name[k]))
+    else:
+        os.system('magick -delay %f figs/fluxPlot%s*.png -colors 256 -depth 256 figs/fluxPlot%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
     if(cleanPNGs):

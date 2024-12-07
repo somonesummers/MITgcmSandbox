@@ -76,17 +76,17 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Delta_m0_b1'
-run_config['ndays'] = 20 # simulaton time (days)
+run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'charlie_25'
+run_config['ndays'] = 5 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
-run_config['Lx_m'] = 50000 # domain size in x (m)
+run_config['Lx_m'] = 40000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 50 # num of z-grid points
+grid_params['Nr'] = 25 # num of z-grid points
 
 # Offshore current =========================
 oscStrength = .3 #[m/s] peak strength of offshore current
@@ -95,9 +95,9 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 10000 # [meters] of extent of ice
+iceExtent = 20000 # [meters] of extent of ice
 iceCoverage = 80 # % of ice cover in melange, stay under 90% ideally
-doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
+doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 #========================================================================================
 # The rest of this should take care of it self mostly

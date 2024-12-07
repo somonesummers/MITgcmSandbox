@@ -106,7 +106,7 @@ for k in range(len(name)):
             cm = "xkcd:olive green"
             salt = np.squeeze(data[1,:,:,xSlice])
             if(i == startStep): #only calc pressure once
-                pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), 12, axis=1) /10e3
+                pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
             CT = gsw.CT_from_t(salt, data[0,:,:,xSlice], pressure)
             tmp = gsw.Nsquared(salt, CT, pressure) 
             plotData = tmp[0]
