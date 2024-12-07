@@ -601,7 +601,7 @@ runoffRad = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
 plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 # Total runoff (m^3/s)
-runoff = 10
+runoff = 500
 
 # velocity (m/s) of subglacial runoff
 wsg = 1
@@ -675,6 +675,7 @@ for j in np.arange(0, grid_params['Ny']):
     iceshelf[j,:] = np.interp(x[j,:],mX,-mH,0,0)
 
 iceshelf[:, 0] = 0  #let ice wall remain at x = 0
+# iceshelf[(plume_loc-5):(plume_loc+5),1:2] = 0
 
 plt.plot(np.transpose(x), np.transpose(iceshelf), 'r', label="shelfice")
 plt.plot(np.transpose(x), np.transpose(d), 'b', label="bathy")
