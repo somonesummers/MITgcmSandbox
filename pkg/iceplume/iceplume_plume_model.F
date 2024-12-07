@@ -155,7 +155,7 @@ C Set intial conditions
 
 C Move up through water column from lowest layer
 
-      DO IOUT = iceDepthK-1,1,-1
+      DO IOUT = iceDepthK-1,Ktop,-1
       
 C Check to make sure plume hasn't reached neutral buoyancy in a lower layer
        IF ( ISTATE .GT. -1 ) THEN 
@@ -194,7 +194,7 @@ C at this level. This generally occurs because plume has reached neutral buoyanc
 C run out of momentum, and so is no longer rising. At this point, we therefore end
 C the call to the plume model.
 C Our aim is to catch the plume at the point of neutral buoyancy. We therefore perform
-C a manual comparison of ambient and plume density. If plume density >= ambient density
+C a manual comparrison of ambient and plume density. If plume density >= ambient density
 C we assign ISTATE = -1, again ending the call to the plume model.
 
         temperature = Y(3)
@@ -204,9 +204,9 @@ C we assign ISTATE = -1, again ending the call to the plume model.
 C Calculate plume density
         rho_plume = RHO(temperature,salinity,depth)
 
-        IF (IOUT.EQ.1) THEN
-         tambient = tprof(1)
-         sambient = sprof(1)
+        IF (IOUT.EQ.Ktop) THEN
+         tambient = tprof(Ktop)
+         sambient = sprof(Ktop)
         ELSE
          tambient = .5*(tprof(IOUT-1)+tprof(IOUT))
          sambient = .5*(sprof(IOUT-1)+sprof(IOUT))
@@ -232,7 +232,7 @@ C Other values are kept for use in determining plume outflow properties.
 C If the plume has not reached neutral buoyancy, then we assign a depth at which to calculate the next value and loop round to call the plume model again.
 C Make sure we're not at the surface
 
-         IF ( iout .NE. 1 ) THEN
+         IF ( iout .GT. Ktop ) THEN  !If below surface 
 
 C Define present depth
 
@@ -241,9 +241,20 @@ C Define present depth
 C Define next depth
 
           TOUT = zProf(IOUT-1)
-
-         ENDIF
-        ENDIF
+         ELSE 
+C           Once at at top of ocean (esp under SHELFICE) values are 0
+            Y(1) = 0.0
+            Y(2) = 0.0
+            Y(3) = 0.0
+            Y(4) = 0.0
+            Y(5) = 0.0
+            Y(6) = 0.0
+#ifdef ICEPLUME_ALLOW_DETACHED_PLUME
+            Y(7) = 0.0
+            Y(8) = 0.0
+#endif /* ICEPLUME_ALLOW_DETACHED_PLUME */
+         ENDIF !iout.NE.SURF
+        ENDIF !ISTATE.LT.0
 
 C This section is entered once the plume has reached neutral buoyancy
        ELSE
@@ -260,7 +271,7 @@ C Once plume has reached neutral buoyancy, no plume values
         Y(8) = 0.0
 #endif /* ICEPLUME_ALLOW_DETACHED_PLUME */
 
-       ENDIF
+       ENDIF !rhoPLUME.GT.rhoAMB
 
 C Save results
        
@@ -313,9 +324,9 @@ C     Y(4) = S
       
 C Interpolate from imposed ambient profiles
 
-      IF ( abs(T) .LE. zProfAbs(1) ) THEN
-       Tambient = tProf(1)
-       Sambient = sProf(1)
+      IF ( abs(T) .LE. zProfAbs(Ktop) ) THEN
+       Tambient = tProf(Ktop)
+       Sambient = sProf(Ktop)
       ELSEIF ( abs(T) .GE. zProfAbs(Nr) ) THEN
        Tambient = tProf(Nr)
        Sambient = sProf(Nr)
@@ -404,9 +415,9 @@ C     Y(4) = S
      
 C     Interpolate from imposed ambient profiles
 
-      IF ( abs(T) .LE. zProfAbs(1) ) THEN
-       Tambient = tProf(1)
-       Sambient = sProf(1)
+      IF ( abs(T) .LE. zProfAbs(Ktop) ) THEN
+       Tambient = tProf(Ktop)
+       Sambient = sProf(Ktop)
       ELSEIF ( abs(T) .GE. zProfAbs(Nr) ) THEN
        Tambient = tProf(Nr)
        Sambient = sProf(Nr)
@@ -489,9 +500,9 @@ C     Y(4) = S
      
 C     Interpolate from imposed ambient profiles
 
-      IF ( abs(T) .LE. zProfAbs(1) ) THEN
-       Tambient = tProf(1)
-       Sambient = sProf(1)
+      IF ( abs(T) .LE. zProfAbs(Ktop) ) THEN
+       Tambient = tProf(Ktop)
+       Sambient = sProf(Ktop)
       ELSEIF ( abs(T) .GE. zProfAbs(Nr) ) THEN
        Tambient = tProf(Nr)
        Sambient = sProf(Nr)

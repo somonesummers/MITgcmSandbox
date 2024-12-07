@@ -30,6 +30,10 @@ C     === Global variables ===
 #include "FFIELDS.h"
 #include "ICEPLUME.h"
 
+#ifdef ALLOW_SHELFICE
+#include "SHELFICE.H"
+#endif
+
 #ifdef ALLOW_PTRACERS
 #include "PTRACERS_PARAMS.h"
 #include "PTRACERS_START.h"
@@ -206,7 +210,7 @@ C           Velocities
 
             delta_z(k) = drF(K)
 
-	   ENDDO
+	   ENDDO !K=1,NR
 
 C Vertical extent of domain
            maxDepth = rF(Nr+1)
@@ -250,6 +254,12 @@ C If we still cannot find the bottom cell
                 CALL PRINT_ERROR( msgBuf, myThid )
                 STOP 'ABNORMAL END: S/R ICEPLUME_CALC IV'
        endif
+C Find top cell if under SHELFICE
+#ifdef ALLOW_SHELFICE
+       Ktop = max(kTopC(i,j,bi,bj),1) !shelfice sets to 0 when no shelf there
+#else
+       Ktop = 1 !Typical surface value
+#endif
 
 C --- If there is subglacial outflow in that column, then parameterise plume ---
 
@@ -262,7 +272,7 @@ C Calculate vertical plume volume flux...
 
             DO k=1,Nr
 C ... after checking to see if we are above the base of the ice face...
-            IF ( K .LT. iceDepthK ) THEN
+            IF ( K .LT. iceDepthK .AND. K .GT. Ktop) THEN  
 C ... assuming specified plume horizontal extent (for sheet flow)...
               IF ( useSheetPlume ) THEN
               volFlux(k) = wProfPlume(k)*rProfPlume(k)*delta_y
@@ -279,8 +289,8 @@ C ... assuming detached-conical form
             ENDDO
                                 
 C A couple of corrections:
-C - even if plume is still buoyant, it cannot flow through the fjord surface
-            volFlux(1) = 0.D0
+C - even if plume is still buoyant, it cannot flow through the fjord surface 
+            volFlux(Ktop) = 0.D0 
 C - the initial volume flux is equal to runoff
             volflux(iceDepthK) = Q_sg
 
@@ -292,7 +302,7 @@ C First clear volfluxdiff
              volfluxdiff(K) = 0.D0
             ENDDO
 
-            DO k=1,iceDepthK-1
+            DO k=Ktop,iceDepthK-1 
              volFluxDiff(k) = volFlux(k+1) - volFlux(k)
             ENDDO
 
@@ -325,7 +335,7 @@ C i.e. so that there is no net flow over boundary
 #ifdef ALLOW_PTRACERS
 
 C Add up total sum of each tracer in plume
-            DO K=1,iceDepthK-1
+            DO K=Ktop,iceDepthK-1
              IF (volFLuxDiff(k) .LT. 0. ) THEN
               DO iTracer = 1,PTRACERS_num
               ptrPlumeCum(iTracer) 
@@ -352,7 +362,7 @@ C Add ptracers in runoff
             ENDIF
 
 C Calculate concentration of tracer in outflow 
-             DO K=1,iceDepthK-1
+             DO K=Ktop,iceDepthK-1 
               IF (volFluxDiff(k) .GT. 0. ) THEN
                DO iTracer = 1,PTRACERS_num
                 ptrPlume(iTracer)
@@ -399,10 +409,10 @@ C Send outputs to 3D grid for diagnostics
 
 C-------- Calculate melt rates ----------------------------
 
-           DO K = 1,Nr
+           DO K = 1,Nr 
 
 C Check to see if we are above the sea bed
-            IF ( K .GE. iceDepthK ) THEN
+            IF ( K .GE. iceDepthK .OR. K .LE. Ktop) THEN  
 
 C If not then there is no melting             
              mProfAv(k) = 0.D0
@@ -587,7 +597,7 @@ C     (icefrontlength = dy / dxdy = 1 / dx)
              icefront_TendS(I,j,K,bi,bj) = 
      &            icefront_TendS(I,j,K,bi,bj)
      &            * 1./delta_x
-           ENDDO
+           ENDDO !MELTRATES END OVER K
 
 
 C The plume transport is undertaken using the addMass terms.
@@ -595,7 +605,7 @@ C addMass terms for volume (kg/s), pot. temperature, salinity and ptracers are i
 C into the correct locations in 3D arrays
            IF ( Q_sg.NE.0 ) THEN
 C Find temperature and salinity of plume outflow
-             DO k = 1,Nr
+             DO k = 1,Nr 
                IF ( volFluxDiff(k) .GT. 0 ) THEN
                temp_AddMass3D(I,J,K,bi,bj) = ! convert to potential temp
      &          SW_PTMP(sProfPlume(k),tProfPlume(k),prProf(k),0. _d 0)
@@ -622,7 +632,7 @@ C Convert m3/s into kg/s
 
            ELSE
 
-           DO K = 1,Nr
+           DO K = 1,Nr 
             temp_AddMass3D(I,J,K,bi,bj) = ptProf(k)
             salt_AddMass3D(I,J,K,bi,bj) = sProf(k)
             addMass(I,j,k,bi,bj) = 0.D0

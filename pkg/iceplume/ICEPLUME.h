@@ -10,10 +10,11 @@
 C Header file pkg/ICEPLUME
 
       COMMON /ICEPLUME_INTEGERS/
-     &       iceDepthK,
+     &       iceDepthK, Ktop, 
      &       runoffLocation, plumeInputLayer
 
       INTEGER iceDepthK
+      INTEGER Ktop   !for SHELFICE compatibility
       INTEGER runoffLocation  (100,2)
       INTEGER plumeInputLayer (100)
 
