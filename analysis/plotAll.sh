@@ -35,8 +35,8 @@ do
   echo '== Plume plot =='
   python ../quickPlumePlot.py
 
-  echo '== Berg plot =='
-  python ../quickBergPlot.py
+  # echo '== Berg plot =='
+  # python ../quickBergPlot.py
   
   cd ..    
 done

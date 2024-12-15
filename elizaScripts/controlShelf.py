@@ -32,7 +32,7 @@ import build_domain_funcs as build_domain
 import run_config_funcs as rcf # import helpter functions
 
 #Set up new folder
-makeDirs = False
+makeDirs = True
 #Write input files, this lets us update the inputs with a full new run
 writeFiles = True
 
@@ -55,7 +55,12 @@ def write_bin(fname, data):
 email = 'psummers8@gatech.edu'
 # set high level run configurations
 
+briefSummaryOfExp = """Comparing shelf to berg version of Melange, using melange shape
+from melange1D first, this is shelf version to compare meltrates/heatflux"""
+
+
 setUpPrint('====== Welcome to the mélange building script =====')
+setUpPrint(briefSummaryOfExp)
 setUpPrint('\tMaking experiment to compare mélange realizations')
 #========================================================================================
 #main values to imput 
@@ -63,8 +68,8 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'shelfTest'
-run_config['ndays'] = 2 # simulaton time (days)
+run_config['run_name'] = 'foxtrotShelf'
+run_config['ndays'] = 10 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
@@ -313,7 +318,7 @@ params02['cg3dTargetResidual'] = 1e-8
 params03 = {}
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 20.0
+deltaT = 100.0
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -365,6 +370,19 @@ if(makeDirs):
     rcf.createSIZEh(run_config, grid_params)
 
 #========================================================================================
+# Stability Check 
+u_char = .5 #[m/s]
+S_adv = 2 * (u_char * deltaT)/run_config['horiz_res_m']  # < 0.5 (Courant–Friedrichs–Lewy)
+S_in = params01['f0'] * deltaT # < 0.5 (adams bashforth II)
+# S_lh = 8 * params01['viscAh'] * deltaT /(run_config['horiz_res_m']**2) # < 0.6 
+S_lv = 4 * params01['viscAz'] * deltaT /(dz[0]**2) # < 0.6 
+
+setUpPrint('====== Stability Check =====')
+setUpPrint("S_adv: <0.5 , S_in: <0.5 , S_lv: <0.6")
+setUpPrint("S_adv: %.04f, S_in: %.04f, S_lv: %.04f" % (S_adv, S_in, S_lv))
+
+
+#========================================================================================
 # Diagnostics
 
 # adjust output frequency
@@ -379,9 +397,13 @@ else:
 
 #---------specify time averaged fields------#
 # NOTE: many more options available see mitgcm docs
-diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],['UVELSLT ','UVELTH  ','WVELSLT ','WVELTH  ']] #Need to add shelf melt
+diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
+                    ['UVELSLT ','UVELTH  ','WVELSLT ','WVELTH  '],
+                    ['UTHMASS ','USLTMASS','VTHMASS ','VSLTMASS','WTHMASS ','WSLTMASS',],
+                    ['icefrntW','icefrntT','icefrntS','icefrntR','icefrntM'],
+                    ['SHIfwFlx','SHIhtFlx','SHI_TauX','SHI_TauY']]
 diag_fields_max = 0
-diag_fields_avg_name = ['dynDiag','fluxDiag']
+diag_fields_avg_name = ['dynDiag','fluxDiag','fluxMassDiag','plumeDiag','shelfDiag']
 # diag_fields_avg = ['UVEL', 'VVEL', 'WVEL', 'UVELSQ', 'VVELSQ', 'WVELSQ',
 #                   'UVELTH', 'VVELTH', 'WVELTH', 'THETA', 'THETASQ',
 #                   'PHIHYD', 'LaUH1TH', 'LaVH1TH', 'LaHw1TH','LaHs1TH']
@@ -412,7 +434,6 @@ for ii in range(numdiags_avg):
     diag_params01['frequency(%s)'%n] = diag_freq_avg
     diag_params01['timePhase(%s)'%n] = diag_phase_avg
 
-    
 #--------specify instanteous fields (i.e. snapshots)--------#
 diag_fields_inst = [['THETA','SALT','UVEL','WVEL','VVEL']]
 diag_fields_names = ['dynDiag']
@@ -778,13 +799,17 @@ setUpPrint('Estimated run time is %.2f hours for one CPU' % (estTime/60))
 setUpPrint('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/ncpus*1.2,ncpus))
 
 comptime_hrs = estTime/60/ncpus*1.2 
-if(makeDirs):
-    setupNotes.close()
-
-if(makeDirs):
+f(makeDirs):
+    if os.path.isfile(run_config['run_dir']+'/input/setupReport.txt'):   
+        os.remove(run_config['run_dir']+'/input/setupReport.txt')
+        setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')
     shutil.move('setupReport.txt', run_config['run_dir']+'/input')
+    shutil.copy('controlMelange.py', run_config['run_dir']+'/input/buildScript.py')
     rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
-
-print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
-
-
+    setupNotes.close()
+    print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
+elif(writeFiles):
+    print("Done! You shouldn't have to rebuild as we only changed run time options here")
+    shutil.move('controlMelange.py', run_config['run_dir']+'/input/buildScriptUpdate.py')
+else:
+    print('Nothing was saved, I hope you liked the pretty plots at least')

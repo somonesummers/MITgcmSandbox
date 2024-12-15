@@ -123,9 +123,9 @@ print('cross section is y =', y[ySlice,0], 'index', ySlice)
 #     name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
 #     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]"]
 # else:
-dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag','BRGFlx','dynDiag']
-name = ["Temp", "Sal", "U", "W", "V","BRGmltRt","SPD_h"]
-cbarLabel = ["[∆ C]", "[∆ ppt]", "[∆ m/s]", "[∆ m/s]", "[∆ m/s]","[∆ m/d]",'[∆ m/s]']
+dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag','dynDiag','BRGFlx']
+name = ["Temp", "Sal", "U", "W", "V","SPD_h","BRGmltRt"]
+cbarLabel = ["[∆ C]", "[∆ ppt]", "[∆ m/s]", "[∆ m/s]", "[∆ m/s]","[∆ m/s]","[∆ m/d]"]
 
 for k in range(len(name)):
     print('\t',name[k])

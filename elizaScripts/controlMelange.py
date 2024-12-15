@@ -64,8 +64,8 @@ def setUpPrint(msg):
 email = 'psummers8@gatech.edu'
 # set high level run configurations
 
-briefSummaryOfExp = """Comparison of on/off for blocking and melt in control domain, 4 experiments total.
-    slightly lower berg conc(80%) and larger dz (10m) to keep dt reasonable"""
+briefSummaryOfExp = """Comparing shelf to berg version of Melange, using melange shape
+from melange1D first, this is berg version to compare meltrates/heatflux"""
 
 
 setUpPrint('====== Welcome to the mélange building script =====')
@@ -77,8 +77,8 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'charlie_25'
-run_config['ndays'] = 5 # simulaton time (days)
+run_config['run_name'] = 'foxtrotMelange'
+run_config['ndays'] = 10 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
@@ -86,7 +86,7 @@ run_config['Lx_m'] = 40000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 25 # num of z-grid points
+grid_params['Nr'] = 50 # num of z-grid points
 
 # Offshore current =========================
 oscStrength = .3 #[m/s] peak strength of offshore current
@@ -94,8 +94,8 @@ lengthOffShoreCurrent = 5e3 #width of offshore current [m]
 indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
-iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 20000 # [meters] of extent of ice
+iceBergDepth = 150 # max iceberg depth [meters], used for ICEBERG package
+iceExtent = 18000 # [meters] of extent of ice
 iceCoverage = 80 # % of ice cover in melange, stay under 90% ideally
 doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
@@ -330,7 +330,7 @@ params02['cg3dTargetResidual'] = 1e-8
 params03 = {}
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 20
+deltaT = 100
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -753,8 +753,8 @@ barrierMask[1:-1,1:iceExtentIndex] = doBlock # make icebergs a physical barrier 
 barrierMask[plume_loc,icefront] = 0 #Plume code struggles with hFac adjustments
 
 # Iceberg concentration (# of each surface cell that is filled in plan view)
-# bergConc[1:-1,1:iceExtentIndex] = np.linspace(iceCoverage,20,(iceExtentIndex-1)) # iceberg concentration set at top
-bergConc[1:-1,1:iceExtentIndex] = iceCoverage # iceberg concentration set at top
+bergConc[1:-1,1:iceExtentIndex] = np.linspace(iceCoverage,40,(iceExtentIndex-1)) # iceberg concentration set at top
+# bergConc[1:-1,1:iceExtentIndex] = iceCoverage # iceberg concentration set at top
 
 # print(bergConc[1:-1,1:iceExtentIndex])
 

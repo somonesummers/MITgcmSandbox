@@ -10,6 +10,7 @@ import fileinput
 zDepth = -50
 plotDPI = 100
 cleanPNGs = True
+usePcolor = False
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
@@ -21,8 +22,7 @@ elif(os.path.isfile('../plotHelper.py')):
     from plotHelper import *
 else:  
     print('no defaults found')
-print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
-
+print('Plot DPI:',plotDPI,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
 dt = 0.0   
 for line in fileinput.input('input/data'):
         if "deltaT=" in line:
@@ -99,18 +99,28 @@ for k in range(len(name)):
             plotData = data[k, zSlice, :, :]/1000 # Pa to kPa
             cm = "cmo.balance"
         elif k == 5:
-            lvl = np.linspace(0,5,127)
+            lvl = np.linspace(0,3,128)
             cm = "cmo.tempo"
             plotData = np.sum(data[0, :, :, :],0)
         plt.figure()
-        cp = plt.contourf(
-            np.squeeze(x),
-            np.squeeze(y),
-            np.squeeze(plotData),
-            lvl,
-            extend="both",
-            cmap=cm,
-        )
+        if(usePcolor):
+            cp = plt.pcolormesh(
+                np.squeeze(x),
+                np.squeeze(y),
+                np.squeeze(plotData),
+                cmap=cm,
+                vmin=np.min(lvl),
+                vmax=np.max(lvl),
+            )
+        else:
+            cp = plt.contourf(
+                np.squeeze(x),
+                np.squeeze(y),
+                np.squeeze(plotData),
+                lvl,
+                extend="both",
+                cmap=cm,
+            )
         cbar = plt.colorbar(cp)
         cbar.set_label(units[k])
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(plotData),np.nanmax(plotData),np.max(np.isnan(plotData))))
