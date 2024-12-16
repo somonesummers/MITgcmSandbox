@@ -16,6 +16,7 @@ cleanPNGs = True
 showQuiver = False
 showZeros = True
 showDensity = True
+makeMovie = False   
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
@@ -72,6 +73,7 @@ else:
 
 os.system('rm -f figs/side_*.png')
 os.system('rm -f figs/autoside_*.gif')
+os.system('rm -f figs/autoside_*.mov')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
@@ -256,7 +258,7 @@ for k in range(len(name)):
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, ySlice, :]),np.nanmax(data[kk, :, ySlice, :]),np.max(np.isnan(data[kk, :, ySlice, :]))))
         plt.ylabel('Depth [m]')
         plt.title("%s y = %i at %.02f days" % (name[k], y[ySlice,0], i/86400.0*dt))
-        j = i/sizeStep + startStep
+        j = i/sizeStep
         
         str = "figs/side_%s%05i.png" % (name[k],j)
         
@@ -265,6 +267,8 @@ for k in range(len(name)):
         #plt.show()
 
     os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(makeMovie):
+        os.system('ffmpeg -r %f -i figs/side_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/autoside_%s.mov' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
     if(cleanPNGs):

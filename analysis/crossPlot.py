@@ -15,7 +15,7 @@ zDepth = -50
 plotDPI = 100
 cleanPNGs = True
 usePcolor = False
-
+makeMovie = True
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
     from plotHelperLocal import *
@@ -66,6 +66,7 @@ else:
 #Clean up old gifs and pngs
 os.system('rm -f figs/cross_*.png')
 os.system('rm -f figs/autoCross_*.gif')
+# os.system('rm -f figs/autoCross_*.m*')
 
 #Import grid
 x = mds.rdmds("results/XC")
@@ -309,7 +310,7 @@ for k in range(len(name)):
         ax.axes.set_zlim3d(bottom=z.min(), top=z.max()) 
 
         ax.set_box_aspect([1,2,1])
-        j = i/sizeStep + startStep
+        j = i/sizeStep
 
         str = "figs/cross_%s%05i.png" % (name[k],j)
         plt.savefig(str, format='png', dpi=plotDPI)
@@ -317,6 +318,8 @@ for k in range(len(name)):
         # plt.show()
 
     os.system('magick -delay %f figs/cross_%s*.png -colors 256 -depth 256 figs/autoCross_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(makeMovie):
+        os.system('ffmpeg -r %f -i figs/cross_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/autoCross_%s.mp4' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
     if(cleanPNGs):

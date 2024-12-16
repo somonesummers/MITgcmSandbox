@@ -77,7 +77,7 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'foxtrotMelange'
+run_config['run_name'] = 'golf_b0'
 run_config['ndays'] = 10 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -98,7 +98,7 @@ iceBergDepth = 150 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 18000 # [meters] of extent of ice
 iceCoverage = 80 # % of ice cover in melange, stay under 90% ideally
 doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
-doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
+doBlock = 0 # do we actually calculate melt (0/1 = no/yes)
 #========================================================================================
 # The rest of this should take care of it self mostly
 

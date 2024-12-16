@@ -154,7 +154,7 @@ for k in range(len(name)):
             lvl = np.linspace(-.1, .1, 127)
             cm = "cmo.balance"
         elif k == 3: #W
-            lvl = np.linspace(-0.01, 0.01, 127)
+            lvl = np.linspace(-0.001, 0.001, 127)
             cm = "cmo.curl"
         elif k == 6: #meltRate
             lvl = np.linspace(-.1, .1, 127)

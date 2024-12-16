@@ -142,19 +142,19 @@ for k in range(len(name)):
             lvl = np.linspace(-.1, .1, 127)
             cm = "cmo.balance"
         elif k == 3: #W
-            lvl = np.linspace(-0.01, 0.01, 127)
+            lvl = np.linspace(-0.001, 0.001, 127)
             cm = "cmo.curl"
-        elif k == 5: #meltRate
+        elif k == 5: #speed
             lvl = np.linspace(-.1, .1, 127)
             cm = "cmo.curl"
-        elif k == 6: #speed
+        elif k == 6: #meltRate
             lvl = np.linspace(-.1, .1, 127)
             cm = "cmo.curl"
-        if(k == 5):
+        if(k == 6):
             kk = 2
         else:
             kk = k
-        if(k == 6): #speed plot
+        if(k == 5): #speed plot
             data = np.sqrt(data1[2,:,:,:]**2 + data1[4,:,:,:]**2) - np.sqrt(data2[2,:,:,:]**2 + data2[4,:,:,:]**2)
         else:
             data = data1[kk,:,:,:] - data2[kk,:,:,:]
