@@ -2,6 +2,7 @@
 # | Parameters for SHELFICE package |
 # ===================================
  &SHELFICE_PARM01
+ SHELFICEconserve = .TRUE.,
  SHELFICEboundaryLayer = .TRUE.,
  SHELFICEtopoFile='icetopo.exp1',
  SHELFICEloadAnomalyFile = 'phi0.exp1',
