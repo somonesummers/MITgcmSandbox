@@ -129,95 +129,126 @@ elif(isBerg2):
 zSlice = np.argmin(np.abs(z[:,0,0]- zDepth))
 print('depth is z =', z[zSlice,0,0], 'index', zSlice, 'for quiver plotting')
 
-# if(isBerg):
-#     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag', 'BRGFlx']
-#     name = ["Temp", "Sal", "U", "W", "V", "SPD", "BRGmltRt"]
-#     cbarLabel = ["[∆ C]", "[∆ ppt]", "[∆ m/s]", "[∆ m/s]", "[∆ m/s]","[∆ m/s]", "[∆ m/d]"]
-# else:
-#     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
-#     name = ["Temp", "Sal", "U", "W", "V", "SPD"]
-#     cbarLabel = ["[∆ C]", "[∆ ppt]", "[∆ m/s]", "[∆ m/s]", "[∆ m/s]","[∆ m/s]"]
 
-for i in np.arange(startStep, maxStep + 1, sizeStep):
-    if(showQuiver):
-        dataQuiv = mds.rdmds(folder1 + "/dynDiag", i)
-    if(isBerg1):
-        data1 = np.sum(mds.rdmds(folder1 + "/BRGFlx", i)[0,:,:,:],0)
-    else:
-         # raw data is kg/m^2/s, convert to m^3/s
-        data1 = mds.rdmds(folder1 + "/shelfDiag", i)[0,:,:] * -1 / 1000 * (x[1,1] - x[1,0]) * (y[1,1] - y[0,1])
-    if(isBerg2):
-        data2 = np.sum(mds.rdmds(folder2 + "/BRGFlx", i * dt1 / dt2)[0,:,:,:],0)
-    else:
-         # raw data is kg/m^2/s, convert to m^3/s
-        data2 = mds.rdmds(folder2 + "/shelfDiag", i * dt1 / dt2)[0,:,:] * -1 / 1000 * (x[1,1] - x[1,0]) * (y[1,1] - y[0,1])
-    dataPlot = data1 - data2    
-    lvl = np.linspace(-2, 2, 127)
-    cm = "cmo.tarn_r"
-    
-    if(usePcolor):
-        cp = plt.pcolormesh(
-            np.squeeze(x),
-            np.squeeze(y),
-            np.squeeze(dataPlot),
-            cmap=cm,
-            vmin=np.min(lvl),
-            vmax=np.max(lvl),
-        )
-    else:
-        cp = plt.contourf(
-            np.squeeze(x),
-            np.squeeze(y),
-            np.squeeze(dataPlot),
-            lvl,
-            extend="both",
-            cmap=cm,
-        )
-    cbar = plt.colorbar(cp)
-    cbar.set_label('[∆ m^3/s]')
-    plt.xlabel('Along Fjord [m] %.3f %.3f ∆ Sum: %i' %(np.nanmin(dataPlot),np.nanmax(dataPlot),np.sum(dataPlot)))
-    plt.ylabel('Across Fjord [m]')
-    plt.title("%s at %.02f days" % ('fwFlx',i/86400.0*dt1))
-    if(showZeros):
-        cc = plt.contour(
-            np.squeeze(x),
-            np.squeeze(y),
-            np.squeeze(dataPlot),
-            [0],
-            colors='gray',
-            linewidths=0.5
-        )
-        plt.clabel(cc, inline=3, fontsize=8)
-    if(showQuiver):
-        u = np.squeeze(dataQuiv[2, zSlice, :, :])
-        v = np.squeeze(dataQuiv[4, zSlice, :, :])
-        plt.quiver(
-            np.squeeze(x),
-            np.squeeze(y),
-            u/np.sqrt(u**2 + v**2 + 1e-12),
-            v/np.sqrt(u**2 + v**2 + 1e-12),
-            alpha=.5
+name = ["fwFlx", "htFlx", "Tau_x", "Tau_y"]
+cbarLabel = ["[∆ m^3/s]", "[∆ W/m^2]", "[∆ Pa/m^2]", "[∆ Pa/m^2]"]
+
+for k in range(len(name)):
+    print("\t" + name[k])
+    for i in np.arange(startStep, maxStep + 1, sizeStep):
+        if(showQuiver):
+            dataQuiv = mds.rdmds(folder1 + "/dynDiag", i)
+        if(isBerg1):
+            if(k == 0):
+                data1 = np.sum(mds.rdmds(folder1 + "/BRGFlx", i)[k,:,:,:],0)
+            elif(k == 1):
+                data1 = np.sum(mds.rdmds(folder1 + "/BRGFlx", i)[0,:,:,:],0) * 998 * 333.55E+3 / ((x[1,1] - x[1,0]) * (y[1,1] - y[0,1]))
+            else:
+                data1 = np.sum(mds.rdmds(folder1 + "/BRGFlx", i)[k+1,:,:,:],0)
+        else:
+             # raw data is kg/m^2/s, convert to m^3/s
+            if(k == 0):
+                data1 = mds.rdmds(folder1 + "/shelfDiag", i)[0,:,:] * -1 / 1000 * (x[1,1] - x[1,0]) * (y[1,1] - y[0,1])
+            elif(k == 1):
+                # raw data is W/m^2
+                data1 = mds.rdmds(folder1 + "/shelfDiag", i)[k,:,:]
+            else:
+                data1 = mds.rdmds(folder1 + "/shelfDiag", i)[k,:,:]
+        if(isBerg2):
+            if(k == 0 ):
+                data2 = np.sum(mds.rdmds(folder2 + "/BRGFlx", i * dt1 / dt2)[k,:,:,:],0)
+            elif(k == 1):
+                data2 = np.sum(mds.rdmds(folder2 + "/BRGFlx", i)[0,:,:,:],0) * 998 * 333.55E+3 / ((x[1,1] - x[1,0]) * (y[1,1] - y[0,1]))
+            else:
+                data2 = np.sum(mds.rdmds(folder2 + "/BRGFlx", i * dt1 / dt2)[k+1,:,:,:],0)
+        else:
+             
+            if(k == 0):
+                # raw data is kg/m^2/s, convert to m^3/s
+                data2 = mds.rdmds(folder2 + "/shelfDiag", i * dt1 / dt2)[0,:,:] * -1 / 1000 * (x[1,1] - x[1,0]) * (y[1,1] - y[0,1])
+            elif(k == 1):
+                # raw data is W/m^2
+                data2 = mds.rdmds(folder2 + "/shelfDiag", i * dt1 / dt2)[k,:,:]
+            else:
+                data2 =  mds.rdmds(folder2 + "/shelfDiag", i * dt1 / dt2)[k,:,:]    
+        dataPlot = data1 - data2    
+        if(k == 0):
+            lvl = np.linspace(-2, 2, 127)
+            cm = "cmo.tarn_r"
+        elif(k == 1):
+            lvl = np.linspace(-2500, 2500, 127)
+            cm = "cmo.balance"
+        elif(k == 2):
+            lvl = np.linspace(-10000, 10000, 127)
+            cm = "cmo.tarn_r"
+        elif(k == 3):
+            lvl = np.linspace(-10000, 10000, 127)
+            cm = "cmo.tarn_r"
+
+        
+        if(usePcolor):
+            cp = plt.pcolormesh(
+                np.squeeze(x),
+                np.squeeze(y),
+                np.squeeze(dataPlot),
+                cmap=cm,
+                vmin=np.min(lvl),
+                vmax=np.max(lvl),
             )
-    if(isBerg1 or isBerg2):
-        cp2 = plt.contourf(np.squeeze(x),
-            np.squeeze(y),
-            np.squeeze(openFrac[zSlice, :, :]),
-            [.1,.5,.9],
-            extend="min",
-            alpha=.1,
-            cmap='cmo.gray')
-        #cbar2 = plt.colorbar(cp2)
-        #cbar2.set_label('Ocean Fraction')
+        else:
+            cp = plt.contourf(
+                np.squeeze(x),
+                np.squeeze(y),
+                np.squeeze(dataPlot),
+                lvl,
+                extend="both",
+                cmap=cm,
+            )
+        cbar = plt.colorbar(cp)
+        cbar.set_label(cbarLabel[k])
+        plt.xlabel('Along Fjord [m] %.3f %.3f ∆ Sum: %i' %(np.nanmin(dataPlot),np.nanmax(dataPlot),np.sum(dataPlot)))
+        plt.ylabel('Across Fjord [m]')
+        plt.title("%s at %.02f days" % (name[k],i/86400.0*dt1))
+        if(showZeros):
+            cc = plt.contour(
+                np.squeeze(x),
+                np.squeeze(y),
+                np.squeeze(dataPlot),
+                [0],
+                colors='gray',
+                linewidths=0.5
+            )
+            plt.clabel(cc, inline=3, fontsize=8)
+        if(showQuiver):
+            u = np.squeeze(dataQuiv[2, zSlice, :, :])
+            v = np.squeeze(dataQuiv[4, zSlice, :, :])
+            plt.quiver(
+                np.squeeze(x),
+                np.squeeze(y),
+                u/np.sqrt(u**2 + v**2 + 1e-12),
+                v/np.sqrt(u**2 + v**2 + 1e-12),
+                alpha=.5
+                )
+        if(isBerg1 or isBerg2):
+            cp2 = plt.contourf(np.squeeze(x),
+                np.squeeze(y),
+                np.squeeze(openFrac[zSlice, :, :]),
+                [.1,.5,.9],
+                extend="min",
+                alpha=.1,
+                cmap='cmo.gray')
+            #cbar2 = plt.colorbar(cp2)
+            #cbar2.set_label('Ocean Fraction')
 
-    j = i/sizeStep + startStep
-    str = "figs/compareMelt%s%05i.png" % ('fwFlx',j)
-    
-    plt.savefig(str, format='png', dpi=plotDPI)
-    plt.close()
-    #plt.show()
+        j = i/sizeStep + startStep
+        str = "figs/compareMelt%s%05i.png" % (name[k],j)
+        
+        plt.savefig(str, format='png', dpi=plotDPI)
+        plt.close()
+        #plt.show()
 
-os.system('magick -delay %f figs/compareMelt%s*.png -colors 256 -depth 256 figs/compareMelt%s.gif' %(500/((maxStep-startStep)/sizeStep), 'fwFlx', 'fwFlx'))
+    os.system('magick -delay %f figs/compareMelt%s*.png -colors 256 -depth 256 figs/compareMelt%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
-#Clean up intermediate pngs
-if(cleanPNGs):
-    os.system('rm -f figs/compareMelt*.png')
+    #Clean up intermediate pngs
+    if(cleanPNGs):
+        os.system('rm -f figs/compareMelt*.png')

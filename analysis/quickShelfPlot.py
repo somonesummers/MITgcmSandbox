@@ -84,7 +84,7 @@ for k in range(len(name)):
             # print(data.shape)
             # print(plotData.shape)
         elif k == 1:
-            lvl = np.linspace(0,5,64)
+            lvl = np.linspace(0,5000,64)
             cm = "cmo.amp"
             plotData = data[k,:, :]
         elif k == 2:
