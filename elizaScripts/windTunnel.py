@@ -76,11 +76,11 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Hughes_smag_LR_50'
+run_config['run_name'] = 'Hotel_30'
 run_config['ndays'] = 4/3. # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
+run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
 run_config['Lx_m'] = 30000 # domain size in x (m)
 run_config['Ly_m'] = 2400 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
@@ -91,9 +91,9 @@ grid_params['Nr'] = 50 # num of z-grid points
 oscStrength = 0.12 #[m/s] peak strength of sin forcing current
 
 # Iceberg configuration =========================
-iceBergDepth = 120 # max iceberg depth [meters], used for ICEBERG package
+iceBergDepth = 140 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 2500 # [meters] of extent of ice
-iceCoverage = 40 # % of ice cover in melange, stay under 90% ideally
+iceCoverage = 30 # % of ice cover in melange, stay under 90% ideally
 doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 #========================================================================================
@@ -643,7 +643,7 @@ numBergsPerCell = np.zeros([ny,nx],dtype=np.int64)
 
 # Berg parameters
 bergType = 1 # 1 = block 2 = cone (not implemented)
-alpha = 1.9 # slope of inverse power law size frequency distribution
+alpha = 1.9 * 2 # slope of inverse power law size frequency distribution
 scaling = 2 # 1 = Sulak 2017 2 = Barker 2004
 maxBergDepth = iceBergDepth # (m) - set to zero if 'prescribing' max iceberg width, set at top here
 minBergDepth= 40 # (m)
@@ -694,7 +694,7 @@ elif(scaling == 2): # Then use Barker04 width-depth relationship
         maxBergDepth = 2.91*maxBergWidth^0.71
         minBergDepth = 2.91*minBergWidth^0.71
 
-numberOfBergs = 300 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
+numberOfBergs = 50 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
 bergTopArea = 0
 areaResidual = 1
 # Generate the Inverse Power Law cumulative distribution function
@@ -979,10 +979,10 @@ def replaceAll(file,searchExp,replaceExp):
             line = line.replace(searchExp,replaceExp)
         sys.stdout.write(line)
 
-#turn on ICEBERG if off
+#turn on ICEBERG if off, turn ICEPLUME off
 if(makeDirs):
     replaceAll(run_config['run_dir'] + '/input/data.pkg','ICEBERG=.FALSE.', 'ICEBERG=.TRUE.') 
-
+    replaceAll(run_config['run_dir'] + '/input/data.pkg','ICEPLUME=.TRUE.', 'ICEPLUME=.FALSE.') 
 
 
 #========================================================================================
