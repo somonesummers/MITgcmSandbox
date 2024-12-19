@@ -72,10 +72,8 @@ for k in range(len(name)):
         # print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 
-
-
-
         dirName = dirNames[l]
+
         #Comparing Diff resolutions
         x = mds.rdmds(dirName + "/results/XC")
         y = mds.rdmds(dirName + "/results/YC")
@@ -116,6 +114,11 @@ for k in range(len(name)):
         else:
              plt.plot(np.mean(plotData[:,1:-1,iceStart:iceEnd],axis=(1,2)),z,linewidth=2,label=dirName,color='xkcd:light gray')
         ax = plt.gca()
+        if(dirName == 'Hotel_20'):
+            bergDepth = -1*np.fromfile('Hotel_20/input/icebergs_depths.bin', dtype='>f8')
+            bergDepth[bergDepth == 0] = np.nan
+            plt.plot([-1,1],[np.nanmean(bergDepth),np.nanmean(bergDepth)],color='red',linestyle='--',alpha=.5)
+            plt.plot([-1,1],[np.nanmedian(bergDepth),np.nanmedian(bergDepth)],color='red',linestyle='--',alpha=.5)
         ax.set_xlim(lvl)
         plt.plot(np.cos(z * np.pi /600)* 0.12, z,linewidth=1,color='gray',linestyle='--')
         plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(plotData[:,1:-1]),np.nanmax(plotData[:,1:-1]),np.max(np.isnan(plotData[:,1:-1]))))
