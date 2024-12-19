@@ -64,8 +64,7 @@ def setUpPrint(msg):
 email = 'psummers8@gatech.edu'
 # set high level run configurations
 
-briefSummaryOfExp = """Comparing shelf to berg version of Melange, using melange shape
-from melange1D first, this is berg version to compare meltrates/heatflux"""
+briefSummaryOfExp = """Comparing our results to that of Hughes 2022 around form drag of bergs in a wind tunnel like set up"""
 
 
 setUpPrint('====== Welcome to the mélange building script =====')
@@ -77,28 +76,26 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'golf_b0'
-run_config['ndays'] = 10 # simulaton time (days)
+run_config['run_name'] = 'Hughes_smag_50'
+run_config['ndays'] = 4/3. # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
-run_config['Lx_m'] = 40000 # domain size in x (m)
-run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
+run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
+run_config['Lx_m'] = 30000 # domain size in x (m)
+run_config['Ly_m'] = 2400 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 grid_params['Nr'] = 50 # num of z-grid points
 
 # Offshore current =========================
-oscStrength = .3 #[m/s] peak strength of offshore current
-lengthOffShoreCurrent = 5e3 #width of offshore current [m]
-indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
+oscStrength = 0.12 #[m/s] peak strength of sin forcing current
 
 # Iceberg configuration =========================
-iceBergDepth = 150 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 18000 # [meters] of extent of ice
-iceCoverage = 80 # % of ice cover in melange, stay under 90% ideally
-doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
-doBlock = 0 # do we actually calculate melt (0/1 = no/yes)
+iceBergDepth = 120 # max iceberg depth [meters], used for ICEBERG package
+iceExtent = 2500 # [meters] of extent of ice
+iceCoverage = 40 # % of ice cover in melange, stay under 90% ideally
+doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
+doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 #========================================================================================
 # The rest of this should take care of it self mostly
 
@@ -175,8 +172,8 @@ setUpPrint('====== Domain Size and Parameters =====')
 domain_params = {}
 domain_params['Lx'] = run_config['Lx_m'] # domain size in x (m)
 domain_params['Ly'] = run_config['Ly_m'] # domain size in y (m)
-domain_params['L_sponge'] = 20000 # width of eastern sponge layer (m)
-domain_params['H'] = 500 # max domain depth (m)
+domain_params['L_sponge'] = 8000 # width of sponge layers (m)
+domain_params['H'] = 600 # max domain depth (m)
 
 # NOTE: the only thing you may need to change here is the number of z-grid pointsm, which was set above)
 
@@ -266,7 +263,7 @@ params01['vectorInvariantMomentum'] = True
 # viscosity parameters
 #params01['viscA4'] = 0.0000 # Biharmonic viscosity?
 params01['viscAz'] = 1.0e-2 # Vertical viscosity
-#params01['viscAh'] = 2.5e-1 # Vertical viscosity
+# params01['viscAh'] = 1.0e-3 # Vertical viscosity, this limits our timestep a lot
 params01['viscC2smag'] = 2.2 # ??? viscosity
 
 # advection and time stepping
@@ -278,10 +275,10 @@ params01['staggerTimeStep'] = True
 
 # diffusivity
 #params01['diffK4T'] = 0.0e4 # ?? temp diffusion
-params01['diffKhT'] = 1.0 # Horizontal temp diffusion
-params01['diffKhS'] = 1.0 # Horz salt diffusion
-params01['diffKzT'] = 4.0e-3 # Vertical temp diffusion
-params01['diffKzS'] = 4.0e-3 # Vert salt diffusion
+params01['diffKhT'] = 1.0e-1 # Horizontal temp diffusion
+params01['diffKhS'] = 1.0e-1 # Horz salt diffusion
+params01['diffKzT'] = 1.0e-3 # Vertical temp diffusion
+params01['diffKzS'] = 1.0e-3 # Vert salt diffusion
 #params01['diffK4S'] = 0.0e4 # ?? salt diffusion
 
 
@@ -296,24 +293,24 @@ params01['Sref'] = np.ones(grid_params['Nr'])*34. #ref salt
 # boundary conditions
 #params01['bottomDragLinear'] = 0.0e-4
 
-params01['no_slip_sides'] = True
-params01['no_slip_bottom'] = True
+params01['no_slip_sides'] = False
+params01['no_slip_bottom'] = False
 params01['rigidLid'] = False
 params01['implicitFreeSurface'] = True
 params01['selectAddFluid'] = 1
 #params01['implicitViscosity'] = True
 #params01['implicitDiffusion'] = True
-params01['bottomVisc_pCell'] = True
+# params01['bottomVisc_pCell'] = True
 
 # physical parameters
 #params01['f0'] = -1.36e-4
-params01['f0'] = 1.36e-4
+params01['f0'] = 0
 params01['beta'] = 0.0e-13
 params01['gravity'] = g
 
 # misc
 params01['hFacMin'] = 0.05
-params01['nonHydrostatic'] = True
+params01['nonHydrostatic'] = False
 params01['readBinaryPrec'] = 64
 
 # ## Numeric solvers and I/O controls
@@ -330,7 +327,7 @@ params02['cg3dTargetResidual'] = 1e-8
 params03 = {}
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 100
+deltaT = 25
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -374,7 +371,7 @@ params05['bathyFile'] ='bathymetry.bin'
 params05['hydrogThetaFile'] = 'T.init'
 params05['hydrogSaltFile'] = 'S.init'
 
-if(makeDirs):
+if(writeFiles):
     data_params = [params01, params02, params03, params04, params05]
     #data file
     rcf.write_data(run_config, data_params, group_name='data', lf=run_config['lf'])
@@ -406,8 +403,8 @@ if run_config['test']:
     run_config['tavg_freq'] = 1 # multiples of timestep
     
 else:
-    run_config['inst_freq'] = 12 # multiples of hours
-    run_config['tavg_freq'] = 12 # multiples of hours
+    run_config['inst_freq'] = 2 # multiples of hours
+    run_config['tavg_freq'] = 2 # multiples of hours
 
 
 #---------specify time averaged fields------#
@@ -415,11 +412,10 @@ else:
 diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
                     ['THETA','SALT','UVELMASS','VVELMASS','WVELMASS'],
                     ['UTHMASS ','USLTMASS','VTHMASS ','VSLTMASS','WTHMASS ','WSLTMASS',],
-                    ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY'],
-                    ['icefrntW','icefrntT','icefrntS','icefrntR','icefrntM']
+                    ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY']
                     ]
 diag_fields_max = 0
-diag_fields_avg_name = ['dynDiag','dynMassDiag','fluxMassDiag','BRGFlx','plumeDiag']
+diag_fields_avg_name = ['dynDiag','dynMassDiag','fluxMassDiag','BRGFlx']
 # diag_fields_avg = ['UVEL', 'VVEL', 'WVEL', 'UVELSQ', 'VVELSQ', 'WVELSQ',
 #                   'UVELTH', 'VVELTH', 'WVELTH', 'THETA', 'THETASQ',
 #                   'PHIHYD', 'LaUH1TH', 'LaVH1TH', 'LaHw1TH','LaHs1TH']
@@ -483,23 +479,27 @@ obcs_params01 = {}
 obcs_params02 = {}
 obcs_params03 = {}
 
+obcs_params01['OB_singleIwest'] = 1
 obcs_params01['OB_singleIeast'] = -1
-obcs_params01['OB_Jsouth(%i:%i)'%(grid_params['Nx']-indexOSC+1,grid_params['Nx'])] = np.ones(indexOSC,dtype=int)
-obcs_params01['OB_Jnorth(%i:%i)'%(grid_params['Nx']-indexOSC+1,grid_params['Nx'])] = -1*np.ones(indexOSC,dtype=int)
-obcs_params01['useOBCSsponge'] = False
+obcs_params01['useOBCSsponge'] = True
 obcs_params01['useOBCSprescribe']= True
 #East
 obcs_params01['OBEsFile']='EBCs.bin'
 obcs_params01['OBEtFile']='EBCt.bin'
-obcs_params01 ['OBEvFile']='EBCv.bin'
-#North
-obcs_params01['OBNsFile']='NsBCs.bin'  
-obcs_params01['OBNtFile']='NsBCt.bin'  
-obcs_params01 ['OBNvFile']='NsBCv.bin'
-#South
-obcs_params01['OBSsFile']='NsBCs.bin'
-obcs_params01['OBStFile']='NsBCt.bin'
-obcs_params01 ['OBSvFile']='NsBCv.bin'
+obcs_params01 ['OBEuFile']='EBCu.bin'
+#West
+obcs_params01['OBWsFile']='EBCs.bin'
+obcs_params01['OBWtFile']='EBCt.bin'
+obcs_params01 ['OBWuFile']='EBCu.bin'
+
+# #North
+# obcs_params01['OBNsFile']='NsBCs.bin'  
+# obcs_params01['OBNtFile']='NsBCt.bin'  
+# obcs_params01 ['OBNvFile']='NsBCv.bin'
+# #South
+# obcs_params01['OBSsFile']='NsBCs.bin'
+# obcs_params01['OBStFile']='NsBCt.bin'
+# obcs_params01 ['OBSvFile']='NsBCv.bin'
 
 obcs_params03['spongeThickness'] = int(domain_params['L_sponge'] / run_config['horiz_res_m']) #grid cells
 obcs_params03['Urelaxobcsinner'] = 86400.0
@@ -554,21 +554,14 @@ z = -np.cumsum(dz)
 
 
 # Topography
-sillStart = 45000
-sillHeight = 0  #no sill
-sillLength = 5000
-fjordEnd = int(grid_params['Nx'] - indexOSC)
 
 d = np.zeros([grid_params['Ny'], grid_params['Nx']]) - domain_params['H']
-d[x>sillStart] = - domain_params['H'] + (x[x>sillStart]-sillStart) * sillHeight/sillLength
-d[x>(sillStart + sillLength)] = sillHeight - domain_params['H']
-setUpPrint('fjord end: %i' %fjordEnd)
-d[ 0, 1:fjordEnd] = 0  # walls of fjord
-d[-1, 1:fjordEnd] = 0
-d[: , 0] = 0 #cap west side
+d[ 0, :] = 0  # walls of fjord
+d[-1, :] = 0
+
 
 plt.figure
-plt.plot(x[10,:],d[10,:])
+plt.plot(x[5,:],d[5,:])
 plt.pcolormesh(x,y,d)
 plt.colorbar()
 if(writeFiles):
@@ -584,14 +577,15 @@ t2 = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
 s2 = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
 S2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
 T2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
+U2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
 S_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 T_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 V_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 W_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 
-z_tmp =  np.asarray([  0,  10,   50,  100,  200,  300, 500]); #must be increasing, so do depth as positive, see negs later for z[:]
-t_tmp =  np.asarray([  1,   1,  1.5,  1.8,  2.1,  2.3, 2.6]);
-s_tmp =  np.asarray([ 33,33.2, 33.8, 34.0, 34.3, 34.4,34.6]);
+z_tmp =  np.asarray([  0,  600]); #must be increasing, so do depth as positive, see negs later for z[:]
+t_tmp =  np.asarray([  0,    2]); #linear for both T and S
+s_tmp =  np.asarray([ 33,   35]);
 t_int = interpolate.PchipInterpolator(z_tmp, t_tmp)
 s_int = interpolate.PchipInterpolator(z_tmp, s_tmp)
 for j in np.arange(0,grid_params['Ny']):
@@ -599,37 +593,22 @@ for j in np.arange(0,grid_params['Ny']):
         t2[:, j, i] = t_int(-1 * z[:])
         s2[:, j, i] = s_int(-1 * z[:])
 
-#East BC
+#East/West BC
 for j in np.arange(0,grid_params['Ny']):
     T2[:,j] = t_int(-1 * z[:])
     S2[:,j] = s_int(-1 * z[:])
-
-#BC for V at East side
-Ve = np.zeros([grid_params['Nr'],grid_params['Ny']])
-Ve[:,:] = oscStrength #[m/s]
-
-#N/S BCs
-for i in np.arange(fjordEnd,grid_params['Nx']):
-    T_ns[:,i] = t_int(-1 * z[:])
-    S_ns[:,i] = s_int(-1 * z[:])
-    V_ns[:,i] = oscStrength * (i-fjordEnd)/indexOSC #[m/s] along coast flow
-
+    U2[:,j] = oscStrength * np.cos(z[:]*np.pi/600)
 
 write_bin("T.init", t2)
 write_bin("S.init", s2)
 write_bin("EBCs.bin", S2)
 write_bin("EBCt.bin", T2)
-write_bin("EBCs.bin", S2)
-write_bin("EBCt.bin", T2)
-write_bin("EBCv.bin", Ve)
-write_bin("NsBCs.bin", S_ns)
-write_bin("NsBCt.bin", T_ns)
-write_bin("NsBCv.bin", V_ns)
-write_bin("NsBCW.bin", W_ns)
+write_bin("EBCu.bin", U2)
 
 plt.figure()
 plt.plot(S2[:,0] - 34, z, 'b', label="Sref - 34")
 plt.plot(T2[:,0], z, 'r', label="Tref")
+plt.plot(U2[:,0], z, 'g', label='Uref')
 plt.scatter(s_tmp - 34,-z_tmp,color='b')
 plt.scatter(t_tmp,-z_tmp,color='r')
 plt.legend()
@@ -638,72 +617,6 @@ if(writeFiles):
 plt.show()
 plt.close()
 
-# Plume
-nt = 1 #if variable forcing
-runoffVel = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
-runoffRad = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
-plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
-
-# Total runoff (m^3/s)
-runoff = 100
-
-# velocity (m/s) of subglacial runoff
-wsg = 1
-
-# ice front location
-icefront=1 # adjacent to wall at western end of domain, simulate wall of ice
-
-# plume location
-plume_loc = int(np.round(grid_params['Ny']/2))
-setUpPrint('Plume Location: %i discharge: %f' %(plume_loc, runoff))
-## Define plume-type mask 
-# 1 = ice but no plume (melting only)
-# 2 = sheet plume (Jenkins)
-# 3 = half-conical plume (Morton/Slater)
-# 4 = both sheet plume and half-conical plume (NOT YET IMPLEMENTED)
-# 5 = detaching conical plume (Goldberg)
-# POSITIVE values indicate ice front is orientated north-south
-# NEGATIVE values indicate ice front is orientated east-west
-
-# Create virtual ice wall
-plumeMask[1:-1,icefront] = 1 
-# Located 1 cell in from western boundary (need solid barrier behind), and extending across the fjord with (fjord walls either side)
-
-# Specify discharge location
-plumeMask[plume_loc,icefront] = 3 # runoff emerges from centre of grounding line
-
-# specify a runoff velocity of 1 m/s
-runoffVel[plume_loc,icefront,:] = wsg
-
-# calculate channel radius
-runoffRad[plume_loc,icefront,:] = np.sqrt(2*runoff/(np.pi*wsg))
-
-# Write files
-write_bin("runoffVel.bin", runoffVel)
-write_bin("runoffRad.bin", runoffRad)
-write_bin("plumeMask.bin", plumeMask)
-
-plt.figure(1)
-plt.pcolormesh(x,y,plumeMask)
-plt.colorbar()
-if(writeFiles):
-    plt.savefig("%splumeMask" % (run_config['run_dir']+'/input/'))
-plt.show()
-plt.close()
-
-## Boundary conditions
-
-# pre-allocate
-EBCu = np.zeros([grid_params['Nr'],grid_params['Ny']])
-
-# Apply barotropic velocity to balance input of runoff
-if runoff > 0:
-    fjordMouthCrossSection = -np.sum(d[:,-1]) * run_config['horiz_res_m']
-    fjordMouthVelocity = runoff/fjordMouthCrossSection
-    # Out-of-domain velocity is positive at eastern boundary
-    EBCu[:] = fjordMouthVelocity
-
-write_bin("EBCu.bin", EBCu)
 
 #=======================================================================================
 # Make Bergs, now all in python
@@ -730,31 +643,31 @@ numBergsPerCell = np.zeros([ny,nx],dtype=np.int64)
 
 # Berg parameters
 bergType = 1 # 1 = block 2 = cone (not implemented)
-alpha = 1.8 # slope of inverse power law size frequency distribution
+alpha = 1.9 # slope of inverse power law size frequency distribution
 scaling = 2 # 1 = Sulak 2017 2 = Barker 2004
 maxBergDepth = iceBergDepth # (m) - set to zero if 'prescribing' max iceberg width, set at top here
-minBergDepth= 20 # (m)
+minBergDepth= 40 # (m)
 maxBergWidth = 0 # (m) - set to zero if 'prescribing' max iceberg depth
-minBergWidth = 20 # (m)
+minBergWidth = 40 # (m)
 
-iceExtentIndex = int(np.round(iceExtent/run_config['horiz_res_m']))
+iceStart = int(np.round(13000/run_config['horiz_res_m']))
+iceExtentIndex = int(np.round((13000 + iceExtent)/run_config['horiz_res_m']))
 
 # Iceberg mask
-bergMask[1:-1,1:iceExtentIndex] = 1 # icebergs in inner 5 km, all oriented east-west
+bergMask[1:-1,iceStart:iceExtentIndex] = 1 # icebergs in inner 5 km, all oriented east-west
 
 # Drift mask, No drift for Melange experiments, but can toggle on here if you want
 # driftMask[1:-1,1:iceExtentIndex] = 1 # calculate effect of iceberg drift on melt rates 
 
 # Melt mask, only let bergs melt in this region (make melt water, these don't change size)
-meltMask[1:-1,1:iceExtentIndex] = doMelt # Allow focus on blocking effect only
+meltMask[1:-1,iceStart:iceExtentIndex] = doMelt # Allow focus on blocking effect only
 
 # Barrier mask
-barrierMask[1:-1,1:iceExtentIndex] = doBlock # make icebergs a physical barrier to water flow
-barrierMask[plume_loc,icefront] = 0 #Plume code struggles with hFac adjustments
+barrierMask[1:-1,iceStart:iceExtentIndex] = doBlock # make icebergs a physical barrier to water flow
 
 # Iceberg concentration (# of each surface cell that is filled in plan view)
-bergConc[1:-1,1:iceExtentIndex] = np.linspace(iceCoverage,40,(iceExtentIndex-1)) # iceberg concentration set at top
-# bergConc[1:-1,1:iceExtentIndex] = iceCoverage # iceberg concentration set at top
+# bergConc[1:-1,iceStart:iceExtentIndex] = np.linspace(iceCoverage,40,(iceExtentIndex-1)) # iceberg concentration set at top
+bergConc[1:-1,iceStart:iceExtentIndex] = iceCoverage # iceberg concentration set at top
 
 # print(bergConc[1:-1,1:iceExtentIndex])
 
@@ -781,7 +694,7 @@ elif(scaling == 2): # Then use Barker04 width-depth relationship
         maxBergDepth = 2.91*maxBergWidth^0.71
         minBergDepth = 2.91*minBergWidth^0.71
 
-numberOfBergs = 1500 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
+numberOfBergs = 300 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
 bergTopArea = 0
 areaResidual = 1
 # Generate the Inverse Power Law cumulative distribution function
@@ -1110,13 +1023,13 @@ if(makeDirs):
         os.remove(run_config['run_dir']+'/input/setupReport.txt')
         setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')
     shutil.move('setupReport.txt', run_config['run_dir']+'/input')
-    shutil.copy('controlMelange.py', run_config['run_dir']+'/input/buildScript.py')
+    shutil.copy('windTunnel.py', run_config['run_dir']+'/input/buildScript.py')
     replaceAll(run_config['run_dir']+'/input/buildScript.py','makeDirs = True', 'makeDirs = False') 
     rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
     setupNotes.close()
     print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
 elif(writeFiles):
     print("Done! You shouldn't have to rebuild as we only changed run time options here")
-    shutil.copy('controlMelange.py', run_config['run_dir']+'/input/buildScriptUpdate.py')
+    shutil.copy('windTunnel.py', run_config['run_dir']+'/input/buildScriptUpdate.py')
 else:
     print('Nothing was saved, I hope you liked the pretty plots at least')

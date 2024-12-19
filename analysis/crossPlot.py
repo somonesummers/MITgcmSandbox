@@ -15,7 +15,7 @@ zDepth = -50
 plotDPI = 100
 cleanPNGs = True
 usePcolor = False
-makeMovie = True
+makeMovie = False
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
     from plotHelperLocal import *
@@ -66,7 +66,7 @@ else:
 #Clean up old gifs and pngs
 os.system('rm -f figs/cross_*.png')
 os.system('rm -f figs/autoCross_*.gif')
-# os.system('rm -f figs/autoCross_*.m*')
+os.system('rm -f figs/autoCross_*.m*')
 
 #Import grid
 x = mds.rdmds("results/XC")

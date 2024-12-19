@@ -67,72 +67,66 @@ if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to b
 
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
-os.system('rm -f figs/depthPlotX*.png')
+os.system('rm -f figs/depth*.png')
 # os.system('rm -f figs/depthPlotX*.gif')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
 z = np.squeeze(mds.rdmds("results/RC"))
 
-xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
-print('cross section is x =', x[0,xSlice],'index', xSlice)
+# xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
+# print('cross section is x =', x[0,xSlice],'index', xSlice)
 
-dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag','dynDiag']
-name = ["Temp", "Sal", "U", "W", "V", "N2"]
-units = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[rad^2 s^-2 ]"]
+dynName = ['dynMassDiag', 'dynMassDiag', 'dynMassDiag']
+# dynName = ['dynDiag', 'dynDiag', 'dynDiag']
+name = ["U", "W", "V"]
+units = ["[m/s]", "[m/s]", "[m/s]"]
+
+iceStart = np.argmin(np.abs(x[0,:] - 13100)) 
+iceEnd = np.argmin(np.abs(x[0,:] - 15400))
+
+print('Average is is x =', x[0,iceStart],',',x[0,iceEnd],'index', iceStart,',',iceEnd)
+
+hFacC = mds.rdmds("results/hFacC")
 
 for k in range(len(name)):
     print('\t' + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
-        if k == 0:
-            lvl = [np.min(tempRange),np.max(tempRange)]
-            cm = "xkcd:raspberry"
-            plotData = np.squeeze(data[k,:,:,xSlice]) 
-        elif k == 1:
-            lvl = [np.min(saltRange),np.max(saltRange)]
-            cm = "xkcd:green"
-            plotData = np.squeeze(data[k,:,:,xSlice]) 
-        elif k == 2 or k == 4:
+        if k == 0 or k == 2:
             lvl = [np.min(uRange),np.max(uRange)]
             cm = "xkcd:rose"
-            plotData = np.squeeze(data[k,:,:,xSlice]) 
-        elif k == 3:
+            plotData = np.squeeze(data[k+2,:,:,:]) * 1 
+        elif k == 1:
             lvl = [np.min(wRange),np.max(wRange)]
             cm = "xkcd:violet"
-            plotData = np.squeeze(data[k,:,:,xSlice]) 
-        elif k == 5:
-            lvl = [0,1e-3]
-            cm = "xkcd:olive green"
-            salt = np.squeeze(data[1,:,:,xSlice])
-            if(i == startStep): #only calc pressure once
-                pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
-            CT = gsw.CT_from_t(salt, data[0,:,:,xSlice], pressure)
-            tmp = gsw.Nsquared(salt, CT, pressure) 
-            plotData = tmp[0]
-            if(i == startStep):
-                z = -1 * tmp[1] * 10e3 / (1020 * 9.81) # defined at midpoints, so new z here on first i loop
+            plotData = np.squeeze(data[k+2,:,:,:]) * 1
         plt.figure()
-        for j in range(np.shape(y[1:-1,:])[0]):
-            plt.plot(plotData[:,j+1],z,linewidth=.5,alpha=.5,color=cm)
-        plt.plot(np.mean(plotData[:,1:-1],1),z,linewidth=2,color=cm)
+        for ii in range(iceEnd - iceStart):
+            for j in range(np.shape(y[1:-1,:])[0]):
+                plt.plot(plotData[:,j+1,iceStart + ii],z,linewidth=.5,alpha=.1,color=cm)
+
+        plt.plot(np.mean(plotData[:,1:-1,iceStart:iceEnd],axis=(1,2)),z,linewidth=2,color=cm)
         ax = plt.gca()
         ax.set_xlim(lvl)
-
-        plt.xlabel(name[k] + " " + units[k] + ' %.3e %.3e nan: %i' %(np.nanmin(plotData[:,1:-1]),np.nanmax(plotData[:,1:-1]),np.max(np.isnan(plotData[:,1:-1]))))
+        plt.plot(np.cos(z * np.pi /600)* 0.12, z,linewidth=1,color='gray',linestyle='--')
+        plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(plotData[:,1:-1]),np.nanmax(plotData[:,1:-1]),np.max(np.isnan(plotData[:,1:-1]))))
         plt.ylabel('Depth [m]')
-        plt.title("%s x = %i at %.02f days" % (name[k], x[0,xSlice], i/86400.0*dt))
+        plt.title("%s over melange at %.02f days" % (name[k], i/86400.0*dt))
+        if (k == 0 ):
+            plt.xlim([0, .25])
+        plt.ylim([-300, 0])
         j = i/sizeStep + startStep
         
-        str = "figs/depthPlotX%s%05i.png" % (name[k],j)
+        str = "figs/depth%s%05i.png" % (name[k],j)
         plt.savefig(str, format='png',dpi=plotDPI)
         plt.close()
-        # plt.show()
+        plt.show()
     if(args.xCrossSection != None):
-        os.system('magick -delay %f figs/depthPlotX%s*.png -colors 256 -depth 256 figs/depthPlotX%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.xCrossSection, name[k]))
+        os.system('magick -delay %f figs/depth%s*.png -colors 256 -depth 256 figs/depth%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.xCrossSection, name[k]))
     else:
-        os.system('magick -delay %f figs/depthPlotX%s*.png -colors 256 -depth 256 figs/depthPlotX%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+        os.system('magick -delay %f figs/depth%s*.png -colors 256 -depth 256 figs/depth%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
     if(cleanPNGs):
-        os.system('rm -f figs/depthPlotX*.png')
+        os.system('rm -f figs/depth*.png')
