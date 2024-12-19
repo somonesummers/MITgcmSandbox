@@ -9,6 +9,7 @@ Berg500*
 !*.sh
 !batchBuildRun.sh
 !BJD_idealised_setup-3*
+!CompareHughes.py
 *
 *DS.store
 
