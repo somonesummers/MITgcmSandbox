@@ -218,6 +218,7 @@ for k in range(len(name)):
             #cbar2 = plt.colorbar(cp2)
             #cbar2.set_label('Ocean Fraction')
 
+        # plt.xlim([11000, 18000]) # if zooming into a specific region
         j = i/sizeStep + startStep
         str = "figs/map%s%05i.png" % (name[k],j)
         

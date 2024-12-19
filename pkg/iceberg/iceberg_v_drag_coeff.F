@@ -58,11 +58,10 @@ C  Kp1                  :: =k+1 for k<Nr, =Nr for k>=Nr
       _RL rDrCkp1
 CEOP
 
-C-  No-slip BCs impose a drag at top
       IF ( usingZCoords ) THEN
        kTop    = 1
        kUpC    = k
-c      dragFac = mass2rUnit*rhoConst
+c      dragFac = mass2rUnit*rhoConst !equals about 1 anyway
        dragFac = 1. _d 0
       ELSE
        kTop    = Nr

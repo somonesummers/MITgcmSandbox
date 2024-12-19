@@ -76,11 +76,11 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Hughes_smag_50'
+run_config['run_name'] = 'Hughes_smag_LR_50'
 run_config['ndays'] = 4/3. # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
+run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
 run_config['Lx_m'] = 30000 # domain size in x (m)
 run_config['Ly_m'] = 2400 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
@@ -1030,6 +1030,6 @@ if(makeDirs):
     print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
 elif(writeFiles):
     print("Done! You shouldn't have to rebuild as we only changed run time options here")
-    shutil.copy('windTunnel.py', run_config['run_dir']+'/input/buildScriptUpdate.py')
+    # shutil.copy('windTunnel.py', run_config['run_dir']+'/input/buildScriptUpdate.py')
 else:
     print('Nothing was saved, I hope you liked the pretty plots at least')

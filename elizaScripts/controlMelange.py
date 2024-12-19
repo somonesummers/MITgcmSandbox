@@ -1117,6 +1117,6 @@ if(makeDirs):
     print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
 elif(writeFiles):
     print("Done! You shouldn't have to rebuild as we only changed run time options here")
-    shutil.copy('controlMelange.py', run_config['run_dir']+'/input/buildScriptUpdate.py')
+    # shutil.copy('controlMelange.py', run_config['run_dir']+'/input/buildScriptUpdate.py')
 else:
     print('Nothing was saved, I hope you liked the pretty plots at least')
