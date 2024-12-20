@@ -41,7 +41,7 @@ C     So far, ICEBERG works only with oceanic z-coordinates
          STOP 'ABNORMAL END: S/R ICEBERG_CHECK'
       ENDIF
 
-C     Only implimented so far with explicit drag, likely easy to update
+C     Only implimented so far with explicit drag
       IF ( selectImplicitDrag .NE. 0 ) THEN
          WRITE(msgBuf,'(A)')
      &      'ICEBERG works only with selectImplicitDrag = 0'

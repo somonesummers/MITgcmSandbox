@@ -55,8 +55,6 @@ C     brg_CDragQuadFld used in iceberg_u/v_drag_coeff
             ENDIF
 #endif /* ALLOW_DIAGNOSTICS */
           ENDDO !k
-          brgCDragFld            (i,j,bi,bj) = brg_Cd  !not implemented
-          brgDragQuadFld         (i,j,bi,bj) = brg_DragQuadratic
          ENDDO !i
         ENDDO !j
        ENDDO !bi

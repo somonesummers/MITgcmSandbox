@@ -56,6 +56,7 @@ C  Kp1            :: =k+1 for k<Nr, =Nr for k>=Nr
       INTEGER kUpC, kTop
       _RL viscFac, dragFac, uSq
       _RL rDrCkp1
+      _RL fillFactor (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
 CEOP
 
 C-  No-slip BCs impose a drag at top
@@ -72,47 +73,49 @@ c      dragFac = mass2rUnit*rhoConst !equals about 1 anyway
       rDrCkp1 = recip_drC(kUpC)
 CML      IF (k.EQ.kTop) rDrCkp1=recip_drF(k)
       viscFac = 0. _d 0
-      IF (brg_NoSlip) viscFac = 2. _d 0
 
-C--   Initialise drag-coeff
+C--   Initialise drag-coeff, fill factor
       DO j=1-OLy,sNy+OLy
        DO i=1-OLx,sNx+OLx
          cDrag(i,j) = 0. _d 0
+         fillFactor(i,j) = 0. _d 0
        ENDDO
       ENDDO
 
-C--   Friction at the bottom of iceberg (no-slip BC) (NOT IMPLEMENTED)
-      IF ( brg_NoSlip ) THEN
-C-    friction accounts for true distance (including hFac) to the surface
-       DO j=1-OLy,sNy+OLy-1
-        DO i=1-OLx+1,sNx+OLx-1
-         IF ( k.LE.
-     &       MAX( kBergBotC(i-1,j,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
-           cDrag(i,j) = cDrag(i,j)
-     &                + kappaRU(i,j,kUpC)*rDrCkp1*viscFac
-     &                        * _recip_hFacW(i,j,k,bi,bj)
-         ENDIF
+C     Compute fill factor
+      IF( brg_SelectFill.EQ.1) THEN
+        DO j=1-OLy,sNy+OLy
+         DO i=1-OLx,sNx+OLx
+          fillFactor(i,j) = 1.0 - _hFacC(i,j,k,bi,bj)
+         ENDDO
         ENDDO
-       ENDDO
-      ENDIF
+      ELSEIF( brg_SelectFill.EQ.2 ) THEN
+        DO j=1-OLy,sNy+OLy
+         DO i=1-OLx,sNx+OLx
+          fillFactor(i,j) = 1.0 - _hFacC(i,j,k,bi,bj)**2
+         ENDDO
+        ENDDO
+      ELSEIF( brg_SelectFill.EQ.3 ) THEN  
+        DO j=1-OLy,sNy+OLy
+         DO i=1-OLx,sNx+OLx
+          fillFactor(i,j) = 1.0 - _hFacC(i,j,k,bi,bj)**4
+         ENDDO
+        ENDDO
+      ENDIF !fillFactor 
 
-C--   Add Linear drag contribution: 
-      IF ( brg_DragLinear.NE.zeroRL ) THEN
+C--   Add drag contribution: 
+      IF ( brg_SelectDrag.EQ.1 ) THEN !linear
        DO j=1-OLy,sNy+OLy
         DO i=1-OLx+1,sNx+OLx
          IF ( k.LE.
      &       MAX( kBergBotC(i-1,j,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
-          cDrag(i,j) = cDrag(i,j) !bot and form drag here
-     &       + brg_DragLinear * dragFac * (1 - _hFacC(i,j,k,bi,bj))
-     &       + brg_DragForm * dragFac * recip_dxF(i,j,bi,bj) * drF(k) *
-     &                   (1 - _hFacC(i,j,k,bi,bj)**4)
+          cDrag(i,j) = cDrag(i,j) 
+     &       + 0.5 * brg_DragForm * dragFac * recip_dxF(i,j,bi,bj) * 
+     &                   drF(k) * fillFactor(i,j)
          ENDIF
         ENDDO
        ENDDO
-      ENDIF
-
-C--   Add quadratic drag, off is -1
-      IF ( brg_SelectDragQuad.EQ.0 ) THEN
+      ELSEIF( brg_SelectDrag.EQ.2 ) THEN !quadratic
        IF ( .NOT.inp_KE ) THEN
          DO j=1-OLy,sNy+OLy-1
           DO i=1-OLx,sNx+OLx-1
@@ -134,73 +137,45 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
            uSq = KE(i,j)+KE(i-1,j)
           ENDIF
           IF ( uSq.GT.zeroRL ) THEN
-           cDrag(i,j) = cDrag(i,j)  !Bot drag and form drag here
-     &            + brgDragQuadFld(i,j,bi,bj)*SQRT(uSq)*dragFac * 
-     &                   (1 - _hFacC(i,j,k,bi,bj))
-     &            + brg_DragForm * dragFac *  
-     &                   SQRT(uSq)**(.75*_hFacC(i,j,k,bi,bj)) * 
+           cDrag(i,j) = cDrag(i,j)  
+     &            + 0.5 * brg_DragForm * dragFac *  
+     &                   SQRT(uSq) * 
      &                   recip_dxF(i,j,bi,bj) * drF(k) *
-     &                   (1 - _hFacC(i,j,k,bi,bj)**4)
+     &                   fillFactor(i,j)
           ENDIF
         ENDDO
        ENDDO
-      ELSEIF ( brg_SelectDragQuad.EQ.1 ) THEN
-C-    calculate locally velocity norm @ U.pt (local U & 4 V averaged)
+      ELSEIF ( brg_SelectDrag.EQ.3 ) THEN !nonlinear
+        IF ( .NOT.inp_KE ) THEN
+         DO j=1-OLy,sNy+OLy-1
+          DO i=1-OLx,sNx+OLx-1
+            KE(i,j) = 0.25*(
+     &          ( uFld( i , j )*uFld( i , j )*_hFacW(i,j,k,bi,bj)
+     &           +uFld(i+1, j )*uFld(i+1, j )*_hFacW(i+1,j,k,bi,bj) )
+     &        + ( vFld( i , j )*vFld( i , j )*_hFacS(i,j,k,bi,bj)
+     &           +vFld( i ,j+1)*vFld( i ,j+1)*_hFacS(i,j+1,k,bi,bj) )
+     &                     )*_recip_hFacC(i,j,k,bi,bj)
+          ENDDO
+         ENDDO
+       ENDIF !.not.inp_KE
+C-    average grid-cell-center KE to get velocity norm @ U.pt
        DO j=1-OLy,sNy+OLy-1
         DO i=1-OLx+1,sNx+OLx-1
           uSq = 0. _d 0
           IF ( k.LE.
-     &       MAX( kBergBotC(i-1,j,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
-           uSq = uFld(i,j)*uFld(i,j)
-     &       + ( (vFld(i-1, j )*vFld(i-1, j )*hFacS(i-1, j ,k,bi,bj)
-     &           +vFld( i , j )*vFld( i , j )*hFacS( i , j ,k,bi,bj))
-     &         + (vFld(i-1,j+1)*vFld(i-1,j+1)*hFacS(i-1,j+1,k,bi,bj)
-     &           +vFld( i ,j+1)*vFld( i ,j+1)*hFacS( i ,j+1,k,bi,bj))
-     &         )*recip_hFacW(i,j,k,bi,bj)*0.25 _d 0
+     &         MAX( kBergBotC(i-1,j,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+           uSq = KE(i,j)+KE(i-1,j)
           ENDIF
           IF ( uSq.GT.zeroRL ) THEN
-           cDrag(i,j) = cDrag(i,j) !Bot drag and form drag here
-     &            + brgDragQuadFld(i,j,bi,bj)*SQRT(uSq)*dragFac * 
-     &                   (1 - _hFacC(i,j,k,bi,bj))
-     &            + brg_DragForm * dragFac *   
+           cDrag(i,j) = cDrag(i,j)  
+     &            + 0.5 * brg_DragForm * dragFac *  
      &                   SQRT(uSq)**(.75*_hFacC(i,j,k,bi,bj)) * 
      &                   recip_dxF(i,j,bi,bj) * drF(k) *
-     &                   (1 - _hFacC(i,j,k,bi,bj)**4)
+     &                   fillFactor(i,j)
           ENDIF
         ENDDO
        ENDDO
-      ELSEIF ( brg_SelectDragQuad.EQ.2 ) THEN
-C-    same as above but using wet-point method to average 4 V
-       DO j=1-OLy,sNy+OLy-1
-        DO i=1-OLx+1,sNx+OLx-1
-          uSq = 0. _d 0
-          IF ( k.LE.
-     &       MAX( kBergBotC(i-1,j,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
-           uSq = ( hFacS(i-1, j ,k,bi,bj) + hFacS( i , j ,k,bi,bj) )
-     &         + ( hFacS(i-1,j+1,k,bi,bj) + hFacS( i ,j+1,k,bi,bj) )
-           IF ( uSq.GT.zeroRL ) THEN
-            uSq = uFld(i,j)*uFld(i,j)
-     &        +( (vFld(i-1, j )*vFld(i-1, j )*hFacS(i-1, j ,k,bi,bj)
-     &           +vFld( i , j )*vFld( i , j )*hFacS( i , j ,k,bi,bj))
-     &         + (vFld(i-1,j+1)*vFld(i-1,j+1)*hFacS(i-1,j+1,k,bi,bj)
-     &           +vFld( i ,j+1)*vFld( i ,j+1)*hFacS( i ,j+1,k,bi,bj))
-     &         )/uSq
-           ELSE
-            uSq = uFld(i,j)*uFld(i,j)
-           ENDIF
-          ENDIF
-          IF ( uSq.GT.zeroRL ) THEN
-           cDrag(i,j) = cDrag(i,j) !Bot drag and form drag here
-     &            + brgDragQuadFld(i,j,bi,bj)*SQRT(uSq)*dragFac * 
-     &                   (1 - _hFacC(i,j,k,bi,bj))
-     &            + brg_DragForm * dragFac *   
-     &                   SQRT(uSq)**(.75*_hFacC(i,j,k,bi,bj)) * 
-     &                   recip_dxF(i,j,bi,bj) * drF(k) *
-     &                   (1 - _hFacC(i,j,k,bi,bj)**4)
-          ENDIF
-        ENDDO
-       ENDDO
-      ENDIF
+      ENDIF !selectDrag 
 
 #ifdef ALLOW_DIAGNOSTICS
       IF ( useDiagnostics ) THEN

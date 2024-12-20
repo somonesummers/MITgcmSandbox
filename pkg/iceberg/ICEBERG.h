@@ -51,16 +51,11 @@ C     lambda3                         :: Freezing point depth (def: -7.61*10^-4)
 C     brg_GamT                        :: Thermal turbulent transfer coeffcient (def: 0.022)
 C     brg_GamS                        :: Salt turbulent transfer coefficient (def: 0.00062)
 C     brg_c_w                         :: Heat capacity of water (def: 3974 J kg^-1 degC^-1)
-C     brg_DragLinear                  :: linear drag at bottom of icebergs (1/s)
-C     brg_SelectDragQuad              :: select how quad drag is computed
-C     brg_DragQuadratic               :: quadratic drag at bottom iceberg (default
-C                                          = brg_Cd)
-C     brg_DragForm                    :: quadratic form drag across iceberg (default
-C                                          = 1)
-C     brg_NoSlip                      :: set slip conditions for iceberg separately,
-C                                        (by default the same as no_slip_bottom, but
-C                                         really should be false when there is linear
-C                                         or quadratic drag)
+C     brg_SelectDrag                  :: select how drag is computed from velocity (def: 3)
+C                                        (1:n = 2, 2:n = 2, 3: n = 1 + .75*hFacC)
+C     brg_SelectFill                  :: select how frontal area scales with hFacC (def: 3)
+C                                        (1:linear, 2:quad, 4:quartic)
+C     brg_DragForm                    :: form drag across iceberg (default = 1.0)
 
 C=============================================================================
 C     FIELDS
@@ -80,13 +75,11 @@ C==============================================================================
 C \ev
 CEOP
 
-      COMMON /ICEBERG_PARMS_L/
-     &     brg_NoSlip
-      LOGICAL brg_NoSlip
-
       COMMON /ICEBERG_PARMS_I/
-     &     brg_SelectDragQuad
-      INTEGER brg_SelectDragQuad
+     &     brg_SelectDrag,
+     &     brg_SelectFill
+      INTEGER brg_SelectDrag
+      INTEGER brg_SelectFill
 
       COMMON /ICEBERG_PARMS_R/
      &     icebergRho,
@@ -101,8 +94,6 @@ CEOP
      &     brg_c_i,
      &     brg_L,
      &     brg_Cd,
-     &     brg_DragLinear,
-     &     brg_DragQuadratic,
      &     brg_DragForm
       _RL icebergRho
       _RL brg_iceTemp
@@ -116,8 +107,6 @@ CEOP
       _RL brg_c_i
       _RL brg_L
       _RL brg_Cd
-      _RL brg_DragLinear
-      _RL brg_DragQuadratic
       _RL brg_DragForm
 
       COMMON /ICEBERG_FIELDS_I/ kBergBotC
@@ -139,9 +128,7 @@ CEOP
      &     icebergArea3D,
      &     icebergLength,
      &     icebergWidths,
-     &     icebergDepths,
-     &     brgCDragFld,
-     &     brgDragQuadFld
+     &     icebergDepths
       _RL icebergHeatFlux3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)  
       _RL icebergFWFlux3D (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)  
       _RL icebergMeltRate3D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)  
@@ -161,8 +148,6 @@ CEOP
      &       maxBergCt,nSx,nSy)
       _RL icebergDepths(1-OLx:sNx+OLx,1-OLy:sNy+OLy,
      &       maxBergCt,nSx,nSy)
-      _RL brgCDragFld(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RL brgDragQuadFld(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 
       COMMON /ICEBERG_PARM_C/
      &     ICEBERGmaskFile,

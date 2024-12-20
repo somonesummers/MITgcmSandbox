@@ -49,11 +49,9 @@ CEOP
      &     brg_c_i,
      &     brg_L,
      &     brg_Cd,
-     &     brg_DragLinear,
-     &     brg_DragQuadratic,
-     &     brg_SelectDragQuad,  
-     &     brg_DragForm,         
-     &     brg_NoSlip, 
+     &     brg_SelectDrag,  
+     &     brg_DragForm,    
+     &     brg_SelectFill,
      &     ICEBERGmaskFile, ICEBERGmeltFile, ICEBERGmaskNumsFile,
      &     ICEBERGlengthFile, ICEBERGwidthsFile, ICEBERGdepthsFile,
      &     ICEBERGnumPerCellFile, ICEBERGdriftFile,
@@ -74,11 +72,9 @@ C Set defaults values for parameters in ICEBERG.h
       brg_c_i                      = 2000.D0
       brg_L                        = 334000D0
       brg_Cd                       = 0.0025
-      brg_DragLinear               = bottomDragLinear
-      brg_DragQuadratic            = brg_Cd
       brg_DragForm                 = 1.0 _d 0
-      brg_SelectDragQuad           = 0 !0 is on
-      brg_NoSlip                   = .FALSE. 
+      brg_SelectDrag               = 3 
+      brg_SelectFill               = 3 
       ICEBERGmaskFile              = ' '
       ICEBERGmeltFile              = ' '
       ICEBERGmaskNumsFile          = ' '
@@ -106,11 +102,6 @@ C Open and read the data.iceberg file
      &                   SQUEEZE_RIGHT, myThid )
 
 
-
-C Set quadratic bottom drag depending on choices:
-      IF ( brg_DragQuadratic.EQ.0. _d 0 ) THEN
-        brg_SelectDragQuad = -1
-      ENDIF
       
 C Close the open data file
       CLOSE(iUnit)
