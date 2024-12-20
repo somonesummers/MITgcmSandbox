@@ -10,6 +10,10 @@ C     | o Shared 3-D Buffers used for I/O
 C     *==========================================================*
 CEOP
 
+#ifdef ALLOW_ICEBERG
+# include "ICEBERG_SIZE.h"
+#endif /* ALLOW_ICEBERG */
+
 C     size3dBuf  :: buffer 3rd dimension, corresponds to the maximum number
 C                   of levels that can be read/written at a time.
 C     Note: minimum value = Nr, but in few cases (vertical interpolation,
@@ -19,7 +23,7 @@ C           which should be enough for most applications.
 #ifdef ALLOW_FIZHI
       PARAMETER ( size3dBuf = Nr+NrPhys )
 #elif defined(ALLOW_ICEBERG)
-      PARAMETER ( size3dBuf = 500 ) !maxBerg hard coded here too
+      PARAMETER ( size3dBuf = maxBergCt )
 #else
       PARAMETER ( size3dBuf = 2*Nr )
 #endif

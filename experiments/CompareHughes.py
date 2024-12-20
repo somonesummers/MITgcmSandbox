@@ -29,13 +29,13 @@ print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 resultFolder = '/results'
 hFacWeighted = True
 # dirNames = ['Hughes_smag_LR_30','Hughes_smag_30','Hughes_smag_LR_50','Hughes_smag_50','Hughes_smag_100']
-dirNames = ['Hotel_40','Hotel_20','Hotel_10','Hotel_05','Hotel_02']
-# dirNames = ['india_40','india_25','india_16','india_05','india_02']
+# dirNames = ['Hotel_40','Hotel_20','Hotel_10','Hotel_05','Hotel_02']
+dirNames = ['india_40','india_25','india_16','india_05','india_02']
 # dirNames = ['Hotel_80','Hotel_60','Hotel_40','Hotel_20','Hotel_10','Hotel_05','Hotel_02']
 # dirNames = ['juliet_001','juliet_002','juliet_005','juliet_01','juliet_02','juliet_05','juliet_10']
 
-# spds = [.4,.25,.16,.05,.02]
-spds = [.12]*len(dirNames)
+spds = [.4,.25,.16,.05,.02]
+# spds = [.12]*len(dirNames)
 
 if(hFacWeighted):
     dynName = ['dynDiag', 'dynDiag', 'dynDiag']
@@ -96,7 +96,7 @@ for k in range(len(name)):
         data = mds.rdmds(dirName + resultFolder + "/%s"%(dynName[k]), i)
         if k == 0:
             lvl = [-0,2.5]
-            seedColor = 'green'
+            seedColor = 'blue'
             plotData = np.squeeze(data[k+2,:,:,:]) * 1 / spds[l]
         elif k == 1:
             lvl = [-0.01,0.01]
