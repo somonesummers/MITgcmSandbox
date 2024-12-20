@@ -105,7 +105,7 @@ C--   Add Linear drag contribution:
           cDrag(i,j) = cDrag(i,j) !bot and form drag here
      &       + brg_DragLinear * dragFac * (1 - _hFacC(i,j,k,bi,bj))
      &       + brg_DragForm * dragFac * recip_dxF(i,j,bi,bj) * drF(k) *
-     &                   (1 - _hFacC(i,j,k,bi,bj)**2)
+     &                   (1 - _hFacC(i,j,k,bi,bj)**4)
          ENDIF
         ENDDO
        ENDDO
@@ -137,9 +137,10 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
            cDrag(i,j) = cDrag(i,j)  !Bot drag and form drag here
      &            + brgDragQuadFld(i,j,bi,bj)*SQRT(uSq)*dragFac * 
      &                   (1 - _hFacC(i,j,k,bi,bj))
-     &            + brg_DragForm * dragFac * SQRT(uSq) * 
+     &            + brg_DragForm * dragFac *  
+     &                   SQRT(uSq)**(.75*_hFacC(i,j,k,bi,bj)) * 
      &                   recip_dxF(i,j,bi,bj) * drF(k) *
-     &                   (1 - _hFacC(i,j,k,bi,bj)**2)
+     &                   (1 - _hFacC(i,j,k,bi,bj)**4)
           ENDIF
         ENDDO
        ENDDO
@@ -161,9 +162,10 @@ C-    calculate locally velocity norm @ U.pt (local U & 4 V averaged)
            cDrag(i,j) = cDrag(i,j) !Bot drag and form drag here
      &            + brgDragQuadFld(i,j,bi,bj)*SQRT(uSq)*dragFac * 
      &                   (1 - _hFacC(i,j,k,bi,bj))
-     &            + brg_DragForm * dragFac * SQRT(uSq) * 
+     &            + brg_DragForm * dragFac *   
+     &                   SQRT(uSq)**(.75*_hFacC(i,j,k,bi,bj)) * 
      &                   recip_dxF(i,j,bi,bj) * drF(k) *
-     &                   (1 - _hFacC(i,j,k,bi,bj)**2)
+     &                   (1 - _hFacC(i,j,k,bi,bj)**4)
           ENDIF
         ENDDO
        ENDDO
@@ -191,9 +193,10 @@ C-    same as above but using wet-point method to average 4 V
            cDrag(i,j) = cDrag(i,j) !Bot drag and form drag here
      &            + brgDragQuadFld(i,j,bi,bj)*SQRT(uSq)*dragFac * 
      &                   (1 - _hFacC(i,j,k,bi,bj))
-     &            + brg_DragForm * dragFac * SQRT(uSq) * 
+     &            + brg_DragForm * dragFac *   
+     &                   SQRT(uSq)**(.75*_hFacC(i,j,k,bi,bj)) * 
      &                   recip_dxF(i,j,bi,bj) * drF(k) *
-     &                   (1 - _hFacC(i,j,k,bi,bj)**2)
+     &                   (1 - _hFacC(i,j,k,bi,bj)**4)
           ENDIF
         ENDDO
        ENDDO
