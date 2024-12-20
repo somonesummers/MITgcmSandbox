@@ -76,7 +76,7 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Hotel_30'
+run_config['run_name'] = 'Hotel_80'
 run_config['ndays'] = 4/3. # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -93,7 +93,7 @@ oscStrength = 0.12 #[m/s] peak strength of sin forcing current
 # Iceberg configuration =========================
 iceBergDepth = 140 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 2500 # [meters] of extent of ice
-iceCoverage = 30 # % of ice cover in melange, stay under 90% ideally
+iceCoverage = 80 # % of ice cover in melange, stay under 90% ideally
 doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 #========================================================================================

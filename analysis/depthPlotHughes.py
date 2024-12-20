@@ -77,7 +77,7 @@ z = np.squeeze(mds.rdmds("results/RC"))
 # xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
 # print('cross section is x =', x[0,xSlice],'index', xSlice)
 
-dynName = ['dynMassDiag', 'dynMassDiag', 'dynMassDiag']
+dynName = ['dynDiag', 'dynDiag', 'dynDiag']
 # dynName = ['dynDiag', 'dynDiag', 'dynDiag']
 name = ["U", "W", "V"]
 units = ["[m/s]", "[m/s]", "[m/s]"]

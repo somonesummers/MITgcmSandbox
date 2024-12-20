@@ -26,14 +26,24 @@ else:
     print('no defaults found')
 print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
-
+resultFolder = '/results'
+hFacWeighted = True
 # dirNames = ['Hughes_smag_LR_30','Hughes_smag_30','Hughes_smag_LR_50','Hughes_smag_50','Hughes_smag_100']
 dirNames = ['Hotel_40','Hotel_20','Hotel_10','Hotel_05','Hotel_02']
+# dirNames = ['india_40','india_25','india_16','india_05','india_02']
+# dirNames = ['Hotel_80','Hotel_60','Hotel_40','Hotel_20','Hotel_10','Hotel_05','Hotel_02']
+# dirNames = ['juliet_001','juliet_002','juliet_005','juliet_01','juliet_02','juliet_05','juliet_10']
 
-dynName = ['dynMassDiag', 'dynMassDiag', 'dynMassDiag']
-# dynName = ['dynDiag', 'dynDiag', 'dynDiag']
+# spds = [.4,.25,.16,.05,.02]
+spds = [.12]*len(dirNames)
+
+if(hFacWeighted):
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag']
+else:
+    dynName = ['dynMassDiag', 'dynMassDiag', 'dynMassDiag']
+
 name = ["U", "W", "V"]
-units = ["[m/s]", "[m/s]", "[m/s]"]
+units = ["[u(z)/U]", "[m/s]", "[m/s]"]
 
 
 for k in range(len(name)):
@@ -51,7 +61,7 @@ for k in range(len(name)):
                     dt = float(line[8:-2])
         # print('dt is loaded as', dt)
 
-        for file in os.listdir(dirNames[l] + '/results'):
+        for file in os.listdir(dirNames[l] + resultFolder):
             # print(file)
             if "dynMassDiag.0" in file:
                 words = file.split(".")
@@ -75,26 +85,26 @@ for k in range(len(name)):
         dirName = dirNames[l]
 
         #Comparing Diff resolutions
-        x = mds.rdmds(dirName + "/results/XC")
-        y = mds.rdmds(dirName + "/results/YC")
-        z = np.squeeze(mds.rdmds(dirName + "/results/RC"))
+        x = mds.rdmds(dirName + resultFolder +"/XC")
+        y = mds.rdmds(dirName + resultFolder + "/YC")
+        z = np.squeeze(mds.rdmds(dirName + resultFolder+ "/RC"))
         iceStart = np.argmin(np.abs(x[0,:] - 13100)) 
         iceEnd = np.argmin(np.abs(x[0,:] - 15400))
         # print('Average is is x =', x[0,iceStart],',',x[0,iceEnd],'index', iceStart,',',iceEnd)
         
         i = maxStep
-        data = mds.rdmds(dirName + "/results/%s"%(dynName[k]), i)
+        data = mds.rdmds(dirName + resultFolder + "/%s"%(dynName[k]), i)
         if k == 0:
-            lvl = [-0,0.3]
+            lvl = [-0,2.5]
             seedColor = 'green'
-            plotData = np.squeeze(data[k+2,:,:,:]) * 1 
+            plotData = np.squeeze(data[k+2,:,:,:]) * 1 / spds[l]
         elif k == 1:
             lvl = [-0.01,0.01]
             seedColor = 'red'
             plotData = np.squeeze(data[k+2,:,:,:]) * 1
         elif k == 2:
             lvl = [-.01,0.01]
-            seedColor = 'blue'
+            seedColor = 'green'
             plotData = np.squeeze(data[k+2,:,:,:]) * 1 
         
         n = len(dirNames) - 1 
@@ -109,22 +119,31 @@ for k in range(len(name)):
         # for ii in range(iceEnd - iceStart):
         #     for j in range(np.shape(y[1:-1,:])[0]):
         #         plt.plot(plotData[:,j+1,iceStart + ii],z,linewidth=.5,alpha=.1,color=cm)
+        if(hFacWeighted):
+            hFacC = mds.rdmds(dirName + resultFolder + "/hFacC") #must weight by ocean fraction
         if(l != n ):
-            plt.plot(np.mean(plotData[:,1:-1,iceStart:iceEnd],axis=(1,2)),z,linewidth=2,label=dirName,color=colors[:,l])
+            if(hFacWeighted):
+                plt.plot(np.average(plotData[:,1:-1,iceStart:iceEnd], weights=hFacC[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=dirName,color=colors[:,l])
+            else:
+                plt.plot(np.mean(plotData[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=dirName,color=colors[:,l])
         else:
-             plt.plot(np.mean(plotData[:,1:-1,iceStart:iceEnd],axis=(1,2)),z,linewidth=2,label=dirName,color='xkcd:light gray')
+            if(hFacWeighted):
+                plt.plot(np.average(plotData[:,1:-1,iceStart:iceEnd], weights=hFacC[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=dirName,color='xkcd:light gray')
+            else:
+                plt.plot(np.mean(plotData[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=dirName,color='xkcd:light gray')
         ax = plt.gca()
-        if(dirName == 'Hotel_20'):
-            bergDepth = -1*np.fromfile('Hotel_20/input/icebergs_depths.bin', dtype='>f8')
-            bergDepth[bergDepth == 0] = np.nan
-            plt.plot([-1,1],[np.nanmean(bergDepth),np.nanmean(bergDepth)],color='red',linestyle='--',alpha=.5)
-            plt.plot([-1,1],[np.nanmedian(bergDepth),np.nanmedian(bergDepth)],color='red',linestyle='--',alpha=.5)
+        if(l == 3):
+            bergDepth = -1*np.fromfile(dirName + '/input/icebergs_depths.bin', dtype='>f8')
+            bergDepth[bergDepth == 0] = np.nan #dont avg ones that don't exist
+            plt.plot([-1,3],[np.nanpercentile(bergDepth,10),np.nanpercentile(bergDepth,10)],color='red',linestyle='--',alpha=.5)
+            plt.plot([-1,3],[np.nanmedian(bergDepth),np.nanmedian(bergDepth)],color='red',linestyle='--',alpha=.5)
         ax.set_xlim(lvl)
-        plt.plot(np.cos(z * np.pi /600)* 0.12, z,linewidth=1,color='gray',linestyle='--')
+        plt.plot(np.cos(z * np.pi /600)* 1, z,linewidth=1,color='gray',linestyle='--')
         plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(plotData[:,1:-1]),np.nanmax(plotData[:,1:-1]),np.max(np.isnan(plotData[:,1:-1]))))
         plt.ylabel('Depth [m]')
         plt.title("%s over melange at %.02f days" % (name[k], i/86400.0*dt))
         plt.ylim([-300, 0])
+        plt.grid(alpha=.5)
         j = i/sizeStep + startStep
         # plt.show()
     plt.legend()
