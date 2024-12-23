@@ -301,8 +301,10 @@ params01['no_slip_bottom'] = True
 params01['rigidLid'] = False
 params01['implicitFreeSurface'] = True
 params01['selectAddFluid'] = 1
-#params01['implicitViscosity'] = True
-#params01['implicitDiffusion'] = True
+params01['useRealFreshWaterFlux'] = True
+params01['exactConserv'] = True
+params01['implicitViscosity'] = True
+params01['implicitDiffusion'] = True
 params01['bottomVisc_pCell'] = True
 
 # physical parameters
