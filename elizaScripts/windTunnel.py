@@ -76,8 +76,8 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Hotel_80'
-run_config['ndays'] = 4/3. # simulaton time (days)
+run_config['run_name'] = 'kilo_15'
+run_config['ndays'] = 2.0 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
@@ -85,7 +85,7 @@ run_config['Lx_m'] = 30000 # domain size in x (m)
 run_config['Ly_m'] = 2400 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 50 # num of z-grid points
+grid_params['Nr'] = 15 # num of z-grid points
 
 # Offshore current =========================
 oscStrength = 0.12 #[m/s] peak strength of sin forcing current
@@ -93,7 +93,7 @@ oscStrength = 0.12 #[m/s] peak strength of sin forcing current
 # Iceberg configuration =========================
 iceBergDepth = 140 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 2500 # [meters] of extent of ice
-iceCoverage = 80 # % of ice cover in melange, stay under 90% ideally
+iceCoverage = 20 # % of ice cover in melange, stay under 90% ideally
 doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 #========================================================================================
@@ -298,6 +298,8 @@ params01['no_slip_bottom'] = False
 params01['rigidLid'] = False
 params01['implicitFreeSurface'] = True
 params01['selectAddFluid'] = 1
+params01['useRealFreshWaterFlux'] = True
+params01['exactConserv'] = True
 params01['implicitViscosity'] = True
 params01['implicitDiffusion'] = True
 # params01['bottomVisc_pCell'] = True
@@ -412,10 +414,11 @@ else:
 diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
                     ['THETA','SALT','UVELMASS','VVELMASS','WVELMASS'],
                     ['UTHMASS ','USLTMASS','VTHMASS ','VSLTMASS','WTHMASS ','WSLTMASS',],
-                    ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY']
+                    ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY'],
+                    ['VISCAHZ','VISCAHD'],
                     ]
 diag_fields_max = 0
-diag_fields_avg_name = ['dynDiag','dynMassDiag','fluxMassDiag','BRGFlx']
+diag_fields_avg_name = ['dynDiag','dynMassDiag','fluxMassDiag','BRGFlx','viscDiag']
 # diag_fields_avg = ['UVEL', 'VVEL', 'WVEL', 'UVELSQ', 'VVELSQ', 'WVELSQ',
 #                   'UVELTH', 'VVELTH', 'WVELTH', 'THETA', 'THETASQ',
 #                   'PHIHYD', 'LaUH1TH', 'LaVH1TH', 'LaHw1TH','LaHs1TH']
@@ -448,19 +451,19 @@ for ii in range(numdiags_avg):
 
     
 #--------specify instanteous fields (i.e. snapshots)--------#
-diag_fields_inst = [['THETA','SALT','UVEL','WVEL','VVEL']]
-diag_fields_names = ['dynDiag']
-numdiags_inst = len(diag_fields_inst)
-diag_phase_inst = 0.0
+# diag_fields_inst = [['THETA','SALT','UVEL','WVEL','VVEL']]
+# diag_fields_names = ['dynDiag']
+# numdiags_inst = len(diag_fields_inst)
+# diag_phase_inst = 0.0
 
-for ii in range(numdiags_inst):
-    n = numdiags_avg+ii+1
-    if len(diag_fields_inst[ii]) > diag_fields_max:
-        diag_fields_max = len(diag_fields_inst[ii])
-    diag_params01['fields(1:%i,%s)'%(len(diag_fields_inst[ii]),n)] = "','".join(diag_fields_inst[ii])
-    diag_params01['fileName(%s)'%n] = diag_fields_names[ii] + '_inst'
-    diag_params01['frequency(%s)'%n] = diag_freq_inst
-    diag_params01['timePhase(%s)'%n] = diag_phase_inst
+# for ii in range(numdiags_inst):
+#     n = numdiags_avg+ii+1
+#     if len(diag_fields_inst[ii]) > diag_fields_max:
+#         diag_fields_max = len(diag_fields_inst[ii])
+#     diag_params01['fields(1:%i,%s)'%(len(diag_fields_inst[ii]),n)] = "','".join(diag_fields_inst[ii])
+#     diag_params01['fileName(%s)'%n] = diag_fields_names[ii] + '_inst'
+#     diag_params01['frequency(%s)'%n] = diag_freq_inst
+#     diag_params01['timePhase(%s)'%n] = diag_phase_inst
 
 setUpPrint('Diagnostic Settings')
 setUpPrint(diag_params01)
