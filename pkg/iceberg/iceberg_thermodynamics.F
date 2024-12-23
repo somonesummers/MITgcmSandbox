@@ -110,10 +110,28 @@ C
       _RL width_list(1:maxBergCt)
       _RL length_list(1:maxBergCt)
       PARAMETER(rho_0=1027.0D0)
-      LOGICAL DIFFERENT_MULTIPLE, THERE
+      LOGICAL  DIFFERENT_MULTIPLE
+      EXTERNAL DIFFERENT_MULTIPLE
 
       _RL SW_TEMP
       EXTERNAL SW_TEMP
+#ifdef ALLOW_PER_BERG_DIAG
+      CHARACTER*5 cellNumStr
+      CHARACTER*5 cellNumStub
+      CHARACTER*19 fileName1
+      CHARACTER*19 fileName2
+      CHARACTER*19 fileName3
+      CHARACTER*19 fileName4
+      CHARACTER*19 fileName5
+      CHARACTER*19 fileName6
+      CHARACTER*23 fileName_melt
+      CHARACTER*23 fileName_fw
+      CHARACTER*23 fileName_hf
+      CHARACTER*23 fileName_spd1
+      CHARACTER*23 fileName_spd2
+      CHARACTER*23 fileName_spd3
+      INTEGER r4, r5, r6, r7, r8, r9
+#endif /* ALLOW_DIAGNOSTICS */
 
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
 
@@ -189,6 +207,67 @@ C     Pre-allocate berg geometry profiles
         width_list(n) = icebergWidths(I,J,n,bi,bj)
       ENDDO 
 
+#ifdef ALLOW_PER_BERG_DIAG
+      IF ( numBergs .GT. 0 ) THEN
+C     Create text file names for writing
+       IF ( cellNum .LT. 10 ) THEN
+         write(cellNumStr, '(I1)') cellNum ! Convert cell number to a string
+         cellNumStub = "0000" // cellNumStr
+       ELSEIF ( cellNum .GE. 10 .AND. cellNum .LT. 100 ) THEN
+         write(cellNumStr, '(I2)') cellNum ! Convert cell number to a string
+         cellNumStub = "000" // cellNumStr
+       ELSEIF ( cellNum .GE. 100 .AND. cellNum .LT. 1000 ) THEN
+         write(cellNumStr, '(I3)') cellNum ! Convert cell number to a string
+         cellNumStub = "00" // cellNumStr
+       ELSEIF ( cellNum .GE. 1000 .AND. cellNum .LT. 10000 ) THEN
+         write(cellNumStr, '(I4)') cellNum ! Convert cell number to a string
+         cellNumStub = "0" // cellNumStr
+       ELSE 
+         write(cellNumStr, '(I5)') cellNum ! Convert cell number to a string
+         cellNumStub = cellNumStr
+       ENDIF
+      ENDIF
+C     Make output text files for this cell
+       fileName1 = "iceberg_mltRt_" // cellNumStub
+       fileName_melt = fileName1 // ".txt"
+       fileName2 = "iceberg_fwFlx_" // cellNumStub
+       fileName_fw = fileName2 // ".txt"   
+       fileName3 = "iceberg_htFlx_" // cellNumStub
+       fileName_hf = fileName3 // ".txt"
+       fileName4 = "iceberg_spdla_" // cellNumStub
+       fileName_spd1 = fileName4 // ".txt"
+       fileName5 = "iceberg_spdsa_" // cellNumStub
+       fileName_spd2 = fileName5 // ".txt"
+       fileName6 = "iceberg_spdba_" // cellNumStub
+       fileName_spd3 = fileName6 // ".txt"
+       
+C      Assign units for reading text files (must be specific to each cell
+        r4 = i + j + bi + bj + 10
+        r5 = i + j + bi + bj + 11
+        r6 = i + j + bi + bj + 12
+        r7 = i + j + bi + bj + 13
+        r8 = i + j + bi + bj + 14
+        r9 = i + j + bi + bj + 15
+        
+C     Open text files for writing - open once per cell
+      IF ( DIFFERENT_MULTIPLE(dumpFreq, myTime, deltaTClock) ) THEN  
+       print *, 'Opening text files for Berg diagnostics for cell '
+     & , cellNumStr 
+        open (UNIT=r4, FILE=fileName_melt, 
+     &          FORM='FORMATTED', ACCESS='APPEND')
+        open (UNIT=r5, FILE=fileName_fw, 
+     &          FORM='FORMATTED', ACCESS='APPEND')
+        open (UNIT=r6, FILE=fileName_hf, 
+     &          FORM='FORMATTED', ACCESS='APPEND')
+        open (UNIT=r7, FILE=fileName_spd1, 
+     &          FORM='FORMATTED', ACCESS='APPEND')
+        open (UNIT=r8, FILE=fileName_spd2, 
+     &          FORM='FORMATTED', ACCESS='APPEND')
+        open (UNIT=r9, FILE=fileName_spd3, 
+     &          FORM='FORMATTED', ACCESS='APPEND')
+      ENDIF !checking clock time
+#endif /* ALLOW_PER_BERG_DIAG */  
+
 C --- ENTER BERG LOOPS ---
       DO n = 1,numBergs
 
@@ -211,7 +290,7 @@ C    Determine cell containing base of iceberg
        ENDDO      
        
 C     Print value to screen
-C      print *, 'Berg bottom cell is', bergBottomCell
+C       print *, 'Berg bottom cell is', bergBottomCell
 
 
 C -----------------------------------------------------------------
@@ -377,7 +456,26 @@ C     Heat required to melt that much ice (W m^-2)
        
 C     Get cell-totals and cell-averages
       fwProf(K) = fwProf(K) + fw_berg_cumecs
-      
+
+#ifdef ALLOW_PER_BERG_DIAG      
+C     Write berg output to text files
+      IF ( DIFFERENT_MULTIPLE(dumpFreq, myTime, deltaTClock) ) THEN 
+C      print *, 'Printing Berg Diags in cell', cellNum
+C      Print per iceberg data to text file
+        write(r4,*) melt_rate_berg, bergDepth, bergLength,
+     &          bergWidth, cellNum, myIter, k
+        write(r5,*) fw_berg_cumecs, bergDepth, bergLength,
+     &          bergWidth, cellNum, myIter, k
+        write(r6,*) hf_berg, bergDepth, bergLength,
+     &          bergWidth, cellNum, myIter, k
+        write(r7,*) rel_speed_la, bergDepth, bergLength,
+     &          bergWidth, cellNum, myIter, k
+        write(r8,*) rel_speed_sa, bergDepth, bergLength,
+     &          bergWidth, cellNum, myIter, k
+        write(r9,*) rel_speed_base, bergDepth, bergLength,
+     &          bergWidth, cellNum, myIter, k
+      ENDIF ! Stop checking if time is at dumpFreq  
+#endif /* ALLOW_PER_BERG_DIAG */      
        
       ELSE ! berg doesn't reach this far down the water column
        
@@ -392,24 +490,23 @@ C     Set variables to 0
      
      
       ENDIF ! Stop checking if berg extends to this depth
+
       ENDDO ! stop looping through water column
       ENDIF ! stop checking for melt calc 
       
       ENDDO ! Stop looping through icebergs
-      
-C C     Probably wrong place, but force update hfacC
-C        IF ( ICEBERGopenFracFile .NE. ' ' ) THEN
-C         CALL READ_REC_XYZ_RL
-C      &     (ICEBERGopenFracFile,openFraction,1,0,myThid)  
-C C             If we want to make icebergs physical barriers
-C                IF ( barrierMask(I,J,bi,bj) .GT. 0. _d 0 ) THEN
-C C              Loop through water column
-C                 DO K = 1, Nr
-C                   hFacC(I,J,K,bi,bj) = openFraction(I,J,K,bi,bj)
-C                 ENDDO
-C                ENDIF
-C        ENDIF 
-      
+
+#ifdef ALLOW_PER_BERG_DIAG      
+      IF ( DIFFERENT_MULTIPLE(dumpFreq, myTime, deltaTClock) ) THEN         
+C     Close output text files
+      close(r4)
+      close(r5)
+      close(r6)
+      close(r7)
+      close(r8)
+      close(r9)
+      ENDIF ! Stop checking if time is at dumpFreq  
+#endif /* ALLOW_PER_BERG_DIAG */ 
 
 C -----------------------------------------------------------------
 C ------------------- Calculate variables of interest ----------------------
@@ -478,32 +575,6 @@ C     Write to diagnostics
      &      0,Nr,0,1,1,myThid)
          ENDIF
 #endif /* ALLOW_DIAGNOSTICS */
-
-
-C       IF ( ICEBERGopenFracFile .NE. ' ' ) THEN
-C         CALL READ_REC_XYZ_RL
-C      &     (ICEBERGopenFracFile,openFraction,1,0,myThid)  
-C C          Partially block cells filled by icebergs
-C            DO bj = myByLo(myThid), myByHi(myThid)
-C             DO bi = myBxLo(myThid), myBxHi(myThid)
-C              DO J = 1, sNy
-C               DO I = 1, sNx
-  
-C C             If we want to make icebergs physical barriers
-C                IF ( barrierMask(I,J,bi,bj) .GT. 0. _d 0 ) THEN
-C C              Loop through water column
-C                 DO K = 1, Nr
-C                   hFacC(I,J,K,bi,bj) = openFraction(I,J,K,bi,bj)
-C                 ENDDO
-C                ENDIF
-C               ENDDO
-C              ENDDO
-C             ENDDO
-C            ENDDO
-C         CALL UPDATE_MASKS_ETC(myThid)
-C       ENDIF 
-
-
 
 #endif /* ALLOW_ICEBERG */
       RETURN

@@ -100,9 +100,6 @@ C Open and read the data.iceberg file
      &  ' ICEBERG_READPARMS: finished reading data.iceberg'
       CALL PRINT_MESSAGE(msgBuf, standardMessageUnit,
      &                   SQUEEZE_RIGHT, myThid )
-
-
-      
 C Close the open data file
       CLOSE(iUnit)
 

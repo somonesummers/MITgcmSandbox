@@ -17,6 +17,8 @@ C     *==========================================================*
 #ifdef ALLOW_ICEBERG
 C     Package-specific Options & Macros go here
 
+C     Allow per berg diagnostics via text files, increases runtime significantly
+#undef ALLOW_PER_BERG_DIAG
 
 #endif /* ALLOW_ICEBERG */
 #endif /* ICEBERG_OPTIONS_H */
