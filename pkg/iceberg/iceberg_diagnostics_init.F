@@ -64,6 +64,13 @@ C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
       CALL DIAGNOSTICS_ADDTOLIST( diagNum,
      I     diagName, diagCode, diagUnits, diagTitle, 0, myThid )
 
+      diagName  = 'BRGarea3D'
+      diagTitle = 'Iceberg surface area               '
+      diagUnits = 'm^2             '
+      diagCode  = 'SM      MR      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I     diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+
       diagName  = 'BRG_TauX'
       diagTitle = 
      &     'Iceberg bottom stress, zonal. comp., >0 ++uVel'
