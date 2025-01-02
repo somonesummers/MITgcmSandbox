@@ -33,7 +33,8 @@ hFacWeighted = True
 # dirNames = ['india_40','india_25','india_16','india_05','india_02']
 # dirNames = ['Hotel_80','Hotel_60','Hotel_40','Hotel_20','Hotel_10','Hotel_05','Hotel_02']
 # dirNames = ['juliet_001','juliet_002','juliet_005','juliet_01','juliet_02','juliet_05','juliet_10']
-dirNames = ['kilo_15','kilo_30','kilo_60','kilo_90','kilo_120']
+# dirNames = ['kilo_15','kilo_30','kilo_60','kilo_90','kilo_120']
+dirNames = ['lima11','lima12','lima13','lima21','lima22','lima23','lima31','lima32','lima33']
 
 # spds = [.4,.25,.16,.05,.02]
 spds = [.12]*len(dirNames)
@@ -97,7 +98,7 @@ for k in range(len(name)):
         data = mds.rdmds(dirName + resultFolder + "/%s"%(dynName[k]), i)
         if k == 0:
             lvl = [-0,2.5]
-            seedColor = 'orange'
+            seedColor = 'green'
             plotData = np.squeeze(data[k+2,:,:,:]) * 1 / spds[l]
         elif k == 1:
             lvl = [-0.01,0.01]
@@ -140,7 +141,7 @@ for k in range(len(name)):
             plt.plot([-1,3],[np.nanmedian(bergDepth),np.nanmedian(bergDepth)],color='red',linestyle='--',alpha=.5)
         ax.set_xlim(lvl)
         plt.plot(np.cos(z * np.pi /600)* 1, z,linewidth=1,color='gray',linestyle='--')
-        plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(plotData[:,1:-1]),np.nanmax(plotData[:,1:-1]),np.max(np.isnan(plotData[:,1:-1]))))
+        plt.xlabel(name[k] + " " + units[k])
         plt.ylabel('Depth [m]')
         plt.title("%s over melange at %.02f days" % (name[k], i/86400.0*dt))
         plt.ylim([-300, 0])

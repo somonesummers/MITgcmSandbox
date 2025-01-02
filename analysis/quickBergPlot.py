@@ -63,9 +63,9 @@ z = mds.rdmds("results/RC")
 
 
 
-dynName = ['BRGFlx', 'BRGFlx', 'BRGFlx', 'BRGFlx','BRGFlx','BRGFlx','BRGFlx']
-name = ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY','BRGfwFlxSum',"BRGhtFlxSum"]
-units = ["[m^3/s]", "[W/m^2]", "[m/d]", "[kN/m^2]","[kN/m^2]","[m^3/s]","[W/m^2]"]
+dynName = ['BRGFlx', 'BRGFlx', 'BRGFlx', 'BRGFlx','BRGFlx','BRGFlx','BRGFlx','BRGFlx','BRGFlx']
+name = ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY','BRGfwFlxSum',"BRGhtFlxSum",'BRGarea3D']
+units = ["[m^3/s]", "[W/m^2]", "[m/d]", "[kN/m^2]","[kN/m^2]","[m^3/s]","[W/m^2]",'[m^2]']
 
 zSlice = np.argmin(np.abs(z[:,0,0]- zDepth))
 print('depth is z =', z[zSlice,0,0], 'index', zSlice)
@@ -86,7 +86,7 @@ for k in range(len(name)):
             lvl = np.linspace(0,500,64)
             cm = "cmo.amp"
             # plotData = data[k, zSlice, :, :]
-            #currently thermo plotting is broken, so just converting from FWFLUX
+            #currently thermo plotting is odd, so just converting from FWFLUX
             plotData = data[0, zSlice, :, :] * 998 * 333.55E+3 / ((x[1,1] - x[1,0]) * (y[1,1] - y[0,1]))
         elif k == 2:
             lvl = np.linspace(0,.5,32)
@@ -107,8 +107,12 @@ for k in range(len(name)):
         elif k == 6:
             lvl = np.linspace(0,5000,128)
             cm = "cmo.amp"
-            #currently thermo plotting is broken, so just converting from FWFLUX
+            #currently thermo plotting is odd, so just converting from FWFLUX
             plotData = np.sum(data[0, :, :, :],0) * 998 * 333.55E+3 / ((x[1,1] - x[1,0]) * (y[1,1] - y[0,1]))
+        elif k == 7:
+            lvl = np.linspace(0,5000,128)
+            plotData = np.sum(data[5, :, :, :],0)
+            cm = "cmo.dense"
         plt.figure()
         if(usePcolor):
             cp = plt.pcolormesh(
