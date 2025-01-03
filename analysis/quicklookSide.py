@@ -80,9 +80,9 @@ if(os.path.isfile('input/bergMask.bin')):
 else:
     isBerg = False
 
-os.system('rm -f figs/side_*.png')
-os.system('rm -f figs/autoside_*.gif')
-os.system('rm -f figs/autoside_*.mov')
+# os.system('rm -f figs/side_*.png')
+# os.system('rm -f figs/autoside_*.gif')
+# os.system('rm -f figs/autoside_*.mov')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")

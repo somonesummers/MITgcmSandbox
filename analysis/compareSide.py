@@ -24,6 +24,7 @@ plotDPI = 100
 cleanPNGs = True
 showZeros = True
 
+
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
     from plotHelperLocal import *
@@ -81,9 +82,21 @@ else:
 os.system('rm -f figs/compareSide_*.png')
 os.system('rm -f figs/autoCompareSide_*.gif')
 
+interpolateGrid = False
 x = mds.rdmds("%s/XC" % folder1)
 y = mds.rdmds("%s/YC" % folder1)
 z = mds.rdmds("%s/RC" % folder1)
+
+x2 = mds.rdmds("%s/XC" % folder2)
+y2 = mds.rdmds("%s/YC" % folder2)
+z2 = np.squeeze(mds.rdmds("%s/RC" % folder2))
+
+if(np.max(x != x2)):
+    print("\tUneven lateral grid detected, attempting to interpolate onto %s grid" %folder1)
+    interpolateGrid = True
+if(np.max(z != z2)):
+    print("\tUneven vertical grid detected, attempting to interpolate onto %s grid" %folder1)
+    interpolateGrid = True
 
 if(os.path.isfile('input/bathymetry.bin')):
     topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
@@ -155,9 +168,33 @@ for k in range(len(name)):
         else:
             kk = k
         if(k == 5): #speed plot
-            data = np.sqrt(data1[2,:,:,:]**2 + data1[4,:,:,:]**2) - np.sqrt(data2[2,:,:,:]**2 + data2[4,:,:,:]**2)
+            if(interpolateGrid):
+                from scipy.interpolate import RegularGridInterpolator as rgi
+                data_interp_u = rgi((z2,y2[:,0],x2[0,:]), data2[2,:,:,:],bounds_error=False)
+                data_interp_v = rgi((z2,y2[:,0],x2[0,:]), data2[4,:,:,:],bounds_error=False)
+                points = np.array(np.meshgrid(z,y[:,0],x[0,:])).T.reshape(-1, 3)
+                data_new_u = data_interp_u(points)
+                data_new_v = data_interp_v(points)
+                shp = np.shape(data1[2,:,:,:])
+                data_new_u = data_new_u.reshape([shp[2],shp[0],shp[1]]).T
+                data_new_u = np.swapaxes(data_new_u,0,1) #kind of a mess, but this gets it back into z,y,x order
+                data_new_v = data_new_v.reshape([shp[2],shp[0],shp[1]]).T
+                data_new_v = np.swapaxes(data_new_v,0,1) #kind of a mess, but this gets it back into z,y,x order
+                data = np.sqrt(data1[2,:,:,:]**2 + data1[4,:,:,:]**2) - np.sqrt(data_new_u[:,:,:]**2 + data_new_v[:,:,:]**2)
+            else:
+                data = np.sqrt(data1[2,:,:,:]**2 + data1[4,:,:,:]**2) - np.sqrt(data2[2,:,:,:]**2 + data2[4,:,:,:]**2)
         else:
-            data = data1[kk,:,:,:] - data2[kk,:,:,:]
+            if(interpolateGrid):
+                from scipy.interpolate import RegularGridInterpolator as rgi
+                data_interp = rgi((z2,y2[:,0],x2[0,:]), data2[kk,:,:,:],bounds_error=False)
+                points = np.array(np.meshgrid(z,y[:,0],x[0,:])).T.reshape(-1, 3)
+                data_new = data_interp(points)
+                shp = np.shape(data1[kk,:,:,:])
+                data_new = data_new.reshape([shp[2],shp[0],shp[1]]).T
+                data_new = np.swapaxes(data_new,0,1) #kind of a mess, but this gets it back into z,y,x order
+                data = data1[kk,:,:,:] - data_new[:,:,:]
+            else:
+                data = data1[kk,:,:,:] - data2[kk,:,:,:]
         if(usePcolor):
             cp = plt.pcolormesh(
                 np.squeeze(x[ySlice,:]),
