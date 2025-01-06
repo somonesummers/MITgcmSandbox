@@ -102,7 +102,7 @@ for k in range(len(name)):
             cm = "xkcd:violet"
             plotData = np.squeeze(data[k,:,:,xSlice]) 
         elif k == 5:
-            lvl = [0,1e-3]
+            lvl = [0,1e-4]
             cm = "xkcd:olive green"
             salt = np.squeeze(data[1,:,:,xSlice])
             if(i == startStep): #only calc pressure once

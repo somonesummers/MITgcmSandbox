@@ -34,9 +34,12 @@ hFacWeighted = True
 # dirNames = ['Hotel_80','Hotel_60','Hotel_40','Hotel_20','Hotel_10','Hotel_05','Hotel_02']
 # dirNames = ['juliet_001','juliet_002','juliet_005','juliet_01','juliet_02','juliet_05','juliet_10']
 # dirNames = ['kilo_15','kilo_30','kilo_60','kilo_90','kilo_120']
-dirNames = ['lima11','lima12','lima13','lima21','lima22','lima23','lima31','lima32','lima33']
+# dirNames = ['lima11','lima12','lima13','lima21','lima22','lima23','lima31','lima32','lima33']
+# dirNames = ['november_02','november_05','november_10','november_20','november_40']
+dirNames = ['quebec_02','quebec_05','quebec_10','quebec_20','quebec_40']
+# dirNames = ['oscar_02','oscar_05','oscar_16','oscar_25','oscar_40']
 
-# spds = [.4,.25,.16,.05,.02]
+# spds = [.02,.05,.16,.25,.40]
 spds = [.12]*len(dirNames)
 
 if(hFacWeighted):
@@ -86,7 +89,7 @@ for k in range(len(name)):
 
         dirName = dirNames[l]
 
-        #Comparing Diff resolutions
+        #Comparing Diff Runs
         x = mds.rdmds(dirName + resultFolder +"/XC")
         y = mds.rdmds(dirName + resultFolder + "/YC")
         z = np.squeeze(mds.rdmds(dirName + resultFolder+ "/RC"))
@@ -111,8 +114,8 @@ for k in range(len(name)):
         
         n = len(dirNames) - 1 
         
-        color1 = 'xkcd:dark ' + seedColor
-        color2 = 'xkcd:light ' + seedColor
+        color1 = 'xkcd:light ' + seedColor
+        color2 = 'xkcd:dark ' + seedColor
         rlin = np.linspace(mcolors.to_rgb(color1)[0],mcolors.to_rgb(color2)[0],n)
         glin = np.linspace(mcolors.to_rgb(color1)[1],mcolors.to_rgb(color2)[1],n)
         blin = np.linspace(mcolors.to_rgb(color1)[2],mcolors.to_rgb(color2)[2],n)
@@ -123,11 +126,11 @@ for k in range(len(name)):
         #         plt.plot(plotData[:,j+1,iceStart + ii],z,linewidth=.5,alpha=.1,color=cm)
         if(hFacWeighted):
             hFacC = mds.rdmds(dirName + resultFolder + "/hFacC") #must weight by ocean fraction
-        if(l != n ):
+        if(l != 0 ):
             if(hFacWeighted):
-                plt.plot(np.average(plotData[:,1:-1,iceStart:iceEnd], weights=hFacC[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=dirName,color=colors[:,l])
+                plt.plot(np.average(plotData[:,1:-1,iceStart:iceEnd], weights=hFacC[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=dirName,color=colors[:,l-1])
             else:
-                plt.plot(np.mean(plotData[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=dirName,color=colors[:,l])
+                plt.plot(np.mean(plotData[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=dirName,color=colors[:,l-1])
         else:
             if(hFacWeighted):
                 plt.plot(np.average(plotData[:,1:-1,iceStart:iceEnd], weights=hFacC[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=dirName,color='xkcd:light gray')

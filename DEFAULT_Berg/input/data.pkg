@@ -5,4 +5,5 @@
  useDiagnostics=.TRUE.,
  useICEPLUME=.TRUE.,
  useOBCS=.TRUE.,
+ useKL10=.TRUE.,
  &

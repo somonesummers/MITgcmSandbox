@@ -64,7 +64,8 @@ def setUpPrint(msg):
 email = 'psummers8@gatech.edu'
 # set high level run configurations
 
-briefSummaryOfExp = """Comparing our results to that of Hughes 2022 around form drag of bergs in a wind tunnel like set up"""
+briefSummaryOfExp = """Comparing our results to that of Hughes 2022 around form drag of bergs in a wind tunnel like set up.
+quebec is N = 5.2e-3 changing lambda values, but now with variable dz"""
 
 
 setUpPrint('====== Welcome to the mélange building script =====')
@@ -76,7 +77,7 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'kilo_15'
+run_config['run_name'] = 'quebec_02'
 run_config['ndays'] = 2.0 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -85,7 +86,7 @@ run_config['Lx_m'] = 30000 # domain size in x (m)
 run_config['Ly_m'] = 2400 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 15 # num of z-grid points
+grid_params['Nr'] = 50 # num of z-grid points
 
 # Offshore current =========================
 oscStrength = 0.12 #[m/s] peak strength of sin forcing current
@@ -93,7 +94,7 @@ oscStrength = 0.12 #[m/s] peak strength of sin forcing current
 # Iceberg configuration =========================
 iceBergDepth = 140 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 2500 # [meters] of extent of ice
-iceCoverage = 20 # % of ice cover in melange, stay under 90% ideally
+iceCoverage = 2 # % of ice cover in melange, stay under 90% ideally
 doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 #========================================================================================
@@ -235,7 +236,13 @@ grid_params['delY'] = (domain_params['Ly']/grid_params['Ny'])*np.ones(grid_param
 # zz1 = np.append([0], np.cumsum(dz))
 # zz = -(zz1[:-1] + np.diff(zz1)/2) # layer midpoints
 
-dz = domain_params['H']/grid_params['Nr']*np.ones(grid_params['Nr']);
+# dz = domain_params['H']/grid_params['Nr']*np.ones(grid_params['Nr']);
+
+dz_tmp = np.linspace(1,7,grid_params['Nr'])
+dz = dz_tmp/np.sum(dz_tmp)*domain_params['H'] 
+sum_z = np.cumsum(dz)
+print("dz: \n",dz)
+print("z: \n",sum_z)
 
 grid_params['delZ'] = dz
 grid_params['hFacMinDr'] = dz.min()
@@ -587,8 +594,8 @@ V_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 W_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 
 z_tmp =  np.asarray([  0,  600]); #must be increasing, so do depth as positive, see negs later for z[:]
-t_tmp =  np.asarray([  0,    2]); #linear for both T and S
-s_tmp =  np.asarray([ 33,   35]);
+t_tmp =  np.asarray([  2,    2]); #linear for both T and S
+s_tmp =  np.asarray([ 32.85,   35]);
 t_int = interpolate.PchipInterpolator(z_tmp, t_tmp)
 s_int = interpolate.PchipInterpolator(z_tmp, s_tmp)
 for j in np.arange(0,grid_params['Ny']):
@@ -834,7 +841,6 @@ setUpPrint('Max fill is: %.2f%%' % (np.nanmax(icebergs_area_per_cell/(deltaX*del
 openFrac = np.zeros([nz,ny,nx])
 SA = np.zeros([nz,ny,nx])
 SA[:,:,:] = np.nan
-cellVolume = deltaX*deltaY*deltaZ
 
 #This loop knows where all bergs are already, different from searching for all bergs across entire grid
 for i in range(bergMaski):
@@ -845,10 +851,11 @@ for i in range(bergMaski):
         widths = icebergs_widths[i,icebergs_widths[i,:] > 0] #return only non-zeros
         depths = icebergs_depths[i,icebergs_depths[i,:] > 0] #return only non-zeros
         for k in range(nz):
-            d_bot = k*deltaZ + deltaZ #bottom of depth bin
-            d_top = k*deltaZ
-            volume1 = deltaZ * lengths[depths > d_bot] * widths[depths > d_bot]
-            SA1 = deltaZ*2*(lengths[depths > d_bot] + widths[depths > d_bot])
+            cellVolume = deltaX*deltaY*dz[k]
+            d_bot = sum_z[k] #bottom of depth bin
+            d_top = sum_z[k] - dz[k]
+            volume1 = dz[k] * lengths[depths > d_bot] * widths[depths > d_bot]
+            SA1 = dz[k]*2*(lengths[depths > d_bot] + widths[depths > d_bot])
             partialFill = (depths < d_bot) & (depths > d_top)
             #partial fill
             volume2 = (depths[partialFill] - d_top) * lengths[partialFill] * widths[partialFill]
