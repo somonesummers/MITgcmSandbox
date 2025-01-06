@@ -36,7 +36,7 @@ else:
     print('no defaults found')
 
 if(args.yCrossSection != None):
-    print('** Manual zDepth detected **')
+    print('** Manual ySlice detected **')
     yCrossSection = args.yCrossSection
 #Overwrite local settings here if desired
 # usePcolor = True

@@ -76,7 +76,7 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'mike'
+run_config['run_name'] = 'mike_varDz'
 run_config['ndays'] = 7.0 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -237,7 +237,12 @@ grid_params['delY'] = (domain_params['Ly']/grid_params['Ny'])*np.ones(grid_param
 # zz1 = np.append([0], np.cumsum(dz))
 # zz = -(zz1[:-1] + np.diff(zz1)/2) # layer midpoints
 
-dz = domain_params['H']/grid_params['Nr']*np.ones(grid_params['Nr']);
+# dz = np.ones(nz)*deltaZ
+dz_tmp = np.linspace(1,5,grid_params['Nr'])
+dz = dz_tmp/np.sum(dz_tmp)*domain_params['H'] 
+sum_z = np.cumsum(dz)
+print("dz: \n",dz)
+print("z: \n",sum_z)
 
 grid_params['delZ'] = dz
 grid_params['hFacMinDr'] = dz.min()
@@ -698,7 +703,6 @@ nz = grid_params['Nr']
 ny = grid_params['Ny']
 nx = grid_params['Nx']
 
-deltaZ = dz[0]
 deltaY = run_config['horiz_res_m']
 deltaX = run_config['horiz_res_m']
 
@@ -900,7 +904,6 @@ setUpPrint('Max fill is: %.2f%%' % (np.nanmax(icebergs_area_per_cell/(deltaX*del
 openFrac = np.zeros([nz,ny,nx])
 SA = np.zeros([nz,ny,nx])
 SA[:,:,:] = np.nan
-cellVolume = deltaX*deltaY*deltaZ
 
 #This loop knows where all bergs are already, different from searching for all bergs across entire grid
 for i in range(bergMaski):
@@ -911,10 +914,11 @@ for i in range(bergMaski):
         widths = icebergs_widths[i,icebergs_widths[i,:] > 0] #return only non-zeros
         depths = icebergs_depths[i,icebergs_depths[i,:] > 0] #return only non-zeros
         for k in range(nz):
-            d_bot = k*deltaZ + deltaZ #bottom of depth bin
-            d_top = k*deltaZ
-            volume1 = deltaZ * lengths[depths > d_bot] * widths[depths > d_bot]
-            SA1 = deltaZ*2*(lengths[depths > d_bot] + widths[depths > d_bot])
+            cellVolume = deltaX*deltaY*dz[k]
+            d_bot = sum_z[k] #bottom of depth bin
+            d_top = sum_z[k] - dz[k]
+            volume1 = dz[k] * lengths[depths > d_bot] * widths[depths > d_bot]
+            SA1 = dz[k]*2*(lengths[depths > d_bot] + widths[depths > d_bot])
             partialFill = (depths < d_bot) & (depths > d_top)
             #partial fill
             volume2 = (depths[partialFill] - d_top) * lengths[partialFill] * widths[partialFill]
@@ -933,10 +937,10 @@ for i in range(bergMaski):
 fig = plt.figure()
 plt.subplot(2,2,1)
 for i in range(bergMaski):
-    plt.plot(openFrac[:,bergDict[i+1][0],bergDict[i+1][1]],-np.cumsum(dz),alpha=.5,color='xkcd:gray',linewidth=.5)
-plt.plot(np.mean(openFrac[:,bergMask==1],1),-np.cumsum(dz),alpha=1,color='xkcd:black',linewidth=1,linestyle='--',label='Average Bergs')
+    plt.plot(openFrac[:,bergDict[i+1][0],bergDict[i+1][1]],-sum_z,alpha=.5,color='xkcd:gray',linewidth=.5)
+plt.plot(np.mean(openFrac[:,bergMask==1],1),-sum_z,alpha=1,color='xkcd:black',linewidth=1,linestyle='--',label='Average Bergs')
 plt.plot([0,1],[-maxBergDepth,-maxBergDepth],color = 'xkcd:red',linestyle=':', label='Target Max Depth')
-plt.plot([1-np.max(bergConc)/100,1-np.max(bergConc)/100],[-nz*deltaZ,0],color = 'xkcd:gray',linestyle=':',label='Target Max Berg Conc')
+plt.plot([1-np.max(bergConc)/100,1-np.max(bergConc)/100],[-domain_params['H'],0],color = 'xkcd:gray',linestyle=':',label='Target Max Berg Conc')
 plt.xlabel('Open Fraction of Cells')
 plt.ylabel('Depth [m]')
 # plt.legend()  #not quite room so off for now
@@ -1092,7 +1096,7 @@ if(makeDirs):
         os.remove(run_config['run_dir']+'/input/setupReport.txt')
         setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')
     shutil.move('setupReport.txt', run_config['run_dir']+'/input')
-    shutil.copy('windTunnel.py', run_config['run_dir']+'/input/buildScript.py')
+    shutil.copy('HughesMelt.py', run_config['run_dir']+'/input/buildScript.py')
     replaceAll(run_config['run_dir']+'/input/buildScript.py','makeDirs = True', 'makeDirs = False') 
     rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
     setupNotes.close()

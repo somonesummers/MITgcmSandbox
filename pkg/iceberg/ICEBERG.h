@@ -54,7 +54,7 @@ C     brg_c_w                         :: Heat capacity of water (def: 3974 J kg^
 C     brg_SelectDrag                  :: select how drag is computed from velocity (def: 3)
 C                                        (1:n = 2, 2:n = 2, 3: n = 1 + .75*hFacC)
 C     brg_SelectFill                  :: select how frontal area scales with hFacC (def: 3)
-C                                        (1:linear, 2:quad, 4:quartic)
+C                                        (1:linear, 2:quad, 3:quartic)
 C     brg_DragForm                    :: form drag across iceberg (default = 1.0)
 
 C=============================================================================

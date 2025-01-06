@@ -134,7 +134,10 @@ for k in range(len(name)):
             )
         cbar = plt.colorbar(cp)
         cbar.set_label(units[k])
-        plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(plotData),np.nanmax(plotData),np.max(np.isnan(plotData))))
+        if(k == 6 or k == 5):
+            plt.xlabel('Along Fjord [m] %.3f %.3f Total: %i' %(np.nanmin(plotData),np.nanmax(plotData),np.sum(plotData)))
+        else:
+            plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(plotData),np.nanmax(plotData),np.sum(np.isnan(plotData))))
         plt.ylabel('Depth [m]')
         plt.title("%s depth %f at %.02f days" % (name[k], z[zSlice,0,0] ,i/86400.0*dt))
         j = i/sizeStep + startStep

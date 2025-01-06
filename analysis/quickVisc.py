@@ -130,28 +130,27 @@ print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
 dynName = ['viscDiag', 'viscDiag']
 name = ['VISCAHZ','VISCAHD']
-cbarLabel = ["[m^2/s]", "[m^2/s]"]
+cbarLabel = ["[Log10(m^2/s)]", "[Log10(m^2/s)]"]
 
 for k in range(len(name)):
     print("\t" + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
-        if(showQuiver):
-            dataQuiv = mds.rdmds("results/dynDiag", i)    
-        data = mds.rdmds("results/%s"%(dynName[k]), i)  
+        dataQuiv = mds.rdmds("results/dynDiag", i)    
+        data = mds.rdmds("results/%s"%(dynName[k]), i)
         data[data == 0] = np.nan  
         data = np.log10(data)
         
         if k == 0:
-            lvl = np.linspace(-5,2,128)
+            lvl = np.linspace(-4,2,12)
             cm = 'cmo.turbid'
         elif k == 1:
-            lvl = np.linspace(-5,2,128)
+            lvl = np.linspace(-4,2,12)
             cm = 'cmo.turbid'
         elif k == 2:
-            lvl = np.linspace(-5,2,128)
+            lvl = np.linspace(-4,2,12)
             cm = 'cmo.turbid'
         elif k == 3:
-            lvl = np.linspace(-5,2,128)
+            lvl = np.linspace(-4,2,12)
             cm = 'cmo.turbid'
         kk = k  
         if(usePcolor):
@@ -188,10 +187,10 @@ for k in range(len(name)):
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
         if(showDensity):
-            salt = np.squeeze(data[1,:,ySlice,:])
+            salt = np.squeeze(dataQuiv[1,:,ySlice,:])
             if(i == startStep): #only calc pressure once
                 pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
-            CT = gsw.CT_from_t(salt, data[0,:,ySlice,:], pressure)
+            CT = gsw.CT_from_t(salt, dataQuiv[0,:,ySlice,:], pressure)
             density = gsw.rho(salt, CT, pressure) - 1000 #in-stu density less 1000
             densityLevels = np.linspace(25,30,26)
             cc = plt.contour(
@@ -204,18 +203,6 @@ for k in range(len(name)):
                 alpha=0.5
             )
             plt.clabel(cc, inline=3, fontsize=8)
-        if(showZeros):
-            if( k == 2 or k == 6 or k == 7):
-                cc = plt.contour(
-                    np.squeeze(x[ySlice,:]),
-                    np.squeeze(z),
-                    np.squeeze(data[kk, :, ySlice, :]),
-                    [0],
-                    colors='gray',
-                    linewidths=0.5,
-                    alpha=0.5
-                )
-                plt.clabel(cc, inline=3, fontsize=8)
         if(showQuiver):
             u = np.squeeze(dataQuiv[2, :, ySlice, :])
             w = np.squeeze(dataQuiv[3, :, ySlice, :])
