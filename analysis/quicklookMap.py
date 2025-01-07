@@ -211,7 +211,7 @@ for k in range(len(name)):
             cp2 = plt.contourf(np.squeeze(x),
                 np.squeeze(y),
                 np.squeeze(openFrac[zSlice, :, :]),
-                [.1,.5,.9],
+                [.4,.6,.8,.9,.95],
                 extend="min",
                 alpha=.1,
                 cmap='cmo.gray')

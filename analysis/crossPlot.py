@@ -16,6 +16,13 @@ plotDPI = 100
 cleanPNGs = True
 usePcolor = False
 makeMovie = False
+brightBergs = False
+
+if(brightBergs):
+    bergAlpha = 0.25
+else:
+    bergAlpha = 0.1
+
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
     from plotHelperLocal import *
@@ -173,9 +180,9 @@ for k in range(len(name)):
                 np.squeeze(openFrac[:, ySlice, :]),
                 XX,
                 ZZ,
-                [.1,.5,.9],
+                [.4,.6,.8,.9,.95],
                 extend="min",
-                alpha=.1,
+                alpha=bergAlpha,
                 cmap='cmo.gray',
                 zdir='x',offset=y[ySlice,0],zorder=2)
 
@@ -197,9 +204,9 @@ for k in range(len(name)):
                 YY[:,0:ySlice+1],
                 np.squeeze(openFrac[:, 0:ySlice+1, xSlice]),
                 ZZ[:,0:ySlice+1],
-                [.1,.5,.9],
+                [.4,.6,.8,.9,.95],
                 extend="min",
-                alpha=.1,
+                alpha=bergAlpha,
                 cmap='cmo.gray',
                 zdir='y',offset=x[0,xSlice],zorder=3)
        
@@ -220,9 +227,9 @@ for k in range(len(name)):
                 YY[:,ySlice:],
                 np.squeeze(openFrac[:, ySlice:, xSlice]),
                 ZZ[:,ySlice:],
-                [.1,.5,.9],
+                [.4,.6,.8,.9,.95],
                 extend="min",
-                alpha=.1,
+                alpha=bergAlpha,
                 cmap='cmo.gray',
                 zdir='y',offset=x[0,xSlice],zorder=0)
         
@@ -284,9 +291,9 @@ for k in range(len(name)):
                 np.squeeze(y),
                 np.squeeze(x),
                 np.squeeze(openFrac[zSlice, :, :]),
-                [.1,.5,.9],
+                [.05,.1,.2,.4,.8],
                 extend="min",
-                alpha=.1,
+                alpha=bergAlpha,
                 cmap='cmo.gray',
                 zdir='z',offset=z.min(),zorder=-1)
 
@@ -305,18 +312,19 @@ for k in range(len(name)):
         ax.set_xlabel('Width [km]')
         ax.set_ylabel('Along [km] %.3f %.3f nan: %i' %(np.nanmin(data[kk,:,:,:]),np.nanmax(data[kk,:,:,:]),np.max(np.isnan(data[kk, :, :, :]))))
         ax.set_zlabel('Depth [m]')
+        
         ax.axes.set_xlim3d(left=y.max(), right=y.min())
         ax.axes.set_ylim3d(bottom=x.min(), top=x.max()) 
         ax.axes.set_zlim3d(bottom=z.min(), top=z.max()) 
-
-        ax.set_box_aspect([1,2,1])
+        ax.set_box_aspect([2,4,1])
+        ax.view_init(elev=25., azim=-40)
         j = i/sizeStep
 
         str = "figs/cross_%s%05i.png" % (name[k],j)
         plt.savefig(str, format='png', dpi=plotDPI)
-        plt.close()
         # plt.show()
-
+        plt.close()
+        
     os.system('magick -delay %f figs/cross_%s*.png -colors 256 -depth 256 figs/autoCross_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
     if(makeMovie):
         os.system('ffmpeg -r %f -i figs/cross_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/autoCross_%s.mp4' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))

@@ -219,7 +219,7 @@ for k in range(len(name)):
                 np.squeeze(y[:,xSlice]),
                 np.squeeze(z),
                 np.squeeze(openFrac[:, :, xSlice]),
-                [.1,.5,.9],
+                [.4,.6,.8,.9,.95],
                 extend="min",
                 alpha=.1,
                 cmap='cmo.gray')
