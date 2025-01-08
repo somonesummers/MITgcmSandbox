@@ -59,7 +59,7 @@ make -sj 4
 
 if [ "$MACHINE" == "Mac" ];
 then
-   afplay /System/Library/Sounds/Funk.aiff
+   afplay /System/Library/Sounds/Funk.aiff &
 fi 
 
 echo "(⌐■_■) Done building"

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
-TIME="$(date +"%H%M%S")" 
+TIME="$(date +"%y%m%d_%H%M%S")" 
+TIMENICE="$(date +"%H:%M:%S")" 
 unameOut="$(uname -s)"
 case "${unameOut}" in
     Linux*)     MACHINE="Linux";;
@@ -15,6 +16,8 @@ ln -s ../input/* .
 cp ../build/mitgcmuv .
 
 echo "Ready to run -=三(ง ˙o˙)ว"
+
+echo "Running from  $(pwd) at $TIMENICE"
 if [ "$MACHINE" == "Mac" ];
 then
 	time ./mitgcmuv > ../Report$TIME.txt
@@ -28,9 +31,10 @@ then
    	for NAME in "$@"
 		do
 			python $NAME
-		done
-	afplay /System/Library/Sounds/Funk.aiff
+		done	
+	afplay /System/Library/Sounds/Funk.aiff &
 else
 	./mitgcmuv
 fi
+
 echo "Done running  ദി(˵•̀ᴗ-˵)✧"
