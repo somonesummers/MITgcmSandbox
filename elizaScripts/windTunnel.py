@@ -65,7 +65,7 @@ email = 'psummers8@gatech.edu'
 # set high level run configurations
 
 briefSummaryOfExp = """Comparing our results to that of Hughes 2022 around form drag of bergs in a wind tunnel like set up.
-quebec is N = 5.2e-3 changing lambda values, but now with variable dz"""
+sierra is sweep of horz resolution"""
 
 
 setUpPrint('====== Welcome to the mélange building script =====')
@@ -77,13 +77,13 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'quebec_02'
+run_config['run_name'] = 'sierra_200'
 run_config['ndays'] = 2.0 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
 run_config['Lx_m'] = 30000 # domain size in x (m)
-run_config['Ly_m'] = 2400 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
+run_config['Ly_m'] = 2000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 grid_params['Nr'] = 50 # num of z-grid points
@@ -94,7 +94,7 @@ oscStrength = 0.12 #[m/s] peak strength of sin forcing current
 # Iceberg configuration =========================
 iceBergDepth = 140 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 2500 # [meters] of extent of ice
-iceCoverage = 2 # % of ice cover in melange, stay under 90% ideally
+iceCoverage = 20 # % of ice cover in melange, stay under 90% ideally
 doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 #========================================================================================
@@ -571,7 +571,7 @@ d[-1, :] = 0
 
 
 plt.figure
-plt.plot(x[5,:],d[5,:])
+plt.plot(x[1,:],d[1,:])
 plt.pcolormesh(x,y,d)
 plt.colorbar()
 if(writeFiles):

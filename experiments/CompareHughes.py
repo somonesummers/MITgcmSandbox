@@ -7,6 +7,7 @@ import sys
 import cmocean
 import fileinput
 import gsw
+import netCDF4
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
@@ -28,6 +29,7 @@ print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
 resultFolder = '/results'
 hFacWeighted = True
+compareHughes = True
 # dirNames = ['Hughes_smag_LR_30','Hughes_smag_30','Hughes_smag_LR_50','Hughes_smag_50','Hughes_smag_100']
 # dirNames = ['Hotel_40','Hotel_20','Hotel_10','Hotel_05','Hotel_02']
 # dirNames = ['india_40','india_25','india_16','india_05','india_02']
@@ -36,9 +38,10 @@ hFacWeighted = True
 # dirNames = ['kilo_15','kilo_30','kilo_60','kilo_90','kilo_120']
 # dirNames = ['lima11','lima12','lima13','lima21','lima22','lima23','lima31','lima32','lima33']
 # dirNames = ['november_02','november_05','november_10','november_20','november_40']
-dirNames = ['quebec_02','quebec_05','quebec_10','quebec_20','quebec_40']
+# dirNames = ['quebec_02','quebec_05','quebec_10','quebec_20','quebec_40']
 # dirNames = ['oscar_02','oscar_05','oscar_16','oscar_25','oscar_40']
-
+# dirNames = ['romeo_02','romeo_05','romeo_10','romeo_20']
+dirNames = ['sierra_2000','sierra_1000','sierra_0500','sierra_0200','sierra_0100']
 # spds = [.02,.05,.16,.25,.40]
 spds = [.12]*len(dirNames)
 
@@ -142,16 +145,37 @@ for k in range(len(name)):
             bergDepth[bergDepth == 0] = np.nan #dont avg ones that don't exist
             plt.plot([-1,3],[np.nanpercentile(bergDepth,10),np.nanpercentile(bergDepth,10)],color='red',linestyle='--',alpha=.5)
             plt.plot([-1,3],[np.nanmedian(bergDepth),np.nanmedian(bergDepth)],color='red',linestyle='--',alpha=.5)
-        ax.set_xlim(lvl)
-        plt.plot(np.cos(z * np.pi /600)* 1, z,linewidth=1,color='gray',linestyle='--')
-        plt.xlabel(name[k] + " " + units[k])
-        plt.ylabel('Depth [m]')
-        plt.title("%s over melange at %.02f days" % (name[k], i/86400.0*dt))
-        plt.ylim([-300, 0])
-        plt.grid(alpha=.5)
-        j = i/sizeStep + startStep
-        # plt.show()
+    # Compare against Hughes Directly
+    if(compareHughes):
+        # pack = ['020','050','100','200','400']
+        pack = ['200']
+        spds=[.12]
+        # pack = ['020','050','120','250','400']
+        # spds = [.02,.05,.12,.25,.40]
+        for l in range(len(spds)):
+            nc = netCDF4.Dataset('/Users/psummers8/Documents/MITgcm/MITgcm/Sandbox_Berg/6555200/run.lambda_%s.U_120.nc' % pack[l])
+            # nc = netCDF4.Dataset('/Users/psummers8/Documents/MITgcm/MITgcm/Sandbox_Berg/6555200/run.lambda_200.U_%s.nc' % pack[l])
+            Z = nc['Z'][:]
+            plotData = nc['U'][:,1:-1,100:350]/spds[l]
+            plotData[plotData == 0] = np.nan
+            if(l == 0):
+                plt.plot(np.nanmean(plotData,axis=(1,2)),Z,linewidth=2,color='xkcd:light gray',linestyle='--',alpha=.5)
+            else:
+                plt.plot(np.nanmean(plotData,axis=(1,2)),Z,linewidth=2,color=colors[:,l-1],linestyle='--',alpha=.5)
+
+    ax.set_xlim(lvl)
+    plt.plot(np.cos(z * np.pi /600)* 1, z,linewidth=1,color='gray',linestyle='--')
+    plt.xlabel(name[k] + " " + units[k])
+    plt.ylabel('Depth [m]')
+    plt.title("%s over melange at %.02f days" % (name[k], i/86400.0*dt))
+    plt.ylim([-300, 0])
+    plt.grid(alpha=.5)
+    j = i/sizeStep + startStep
+    # plt.show()
     plt.legend()
+    
+   
+
     # plt.show()    
     str = "figs/depth%s%05i.png" % (name[k],j)
     plt.savefig(str, format='png',dpi=plotDPI)
