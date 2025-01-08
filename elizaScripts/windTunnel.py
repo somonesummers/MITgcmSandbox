@@ -65,11 +65,12 @@ email = 'psummers8@gatech.edu'
 # set high level run configurations
 
 briefSummaryOfExp = """Comparing our results to that of Hughes 2022 around form drag of bergs in a wind tunnel like set up.
-sierra is sweep of horz resolution"""
+Tango is sweep of horz resolution with uniform bergs"""
 
 
 setUpPrint('====== Welcome to the mélange building script =====')
 setUpPrint(briefSummaryOfExp)
+input("Confirm above is accurate before continuing...")
 setUpPrint('\tMaking experiment to compare mélange realizations')
 #========================================================================================
 #main values to imput 
@@ -77,13 +78,13 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'sierra_200'
+run_config['run_name'] = 'tango'
 run_config['ndays'] = 2.0 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
 run_config['Lx_m'] = 30000 # domain size in x (m)
-run_config['Ly_m'] = 2000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
+run_config['Ly_m'] = 2400 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 grid_params['Nr'] = 50 # num of z-grid points
@@ -97,6 +98,7 @@ iceExtent = 2500 # [meters] of extent of ice
 iceCoverage = 20 # % of ice cover in melange, stay under 90% ideally
 doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
+uniformBergs = True #lets us have uniform bergs or random powerlaw bergs is default
 #========================================================================================
 # The rest of this should take care of it self mostly
 
@@ -709,83 +711,114 @@ bergTopArea = 0
 areaResidual = 1
 # Generate the Inverse Power Law cumulative distribution function
 # over the range minBergWidth-maxBergWidth with a slope of alpha.
-setUpPrint('Making bergs, this can take a few loops...')
-loop_count = 1
 
-np.random.seed(2)
-setUpPrint('random seed set, not really random anymore')
+if(uniformBergs):
+    setUpPrint('Making bergs to exact size')
+    
+    bergMaski = 0  #Bad name, but this is the count of cells that will recieve bergs
+    bergDict = {}
+    
+    for j in range(ny):
+        for i in range(nx):
+            if(bergMask[j,i] == 1):
+                # print('i,j, bergmask',i,j,bergMask[j,i])
+                bergMaski = 1 + bergMaski #Needs to start at 1, as non-bergs will be 0
+                bergMaskNums[j,i] = bergMaski #Assign Mask Nums, not random as we'll randomly place bergs in cells
+                bergDict[bergMaski] = [j,i] #This lets us do 1-D loops for the whole grid
 
-while(np.abs(areaResidual) > .005 ): # Create random power dist of bergs, ensure correct surface area
-    numberOfBergs = round(numberOfBergs * (1 + areaResidual))  
-    setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
-    x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
-    x_depth = np.arange(minBergDepth, maxBergDepth, (maxBergDepth-minBergDepth)/(numberOfBergs*1e2))
-    inversePowerLawPDF_width = ((alpha-1) / minBergWidth) * (x_width/minBergWidth) ** (-alpha)
-    inversePowerLawPDF_depth = ((alpha-1) / minBergDepth) * (x_depth/minBergDepth) ** (-alpha)
-        # Get the CDF numerically
-    inversePowerLawCDF_width = np.cumsum(inversePowerLawPDF_width)
-    inversePowerLawCDF_depth = np.cumsum(inversePowerLawPDF_depth)
-        # Normalize
-    inversePowerLawCDF_width = inversePowerLawCDF_width / inversePowerLawCDF_width[-1]
-    inversePowerLawCDF_depth = inversePowerLawCDF_depth / inversePowerLawCDF_depth[-1]
+    # bergsCell = 25
+    # numberOfBergs = bergMaski * bergsCell
+    
+    numberOfBergs = 500
+    import math
+    bergsCell = math.floor(numberOfBergs/bergMaski)
+    numberOfBergs = bergsCell*bergMaski
+    setUpPrint('%i cells with bergs' % bergMaski)
+    np.random.seed(2)
+    # make bergs, all identical
+    bergVariation = 10 #[m]
+    sorted_depth = np.ones(numberOfBergs) * (np.random.normal(maxBergDepth - bergVariation,bergVariation,numberOfBergs))#  STD + 1 is 'max depth'
+    sorted_depth[sorted_depth < minBergDepth] = minBergDepth + .1 # Code doesn't like clean numbers (ie berg on perfect cell bottom), disallow small/neg bergs 
+    sorted_width = np.ones(numberOfBergs) * run_config['horiz_res_m'] * np.sqrt(iceCoverage/100/bergsCell) # cannot be 100% full
+    sorted_length = np.ones(numberOfBergs) * run_config['horiz_res_m'] * np.sqrt(iceCoverage/100/bergsCell) # cannot be 100% full
+else:
+    setUpPrint('Making bergs, this can take a few loops...')
+    loop_count = 1
+
+    np.random.seed(2)
+    setUpPrint('random seed set, not really random anymore')
+
+    while(np.abs(areaResidual) > .005 ): # Create random power dist of bergs, ensure correct surface area
+        numberOfBergs = round(numberOfBergs * (1 + areaResidual))  
+        setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
+        x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
+        x_depth = np.arange(minBergDepth, maxBergDepth, (maxBergDepth-minBergDepth)/(numberOfBergs*1e2))
+        inversePowerLawPDF_width = ((alpha-1) / minBergWidth) * (x_width/minBergWidth) ** (-alpha)
+        inversePowerLawPDF_depth = ((alpha-1) / minBergDepth) * (x_depth/minBergDepth) ** (-alpha)
+            # Get the CDF numerically
+        inversePowerLawCDF_width = np.cumsum(inversePowerLawPDF_width)
+        inversePowerLawCDF_depth = np.cumsum(inversePowerLawPDF_depth)
+            # Normalize
+        inversePowerLawCDF_width = inversePowerLawCDF_width / inversePowerLawCDF_width[-1]
+        inversePowerLawCDF_depth = inversePowerLawCDF_depth / inversePowerLawCDF_depth[-1]
+            
+            # Generate number_of_bergs uniformly distributed random numbers.
+        uniformlyDistributedRandomNumbers = np.random.uniform(0,1,numberOfBergs)
         
-        # Generate number_of_bergs uniformly distributed random numbers.
-    uniformlyDistributedRandomNumbers = np.random.uniform(0,1,numberOfBergs)
-    
-    inversePowerLawDistNumbers_width = np.zeros(uniformlyDistributedRandomNumbers.size);
-    inversePowerLawDistNumbers_depth = np.zeros(uniformlyDistributedRandomNumbers.size);
-    nearestIndex_width = [0] * uniformlyDistributedRandomNumbers.size
-    nearestIndex_depth = [0] * uniformlyDistributedRandomNumbers.size
-    
-    # for i in range(uniformlyDistributedRandomNumbers.size):  #this is pretty slow 
-    #     nearestIndex_width[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_width).argmin();
-    #     nearestIndex_depth[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_depth).argmin();
-    # This works by leaveraging that inversPowerLaw is sorted
-    nearestIndex_width = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_width)
-    nearestIndex_depth = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_depth)
+        inversePowerLawDistNumbers_width = np.zeros(uniformlyDistributedRandomNumbers.size);
+        inversePowerLawDistNumbers_depth = np.zeros(uniformlyDistributedRandomNumbers.size);
+        nearestIndex_width = [0] * uniformlyDistributedRandomNumbers.size
+        nearestIndex_depth = [0] * uniformlyDistributedRandomNumbers.size
+        
+        # for i in range(uniformlyDistributedRandomNumbers.size):  #this is pretty slow 
+        #     nearestIndex_width[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_width).argmin();
+        #     nearestIndex_depth[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_depth).argmin();
+        # This works by leaveraging that inversPowerLaw is sorted
+        nearestIndex_width = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_width)
+        nearestIndex_depth = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_depth)
 
 
-    inversePowerLawDistNumbers_width = x_width[nearestIndex_width];
-    inversePowerLawDistNumbers_length = inversePowerLawDistNumbers_width/1.62 # Widths are bigger 
-    tooWide = np.count_nonzero(inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold))  #disallow completely full cells
-    tooLong = np.count_nonzero(inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold))
-    inversePowerLawDistNumbers_width[inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max width is grid cell (assumed square)
-    inversePowerLawDistNumbers_length[inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max length is grid cell (assumed square)
-    if(tooLong + tooWide > 0):
-        setUpPrint('\t\tBergs clipped: %i for width, %i for length' % (tooWide, tooLong))
-    
-    inversePowerLawDistNumbers_depth = x_depth[nearestIndex_depth]; #depths don't get clipped
-    
-    bergTopArea = sum(inversePowerLawDistNumbers_width*inversePowerLawDistNumbers_length)
-    areaResidual = (desiredBergArea - bergTopArea)/desiredBergArea
-    setUpPrint('\t\t%.2f %% Bergs' % (bergTopArea/bergMaskArea*100))
-    setUpPrint('\t\tareaResidual %.2f %%' % (areaResidual * 100))
-    loop_count += 1
-setUpPrint('====== Success! Found our bergs =====')
-setUpPrint('Width min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_width),np.mean(inversePowerLawDistNumbers_width),np.max(inversePowerLawDistNumbers_width)))
-setUpPrint('Depth min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth)))
-setUpPrint('Total Berg Area %f' % bergTopArea)
-setUpPrint('Total Berg fract: %.2f %%' % (bergTopArea/bergMaskArea*100))
+        inversePowerLawDistNumbers_width = x_width[nearestIndex_width];
+        inversePowerLawDistNumbers_length = inversePowerLawDistNumbers_width/1.62 # Widths are bigger 
+        tooWide = np.count_nonzero(inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold))  #disallow completely full cells
+        tooLong = np.count_nonzero(inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold))
+        inversePowerLawDistNumbers_width[inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max width is grid cell (assumed square)
+        inversePowerLawDistNumbers_length[inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max length is grid cell (assumed square)
+        if(tooLong + tooWide > 0):
+            setUpPrint('\t\tBergs clipped: %i for width, %i for length' % (tooWide, tooLong))
+        
+        inversePowerLawDistNumbers_depth = x_depth[nearestIndex_depth]; #depths don't get clipped
+        
+        bergTopArea = sum(inversePowerLawDistNumbers_width*inversePowerLawDistNumbers_length)
+        areaResidual = (desiredBergArea - bergTopArea)/desiredBergArea
+        setUpPrint('\t\t%.2f %% Bergs' % (bergTopArea/bergMaskArea*100))
+        setUpPrint('\t\tareaResidual %.2f %%' % (areaResidual * 100))
+        loop_count += 1
+    setUpPrint('====== Success! Found our bergs =====')
+    setUpPrint('Width min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_width),np.mean(inversePowerLawDistNumbers_width),np.max(inversePowerLawDistNumbers_width)))
+    setUpPrint('Depth min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth)))
+    setUpPrint('Total Berg Area %f' % bergTopArea)
+    setUpPrint('Total Berg fract: %.2f %%' % (bergTopArea/bergMaskArea*100))
 
-# Now we sort these berg into cell, randomly 
-bergMaski = 0  #Bad name, but this is the count of cells that will recieve bergs
-bergDict = {}
+    # Now we sort these berg into cell, randomly 
+    bergMaski = 0  #Bad name, but this is the count of cells that will recieve bergs
+    bergDict = {}
 
-for j in range(ny):
-    for i in range(nx):
-        if(bergMask[j,i] == 1):
-            # print('i,j, bergmask',i,j,bergMask[j,i])
-            bergMaski = 1 + bergMaski #Needs to start at 1, as non-bergs will be 0
-            bergMaskNums[j,i] = bergMaski #Assign Mask Nums, not random as we'll randomly place bergs in cells
-            bergDict[bergMaski] = [j,i] #This lets us do 1-D loops for the whole grid
-setUpPrint('%i cells with bergs' % bergMaski)
+    for j in range(ny):
+        for i in range(nx):
+            if(bergMask[j,i] == 1):
+                # print('i,j, bergmask',i,j,bergMask[j,i])
+                bergMaski = 1 + bergMaski #Needs to start at 1, as non-bergs will be 0
+                bergMaskNums[j,i] = bergMaski #Assign Mask Nums, not random as we'll randomly place bergs in cells
+                bergDict[bergMaski] = [j,i] #This lets us do 1-D loops for the whole grid
+    setUpPrint('%i cells with bergs' % bergMaski)
 
-# Sort my bergs
-sorted_indices = np.argsort(-inversePowerLawDistNumbers_depth) # Sort backwards to get descending from big to small bergs 
-sorted_depth = inversePowerLawDistNumbers_depth[sorted_indices]
-sorted_width = inversePowerLawDistNumbers_width[sorted_indices]
-sorted_length = inversePowerLawDistNumbers_length[sorted_indices]
-assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) # In this script, every berg has a home
+    # Sort my bergs
+    sorted_indices = np.argsort(-inversePowerLawDistNumbers_depth) # Sort backwards to get descending from big to small bergs 
+    sorted_depth = inversePowerLawDistNumbers_depth[sorted_indices]
+    sorted_width = inversePowerLawDistNumbers_width[sorted_indices]
+    sorted_length = inversePowerLawDistNumbers_length[sorted_indices]
+    assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) # In this script, every berg has a home
 
 # Array for bergs
 bergsPerCellLimit = 500
@@ -812,7 +845,7 @@ for i in range(numberOfBergs):
         if((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY) < hfacThreshold - .01): #only consider accepting if under 95
             odds = np.abs(np.random.normal(0,.5,1))  #randomly accepts those that are big in overfull cells, but at decreasing frequency
             overFull = ((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY)*100 - bergConc[bergDict[j+1][0],bergDict[j+1][1]])
-            if(odds > overFull):
+            if(odds > overFull and not uniformBergs):
                  # print('accepting overfull')
                  assignedCell[i] = j  #if we it a shuffling critera
                  break
@@ -883,17 +916,17 @@ plt.ylabel('Depth [m]')
 # plt.legend()  #not quite room so off for now
 
 plt.subplot(2,2,2)
-plt.hist(inversePowerLawDistNumbers_depth,bins = 50)
+plt.hist(sorted_depth,bins = 50)
 plt.ylabel('Count')
 plt.xlabel('Depth [m]')
 
 plt.subplot(2,2,3)
-plt.hist(inversePowerLawDistNumbers_width,bins = 50)
+plt.hist(sorted_width,bins = 50)
 plt.ylabel('Count')
 plt.xlabel('Width [m]')
 
 plt.subplot(2,2,4)
-plt.hist(inversePowerLawDistNumbers_length,bins = 50)
+plt.hist(sorted_length,bins = 50)
 plt.ylabel('Count')
 plt.xlabel('Length [m]')
 fig.tight_layout()

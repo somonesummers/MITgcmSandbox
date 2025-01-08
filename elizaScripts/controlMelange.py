@@ -70,6 +70,7 @@ from melange1D first, this is berg version to compare meltrates/heatflux"""
 
 setUpPrint('====== Welcome to the mélange building script =====')
 setUpPrint(briefSummaryOfExp)
+input("Confirm above is accurate before continuing...")
 setUpPrint('\tMaking experiment to compare mélange realizations')
 #========================================================================================
 #main values to imput 

@@ -69,6 +69,7 @@ briefSummaryOfExp = """Comparing our results to that of Hughes 2024 around berg 
 
 setUpPrint('====== Welcome to the mélange building script =====')
 setUpPrint(briefSummaryOfExp)
+input("Confirm above is accurate before continuing...")
 setUpPrint('\tMaking experiment to compare mélange realizations')
 #========================================================================================
 #main values to imput 
