@@ -52,7 +52,7 @@ C     brg_GamT                        :: Thermal turbulent transfer coeffcient (
 C     brg_GamS                        :: Salt turbulent transfer coefficient (def: 0.00062)
 C     brg_c_w                         :: Heat capacity of water (def: 3974 J kg^-1 degC^-1)
 C     brg_SelectDrag                  :: select how drag is computed from velocity (def: 3)
-C                                        (1:n = 2, 2:n = 2, 3: n = 1 + .75*hFacC)
+C                                        (1:n = 2, 2:n = 2, 3: n = 1 + .75*hFacC, 4: 1 + .75*(hFacC)**3
 C     brg_SelectFill                  :: select how frontal area scales with hFacC (def: 3)
 C                                        (1:linear, 2:quad, 3:quartic)
 C     brg_DragForm                    :: form drag across iceberg (default = 1.0)

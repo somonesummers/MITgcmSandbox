@@ -175,6 +175,36 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
           ENDIF
         ENDDO
        ENDDO
+      ELSEIF ( brg_SelectDrag.EQ.4 ) THEN !nonlinear
+        IF ( .NOT.inp_KE ) THEN
+         DO j=1-OLy,sNy+OLy-1
+          DO i=1-OLx,sNx+OLx-1
+            KE(i,j) = 0.25*(
+     &          ( uFld( i , j )*uFld( i , j )*_hFacW(i,j,k,bi,bj)
+     &           +uFld(i+1, j )*uFld(i+1, j )*_hFacW(i+1,j,k,bi,bj) )
+     &        + ( vFld( i , j )*vFld( i , j )*_hFacS(i,j,k,bi,bj)
+     &           +vFld( i ,j+1)*vFld( i ,j+1)*_hFacS(i,j+1,k,bi,bj) )
+     &                     )*_recip_hFacC(i,j,k,bi,bj)
+          ENDDO
+         ENDDO
+       ENDIF !.not.inp_KE
+C-    average grid-cell-center KE to get velocity norm @ U.pt
+       DO j=1-OLy,sNy+OLy-1
+        DO i=1-OLx+1,sNx+OLx-1
+          uSq = 0. _d 0
+          IF ( k.LE.
+     &         MAX( kBergBotC(i-1,j,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+           uSq = KE(i,j)+KE(i-1,j)
+          ENDIF
+          IF ( uSq.GT.zeroRL ) THEN
+           cDrag(i,j) = cDrag(i,j)  
+     &            + 0.5 * brg_DragForm * dragFac *  
+     &                   SQRT(uSq)**(.75*_hFacC(i,j,k,bi,bj)**3) * 
+     &                   recip_dxF(i,j,bi,bj) * drF(k) *
+     &                   fillFactor(i,j)
+          ENDIF
+        ENDDO
+       ENDDO
       ENDIF !selectDrag 
 
 #ifdef ALLOW_DIAGNOSTICS
