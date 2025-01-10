@@ -110,8 +110,8 @@ C--   Add drag contribution:
          IF ( k.LE.
      &       MAX( kBergBotC(i-1,j,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
           cDrag(i,j) = cDrag(i,j) 
-     &       + 0.5 * brg_DragForm * dragFac *  
-     &                   0.01 * drF(k) * fillFactor(i,j)
+     &       + brg_DragForm * dragFac *  
+     &                   drF(k) * fillFactor(i,j)
          ENDIF
         ENDDO
        ENDDO
@@ -138,9 +138,9 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
           ENDIF
           IF ( uSq.GT.zeroRL ) THEN
            cDrag(i,j) = cDrag(i,j)  
-     &            + 0.5 * brg_DragForm * dragFac *  
+     &            + brg_DragForm * dragFac *  
      &                   SQRT(uSq) * 
-     &                   0.01 * drF(k) *
+     &                   drF(k) *
      &                   fillFactor(i,j)
           ENDIF
         ENDDO
@@ -168,9 +168,9 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
           ENDIF
           IF ( uSq.GT.zeroRL ) THEN
            cDrag(i,j) = cDrag(i,j)  
-     &            + 0.5 * brg_DragForm * dragFac *  
+     &            + brg_DragForm * dragFac *  
      &                   SQRT(uSq)**(.75*_hFacC(i,j,k,bi,bj)) * 
-     &                   0.01 * drF(k) *
+     &                   drF(k) *
      &                   fillFactor(i,j)
           ENDIF
         ENDDO
@@ -198,9 +198,9 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
           ENDIF
           IF ( uSq.GT.zeroRL ) THEN
            cDrag(i,j) = cDrag(i,j)  
-     &            + 0.5 * brg_DragForm * dragFac *  
+     &            + brg_DragForm * dragFac *  
      &                   SQRT(uSq)**(.75*_hFacC(i,j,k,bi,bj)**3) * 
-     &                   0.01 * drF(k) *
+     &                   drF(k) *
      &                   fillFactor(i,j)
           ENDIF
         ENDDO

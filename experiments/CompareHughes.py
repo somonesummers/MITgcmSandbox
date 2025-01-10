@@ -41,11 +41,12 @@ compareHughes = True
 # dirNames = ['quebec_02','quebec_05','quebec_10','quebec_20','quebec_40']
 # dirNames = ['oscar_02','oscar_05','oscar_16','oscar_25','oscar_40']
 # dirNames = ['romeo_02','romeo_05','romeo_10','romeo_20']
-# dirNames = ['sierra_2400','sierra_1200','sierra_0800','sierra_0400','sierra_0200','sierra_0100']
-dirNames = ['sierra_0400','sierra_0400copyFill']
+dirNames = ['sierra_2400','sierra_1200','sierra_0800','sierra_0400','sierra_0200','sierra_0100','sierra_0050']
+# dirNames = ['sierra_0400','sierra_0400copyFill']
 # dirNames = ['sierra_0400']
 # dirNames = ['tango_0100','tango_0200','tango_0400','tango_0800','tango_1200','tango_2400']
 # spds = [.02,.05,.16,.25,.40]
+# dirNames = dirNames[::-1]
 spds = [.12]*len(dirNames)
 
 if(hFacWeighted):
