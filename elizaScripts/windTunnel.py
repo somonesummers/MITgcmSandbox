@@ -78,16 +78,16 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'sierra_0100'
+run_config['run_name'] = 'sierra_LR'
 run_config['ndays'] = 2.0 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 100 # horizontal grid spacing (m)
-run_config['Lx_m'] = 30000 # domain size in x (m)
+run_config['horiz_res_m'] = 800 # horizontal grid spacing (m)
+run_config['Lx_m'] = 30400 # domain size in x (m)
 run_config['Ly_m'] = 2400 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 50 # num of z-grid points
+grid_params['Nr'] = 10 # num of z-grid points
 
 # Offshore current =========================
 oscStrength = 0.12 #[m/s] peak strength of sin forcing current
@@ -323,6 +323,8 @@ params01['gravity'] = g
 params01['hFacMin'] = 0.05
 params01['nonHydrostatic'] = False
 params01['readBinaryPrec'] = 64
+params01['useSmag3D'] = True
+params01['smag3D_coeff'] = 1e-4
 
 # ## Numeric solvers and I/O controls
 

@@ -239,7 +239,8 @@ grid_params['delY'] = (domain_params['Ly']/grid_params['Ny'])*np.ones(grid_param
 # zz = -(zz1[:-1] + np.diff(zz1)/2) # layer midpoints
 
 # dz = np.ones(nz)*deltaZ
-dz_tmp = np.linspace(1,5,grid_params['Nr'])
+
+dz_tmp = np.linspace(1,7,grid_params['Nr'])
 dz = dz_tmp/np.sum(dz_tmp)*domain_params['H'] 
 sum_z = np.cumsum(dz)
 print("dz: \n",dz)

@@ -39,6 +39,10 @@ C o Use "Exact Convervation" of fluid in Free-Surface formulation
 C   so that d/dt(eta) is exactly equal to - Div.Transport
 #define EXACT_CONSERV
 
+C o Allow smag 3d visc and diff
+#define ALLOW_SMAG_3D
+#define ALLOW_SMAG_3D_DIFFUSIVITY
+
 C o Allow the use of Non-Linear Free-Surface formulation
 C   this implies that surface thickness (hFactors) vary with time
 #undef NONLIN_FRSURF
