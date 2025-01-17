@@ -72,7 +72,7 @@ C Set defaults values for parameters in ICEBERG.h
       brg_c_i                      = 2000.D0
       brg_L                        = 334000D0
       brg_Cd                       = 0.0025
-      brg_DragForm                 = 0.01
+      brg_DragForm                 = 0.002
       brg_SelectDrag               = 3 
       brg_SelectFill               = 3 
       ICEBERGmaskFile              = ' '
