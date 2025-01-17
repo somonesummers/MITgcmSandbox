@@ -1,0 +1,24 @@
+# RBCS package parameters:
+ &RBCS_PARM01
+ useRBCtemp=.TRUE.,
+ useRBCuVel=.TRUE.,
+#------------------------------------------------------------------------------
+#- relaxation times
+# This is the timescale where "sponge=1".
+#------------------------------------------------------------------------------
+ tauRelaxU=14400.,
+ tauRelaxT=14400.,
+# Ignoring U being on different grid to T. Using same mask
+ relaxMaskFile='rbcsFullMask.bin',
+ relaxMaskUFile='rbcsFullMask.bin',
+ relaxTFile='T.init',
+ relaxUFile='U.init',
+#------------------------------------------------------------------------------
+ rbcsIniter=0,
+ rbcsForcingPeriod=0.,
+ rbcsForcingCycle=0.,
+ rbcsVanishingTime=28800.,
+/
+
+ &RBCS_PARM02
+/
