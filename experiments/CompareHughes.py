@@ -27,27 +27,46 @@ else:
     print('no defaults found')
 print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
-resultFolder = '/results'
+resultFolder = '/results_002'
 hFacWeighted = True
 compareHughes = True
-# dirNames = ['Hughes_smag_LR_30','Hughes_smag_30','Hughes_smag_LR_50','Hughes_smag_50','Hughes_smag_100']
-# dirNames = ['Hotel_40','Hotel_20','Hotel_10','Hotel_05','Hotel_02']
-# dirNames = ['india_40','india_25','india_16','india_05','india_02']
-# dirNames = ['Hotel_80','Hotel_60','Hotel_40','Hotel_20','Hotel_10','Hotel_05','Hotel_02']
-# dirNames = ['juliet_001','juliet_002','juliet_005','juliet_01','juliet_02','juliet_05','juliet_10']
-# dirNames = ['kilo_15','kilo_30','kilo_60','kilo_90','kilo_120']
-# dirNames = ['lima11','lima12','lima13','lima21','lima22','lima23','lima31','lima32','lima33']
-# dirNames = ['november_02','november_05','november_10','november_20','november_40']
-# dirNames = ['quebec_02','quebec_05','quebec_10','quebec_20','quebec_40']
-# dirNames = ['oscar_02','oscar_05','oscar_16','oscar_25','oscar_40']
-# dirNames = ['romeo_02','romeo_05','romeo_10','romeo_20']
-dirNames = ['sierra_2400','sierra_1200','sierra_0800','sierra_0400','sierra_0200','sierra_0100','sierra_0050']
-# dirNames = ['sierra_0400','sierra_0400copyFill']
-# dirNames = ['sierra_0400']
-# dirNames = ['tango_0100','tango_0200','tango_0400','tango_0800','tango_1200','tango_2400']
-# spds = [.02,.05,.16,.25,.40]
-# dirNames = dirNames[::-1]
+
+# dirNames = ['rbcs_12_02','rbcs_12_05','rbcs_12_10','rbcs_12_20','rbcs_12_40']
+# legendNames = ['$\\lambda = 0.02$','$\\lambda = 0.05$','$\\lambda = 0.10$','$\\lambda = 0.20$','$\\lambda = 0.40$']
+# fileName = 'Lambda_002'
+# titleText = 'U = 0.12 m/s'
+# mainColor = 'green'
+# spds = [.12]*len(dirNames)
+
+# dirNames = ['rbcs_02_20','rbcs_05_20','rbcs_12_20','rbcs_25_20','rbcs_40_20']
+# legendNames = ['$u = 0.02$ m/s','$u = 0.05$ m/s','$u = 0.12$ m/s','$u = 0.24$ m/s','$u = 0.40$ m/s',]
+# fileName = 'Speed_002'
+# titleText = '$\\lambda = 0.20$'
+# mainColor = 'blue'
+# spds = [.02,.05,.12,.25,.40]
+
+dirNames = ['rbcs_dx_100','rbcs_dx_200','rbcs_dx_400','rbcs_dx_800','rbcs_dx_1200','rbcs_dx_2400',]
+legendNames = ['dx = 100 m','dx = 200 m','dx = 400 m','dx = 800 m','dx = 1200 m','dx = 2400 m']
+fileName = 'Dx_002'
+titleText = 'U = 0.12 m/s $\\lambda = 0.20$'
+mainColor = 'teal'
 spds = [.12]*len(dirNames)
+
+# dirNames = ['rbcs_dz_150','rbcs_dz_100','rbcs_dz_75','rbcs_dz_50','rbcs_dz_25','rbcs_dz_12','rbcs_dz_10',]
+# legendNames = ['Nr = 150','Nr = 100','Nr = 75','Nr = 50','Nr = 25','Nr = 12','Nr = 10']
+# fileName = 'Dz_002'
+# titleText = 'U = 0.12 m/s $\\lambda = 0.20$'
+# mainColor = 'pink'
+# spds = [.12]*len(dirNames)
+
+#Normalized Errors fields
+u1 = np.zeros((3,len(dirNames),150))
+z1 = np.ones((len(dirNames),150))*-600
+u2 = np.zeros((3,len(dirNames),46))
+z2 = np.zeros((len(dirNames),46))
+
+
+
 
 if(hFacWeighted):
     dynName = ['dynDiag', 'dynDiag', 'dynDiag']
@@ -95,32 +114,31 @@ for k in range(len(name)):
 
 
         dirName = dirNames[l]
-
         #Comparing Diff Runs
         x = mds.rdmds(dirName + resultFolder +"/XC")
         y = mds.rdmds(dirName + resultFolder + "/YC")
         z = np.squeeze(mds.rdmds(dirName + resultFolder+ "/RC"))
-        iceStart = np.argmin(np.abs(x[0,:] - 13100)) 
-        iceEnd = np.argmin(np.abs(x[0,:] - 15400))
+        iceStart = np.argmin(np.abs(x[0,:] - 13000)) 
+        iceEnd = np.argmin(np.abs(x[0,:] - 15500))
         # print('Average is is x =', x[0,iceStart],',',x[0,iceEnd],'index', iceStart,',',iceEnd)
         
         i = maxStep
         data = mds.rdmds(dirName + resultFolder + "/%s"%(dynName[k]), i)
         if k == 0:
-            lvl = [-0,2.5]
-            seedColor = 'green'
+            lvl = [-0,1.2]
+            seedColor = mainColor
             plotData = np.squeeze(data[k+2,:,:,:]) * 1 / spds[l]
         elif k == 1:
-            lvl = [-0.01,0.01]
+            lvl = [-0.001,0.001]
             seedColor = 'red'
             plotData = np.squeeze(data[k+2,:,:,:]) * 1
         elif k == 2:
             lvl = [-.01,0.01]
-            seedColor = 'green'
+            seedColor = 'peach'
             plotData = np.squeeze(data[k+2,:,:,:]) * 1 
         
         n = len(dirNames) - 1 
-        
+
         color1 = 'xkcd:light ' + seedColor
         color2 = 'xkcd:dark ' + seedColor
         rlin = np.linspace(mcolors.to_rgb(color1)[0],mcolors.to_rgb(color2)[0],n)
@@ -131,16 +149,20 @@ for k in range(len(name)):
         # for ii in range(iceEnd - iceStart):
         #     for j in range(np.shape(y[1:-1,:])[0]):
         #         plt.plot(plotData[:,j+1,iceStart + ii],z,linewidth=.5,alpha=.1,color=cm)
+        
         if(hFacWeighted):
             hFacC = mds.rdmds(dirName + resultFolder + "/hFacC") #must weight by ocean fraction
+
+        u1[k,l,:len(z)] = np.average(plotData[:,1:-1,iceStart:iceEnd], weights=hFacC[:,1:-1,iceStart:iceEnd], axis=(1,2))
+        z1[l,:len(z)] = z
         if(l != 0 ):
             if(hFacWeighted):
-                plt.plot(np.average(plotData[:,1:-1,iceStart:iceEnd], weights=hFacC[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=dirName,color=colors[:,l-1])
+                plt.plot(np.average(plotData[:,1:-1,iceStart:iceEnd], weights=hFacC[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=legendNames[l],color=colors[:,l-1])
             else:
                 plt.plot(np.mean(plotData[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=dirName,color=colors[:,l-1])
         else:
             if(hFacWeighted):
-                plt.plot(np.average(plotData[:,1:-1,iceStart:iceEnd], weights=hFacC[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=dirName,color='xkcd:light gray')
+                plt.plot(np.average(plotData[:,1:-1,iceStart:iceEnd], weights=hFacC[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=legendNames[l],color='xkcd:light gray')
             else:
                 plt.plot(np.mean(plotData[:,1:-1,iceStart:iceEnd], axis=(1,2)),z,linewidth=2,label=dirName,color='xkcd:light gray')
         ax = plt.gca()
@@ -149,19 +171,26 @@ for k in range(len(name)):
             bergDepth[bergDepth == 0] = np.nan #dont avg ones that don't exist
             plt.plot([-1,3],[np.nanpercentile(bergDepth,10),np.nanpercentile(bergDepth,10)],color='red',linestyle='--',alpha=.5)
             plt.plot([-1,3],[np.nanmedian(bergDepth),np.nanmedian(bergDepth)],color='red',linestyle='--',alpha=.5)
-    # Compare against Hughes Directly
+        # Compare against Hughes Directly
     if(compareHughes):
         # pack = ['020','050','100','200','400']
-        pack = ['200']
+        pack = ['120']
         spds=[.12]
         # pack = ['020','050','120','250','400']
         # spds = [.02,.05,.12,.25,.40]
-        for l in range(len(spds)):
-            nc = netCDF4.Dataset('/Users/psummers8/Documents/MITgcm/MITgcm/Sandbox_Berg/6555200/run.lambda_%s.U_120.nc' % pack[l])
-            # nc = netCDF4.Dataset('/Users/psummers8/Documents/MITgcm/MITgcm/Sandbox_Berg/6555200/run.lambda_200.U_%s.nc' % pack[l])
+        for l in range(len(pack)):
+            # nc = netCDF4.Dataset('/Users/psummers8/Documents/MITgcm/MITgcm/Sandbox_Berg/6555200/run.lambda_%s.U_120.nc' % pack[l])
+            nc = netCDF4.Dataset('/Users/psummers8/Documents/MITgcm/MITgcm/Sandbox_Berg/6555200/run.lambda_200.U_%s.nc' % pack[l])
             Z = nc['Z'][:]
-            plotData = nc['U'][:,1:-1,100:350]/spds[l]
+            if(k == 0):
+                plotData = nc['U'][:,1:-1,100:350]/spds[l]
+            elif(k == 1):
+                plotData = nc['W'][:,1:-1,100:350]
+            elif(k == 2):
+                plotData = nc['V'][:,1:-1,100:350]
             plotData[plotData == 0] = np.nan
+            u2[k,l,:] = np.nanmean(plotData,axis=(1,2))
+            z2[l,:] = Z
             if(l == 0):
                 plt.plot(np.nanmean(plotData,axis=(1,2)),Z,linewidth=2,color='xkcd:light gray',linestyle='--',alpha=.5)
             else:
@@ -171,7 +200,8 @@ for k in range(len(name)):
     plt.plot(np.cos(z * np.pi /600)* 1, z,linewidth=1,color='gray',linestyle='--')
     plt.xlabel(name[k] + " " + units[k])
     plt.ylabel('Depth [m]')
-    plt.title("%s over melange at %.02f days" % (name[k], i/86400.0*dt))
+    # plt.title("%s over melange at %.02f days" % (name[k], i/86400.0*dt))
+    plt.title(titleText)
     plt.ylim([-300, 0])
     plt.grid(alpha=.5)
     j = i/sizeStep + startStep
@@ -181,6 +211,37 @@ for k in range(len(name)):
    
 
     # plt.show()    
-    str = "figs/depth%s%05i.png" % (name[k],j)
+    str = "figs/depth%s%s.png" % (name[k],fileName)
     plt.savefig(str, format='png',dpi=plotDPI)
     plt.close()
+
+    plt.figure()
+    for l in range(len(dirNames)):
+        # u2_interp = np.interp(-z1[l,:],-z2[l,:],u2[k,l,:])
+        u2_interp = np.interp(-z1[l,:],-z2[0,:],u2[k,0,:])
+        error = u1[k,l,:] - u2_interp
+        # plt.plot(u1[k,l,:],z1[l,:],label='Summers')
+        # plt.plot(u2[k,l,:],z2[l,:],label='Hughes')
+        if l !=0:
+            plt.plot(error,z1[l,:],label=legendNames[l],color=colors[:,l-1])
+        else:
+            plt.plot(error,z1[l,:],label=legendNames[l],color='xkcd:light gray')
+    plt.plot([-1,3],[np.nanpercentile(bergDepth,10),np.nanpercentile(bergDepth,10)],color='red',linestyle='--',alpha=.5)
+    plt.plot([-1,3],[np.nanmedian(bergDepth),np.nanmedian(bergDepth)],color='red',linestyle='--',alpha=.5)
+    plt.title("Residual for "+ titleText)
+    if k == 0:
+        plt.xlim([-.5, .5])
+    elif k == 1:
+        plt.xlim([-.0005, .0005])
+    elif k == 2:
+        plt.xlim([-.005, .005])
+    plt.ylim([-300, 0])
+    plt.xlabel("∆"+name[k] + " " + units[k])
+    plt.ylabel('Depth [m]')
+    plt.grid(alpha=.5)
+    plt.legend()    
+    # plt.show()
+    str = "figs/depthError%s%s.png" % (name[k],fileName)
+    plt.savefig(str, format='png',dpi=plotDPI)
+    plt.close()
+

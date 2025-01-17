@@ -88,10 +88,9 @@ os.system('rm -f figs/compareMap*.png')
 os.system('rm -f figs/compareMap*.gif')
 
 y = mds.rdmds("results/YC")
-x = mds.rdmds("results/XC")
+# x = mds.rdmds("results/XC")
+x = mds.rdmds("results/XC")-8000
 z = mds.rdmds("results/RC")
-
-
 
 if(os.path.isfile('input/bathymetry.bin')):
     topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
@@ -226,7 +225,8 @@ for k in range(len(name)):
                 cmap='cmo.gray')
             #cbar2 = plt.colorbar(cp2)
             #cbar2.set_label('Ocean Fraction')
-
+        
+        plt.xlim([-8000, 25000]) # if zooming into a specific region    
         j = i/sizeStep + startStep
         str = "figs/compareMap%s%05i.png" % (name[k],j)
         

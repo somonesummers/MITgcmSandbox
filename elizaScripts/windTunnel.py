@@ -65,7 +65,7 @@ email = 'psummers8@gatech.edu'
 # set high level run configurations
 
 briefSummaryOfExp = """Comparing our results to that of Hughes 2022 around form drag of bergs in a wind tunnel like set up.
-Sierra is sweep of horz resolution with power law bergs"""
+Uniform lambda = 40, speed 0.02 m/s - 0.04 m/s, variable dz, nr = 50, 200m dx"""
 
 
 setUpPrint('====== Welcome to the mélange building script =====')
@@ -78,24 +78,24 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'sierra_LR'
+run_config['run_name'] = 'uniform_40'
 run_config['ndays'] = 2.0 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 800 # horizontal grid spacing (m)
-run_config['Lx_m'] = 30400 # domain size in x (m)
+run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
+run_config['Lx_m'] = 30000 # domain size in x (m)
 run_config['Ly_m'] = 2400 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 10 # num of z-grid points
+grid_params['Nr'] = 50 # num of z-grid points
 
 # Offshore current =========================
-oscStrength = 0.12 #[m/s] peak strength of sin forcing current
+oscStrength = 0.40 #[m/s] peak strength of sin forcing current
 
 # Iceberg configuration =========================
 iceBergDepth = 140 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 2500 # [meters] of extent of ice
-iceCoverage = 20 # % of ice cover in melange, stay under 90% ideally
+iceCoverage = 40 # % of ice cover in melange, stay under 90% ideally
 doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 uniformBergs = False #lets us have uniform bergs or random powerlaw bergs is default
@@ -242,6 +242,7 @@ grid_params['delY'] = (domain_params['Ly']/grid_params['Ny'])*np.ones(grid_param
 
 dz_tmp = np.linspace(1,7,grid_params['Nr'])
 dz = dz_tmp/np.sum(dz_tmp)*domain_params['H'] 
+
 sum_z = np.cumsum(dz)
 print("dz: \n",dz)
 print("z: \n",sum_z)
@@ -1075,6 +1076,5 @@ if(makeDirs):
     print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
 elif(writeFiles):
     print("Done! You shouldn't have to rebuild as we only changed run time options here")
-    # shutil.copy('windTunnel.py', run_config['run_dir']+'/input/buildScriptUpdate.py')
 else:
     print('Nothing was saved, I hope you liked the pretty plots at least')

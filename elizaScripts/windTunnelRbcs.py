@@ -10,13 +10,10 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import pickle
-import importlib
 import shutil
 import platform
 import fileinput
 import sys
-import glob
 import cmocean
 from bisect import bisect_left
 
@@ -55,7 +52,7 @@ def find_closest_indices(sorted_A, sorted_B):
             closest_indices.append(before if abs(sorted_B[before] - a) <= abs(sorted_B[after] - a) else after)
     return closest_indices
 
-def setUpPrint(msg):
+def setUpPrint(msg): #returns message to user, but also writes achrival file to note details of experiment
     print(msg)
     if(makeDirs):
         setupNotes.write(str(msg) + "\n")
@@ -64,8 +61,8 @@ def setUpPrint(msg):
 email = 'psummers8@gatech.edu'
 # set high level run configurations
 
-briefSummaryOfExp = """Comparing our results to that of Hughes 2024 around berg melt/blocking
-using final conguration of berg melt parameters, and with NO blocking"""
+briefSummaryOfExp = """Comparing our results to that of Hughes 2022 around form drag of bergs in a wind tunnel like set up.
+rbcs_dz_#Nr is comparison with RBCS boundaries varying Nr"""
 
 
 setUpPrint('====== Welcome to the mélange building script =====')
@@ -74,32 +71,32 @@ input("Confirm above is accurate before continuing...")
 setUpPrint('\tMaking experiment to compare mélange realizations')
 #========================================================================================
 #main values to imput 
+showfigs = False
 
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'victor_b0_200'
-run_config['ndays'] = 7.0 # simulaton time (days)
+run_config['run_name'] = 'rbcs_dz_50'
+run_config['ndays'] = 4/24.0 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 200 # horizontal grid spacing (m)
-run_config['Lx_m'] = 80000 # domain size in x (m)
-run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
+run_config['Lx_m'] = 32000 # domain size in x (m)
+run_config['Ly_m'] = 2400 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 grid_params['Nr'] = 50 # num of z-grid points
 
 # Offshore current =========================
 oscStrength = 0.12 #[m/s] peak strength of sin forcing current
-lengthOffShoreCurrent = 5e3 #width of offshore current [m]
-indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
-iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 8000 # [meters] of extent of ice
-iceCoverage = 10 # % of ice cover in melange, stay under 90% ideally
-doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
-doBlock = 0 # do we actually calculate melt (0/1 = no/yes)
+iceBergDepth = 140 # max iceberg depth [meters], used for ICEBERG package
+iceExtent = 2500 # [meters] of extent of ice
+iceCoverage = 20 # % of ice cover in melange, stay under 90% ideally
+doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
+doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
+uniformBergs = False #lets us have uniform bergs or random powerlaw bergs is default
 #========================================================================================
 # The rest of this should take care of it self mostly
 
@@ -133,7 +130,7 @@ if(makeDirs):
      
 # copy over defaults
     if OSX == 'Darwin':
-        default_dirs = os.listdir('/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg/')
+        default_dirs = os.listdir('/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg_rbcs/')
     else:
         default_dirs = os.listdir('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Berg/')
     for dir00 in default_dirs:
@@ -141,7 +138,7 @@ if(makeDirs):
             continue
             
         if OSX == 'Darwin':
-            default_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg/%s/'%dir00
+            default_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg_rbcs/%s/'%dir00
         else:
             default_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Berg/%s/'%dir00    
         default_files = os.listdir(default_dir)
@@ -239,10 +236,11 @@ grid_params['delY'] = (domain_params['Ly']/grid_params['Ny'])*np.ones(grid_param
 # zz1 = np.append([0], np.cumsum(dz))
 # zz = -(zz1[:-1] + np.diff(zz1)/2) # layer midpoints
 
-# dz = np.ones(nz)*deltaZ
+# dz = domain_params['H']/grid_params['Nr']*np.ones(grid_params['Nr']);
 
-dz_tmp = np.linspace(1,5,grid_params['Nr'])
+dz_tmp = np.linspace(1,7,grid_params['Nr'])
 dz = dz_tmp/np.sum(dz_tmp)*domain_params['H'] 
+
 sum_z = np.cumsum(dz)
 print("dz: \n",dz)
 print("z: \n",sum_z)
@@ -265,7 +263,7 @@ lat_min = -70 # latitude at southern boundary (degrees)
 
 
 # momentum scheme
-# params01['vectorInvariantMomentum'] = True
+params01['vectorInvariantMomentum'] = True
 
 #Note: here and elsewhere, we need to be explicit about floats vs ints. E.g., use 12.0 to represent float and
 # 12 for int
@@ -274,13 +272,13 @@ lat_min = -70 # latitude at southern boundary (degrees)
 #params01['viscA4'] = 0.0000 # Biharmonic viscosity?
 params01['viscAz'] = 1.0e-4 # Vertical viscosity
 params01['viscAh'] = 1.0e-3 # Vertical viscosity, this limits our timestep a lot
-params01['viscC2smag'] = 2.5 # ??? viscosity
+#params01['viscC2smag'] = 2.2 # ??? viscosity
 
 # advection and time stepping
 params01['tempAdvScheme'] = 33 # needs to be int
 params01['saltAdvScheme'] = 33 # needs to be int
 #params01['tempStepping'] = True
-params01['saltStepping'] = True
+params01['saltStepping'] = False
 params01['staggerTimeStep'] = True
 
 # diffusivity
@@ -293,9 +291,9 @@ params01['diffKzS'] = 1.0e-5 # Vert salt diffusion
 
 
 # equation of state
-params01['eosType'] = 'JMD95Z'
-# params01['eosType'] = 'LINEAR'
-# params01['tAlpha'] = 0.4e04
+# params01['eosType'] = 'JMD95Z'
+params01['eosType'] = 'LINEAR'
+params01['tAlpha'] = 2.E-4
 # params01['sBeta'] = 8.0e-4
 params01['Tref'] = np.ones(grid_params['Nr'])*0. #ref temp
 params01['Sref'] = np.ones(grid_params['Nr'])*34. #ref salt
@@ -307,19 +305,22 @@ params01['no_slip_sides'] = False
 params01['no_slip_bottom'] = False
 params01['rigidLid'] = False
 params01['implicitFreeSurface'] = True
-params01['implicSurfPress'] = 1.0
-params01['implicDiv2DFlow'] = 1.0
+
+# Domain Options
 params01['selectAddFluid'] = 1
-# params01['useRealFreshWaterFlux'] = True
+params01['useRealFreshWaterFlux'] = True
 params01['exactConserv'] = True
 params01['implicitViscosity'] = True
 params01['implicitDiffusion'] = True
+params01['implicDiv2DFlow'] = 1.0
+params01['implicSurfPress'] = 1.0
 
 # physical parameters
-params01['f0'] = 1.37e-4
-# params01['f0'] = 0
+#params01['f0'] = -1.36e-4
+params01['f0'] = 0
 params01['beta'] = 0.0e-13
 params01['gravity'] = g
+params01['rhoConst'] = 999.8
 
 # misc
 params01['hFacMin'] = 0.05
@@ -348,7 +349,7 @@ params03['abEps'] = 0.1
 #if run_config['testing']:
     
 params03['chkptFreq'] = 0.0
-params03['pChkptFreq'] = 864000.0
+params03['pChkptFreq'] = 14400.0
 params03['taveFreq'] = 0.0
 params03['dumpFreq'] = 864000.0
 params03['taveFreq'] = 0.0
@@ -384,7 +385,7 @@ params04['delZ'] = dz
 params05 = {}
 params05['bathyFile'] ='bathymetry.bin'
 params05['hydrogThetaFile'] = 'T.init'
-params05['hydrogSaltFile'] = 'S.init'
+# params05['hydrogSaltFile'] = 'S.init'
 
 if(writeFiles):
     data_params = [params01, params02, params03, params04, params05]
@@ -428,13 +429,11 @@ diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
                     ['THETA','SALT','UVELMASS','VVELMASS','WVELMASS'],
                     ['UTHMASS ','USLTMASS','VTHMASS ','VSLTMASS','WTHMASS ','WSLTMASS',],
                     ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY'],
-                    ['VISCAHZ','VISCAHD'],
+                    #['VISCAHZ','VISCAHD'],
                     ]
 diag_fields_max = 0
-diag_fields_avg_name = ['dynDiag','dynMassDiag','fluxMassDiag','BRGFlx','viscDiag']
-# diag_fields_avg = ['UVEL', 'VVEL', 'WVEL', 'UVELSQ', 'VVELSQ', 'WVELSQ',
-#                   'UVELTH', 'VVELTH', 'WVELTH', 'THETA', 'THETASQ',
-#                   'PHIHYD', 'LaUH1TH', 'LaVH1TH', 'LaHw1TH','LaHs1TH']
+diag_fields_avg_name = ['dynDiag','dynMassDiag','fluxMassDiag','BRGFlx']#,'viscDiag']
+
 
 numdiags_avg = len(diag_fields_avg)
 numdiags_avg_total = 0
@@ -495,23 +494,27 @@ obcs_params01 = {}
 obcs_params02 = {}
 obcs_params03 = {}
 
+obcs_params01['OB_singleIwest'] = 1
 obcs_params01['OB_singleIeast'] = -1
-obcs_params01['OB_Jsouth(%i:%i)'%(grid_params['Nx']-indexOSC+1,grid_params['Nx'])] = np.ones(indexOSC,dtype=int)
-obcs_params01['OB_Jnorth(%i:%i)'%(grid_params['Nx']-indexOSC+1,grid_params['Nx'])] = -1*np.ones(indexOSC,dtype=int)
-obcs_params01['useOBCSsponge'] = False
+obcs_params01['useOBCSsponge'] = True
 obcs_params01['useOBCSprescribe']= True
 #East
 obcs_params01['OBEsFile']='EBCs.bin'
 obcs_params01['OBEtFile']='EBCt.bin'
-obcs_params01 ['OBEvFile']='EBCv.bin'
-#North
-obcs_params01['OBNsFile']='NsBCs.bin'  
-obcs_params01['OBNtFile']='NsBCt.bin'  
-obcs_params01 ['OBNvFile']='NsBCv.bin'
-#South
-obcs_params01['OBSsFile']='NsBCs.bin'
-obcs_params01['OBStFile']='NsBCt.bin'
-obcs_params01 ['OBSvFile']='NsBCv.bin'
+obcs_params01 ['OBEuFile']='EBCu.bin'
+#West
+obcs_params01['OBWsFile']='EBCs.bin'
+obcs_params01['OBWtFile']='EBCt.bin'
+obcs_params01 ['OBWuFile']='EBCu.bin'
+
+# #North
+# obcs_params01['OBNsFile']='NsBCs.bin'  
+# obcs_params01['OBNtFile']='NsBCt.bin'  
+# obcs_params01 ['OBNvFile']='NsBCv.bin'
+# #South
+# obcs_params01['OBSsFile']='NsBCs.bin'
+# obcs_params01['OBStFile']='NsBCt.bin'
+# obcs_params01 ['OBSvFile']='NsBCv.bin'
 
 obcs_params03['spongeThickness'] = int(domain_params['L_sponge'] / run_config['horiz_res_m']) #grid cells
 obcs_params03['Urelaxobcsinner'] = 86400.0
@@ -530,7 +533,7 @@ if(makeDirs):
     rcf.create_eedata(run_config, grid_params['nTx'], grid_params['nTy'])
 
     #create data.obcs
-    rcf.write_data(run_config, obcs_params, group_name='obcs')
+    # rcf.write_data(run_config, obcs_params, group_name='obcs')
 
 #========================================================================================
 #Domain initialization and saving
@@ -566,23 +569,20 @@ z = -np.cumsum(dz)
 
 
 # Topography
-fjordEnd = int(grid_params['Nx'] - indexOSC)
-
 
 d = np.zeros([grid_params['Ny'], grid_params['Nx']]) - domain_params['H']
-setUpPrint('fjord end: %i' %fjordEnd)
-d[ 0, 1:fjordEnd] = 0  # walls of fjord
-d[-1, 1:fjordEnd] = 0
-d[: , 0] = 0 #cap west side
+d[ 0, :] = 0  # walls of fjord
+d[-1, :] = 0
 
 
 plt.figure
-plt.plot(x[5,:],d[5,:])
+plt.plot(x[1,:],d[1,:])
 plt.pcolormesh(x,y,d)
 plt.colorbar()
 if(writeFiles):
     plt.savefig("%sbathymetry" % (run_config['run_dir']+'/input/'))
-plt.show()
+if(showfigs):    
+    plt.show()
 plt.close()
 
 write_bin("bathymetry.bin", d)
@@ -591,112 +591,64 @@ write_bin("bathymetry.bin", d)
 from scipy import interpolate
 t2 = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
 s2 = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
+u2 = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
+rbcsMask = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
+rbcsFullMask = np.ones([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
 S2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
 T2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
+U2 = np.zeros([grid_params['Nr'],grid_params['Ny']])
 S_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 T_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 V_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 W_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 
 z_tmp =  np.asarray([  0,  600]); #must be increasing, so do depth as positive, see negs later for z[:]
-t_tmp =  np.asarray([  2,    2]); #const temp
-s_tmp =  np.asarray([ 32,   35]); #linear salt
+t_tmp =  np.asarray([  0, -8.3]); #linear for both T and S
+s_tmp =  np.asarray([   0,   0]);
 t_int = interpolate.PchipInterpolator(z_tmp, t_tmp)
 s_int = interpolate.PchipInterpolator(z_tmp, s_tmp)
 for j in np.arange(0,grid_params['Ny']):
     for i in np.arange(0, grid_params['Nx']):
         t2[:, j, i] = t_int(-1 * z[:])
         s2[:, j, i] = s_int(-1 * z[:])
+        u2[:, j, i] = oscStrength * np.cos(z[:]*np.pi/600)
+        rbcsMask[:, j, i] = np.max([(1 - x[0,i]/8000), 0, (x[0,i] - 24000)/8000])
 
-#East BC
+
+
+#East/West BC
 for j in np.arange(0,grid_params['Ny']):
     T2[:,j] = t_int(-1 * z[:])
     S2[:,j] = s_int(-1 * z[:])
-
-#BC for V at East side
-Ve = np.zeros([grid_params['Nr'],grid_params['Ny']])
-Ve[:,:] = oscStrength #[m/s]
-
-#N/S BCs
-for i in np.arange(fjordEnd,grid_params['Nx']):
-    T_ns[:,i] = t_int(-1 * z[:])
-    S_ns[:,i] = s_int(-1 * z[:])
-    V_ns[:,i] = oscStrength * (i-fjordEnd)/indexOSC #[m/s] along coast flow
+    U2[:,j] = oscStrength * np.cos(z[:]*np.pi/600)
 
 write_bin("T.init", t2)
 write_bin("S.init", s2)
+write_bin("U.init", u2)
 write_bin("EBCs.bin", S2)
 write_bin("EBCt.bin", T2)
-write_bin("EBCv.bin", Ve)
-write_bin("NsBCs.bin", S_ns)
-write_bin("NsBCt.bin", T_ns)
-write_bin("NsBCv.bin", V_ns)
-write_bin("NsBCW.bin", W_ns)
+write_bin("EBCu.bin", U2)
+write_bin("rbcsMask.bin", rbcsMask)
+write_bin("rbcsFullMask.bin", rbcsFullMask)
 
 plt.figure()
 plt.plot(S2[:,0] - 34, z, 'b', label="Sref - 34")
 plt.plot(T2[:,0], z, 'r', label="Tref")
+plt.plot(U2[:,0], z, 'g', label='Uref')
 plt.scatter(s_tmp - 34,-z_tmp,color='b')
 plt.scatter(t_tmp,-z_tmp,color='r')
 plt.legend()
 if(writeFiles):
     plt.savefig("%sinitialTS" % (run_config['run_dir']+'/input/'))
-plt.show()
+if(showfigs):    
+    plt.show()
 plt.close()
 
-#=======================================================================================
-# Plume
-nt = 1 #if variable forcing
-runoffVel = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
-runoffRad = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
-plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
+plt.figure
+plt.plot(x[0,:],rbcsMask[0,0,:])
 
-# Total runoff (m^3/s)
-# runoff = 100
 
-# velocity (m/s) of subglacial runoff
-# wsg = 1
 
-# ice front location
-icefront=1 # adjacent to wall at western end of domain, simulate wall of ice
-
-# plume location
-# plume_loc = int(np.round(grid_params['Ny']/2))
-# setUpPrint('Plume Location: %i discharge: %f' %(plume_loc, runoff))
-## Define plume-type mask 
-# 1 = ice but no plume (melting only)
-# 2 = sheet plume (Jenkins)
-# 3 = half-conical plume (Morton/Slater)
-# 4 = both sheet plume and half-conical plume (NOT YET IMPLEMENTED)
-# 5 = detaching conical plume (Goldberg)
-# POSITIVE values indicate ice front is orientated north-south
-# NEGATIVE values indicate ice front is orientated east-west
-
-# Create virtual ice wall
-plumeMask[1:-1,icefront] = 1 
-# Located 1 cell in from western boundary (need solid barrier behind), and extending across the fjord with (fjord walls either side)
-
-# Specify discharge location
-# plumeMask[plume_loc,icefront] = 3 # runoff emerges from centre of grounding line
-
-# specify a runoff velocity of 1 m/s
-# runoffVel[plume_loc,icefront,:] = wsg
-
-# calculate channel radius
-# runoffRad[plume_loc,icefront,:] = np.sqrt(2*runoff/(np.pi*wsg))
-
-# Write files
-write_bin("runoffVel.bin", runoffVel)
-write_bin("runoffRad.bin", runoffRad)
-write_bin("plumeMask.bin", plumeMask)
-
-plt.figure(1)
-plt.pcolormesh(x,y,plumeMask)
-plt.colorbar()
-if(writeFiles):
-    plt.savefig("%splumeMask" % (run_config['run_dir']+'/input/'))
-plt.show()
-plt.close()
 
 #=======================================================================================
 # Make Bergs, now all in python
@@ -709,6 +661,7 @@ nz = grid_params['Nr']
 ny = grid_params['Ny']
 nx = grid_params['Nx']
 
+deltaZ = dz[0]
 deltaY = run_config['horiz_res_m']
 deltaX = run_config['horiz_res_m']
 
@@ -729,8 +682,8 @@ minBergDepth= 40 # (m)
 maxBergWidth = 0 # (m) - set to zero if 'prescribing' max iceberg depth
 minBergWidth = 40 # (m)
 
-iceStart = 1
-iceExtentIndex = int(np.round((iceExtent)/run_config['horiz_res_m']))
+iceStart = int(np.round(13000/run_config['horiz_res_m']))
+iceExtentIndex = int(np.round((13000 + iceExtent)/run_config['horiz_res_m']))
 
 # Iceberg mask
 bergMask[1:-1,iceStart:iceExtentIndex] = 1 # icebergs in inner 5 km, all oriented east-west
@@ -778,83 +731,114 @@ bergTopArea = 0
 areaResidual = 1
 # Generate the Inverse Power Law cumulative distribution function
 # over the range minBergWidth-maxBergWidth with a slope of alpha.
-setUpPrint('Making bergs, this can take a few loops...')
-loop_count = 1
 
-np.random.seed(2)
-setUpPrint('random seed set, not really random anymore')
+if(uniformBergs):
+    setUpPrint('Making bergs to exact size')
+    
+    bergMaski = 0  #Bad name, but this is the count of cells that will recieve bergs
+    bergDict = {}
+    
+    for j in range(ny):
+        for i in range(nx):
+            if(bergMask[j,i] == 1):
+                # print('i,j, bergmask',i,j,bergMask[j,i])
+                bergMaski = 1 + bergMaski #Needs to start at 1, as non-bergs will be 0
+                bergMaskNums[j,i] = bergMaski #Assign Mask Nums, not random as we'll randomly place bergs in cells
+                bergDict[bergMaski] = [j,i] #This lets us do 1-D loops for the whole grid
 
-while(np.abs(areaResidual) > .005 ): # Create random power dist of bergs, ensure correct surface area
-    numberOfBergs = round(numberOfBergs * (1 + areaResidual))  
-    setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
-    x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
-    x_depth = np.arange(minBergDepth, maxBergDepth, (maxBergDepth-minBergDepth)/(numberOfBergs*1e2))
-    inversePowerLawPDF_width = ((alpha-1) / minBergWidth) * (x_width/minBergWidth) ** (-alpha)
-    inversePowerLawPDF_depth = ((alpha-1) / minBergDepth) * (x_depth/minBergDepth) ** (-alpha)
-        # Get the CDF numerically
-    inversePowerLawCDF_width = np.cumsum(inversePowerLawPDF_width)
-    inversePowerLawCDF_depth = np.cumsum(inversePowerLawPDF_depth)
-        # Normalize
-    inversePowerLawCDF_width = inversePowerLawCDF_width / inversePowerLawCDF_width[-1]
-    inversePowerLawCDF_depth = inversePowerLawCDF_depth / inversePowerLawCDF_depth[-1]
+    # bergsCell = 25
+    # numberOfBergs = bergMaski * bergsCell
+    
+    numberOfBergs = 500
+    import math
+    bergsCell = math.floor(numberOfBergs/bergMaski)
+    numberOfBergs = bergsCell*bergMaski
+    setUpPrint('%i cells with bergs' % bergMaski)
+    np.random.seed(15)
+    # make bergs, all identical
+    bergVariation = 10 #[m]
+    sorted_depth = np.ones(numberOfBergs) * (np.random.normal(maxBergDepth - bergVariation,bergVariation,numberOfBergs))#  STD + 1 is 'max depth'
+    sorted_depth[sorted_depth < minBergDepth] = minBergDepth + .1 # Code doesn't like clean numbers (ie berg on perfect cell bottom), disallow small/neg bergs 
+    sorted_width = np.ones(numberOfBergs) * run_config['horiz_res_m'] * np.sqrt(iceCoverage/100/bergsCell) # cannot be 100% full
+    sorted_length = np.ones(numberOfBergs) * run_config['horiz_res_m'] * np.sqrt(iceCoverage/100/bergsCell) # cannot be 100% full
+else:
+    setUpPrint('Making bergs, this can take a few loops...')
+    loop_count = 1
+
+    np.random.seed(15)
+    setUpPrint('random seed set, not really random anymore')
+
+    while(np.abs(areaResidual) > .005 ): # Create random power dist of bergs, ensure correct surface area
+        numberOfBergs = round(numberOfBergs * (1 + areaResidual))  
+        setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
+        x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
+        x_depth = np.arange(minBergDepth, maxBergDepth, (maxBergDepth-minBergDepth)/(numberOfBergs*1e2))
+        inversePowerLawPDF_width = ((alpha-1) / minBergWidth) * (x_width/minBergWidth) ** (-alpha)
+        inversePowerLawPDF_depth = ((alpha-1) / minBergDepth) * (x_depth/minBergDepth) ** (-alpha)
+            # Get the CDF numerically
+        inversePowerLawCDF_width = np.cumsum(inversePowerLawPDF_width)
+        inversePowerLawCDF_depth = np.cumsum(inversePowerLawPDF_depth)
+            # Normalize
+        inversePowerLawCDF_width = inversePowerLawCDF_width / inversePowerLawCDF_width[-1]
+        inversePowerLawCDF_depth = inversePowerLawCDF_depth / inversePowerLawCDF_depth[-1]
+            
+            # Generate number_of_bergs uniformly distributed random numbers.
+        uniformlyDistributedRandomNumbers = np.random.uniform(0,1,numberOfBergs)
         
-        # Generate number_of_bergs uniformly distributed random numbers.
-    uniformlyDistributedRandomNumbers = np.random.uniform(0,1,numberOfBergs)
-    
-    inversePowerLawDistNumbers_width = np.zeros(uniformlyDistributedRandomNumbers.size);
-    inversePowerLawDistNumbers_depth = np.zeros(uniformlyDistributedRandomNumbers.size);
-    nearestIndex_width = [0] * uniformlyDistributedRandomNumbers.size
-    nearestIndex_depth = [0] * uniformlyDistributedRandomNumbers.size
-    
-    # for i in range(uniformlyDistributedRandomNumbers.size):  #this is pretty slow 
-    #     nearestIndex_width[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_width).argmin();
-    #     nearestIndex_depth[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_depth).argmin();
-    # This works by leaveraging that inversPowerLaw is sorted
-    nearestIndex_width = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_width)
-    nearestIndex_depth = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_depth)
+        inversePowerLawDistNumbers_width = np.zeros(uniformlyDistributedRandomNumbers.size);
+        inversePowerLawDistNumbers_depth = np.zeros(uniformlyDistributedRandomNumbers.size);
+        nearestIndex_width = [0] * uniformlyDistributedRandomNumbers.size
+        nearestIndex_depth = [0] * uniformlyDistributedRandomNumbers.size
+        
+        # for i in range(uniformlyDistributedRandomNumbers.size):  #this is pretty slow 
+        #     nearestIndex_width[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_width).argmin();
+        #     nearestIndex_depth[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_depth).argmin();
+        # This works by leaveraging that inversPowerLaw is sorted
+        nearestIndex_width = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_width)
+        nearestIndex_depth = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_depth)
 
 
-    inversePowerLawDistNumbers_width = x_width[nearestIndex_width];
-    inversePowerLawDistNumbers_length = inversePowerLawDistNumbers_width/1.62 # Widths are bigger 
-    tooWide = np.count_nonzero(inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold))  #disallow completely full cells
-    tooLong = np.count_nonzero(inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold))
-    inversePowerLawDistNumbers_width[inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max width is grid cell (assumed square)
-    inversePowerLawDistNumbers_length[inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max length is grid cell (assumed square)
-    if(tooLong + tooWide > 0):
-        setUpPrint('\t\tBergs clipped: %i for width, %i for length' % (tooWide, tooLong))
-    
-    inversePowerLawDistNumbers_depth = x_depth[nearestIndex_depth]; #depths don't get clipped
-    
-    bergTopArea = sum(inversePowerLawDistNumbers_width*inversePowerLawDistNumbers_length)
-    areaResidual = (desiredBergArea - bergTopArea)/desiredBergArea
-    setUpPrint('\t\t%.2f %% Bergs' % (bergTopArea/bergMaskArea*100))
-    setUpPrint('\t\tareaResidual %.2f %%' % (areaResidual * 100))
-    loop_count += 1
-setUpPrint('====== Success! Found our bergs =====')
-setUpPrint('Width min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_width),np.mean(inversePowerLawDistNumbers_width),np.max(inversePowerLawDistNumbers_width)))
-setUpPrint('Depth min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth)))
-setUpPrint('Total Berg Area %f' % bergTopArea)
-setUpPrint('Total Berg fract: %.2f %%' % (bergTopArea/bergMaskArea*100))
+        inversePowerLawDistNumbers_width = x_width[nearestIndex_width];
+        inversePowerLawDistNumbers_length = inversePowerLawDistNumbers_width/1.62 # Widths are bigger 
+        tooWide = np.count_nonzero(inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold))  #disallow completely full cells
+        tooLong = np.count_nonzero(inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold))
+        inversePowerLawDistNumbers_width[inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max width is grid cell (assumed square)
+        inversePowerLawDistNumbers_length[inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max length is grid cell (assumed square)
+        if(tooLong + tooWide > 0):
+            setUpPrint('\t\tBergs clipped: %i for width, %i for length' % (tooWide, tooLong))
+        
+        inversePowerLawDistNumbers_depth = x_depth[nearestIndex_depth]; #depths don't get clipped
+        
+        bergTopArea = sum(inversePowerLawDistNumbers_width*inversePowerLawDistNumbers_length)
+        areaResidual = (desiredBergArea - bergTopArea)/desiredBergArea
+        setUpPrint('\t\t%.2f %% Bergs' % (bergTopArea/bergMaskArea*100))
+        setUpPrint('\t\tareaResidual %.2f %%' % (areaResidual * 100))
+        loop_count += 1
+    setUpPrint('====== Success! Found our bergs =====')
+    setUpPrint('Width min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_width),np.mean(inversePowerLawDistNumbers_width),np.max(inversePowerLawDistNumbers_width)))
+    setUpPrint('Depth min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth)))
+    setUpPrint('Total Berg Area %f' % bergTopArea)
+    setUpPrint('Total Berg fract: %.2f %%' % (bergTopArea/bergMaskArea*100))
 
-# Now we sort these berg into cell, randomly 
-bergMaski = 0  #Bad name, but this is the count of cells that will recieve bergs
-bergDict = {}
+    # Now we sort these berg into cell, randomly 
+    bergMaski = 0  #Bad name, but this is the count of cells that will recieve bergs
+    bergDict = {}
 
-for j in range(ny):
-    for i in range(nx):
-        if(bergMask[j,i] == 1):
-            # print('i,j, bergmask',i,j,bergMask[j,i])
-            bergMaski = 1 + bergMaski #Needs to start at 1, as non-bergs will be 0
-            bergMaskNums[j,i] = bergMaski #Assign Mask Nums, not random as we'll randomly place bergs in cells
-            bergDict[bergMaski] = [j,i] #This lets us do 1-D loops for the whole grid
-setUpPrint('%i cells with bergs' % bergMaski)
+    for j in range(ny):
+        for i in range(nx):
+            if(bergMask[j,i] == 1):
+                # print('i,j, bergmask',i,j,bergMask[j,i])
+                bergMaski = 1 + bergMaski #Needs to start at 1, as non-bergs will be 0
+                bergMaskNums[j,i] = bergMaski #Assign Mask Nums, not random as we'll randomly place bergs in cells
+                bergDict[bergMaski] = [j,i] #This lets us do 1-D loops for the whole grid
+    setUpPrint('%i cells with bergs' % bergMaski)
 
-# Sort my bergs
-sorted_indices = np.argsort(-inversePowerLawDistNumbers_depth) # Sort backwards to get descending from big to small bergs 
-sorted_depth = inversePowerLawDistNumbers_depth[sorted_indices]
-sorted_width = inversePowerLawDistNumbers_width[sorted_indices]
-sorted_length = inversePowerLawDistNumbers_length[sorted_indices]
-assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) # In this script, every berg has a home
+    # Sort my bergs
+    sorted_indices = np.argsort(-inversePowerLawDistNumbers_depth) # Sort backwards to get descending from big to small bergs 
+    sorted_depth = inversePowerLawDistNumbers_depth[sorted_indices]
+    sorted_width = inversePowerLawDistNumbers_width[sorted_indices]
+    sorted_length = inversePowerLawDistNumbers_length[sorted_indices]
+    assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) # In this script, every berg has a home
 
 # Array for bergs
 bergsPerCellLimit = 500
@@ -862,7 +846,7 @@ icebergs_depths = np.zeros([bergMaski,bergsPerCellLimit])
 icebergs_widths = np.zeros([bergMaski,bergsPerCellLimit])
 icebergs_length = np.zeros([bergMaski,bergsPerCellLimit])  #careful, not plural as to length match
 
-np.random.seed(2)
+np.random.seed(15)
 assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) #every Berg has a spot
 
 icebergs_per_cell = np.zeros([bergMaski],dtype=np.int16)
@@ -881,7 +865,7 @@ for i in range(numberOfBergs):
         if((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY) < hfacThreshold - .01): #only consider accepting if under 95
             odds = np.abs(np.random.normal(0,.5,1))  #randomly accepts those that are big in overfull cells, but at decreasing frequency
             overFull = ((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY)*100 - bergConc[bergDict[j+1][0],bergDict[j+1][1]])
-            if(odds > overFull):
+            if(odds > overFull and not uniformBergs):
                  # print('accepting overfull')
                  assignedCell[i] = j  #if we it a shuffling critera
                  break
@@ -943,32 +927,33 @@ for i in range(bergMaski):
 fig = plt.figure()
 plt.subplot(2,2,1)
 for i in range(bergMaski):
-    plt.plot(openFrac[:,bergDict[i+1][0],bergDict[i+1][1]],-sum_z,alpha=.5,color='xkcd:gray',linewidth=.5)
-plt.plot(np.mean(openFrac[:,bergMask==1],1),-sum_z,alpha=1,color='xkcd:black',linewidth=1,linestyle='--',label='Average Bergs')
+    plt.plot(openFrac[:,bergDict[i+1][0],bergDict[i+1][1]],-np.cumsum(dz),alpha=.5,color='xkcd:gray',linewidth=.5)
+plt.plot(np.mean(openFrac[:,bergMask==1],1),-np.cumsum(dz),alpha=1,color='xkcd:black',linewidth=1,linestyle='--',label='Average Bergs')
 plt.plot([0,1],[-maxBergDepth,-maxBergDepth],color = 'xkcd:red',linestyle=':', label='Target Max Depth')
-plt.plot([1-np.max(bergConc)/100,1-np.max(bergConc)/100],[-domain_params['H'],0],color = 'xkcd:gray',linestyle=':',label='Target Max Berg Conc')
+plt.plot([1-np.max(bergConc)/100,1-np.max(bergConc)/100],[-nz*deltaZ,0],color = 'xkcd:gray',linestyle=':',label='Target Max Berg Conc')
 plt.xlabel('Open Fraction of Cells')
 plt.ylabel('Depth [m]')
 # plt.legend()  #not quite room so off for now
 
 plt.subplot(2,2,2)
-plt.hist(inversePowerLawDistNumbers_depth,bins = 50)
+plt.hist(sorted_depth,bins = 50)
 plt.ylabel('Count')
 plt.xlabel('Depth [m]')
 
 plt.subplot(2,2,3)
-plt.hist(inversePowerLawDistNumbers_width,bins = 50)
+plt.hist(sorted_width,bins = 50)
 plt.ylabel('Count')
 plt.xlabel('Width [m]')
 
 plt.subplot(2,2,4)
-plt.hist(inversePowerLawDistNumbers_length,bins = 50)
+plt.hist(sorted_length,bins = 50)
 plt.ylabel('Count')
 plt.xlabel('Length [m]')
 fig.tight_layout()
 if(writeFiles):
     plt.savefig(run_config['run_dir']+'/input/bergStatistics.png', format='png', dpi=200)
-plt.show()
+if(showfigs):    
+    plt.show()
 
 fig = plt.figure()
 pltHelper = 1-openFrac[0,:,:]
@@ -991,7 +976,8 @@ cbar.set_label('cover resid')
 fig.tight_layout()
 if(writeFiles):
     plt.savefig(run_config['run_dir']+'/input/bergMap.png', format='png', dpi=200)
-plt.show()
+if(showfigs):    
+    plt.show()
 
 fig = plt.figure()
 pc = plt.pcolormesh(meltMask,cmap='cmo.ice_r')
@@ -1002,7 +988,8 @@ plt.xlabel("Cell along fjord")
 fig.tight_layout()
 if(writeFiles):
     plt.savefig(run_config['run_dir']+'/input/meltMask.png', format='png', dpi=200)
-plt.show()
+if(showfigs):    
+    plt.show()
 
 ## write iceberg txt files
 # setUpPrint('Saving text files for bergs...')
@@ -1061,7 +1048,7 @@ def replaceAll(file,searchExp,replaceExp):
 #turn on ICEBERG if off, turn ICEPLUME off
 if(makeDirs):
     replaceAll(run_config['run_dir'] + '/input/data.pkg','ICEBERG=.FALSE.', 'ICEBERG=.TRUE.') 
-    # replaceAll(run_config['run_dir'] + '/input/data.pkg','ICEPLUME=.TRUE.', 'ICEPLUME=.FALSE.') 
+    replaceAll(run_config['run_dir'] + '/input/data.pkg','ICEPLUME=.TRUE.', 'ICEPLUME=.FALSE.') 
 
 
 #========================================================================================
@@ -1102,7 +1089,7 @@ if(makeDirs):
         os.remove(run_config['run_dir']+'/input/setupReport.txt')
         setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')
     shutil.move('setupReport.txt', run_config['run_dir']+'/input')
-    shutil.copy('HughesMelt.py', run_config['run_dir']+'/input/buildScript.py')
+    shutil.copy('windTunnelRbcs.py', run_config['run_dir']+'/input/buildScript.py')
     replaceAll(run_config['run_dir']+'/input/buildScript.py','makeDirs = True', 'makeDirs = False') 
     rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
     setupNotes.close()
