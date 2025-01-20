@@ -35,7 +35,7 @@ import run_config_funcs as rcf # import helpter functions
 #Set up new folder
 makeDirs = False
 #Write input files, this lets us update the inputs with a full new run
-writeFiles = False
+writeFiles = True
 
 if(makeDirs):
     setupNotes = open("setupReport.txt", "w") 
@@ -593,12 +593,12 @@ write_bin("bathymetry.bin", d)
 from scipy import interpolate
 t2 = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
 s2 = np.zeros([grid_params['Nr'],grid_params['Ny'],grid_params['Nx']])
-S2 = np.zeros([grid_params['Nr'],grid_params['Ny'],nt])
-T2 = np.zeros([grid_params['Nr'],grid_params['Ny'],nt])
-S_ns = np.zeros([grid_params['Nr'],(grid_params['Nx']),nt])
-T_ns = np.zeros([grid_params['Nr'],(grid_params['Nx']),nt])
-V_ns = np.zeros([grid_params['Nr'],(grid_params['Nx']),nt])
-W_ns = np.zeros([grid_params['Nr'],(grid_params['Nx']),nt])
+S2 = np.zeros([nt,grid_params['Nr'],grid_params['Ny']])
+T2 = np.zeros([nt,grid_params['Nr'],grid_params['Ny']])
+S_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
+T_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
+V_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
+W_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 
 z_tmp =  np.asarray([  0,  600]); #must be increasing, so do depth as positive, see negs later for z[:]
 t_tmp =  np.asarray([  1,    3]); #const temp
@@ -613,19 +613,19 @@ for j in np.arange(0,grid_params['Ny']):
 #East BC
 for j in np.arange(0,grid_params['Ny']):
     for k in range(nt):
-        T2[:,j,k] = t_int(-1 * z[:])
-        S2[:,j,k] = s_int(-1 * z[:])
+        T2[k,:,j] = t_int(-1 * z[:])
+        S2[k,:,j] = s_int(-1 * z[:])
 
 #BC for V at East side
-Ve = np.zeros([grid_params['Nr'],grid_params['Ny'],nt])
+Ve = np.zeros([nt,grid_params['Nr'],grid_params['Ny']])
 Ve[:,:,:] = oscStrength #[m/s]
 
 #N/S BCs
 for i in np.arange(fjordEnd,grid_params['Nx']):
     for k in range(nt):
-        T_ns[:,i,k] = t_int(-1 * z[:])
-        S_ns[:,i,k] = s_int(-1 * z[:])
-        V_ns[:,i,k] = oscStrength * (i-fjordEnd)/indexOSC #[m/s] along coast flow
+        T_ns[k,:,i] = t_int(-1 * z[:])
+        S_ns[k,:,i] = s_int(-1 * z[:])
+        V_ns[k,:,i] = oscStrength * (i-fjordEnd)/indexOSC #[m/s] along coast flow
 
 write_bin("T.init", t2)
 write_bin("S.init", s2)
@@ -638,8 +638,8 @@ write_bin("NsBCv.bin", V_ns)
 write_bin("NsBCW.bin", W_ns)
 
 plt.figure()
-plt.plot(S2[:,0] - 34, z, 'b', label="Sref - 34")
-plt.plot(T2[:,0], z, 'r', label="Tref")
+plt.plot(s2[:,1,1] - 34, z, 'b', label="Sref - 34")
+plt.plot(t2[:,1,1], z, 'r', label="Tref")
 plt.scatter(s_tmp - 34,-z_tmp,color='b')
 plt.scatter(t_tmp,-z_tmp,color='r')
 plt.legend()
@@ -651,8 +651,8 @@ plt.close()
 #=======================================================================================
 # Plume
 
-runoffVel = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
-runoffRad = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
+runoffVel = np.zeros([nt,grid_params['Ny'],grid_params['Nx']])
+runoffRad = np.zeros([nt,grid_params['Ny'],grid_params['Nx']])
 plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 # Total runoff (m^3/s)
@@ -684,10 +684,10 @@ plumeMask[1:-1,icefront] = 1
 plumeMask[plume_loc,icefront] = 3 # runoff emerges from centre of grounding line
 
 # specify a runoff velocity of 1 m/s
-runoffVel[plume_loc,icefront,:] = wsg
+runoffVel[:,plume_loc,icefront] = wsg
 
 # calculate channel radius
-runoffRad[plume_loc,icefront,:] = np.sqrt(2*runoff/(np.pi*wsg))
+runoffRad[:,plume_loc,icefront] = np.sqrt(2*runoff/(np.pi*wsg))
 
 # Write files
 write_bin("runoffVel.bin", runoffVel)
@@ -703,9 +703,11 @@ plt.show()
 plt.close()
 
 plt.figure()
-plt.plot(runoffRad[plume_loc,icefront,:],label='radius')
-plt.plot(runoffVel[plume_loc,icefront,:]*.5*np.pi*runoffRad[plume_loc,icefront,:]**2,label='Volume')
+plt.plot(runoffRad[:,plume_loc,icefront],label='radius')
+plt.plot(runoffVel[:,plume_loc,icefront]*.5*np.pi*runoffRad[:,plume_loc,icefront]**2,label='Volume')
 plt.legend()
+if(writeFiles):
+    plt.savefig("%sforcingVelocity" % (run_config['run_dir']+'/input/'))
 plt.show()
 plt.close()
 
