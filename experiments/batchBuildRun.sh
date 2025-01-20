@@ -26,7 +26,7 @@ do
 		echo "moving back"
 	else
 		bash ../makeBuild.sh ../../..
-		bash ../makeRunRbcs.sh
+		bash ../makeRun.sh
 		echo "moving back"
 	fi
 	cd ..

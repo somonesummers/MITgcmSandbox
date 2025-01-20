@@ -80,8 +80,8 @@ os.system('rm -f figs/map*.png')
 # os.system('rm -f figs/autoMap*.gif')
 
 y = mds.rdmds("results/YC")
-x = mds.rdmds("results/XC")-8000
-# x = mds.rdmds("results/XC")
+# x = mds.rdmds("results/XC")-8000
+x = mds.rdmds("results/XC")
 z = mds.rdmds("results/RC")
 
 
@@ -219,7 +219,7 @@ for k in range(len(name)):
             #cbar2 = plt.colorbar(cp2)
             #cbar2.set_label('Ocean Fraction')
 
-        plt.xlim([-8000, 25000]) # if zooming into a specific region
+        # plt.xlim([-8000, 25000]) # if zooming into a specific region
         j = i/sizeStep + startStep
         str = "figs/map%s%05i.png" % (name[k],j)
         
