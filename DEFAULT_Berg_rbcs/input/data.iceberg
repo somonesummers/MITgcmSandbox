@@ -13,7 +13,13 @@
  ICEBERGmaskNumsFile = 'bergMaskNums.bin',
  ICEBERGnumPerCellFile = 'numBergsPerCell.bin',
  ICEBERGareaFile = 'totalBergArea.bin',
- icebergBGvel=0.06,
+ icebergBGvel=0.04,
  brg_iceTemp=-10,
- brg_DragForm=0.0025,
+ brg_DragForm = 0.0025,
+ brg_lambda1 = -0.0575
+ brg_lambda2 = 0.0901
+ brg_lambda3 = 0.000761
+ brg_GamT = 0.0044
+ brg_GamS = 0.000124
+ brg_Cd = 1.
  &
