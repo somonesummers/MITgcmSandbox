@@ -9,15 +9,15 @@
  tauRelaxU=14400.,
  tauRelaxT=14400.,
 # Ignoring U being on different grid to T. Using same mask
- relaxMaskFile='rbcsFullMask.bin',
- relaxMaskUFile='rbcsFullMask.bin',
+ relaxMaskFile='rbcsMask.bin',
+ relaxMaskUFile='rbcsMask.bin',
  relaxTFile='T.init',
  relaxUFile='U.init',
 #------------------------------------------------------------------------------
  rbcsIniter=0,
  rbcsForcingPeriod=0.,
  rbcsForcingCycle=0.,
- rbcsVanishingTime=28800.,
+ rbcsVanishingTime=0.,
 /
 
  &RBCS_PARM02
