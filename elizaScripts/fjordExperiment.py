@@ -33,7 +33,7 @@ import build_domain_funcs as build_domain
 import run_config_funcs as rcf # import helpter functions
 
 #Set up new folder
-makeDirs = False
+makeDirs = True
 #Write input files, this lets us update the inputs with a full new run
 writeFiles = True
 
@@ -76,9 +76,9 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'fjord_timeVary'
-run_config['ndays'] = 50.0 # simulaton time (days)
+run_config['ncpus_xy'] = [20,1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'fjord_timeVary_m0'
+run_config['ndays'] = 200.0 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
@@ -97,8 +97,8 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 15000 # [meters] of extent of ice
 iceCoverage = 60 # % of ice cover in melange, stay under 90% ideally
-doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
-doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
+doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
+doBlock = 0 # do we actually calculate melt (0/1 = no/yes)
 #========================================================================================
 # The rest of this should take care of it self mostly
 
