@@ -356,8 +356,8 @@ params03['monitorSelect'] = 1
 
 
 params03['periodicExternalForcing'] = True
-params03['ExternForcingPeriod'] = 86400
-params03['ExternForcingCycle'] = 25*86400 
+params03['ExternForcingPeriod'] = 200*86400/25
+params03['ExternForcingCycle'] = 200*86400 
 
 if run_config['test']:
     nTimeSteps = 10
@@ -417,20 +417,18 @@ if run_config['test']:
     run_config['tavg_freq'] = 1 # multiples of timestep
     
 else:
-    run_config['inst_freq'] = 12 # multiples of hours
-    run_config['tavg_freq'] = 12 # multiples of hours
+    run_config['inst_freq'] = 48 # multiples of hours
+    run_config['tavg_freq'] = 48 # multiples of hours
 
 
 #---------specify time averaged fields------#
 # NOTE: many more options available see mitgcm docs
 diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
-                    ['THETA','SALT','UVELMASS','VVELMASS','WVELMASS'],
-                    ['UTHMASS ','USLTMASS','VTHMASS ','VSLTMASS','WTHMASS ','WSLTMASS',],
                     ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY'],
                     ['icefrntW','icefrntT','icefrntS','icefrntR','icefrntM'],
                     ]
 diag_fields_max = 0
-diag_fields_avg_name = ['dynDiag','dynMassDiag','fluxMassDiag','BRGFlx','plumeDiag']
+diag_fields_avg_name = ['dynDiag','BRGFlx','plumeDiag']
 # diag_fields_avg = ['UVEL', 'VVEL', 'WVEL', 'UVELSQ', 'VVELSQ', 'WVELSQ',
 #                   'UVELTH', 'VVELTH', 'WVELTH', 'THETA', 'THETASQ',
 #                   'PHIHYD', 'LaUH1TH', 'LaVH1TH', 'LaHw1TH','LaHs1TH']
@@ -650,14 +648,16 @@ plt.close()
 
 #=======================================================================================
 # Plume
-
+setUpPrint('====== Plume =====')
 runoffVel = np.zeros([nt,grid_params['Ny'],grid_params['Nx']])
 runoffRad = np.zeros([nt,grid_params['Ny'],grid_params['Nx']])
 plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 # Total runoff (m^3/s)
-runoff = 350 + 150 * np.sin(np.pi * np.arange(nt)/12.5)
-print(runoff)
+# runoff = 350 + 150 * np.sin(np.pi * np.arange(nt)/12.5)
+runoff = 500 * np.ones(nt)
+setUpPrint('Runoff is:')
+setUpPrint(runoff)
 # velocity (m/s) of subglacial runoff
 wsg = 1 
 
