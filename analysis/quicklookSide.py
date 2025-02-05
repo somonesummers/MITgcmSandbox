@@ -272,8 +272,9 @@ for k in range(len(name)):
         str = "figs/side_%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png', dpi=plotDPI)
+        # plt.show()
         plt.close()
-        #plt.show()
+        
     if(args.yCrossSection != None):
          os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.yCrossSection, name[k]))
     else:    

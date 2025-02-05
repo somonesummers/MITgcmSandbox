@@ -29,9 +29,6 @@ do
   echo '== TS plot =='
   python ../quickTSplot.py
 
-  echo '== Flux plot =='
-  python ../fluxPlot.py
-
   echo '== Plume plot =='
   python ../quickPlumePlot.py
 

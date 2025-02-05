@@ -62,7 +62,7 @@ email = 'psummers8@gatech.edu'
 # set high level run configurations
 
 briefSummaryOfExp = """Comparing our results to that of Hughes 2022 around form drag of bergs in a wind tunnel like set up.
-rbcs_#spd_lambda is comparison with RBCS boundaries sweeping spd, lamba values"""
+melt_b#_d# has melting enabled and blocking/drag on/off"""
 
 
 setUpPrint('====== Welcome to the mélange building script =====')
@@ -76,7 +76,7 @@ showfigs = False
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'rbcs_12_20_randomAspect'
+run_config['run_name'] = 'rbcs_melt_b0_d0'
 run_config['ndays'] = 3 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -94,8 +94,8 @@ oscStrength = 0.12 #[m/s] peak strength of sin forcing current
 iceBergDepth = 140 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 2500 # [meters] of extent of ice
 iceCoverage = 20 # % of ice cover in melange, stay under 90% ideally
-doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
-doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
+doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
+doBlock = 0 # do we actually calculate melt (0/1 = no/yes)
 uniformBergs = False #lets us have uniform bergs or random powerlaw bergs is default
 #========================================================================================
 # The rest of this should take care of it self mostly
@@ -242,8 +242,8 @@ dz_tmp = np.linspace(1,7,grid_params['Nr'])
 dz = dz_tmp/np.sum(dz_tmp)*domain_params['H'] 
 
 sum_z = np.cumsum(dz)
-print("dz: \n",dz)
-print("z: \n",sum_z)
+setUpPrint("dz: \n",dz)
+setUpPrint("z: \n",sum_z)
 
 grid_params['delZ'] = dz
 grid_params['hFacMinDr'] = dz.min()
@@ -785,8 +785,8 @@ else:
         nearestIndex_width = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_width)
 
         inversePowerLawDistNumbers_width = x_width[nearestIndex_width];
-        wlRatio = np.random.normal(1.62,0.42,numberOfBergs)
-        # wlRatio = 1.2
+        # wlRatio = np.random.normal(1.62,0.42,numberOfBergs)
+        wlRatio = 1.2
         inversePowerLawDistNumbers_length = inversePowerLawDistNumbers_width/wlRatio # Widths are bigger 
             # Power law with random dist to get volume, then use hydrostatic to get draft
         randScale = np.random.normal(6,1.22,numberOfBergs)
