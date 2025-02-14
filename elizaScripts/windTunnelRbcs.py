@@ -76,7 +76,7 @@ showfigs = False
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'rbcs_melt_b0_d0'
+run_config['run_name'] = 'rbcs_sGrad'
 run_config['ndays'] = 3 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -242,8 +242,8 @@ dz_tmp = np.linspace(1,7,grid_params['Nr'])
 dz = dz_tmp/np.sum(dz_tmp)*domain_params['H'] 
 
 sum_z = np.cumsum(dz)
-setUpPrint("dz: \n",dz)
-setUpPrint("z: \n",sum_z)
+setUpPrint("dz: \n %s" %dz)
+setUpPrint("z: \n %s" %sum_z)
 
 grid_params['delZ'] = dz
 grid_params['hFacMinDr'] = dz.min()
@@ -293,8 +293,8 @@ params01['diffKzS'] = 1.0e-5 # Vert salt diffusion
 # equation of state
 # params01['eosType'] = 'JMD95Z'
 params01['eosType'] = 'LINEAR'
-params01['tAlpha'] = 2.E-4
-# params01['sBeta'] = 8.0e-4
+params01['tAlpha'] = 2.0E-4
+params01['sBeta'] = 7.4E-4
 params01['Tref'] = np.ones(grid_params['Nr'])*0. #ref temp
 params01['Sref'] = np.ones(grid_params['Nr'])*34. #ref salt
 
@@ -547,10 +547,8 @@ def write_bin(fname, data):
         setUpPrint('Not saving')
 #Similar params as fed into MITgcm, but redeclared here
 gravity = 9.81
-sbeta = 8.0e-4
-talpha = 0.4e-4
 rho0 = 999.8
-T0 = 1
+T0 = 0
 S0 = 34
 
 x = np.zeros([grid_params['Ny'], grid_params['Nx']])
@@ -603,8 +601,8 @@ V_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 W_ns = np.zeros([grid_params['Nr'],(grid_params['Nx'])])
 
 z_tmp =  np.asarray([  0,  600]); #must be increasing, so do depth as positive, see negs later for z[:]
-t_tmp =  np.asarray([  0, -8.3]); #linear for both T and S
-s_tmp =  np.asarray([   0,   0]);
+t_tmp =  np.asarray([  0, 0]); #linear for both T and S
+s_tmp =  np.asarray([31.837, 34]);
 t_int = interpolate.PchipInterpolator(z_tmp, t_tmp)
 s_int = interpolate.PchipInterpolator(z_tmp, s_tmp)
 for j in np.arange(0,grid_params['Ny']):
