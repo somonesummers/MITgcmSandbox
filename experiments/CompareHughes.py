@@ -32,19 +32,19 @@ hFacWeighted = True
 compareHughes = True
 
 
-dirNames = ['rbcs_12_20','rbcs_12_20_b1_d0','rbcs_12_20_b0_d0']
-legendNames = ['block + drag','block + no drag','no block + no drag']
-fileName = 'controlCases'
-titleText = '$\\lambda = .2$ U = 0.12 m/s'
-mainColor = 'lavender'
-spds = [.12]*len(dirNames)
-
-# dirNames = ['rbcs_12_02','rbcs_12_05','rbcs_12_10','rbcs_12_20_randomAspect','rbcs_12_40']
-# legendNames = ['$\\lambda = 0.02$','$\\lambda = 0.05$','$\\lambda = 0.10$','$\\lambda = 0.20$','$\\lambda = 0.40$']
-# fileName = 'Lambda_0025_ra'
-# titleText = 'U = 0.12 m/s'
-# mainColor = 'green'
+# dirNames = ['rbcs_12_20','rbcs_12_20_b1_d0','rbcs_12_20_b0_d0']
+# legendNames = ['block + drag','block + no drag','no block + no drag']
+# fileName = 'controlCases'
+# titleText = '$\\lambda = .2$ U = 0.12 m/s'
+# mainColor = 'lavender'
 # spds = [.12]*len(dirNames)
+
+dirNames = ['rbcs_12_02','rbcs_12_05','rbcs_12_10','rbcs_12_20','rbcs_12_40']
+legendNames = ['$\\lambda = 0.02$','$\\lambda = 0.05$','$\\lambda = 0.10$','$\\lambda = 0.20$','$\\lambda = 0.40$']
+fileName = 'Lambda_0025_temp'
+titleText = 'U = 0.12 m/s'
+mainColor = 'green'
+spds = [.12]*len(dirNames)
 
 # dirNames = ['rbcs_02_20','rbcs_05_20','rbcs_12_20','rbcs_25_20','rbcs_40_20']
 # legendNames = ['$u = 0.02$ m/s','$u = 0.05$ m/s','$u = 0.12$ m/s','$u = 0.24$ m/s','$u = 0.40$ m/s',]
