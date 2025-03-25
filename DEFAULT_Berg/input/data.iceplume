@@ -12,7 +12,7 @@
  T_sg = 0.001,
  S_sg = 0.001,
  iceTemp=-10.,
- backgroundVel=0.06,
+ backgroundVel=0.04,
  E_0=0.10,
  &
 
