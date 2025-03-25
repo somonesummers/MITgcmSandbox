@@ -235,7 +235,7 @@ if(fillIn):
             while(tmpBergFac < icebergCoverLambda):
                 randScale = np.random.normal(6,1.22,1)
                 randPower = np.random.normal(0.3,0.016,1)
-                a = (minBergWidth**(alpha) + (maxBergWidth**(alpha) - minBergWidth**(alpha))*random.random())**(1/(alpha))
+                a = (minBergWidth**(alpha+1) + (maxBergWidth**(alpha+1) - minBergWidth**(alpha+1))*random.random())**(1/(alpha+1))
                 b = a / aspectRatio
                 if(tmpBergFac + (a*b)/(deltaX*deltaY) < 0.95):
                     bergWidths[bergsPerCell[j,i],j,i] = a
