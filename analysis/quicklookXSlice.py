@@ -68,8 +68,8 @@ for file in os.listdir('results'):
             sizeStep = abs(int(words[1]) - startStep)
 
 
-if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to be less than 50
-    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)
+if((maxStep-startStep)/sizeStep > 120):   #if more than 50 frames, downscale to be less than 50
+    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/120)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 

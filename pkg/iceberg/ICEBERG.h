@@ -55,7 +55,7 @@ C     brg_SelectDrag                  :: select how drag is computed from veloci
 C                                        (1:n = 2, 2:n = 2, 3: n = 1 + .75*hFacC, 4: 1 + .75*(hFacC)**3
 C     brg_SelectFill                  :: select how frontal area scales with hFacC (def: 3)
 C                                        (1:linear, 2:quad, 3:quartic)
-C     brg_DragForm                    :: form drag across iceberg (default = 0.002)
+C     brg_DragForm                    :: form drag across iceberg (default = 0.0025)
 
 C=============================================================================
 C     FIELDS

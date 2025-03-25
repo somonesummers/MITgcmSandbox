@@ -32,9 +32,16 @@ hFacWeighted = True
 compareHughes = True
 
 
-dirNames = ['rbcs_12_02','rbcs_12_05','rbcs_12_10','rbcs_12_20_randomAspect','rbcs_12_40']
+# dirNames = ['rbcs_12_20','rbcs_12_20_b1_d0','rbcs_12_20_b0_d0']
+# legendNames = ['block + drag','block + no drag','no block + no drag']
+# fileName = 'controlCases'
+# titleText = '$\\lambda = .2$ U = 0.12 m/s'
+# mainColor = 'lavender'
+# spds = [.12]*len(dirNames)
+
+dirNames = ['rbcs_12_02','rbcs_12_05','rbcs_12_10','rbcs_12_20','rbcs_12_40']
 legendNames = ['$\\lambda = 0.02$','$\\lambda = 0.05$','$\\lambda = 0.10$','$\\lambda = 0.20$','$\\lambda = 0.40$']
-fileName = 'Lambda_0025_ra'
+fileName = 'Lambda_0025_temp'
 titleText = 'U = 0.12 m/s'
 mainColor = 'green'
 spds = [.12]*len(dirNames)
@@ -130,7 +137,7 @@ for k in range(len(name)):
 
         data = mds.rdmds(dirName + resultFolder + "/%s"%(dynName[k]), i)
         if k == 0:
-            lvl = [-0,1.2]
+            lvl = [-0,1.6]
             seedColor = mainColor
             plotData = np.squeeze(data[k+2,:,:,:]) * 1 / spds[l]
         elif k == 1:
@@ -178,8 +185,8 @@ for k in range(len(name)):
             plt.plot([-1,3],[np.nanmedian(bergDepth),np.nanmedian(bergDepth)],color='red',linestyle='--',alpha=.5)
         # Compare against Hughes Directly
     if(compareHughes):
-        pack = ['020','050','100','200','400']
-        # pack = ['200']
+        # pack = ['020','050','100','200','400']
+        pack = ['200']
         # spds=[.12]
         # pack = ['020','050','120','250','400']
         # spds = [.02,.05,.12,.25,.40]
@@ -221,8 +228,8 @@ for k in range(len(name)):
     plt.figure()
     totalError = np.zeros(np.shape(z1)[1])
     for l in range(len(dirNames)):
-        u2_interp = np.interp(-z1[l,:],-z2[l,:],u2[k,l,:])
-        # u2_interp = np.interp(-z1[l,:],-z2[0,:],u2[k,0,:])
+        # u2_interp = np.interp(-z1[l,:],-z2[l,:],u2[k,l,:])
+        u2_interp = np.interp(-z1[l,:],-z2[0,:],u2[k,0,:])
         error = u1[k,l,:] - u2_interp
         totalError = totalError + error**2
         # plt.plot(u1[k,l,:],z1[l,:],label='Summers')
@@ -242,7 +249,7 @@ for k in range(len(name)):
         plt.xlim([-.005, .005])
     plt.ylim([-300, 0])
     zSlice = np.argmin(np.abs(z1[l,:] + 100))
-    plt.xlabel("∆"+name[k] + " " + units[k] +" $\\sum\\epsilon^2$: %.2f,%.2f" %(np.nansum(totalError[:zSlice]),np.nansum(totalError)))
+    plt.xlabel("∆"+name[k] + " " + units[k] +" MSE: %.2f,%.2f" %(np.nansum(totalError[:zSlice]),np.nansum(totalError)))
     plt.ylabel('Depth [m]')
     plt.grid(alpha=.5)
     plt.legend()    

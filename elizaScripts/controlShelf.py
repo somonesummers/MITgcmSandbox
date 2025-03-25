@@ -68,16 +68,16 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1, 1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'foxtrotShelf'
+run_config['run_name'] = 'Alpha_shelf'
 run_config['ndays'] = 10 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
-run_config['Lx_m'] = 40000 # domain size in x (m)
+run_config['Lx_m'] = 60000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 50 # num of z-grid points
+grid_params['Nr'] = 25 # num of z-grid points
 
 # Offshore current =========================
 oscStrength = .3 #[m/s] peak strength of offshore current
@@ -161,7 +161,7 @@ setUpPrint('====== Domain Size and Parameters =====')
 domain_params = {}
 domain_params['Lx'] = run_config['Lx_m'] # domain size in x (m)
 domain_params['Ly'] = run_config['Ly_m'] # domain size in y (m)
-domain_params['L_sponge'] = 20000 # width of eastern sponge layer (m)
+domain_params['L_sponge'] = 5000 # width of eastern sponge layer (m)
 domain_params['H'] = 500 # max domain depth (m)
 
 # NOTE: the only thing you may need to change here is the number of z-grid pointsm, which was set above)
@@ -214,20 +214,15 @@ grid_params['delX'] = (domain_params['Lx']/grid_params['Nx'])*np.ones(grid_param
 grid_params['delY'] = (domain_params['Ly']/grid_params['Ny'])*np.ones(grid_params['Ny'])
 
 
-# vertical grid spacing 
-# spacing increases with depth---can be modified
-# zidx = np.arange(1, grid_params['Nr']+1)
-# aa = 10
-# dz1 = 2*domain_params['H']/grid_params['Nr']/(aa+1)
-# dz2 = aa*dz1
-# dz = dz1 + ((dz2-dz1)/2)*(1+np.tanh((zidx-((grid_params['Nr']+1)/2))/aa))
-# zz1 = np.append([0], np.cumsum(dz))
-# zz = -(zz1[:-1] + np.diff(zz1)/2) # layer midpoints
-
-dz = domain_params['H']/grid_params['Nr']*np.ones(grid_params['Nr']);
+# I'm smitten with myself for how well this works to make a smooth dz profile
+dz_tmp = np.linspace(1,7,grid_params['Nr'])
+dz = dz_tmp/np.sum(dz_tmp)*domain_params['H'] 
+sum_z = np.cumsum(dz)
+setUpPrint("dz: \n %s" %dz)
+setUpPrint("z: \n %s"  %sum_z)
 
 grid_params['delZ'] = dz
-grid_params['hFacMinDr'] = dz.min()
+# grid_params['hFacMinDr'] = dz.min()
 
 #========================================================================================
 #Physical parameters
@@ -251,55 +246,56 @@ params01['vectorInvariantMomentum'] = True
 
 # viscosity parameters
 #params01['viscA4'] = 0.0000 # Biharmonic viscosity?
-params01['viscAz'] = 1.0e-2 # Vertical viscosity
-#params01['viscAh'] = 2.5e-1 # Vertical viscosity
+params01['viscAz'] = 1.0e-4 # Vertical viscosity
+params01['viscAh'] = 1.0e-3 # Vertical viscosity, this limits our timestep a lot
 params01['viscC2smag'] = 2.2 # ??? viscosity
 
 # advection and time stepping
 params01['tempAdvScheme'] = 33 # needs to be int
 params01['saltAdvScheme'] = 33 # needs to be int
 #params01['tempStepping'] = True
-#params01['saltStepping'] = run_config['evolve_salt']
+params01['saltStepping'] = True
 params01['staggerTimeStep'] = True
 
 # diffusivity
 #params01['diffK4T'] = 0.0e4 # ?? temp diffusion
-params01['diffKhT'] = 1.0 # Horizontal temp diffusion
-params01['diffKhS'] = 1.0 # Horz salt diffusion
-params01['diffKzT'] = 4.0e-3 # Vertical temp diffusion
-params01['diffKzS'] = 4.0e-3 # Vert salt diffusion
+params01['diffKhT'] = 1.0e-5 # Horizontal temp diffusion
+params01['diffKhS'] = 1.0e-5 # Horz salt diffusion
+params01['diffKzT'] = 1.0e-5 # Vertical temp diffusion
+params01['diffKzS'] = 1.0e-5 # Vert salt diffusion
 #params01['diffK4S'] = 0.0e4 # ?? salt diffusion
 
 
 # equation of state
 params01['eosType'] = 'JMD95Z'
-# params01['eosType'] = 'LINEAR'
-# params01['tAlpha'] = 0.4e04
-# params01['sBeta'] = 8.0e-4
 params01['Tref'] = np.ones(grid_params['Nr'])*0. #ref temp
 params01['Sref'] = np.ones(grid_params['Nr'])*34. #ref salt
 
 # boundary conditions
-#params01['bottomDragLinear'] = 0.0e-4
 
-params01['no_slip_sides'] = True
-params01['no_slip_bottom'] = True
+params01['no_slip_sides'] = False
+params01['no_slip_bottom'] = False
 params01['rigidLid'] = False
 params01['implicitFreeSurface'] = True
+params01['implicSurfPress'] = 1.0
+params01['implicDiv2DFlow'] = 1.0
 params01['selectAddFluid'] = 1
-#params01['implicitViscosity'] = True
-#params01['implicitDiffusion'] = True
+# params01['useRealFreshWaterFlux'] = True #we add fluid above, so I think this is un-needed
+params01['exactConserv'] = True
+params01['implicitViscosity'] = True
+params01['implicitDiffusion'] = True
 
 # physical parameters
-#params01['f0'] = -1.36e-4
-params01['f0'] = 1.36e-4
+params01['f0'] = 1.37e-4
 params01['beta'] = 0.0e-13
 params01['gravity'] = g
 
 # misc
 params01['hFacMin'] = 0.05
-params01['nonHydrostatic'] = True
+params01['nonHydrostatic'] = False
 params01['readBinaryPrec'] = 64
+params01['useSmag3D'] = True
+params01['smag3D_coeff'] = 1e-4
 
 
 # ## Check for numericl stability?
@@ -318,7 +314,7 @@ params02['cg3dTargetResidual'] = 1e-8
 params03 = {}
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 100.0
+deltaT = 50
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -799,7 +795,7 @@ setUpPrint('Estimated run time is %.2f hours for one CPU' % (estTime/60))
 setUpPrint('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/ncpus*1.2,ncpus))
 
 comptime_hrs = estTime/60/ncpus*1.2 
-f(makeDirs):
+if(makeDirs):
     if os.path.isfile(run_config['run_dir']+'/input/setupReport.txt'):   
         os.remove(run_config['run_dir']+'/input/setupReport.txt')
         setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')

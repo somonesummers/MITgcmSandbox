@@ -85,7 +85,7 @@ os.system('rm -f figs/autoCompareSide_*.gif')
 interpolateGrid = False
 x = mds.rdmds("%s/XC" % folder1)
 y = mds.rdmds("%s/YC" % folder1)
-z = mds.rdmds("%s/RC" % folder1)
+z = np.squeeze(mds.rdmds("%s/RC" % folder1))
 
 x2 = mds.rdmds("%s/XC" % folder2)
 y2 = mds.rdmds("%s/YC" % folder2)
@@ -96,6 +96,7 @@ if(np.max(x != x2)):
     interpolateGrid = True
 if(np.max(z != z2)):
     print("\tUneven vertical grid detected, attempting to interpolate onto %s grid" %folder1)
+    print(z,z2)
     interpolateGrid = True
 
 if(os.path.isfile('input/bathymetry.bin')):

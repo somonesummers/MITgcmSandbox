@@ -19,7 +19,7 @@ zDepth = -50
 plotDPI = 100
 cleanPNGs = True
 usePcolor = True
-showQuiver = True
+showQuiver = False
 showZeros = True
 
 if(os.path.isfile('input/plotHelperLocal.py')):
@@ -124,6 +124,7 @@ else:
 for k in range(len(name)):
     print("\t" + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
+        plt.figure(figsize=(12, 4))
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
@@ -185,6 +186,8 @@ for k in range(len(name)):
             )
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
+        ax1 = plt.gca()
+        ax1.set_aspect('equal')
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(dataPlot),np.nanmax(dataPlot),np.max(np.isnan(dataPlot))))
         plt.ylabel('Across Fjord [m]')
         plt.title("%s depth %f at %.02f days" % (name[k], z[zSlice,0,0] ,i/86400.0*dt))
@@ -233,5 +236,5 @@ for k in range(len(name)):
         os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
-if(cleanPNGs):
-    os.system('rm -f figs/map*.png')
+    if(cleanPNGs):
+        os.system('rm -f figs/map*.png')

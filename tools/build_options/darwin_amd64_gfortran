@@ -54,6 +54,7 @@ OMPFLAG='-fopenmp'
 NOOPTFLAGS='-O0'
 NOOPTFILES=''
 
+#Paul added -Wl,-no_warn_duplicate_libraries
 FFLAGS="$FFLAGS -fconvert=big-endian"
 # for big objects:
 #FFLAGS="$FFLAGS -fPIC"

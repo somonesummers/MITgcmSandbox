@@ -37,6 +37,9 @@ makeDirs = True
 #Write input files, this lets us update the inputs with a full new run
 writeFiles = True
 
+# Set median drafts to align with output from melange1D
+forceDraft = True
+
 if(makeDirs):
     setupNotes = open("setupReport.txt", "w") 
 
@@ -64,22 +67,20 @@ def setUpPrint(msg):
 email = 'psummers8@gatech.edu'
 # set high level run configurations
 
-briefSummaryOfExp = """Comparing shelf to berg version of Melange, using melange shape
-from melange1D first, this is berg version to compare meltrates/heatflux"""
+briefSummaryOfExp = """Comparing melange and shelf cases with forced draft"""
 
 
 setUpPrint('====== Welcome to the mélange building script =====')
-setUpPrint(briefSummaryOfExp)
+setUpPrint(briefSummaryOfExp + "\n\tmakeDirs: %s, writeFiles: %s" %(makeDirs,writeFiles))
 input("Confirm above is accurate before continuing...")
-setUpPrint('\tMaking experiment to compare mélange realizations')
 #========================================================================================
 #main values to imput 
 
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'golf_b0'
-run_config['ndays'] = 10 # simulaton time (days)
+run_config['run_name'] = 'Beta'
+run_config['ndays'] = 1 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
@@ -87,7 +88,7 @@ run_config['Lx_m'] = 40000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 50 # num of z-grid points
+grid_params['Nr'] = 25 # num of z-grid points
 
 # Offshore current =========================
 oscStrength = .3 #[m/s] peak strength of offshore current
@@ -96,16 +97,16 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 150 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 18000 # [meters] of extent of ice
+iceExtent = 16000 # [meters] of extent of ice
 iceCoverage = 80 # % of ice cover in melange, stay under 90% ideally
 doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
-doBlock = 0 # do we actually calculate melt (0/1 = no/yes)
+doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 #========================================================================================
 # The rest of this should take care of it self mostly
 
 #run_config['evolve_salt'] = False
 run_config['use_GMRedi'] = False # should be set to false for eddy permitting resolutions
-run_config['periodic_forcing'] = False # note: the code is not yet set up to handle time-dependent forcing
+run_config['periodic_forcing'] = False # you have to do this manually
 
 MITgcm_release = 'MITgcm-checkpoint68z' #Sept 2024 release
 #MITgcm_code_dir = os.path.join(group_home_dir, 'shared/mitgcm_releases', MITgcm_release)
@@ -176,7 +177,7 @@ setUpPrint('====== Domain Size and Parameters =====')
 domain_params = {}
 domain_params['Lx'] = run_config['Lx_m'] # domain size in x (m)
 domain_params['Ly'] = run_config['Ly_m'] # domain size in y (m)
-domain_params['L_sponge'] = 20000 # width of eastern sponge layer (m)
+domain_params['L_sponge'] = 5000 # width of eastern sponge layer (m)
 domain_params['H'] = 500 # max domain depth (m)
 
 # NOTE: the only thing you may need to change here is the number of z-grid pointsm, which was set above)
@@ -229,20 +230,17 @@ grid_params['delX'] = (domain_params['Lx']/grid_params['Nx'])*np.ones(grid_param
 grid_params['delY'] = (domain_params['Ly']/grid_params['Ny'])*np.ones(grid_params['Ny'])
 
 
-# vertical grid spacing 
-# spacing increases with depth---can be modified
-# zidx = np.arange(1, grid_params['Nr']+1)
-# aa = 10
-# dz1 = 2*domain_params['H']/grid_params['Nr']/(aa+1)
-# dz2 = aa*dz1
-# dz = dz1 + ((dz2-dz1)/2)*(1+np.tanh((zidx-((grid_params['Nr']+1)/2))/aa))
-# zz1 = np.append([0], np.cumsum(dz))
-# zz = -(zz1[:-1] + np.diff(zz1)/2) # layer midpoints
+# dz = domain_params['H']/grid_params['Nr']*np.ones(grid_params['Nr']);
 
-dz = domain_params['H']/grid_params['Nr']*np.ones(grid_params['Nr']);
+# I'm smitten with myself for how well this works to make a smooth dz profile
+dz_tmp = np.linspace(1,7,grid_params['Nr'])
+dz = dz_tmp/np.sum(dz_tmp)*domain_params['H'] 
+sum_z = np.cumsum(dz)
+setUpPrint("dz: \n %s" %dz)
+setUpPrint("z: \n %s"  %sum_z)
 
 grid_params['delZ'] = dz
-grid_params['hFacMinDr'] = dz.min()
+# grid_params['hFacMinDr'] = dz.min()
 
 #========================================================================================
 #Physical parameters
@@ -266,58 +264,56 @@ params01['vectorInvariantMomentum'] = True
 
 # viscosity parameters
 #params01['viscA4'] = 0.0000 # Biharmonic viscosity?
-params01['viscAz'] = 1.0e-2 # Vertical viscosity
-#params01['viscAh'] = 2.5e-1 # Vertical viscosity
+params01['viscAz'] = 1.0e-4 # Vertical viscosity
+params01['viscAh'] = 1.0e-3 # Vertical viscosity, this limits our timestep a lot
 params01['viscC2smag'] = 2.2 # ??? viscosity
 
 # advection and time stepping
 params01['tempAdvScheme'] = 33 # needs to be int
 params01['saltAdvScheme'] = 33 # needs to be int
 #params01['tempStepping'] = True
-#params01['saltStepping'] = run_config['evolve_salt']
+params01['saltStepping'] = True
 params01['staggerTimeStep'] = True
 
 # diffusivity
 #params01['diffK4T'] = 0.0e4 # ?? temp diffusion
-params01['diffKhT'] = 1.0 # Horizontal temp diffusion
-params01['diffKhS'] = 1.0 # Horz salt diffusion
-params01['diffKzT'] = 4.0e-3 # Vertical temp diffusion
-params01['diffKzS'] = 4.0e-3 # Vert salt diffusion
+params01['diffKhT'] = 1.0e-5 # Horizontal temp diffusion
+params01['diffKhS'] = 1.0e-5 # Horz salt diffusion
+params01['diffKzT'] = 1.0e-5 # Vertical temp diffusion
+params01['diffKzS'] = 1.0e-5 # Vert salt diffusion
 #params01['diffK4S'] = 0.0e4 # ?? salt diffusion
 
 
 # equation of state
 params01['eosType'] = 'JMD95Z'
-# params01['eosType'] = 'LINEAR'
-# params01['tAlpha'] = 0.4e04
-# params01['sBeta'] = 8.0e-4
 params01['Tref'] = np.ones(grid_params['Nr'])*0. #ref temp
 params01['Sref'] = np.ones(grid_params['Nr'])*34. #ref salt
 
 # boundary conditions
-#params01['bottomDragLinear'] = 0.0e-4
 
-params01['no_slip_sides'] = True
-params01['no_slip_bottom'] = True
+params01['no_slip_sides'] = False
+params01['no_slip_bottom'] = False
 params01['rigidLid'] = False
 params01['implicitFreeSurface'] = True
+params01['implicSurfPress'] = 1.0
+params01['implicDiv2DFlow'] = 1.0
 params01['selectAddFluid'] = 1
-params01['useRealFreshWaterFlux'] = True
+# params01['useRealFreshWaterFlux'] = True #we add fluid above, so I think this is un-needed
 params01['exactConserv'] = True
 params01['implicitViscosity'] = True
 params01['implicitDiffusion'] = True
-params01['bottomVisc_pCell'] = True
 
 # physical parameters
-#params01['f0'] = -1.36e-4
-params01['f0'] = 1.36e-4
+params01['f0'] = 1.37e-4
 params01['beta'] = 0.0e-13
 params01['gravity'] = g
 
 # misc
 params01['hFacMin'] = 0.05
-params01['nonHydrostatic'] = True
+params01['nonHydrostatic'] = False
 params01['readBinaryPrec'] = 64
+params01['useSmag3D'] = True
+params01['smag3D_coeff'] = 1e-4
 
 # ## Numeric solvers and I/O controls
 
@@ -333,7 +329,7 @@ params02['cg3dTargetResidual'] = 1e-8
 params03 = {}
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 100
+deltaT = 50
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -417,12 +413,11 @@ else:
 # NOTE: many more options available see mitgcm docs
 diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
                     ['THETA','SALT','UVELMASS','VVELMASS','WVELMASS'],
-                    ['UTHMASS ','USLTMASS','VTHMASS ','VSLTMASS','WTHMASS ','WSLTMASS',],
                     ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY'],
-                    ['icefrntW','icefrntT','icefrntS','icefrntR','icefrntM']
+                    ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntM']
                     ]
 diag_fields_max = 0
-diag_fields_avg_name = ['dynDiag','dynMassDiag','fluxMassDiag','BRGFlx','plumeDiag']
+diag_fields_avg_name = ['dynDiag','dynMassDiag','BRGFlx','plumeDiag']
 # diag_fields_avg = ['UVEL', 'VVEL', 'WVEL', 'UVELSQ', 'VVELSQ', 'WVELSQ',
 #                   'UVELTH', 'VVELTH', 'WVELTH', 'THETA', 'THETASQ',
 #                   'PHIHYD', 'LaUH1TH', 'LaVH1TH', 'LaHw1TH','LaHs1TH']
@@ -572,8 +567,12 @@ d[: , 0] = 0 #cap west side
 
 plt.figure
 plt.plot(x[10,:],d[10,:])
-plt.pcolormesh(x,y,d)
+ax = plt.gca()
+ax.set_aspect('equal')
+plt.pcolormesh(x,y,d,cmap='cmo.deep')
+
 plt.colorbar()
+
 if(writeFiles):
     plt.savefig("%sbathymetry" % (run_config['run_dir']+'/input/'))
 plt.show()
@@ -648,7 +647,7 @@ runoffRad = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
 plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 # Total runoff (m^3/s)
-runoff = 100
+runoff = 500
 
 # velocity (m/s) of subglacial runoff
 wsg = 1
@@ -719,7 +718,6 @@ nz = grid_params['Nr']
 ny = grid_params['Ny']
 nx = grid_params['Nx']
 
-deltaZ = dz[0]
 deltaY = run_config['horiz_res_m']
 deltaX = run_config['horiz_res_m']
 
@@ -733,31 +731,32 @@ numBergsPerCell = np.zeros([ny,nx],dtype=np.int64)
 
 # Berg parameters
 bergType = 1 # 1 = block 2 = cone (not implemented)
-alpha = 1.8 # slope of inverse power law size frequency distribution
-scaling = 2 # 1 = Sulak 2017 2 = Barker 2004
+alpha = 1.9 * 2 # slope of inverse power law size frequency distribution
+scaling = 1 # 1 = Sulak 2017 2 = Barker 2004
 maxBergDepth = iceBergDepth # (m) - set to zero if 'prescribing' max iceberg width, set at top here
-minBergDepth= 20 # (m)
+minBergDepth= 40 # (m)
 maxBergWidth = 0 # (m) - set to zero if 'prescribing' max iceberg depth
-minBergWidth = 20 # (m)
+minBergWidth = 40 # (m)
 
-iceExtentIndex = int(np.round(iceExtent/run_config['horiz_res_m']))
+iceStart = 1
+iceExtentIndex = int(np.round((iceExtent)/run_config['horiz_res_m']))
 
 # Iceberg mask
-bergMask[1:-1,1:iceExtentIndex] = 1 # icebergs in inner 5 km, all oriented east-west
+bergMask[1:-1,iceStart:iceExtentIndex] = 1 # icebergs in inner 5 km, all oriented east-west
 
 # Drift mask, No drift for Melange experiments, but can toggle on here if you want
 # driftMask[1:-1,1:iceExtentIndex] = 1 # calculate effect of iceberg drift on melt rates 
 
 # Melt mask, only let bergs melt in this region (make melt water, these don't change size)
-meltMask[1:-1,1:iceExtentIndex] = doMelt # Allow focus on blocking effect only
+meltMask[1:-1,iceStart:iceExtentIndex] = doMelt # Allow focus on blocking effect only
 
 # Barrier mask
-barrierMask[1:-1,1:iceExtentIndex] = doBlock # make icebergs a physical barrier to water flow
+barrierMask[1:-1,iceStart:iceExtentIndex] = doBlock # make icebergs a physical barrier to water flow
 barrierMask[plume_loc,icefront] = 0 #Plume code struggles with hFac adjustments
 
 # Iceberg concentration (# of each surface cell that is filled in plan view)
-bergConc[1:-1,1:iceExtentIndex] = np.linspace(iceCoverage,40,(iceExtentIndex-1)) # iceberg concentration set at top
-# bergConc[1:-1,1:iceExtentIndex] = iceCoverage # iceberg concentration set at top
+bergConc[1:-1,iceStart:iceExtentIndex] = np.linspace(iceCoverage,10,(iceExtentIndex-1)) # iceberg concentration set at top
+# bergConc[1:-1,iceStart:iceExtentIndex] = iceCoverage # iceberg concentration set at top
 
 # print(bergConc[1:-1,1:iceExtentIndex])
 
@@ -784,7 +783,7 @@ elif(scaling == 2): # Then use Barker04 width-depth relationship
         maxBergDepth = 2.91*maxBergWidth^0.71
         minBergDepth = 2.91*minBergWidth^0.71
 
-numberOfBergs = 1500 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
+numberOfBergs = 50 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
 bergTopArea = 0
 areaResidual = 1
 # Generate the Inverse Power Law cumulative distribution function
@@ -799,42 +798,36 @@ while(np.abs(areaResidual) > .005 ): # Create random power dist of bergs, ensure
     numberOfBergs = round(numberOfBergs * (1 + areaResidual))  
     setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
     x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
-    x_depth = np.arange(minBergDepth, maxBergDepth, (maxBergDepth-minBergDepth)/(numberOfBergs*1e2))
     inversePowerLawPDF_width = ((alpha-1) / minBergWidth) * (x_width/minBergWidth) ** (-alpha)
-    inversePowerLawPDF_depth = ((alpha-1) / minBergDepth) * (x_depth/minBergDepth) ** (-alpha)
         # Get the CDF numerically
     inversePowerLawCDF_width = np.cumsum(inversePowerLawPDF_width)
-    inversePowerLawCDF_depth = np.cumsum(inversePowerLawPDF_depth)
         # Normalize
     inversePowerLawCDF_width = inversePowerLawCDF_width / inversePowerLawCDF_width[-1]
-    inversePowerLawCDF_depth = inversePowerLawCDF_depth / inversePowerLawCDF_depth[-1]
         
         # Generate number_of_bergs uniformly distributed random numbers.
     uniformlyDistributedRandomNumbers = np.random.uniform(0,1,numberOfBergs)
     
     inversePowerLawDistNumbers_width = np.zeros(uniformlyDistributedRandomNumbers.size);
-    inversePowerLawDistNumbers_depth = np.zeros(uniformlyDistributedRandomNumbers.size);
+
     nearestIndex_width = [0] * uniformlyDistributedRandomNumbers.size
-    nearestIndex_depth = [0] * uniformlyDistributedRandomNumbers.size
-    
-    # for i in range(uniformlyDistributedRandomNumbers.size):  #this is pretty slow 
-    #     nearestIndex_width[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_width).argmin();
-    #     nearestIndex_depth[i] = np.abs(uniformlyDistributedRandomNumbers[i]-inversePowerLawCDF_depth).argmin();
-    # This works by leaveraging that inversPowerLaw is sorted
+
     nearestIndex_width = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_width)
-    nearestIndex_depth = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_depth)
 
 
     inversePowerLawDistNumbers_width = x_width[nearestIndex_width];
-    inversePowerLawDistNumbers_length = inversePowerLawDistNumbers_width/1.62 # Widths are bigger 
+    inversePowerLawDistNumbers_length = inversePowerLawDistNumbers_width/1.12 # Widths are bigger 
+
+    randScale = np.random.normal(6,1.22,numberOfBergs)
+    randPower = np.random.normal(0.3,0.016,numberOfBergs)
+    inversePowerLawDistNumbers_depth = randScale * (inversePowerLawDistNumbers_width*inversePowerLawDistNumbers_length) ** randPower * (920/1025)
+    inversePowerLawDistNumbers_depth[inversePowerLawDistNumbers_depth < 5.123] = 5.123 #doest like round numbers, cap low end of bergs
+
     tooWide = np.count_nonzero(inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold))  #disallow completely full cells
     tooLong = np.count_nonzero(inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold))
     inversePowerLawDistNumbers_width[inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max width is grid cell (assumed square)
     inversePowerLawDistNumbers_length[inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max length is grid cell (assumed square)
     if(tooLong + tooWide > 0):
         setUpPrint('\t\tBergs clipped: %i for width, %i for length' % (tooWide, tooLong))
-    
-    inversePowerLawDistNumbers_depth = x_depth[nearestIndex_depth]; #depths don't get clipped
     
     bergTopArea = sum(inversePowerLawDistNumbers_width*inversePowerLawDistNumbers_length)
     areaResidual = (desiredBergArea - bergTopArea)/desiredBergArea
@@ -921,7 +914,6 @@ setUpPrint('Max fill is: %.2f%%' % (np.nanmax(icebergs_area_per_cell/(deltaX*del
 openFrac = np.zeros([nz,ny,nx])
 SA = np.zeros([nz,ny,nx])
 SA[:,:,:] = np.nan
-cellVolume = deltaX*deltaY*deltaZ
 
 #This loop knows where all bergs are already, different from searching for all bergs across entire grid
 for i in range(bergMaski):
@@ -932,10 +924,11 @@ for i in range(bergMaski):
         widths = icebergs_widths[i,icebergs_widths[i,:] > 0] #return only non-zeros
         depths = icebergs_depths[i,icebergs_depths[i,:] > 0] #return only non-zeros
         for k in range(nz):
-            d_bot = k*deltaZ + deltaZ #bottom of depth bin
-            d_top = k*deltaZ
-            volume1 = deltaZ * lengths[depths > d_bot] * widths[depths > d_bot]
-            SA1 = deltaZ*2*(lengths[depths > d_bot] + widths[depths > d_bot])
+            cellVolume = deltaX*deltaY*dz[k]
+            d_bot = sum_z[k] #bottom of depth bin
+            d_top = sum_z[k] - dz[k]
+            volume1 = dz[k] * lengths[depths > d_bot] * widths[depths > d_bot]
+            SA1 = dz[k]*2*(lengths[depths > d_bot] + widths[depths > d_bot])
             partialFill = (depths < d_bot) & (depths > d_top)
             #partial fill
             volume2 = (depths[partialFill] - d_top) * lengths[partialFill] * widths[partialFill]
@@ -950,14 +943,68 @@ for i in range(bergMaski):
         openFrac[:,bergDict[i+1][0],bergDict[i+1][1]] = 1
         SA[:,bergDict[i+1][0],bergDict[i+1][1]] = 0
 
+icebergs_depths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
+icebergs_widths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
+icebergs_length2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
+
+for k in range(bergMaski):
+    j = bergDict[k+1][0]
+    i = bergDict[k+1][1]
+    icebergs_depths2D[:,j,i] = icebergs_depths[k,:]
+    icebergs_widths2D[:,j,i] = icebergs_widths[k,:]
+    icebergs_length2D[:,j,i] = icebergs_length[k,:]
+
+if(forceDraft):
+    mX=np.load(run_config['run_dir']+'/input/melangeX.npy')
+    mH=np.load(run_config['run_dir']+'/input/melangeH.npy')
+    x = np.arange(deltaX/2,deltaX*(nx+.5),deltaX)
+    depthHelper = icebergs_depths2D.copy()
+    depthHelper[depthHelper == 0] = np.nan
+    depthMedian = np.nanmedian(depthHelper,axis=[0,1])
+    del depthHelper
+    for i in range(nx):
+        for j in range(ny):
+            if(~np.isnan(depthMedian[i])):
+                icebergs_depths2D[:,j,i] = icebergs_depths2D[:,j,i]/depthMedian[i]*np.interp(x,mX,mH,0,0)[i]
+                # pass
+
+    for i in range(nx):
+        for j in range(ny):
+            numberOfBergs = len(icebergs_length2D[icebergs_length2D[:,j,i] > 0])
+            if(numberOfBergs > 0):
+                lengths = icebergs_length2D[icebergs_length2D[:,j,i] > 0,j,i] #return only non-zeros
+                widths = icebergs_widths2D[icebergs_widths2D[:,j,i] > 0,j,i] #return only non-zeros
+                depths = icebergs_depths2D[icebergs_depths2D[:,j,i] > 0,j,i] #return only non-zeros
+                for k in range(nz):
+                    cellVolume = deltaX*deltaY*dz[k]
+                    d_bot = sum_z[k] #bottom of depth bin
+                    d_top = sum_z[k] - dz[k]
+                    volume1 = dz[k] * lengths[depths > d_bot] * widths[depths > d_bot]
+                    SA1 = dz[k]*2*(lengths[depths > d_bot] + widths[depths > d_bot])
+                    partialFill = (depths < d_bot) & (depths > d_top)
+                    #partial fill
+                    volume2 = (depths[partialFill] - d_top) * lengths[partialFill] * widths[partialFill]
+                    #partial sides
+                    SA2 = (depths[partialFill] - d_top)*2*(lengths[partialFill] + widths[partialFill]) 
+                    #bottom
+                    SA3 = lengths[partialFill] * widths[partialFill]
+                    #print(np.sum(volume1), np.sum(volume2))
+                    openFrac[k,j,i] = 1-((np.sum(volume1) + np.sum(volume2))/cellVolume)
+                    SA[k,j,i] = np.sum(SA1) + np.sum(SA2) + np.sum(SA3)
+            elif(bergCount == 0):
+                openFrac[:,j,i] = 1
+                SA[:,j,i] = 0
+
+
+
 # Plots for reference on whats happening berg-wise
 fig = plt.figure()
 plt.subplot(2,2,1)
 for i in range(bergMaski):
-    plt.plot(openFrac[:,bergDict[i+1][0],bergDict[i+1][1]],-np.cumsum(dz),alpha=.5,color='xkcd:gray',linewidth=.5)
-plt.plot(np.mean(openFrac[:,bergMask==1],1),-np.cumsum(dz),alpha=1,color='xkcd:black',linewidth=1,linestyle='--',label='Average Bergs')
+    plt.plot(openFrac[:,bergDict[i+1][0],bergDict[i+1][1]],-sum_z,alpha=.5,color='xkcd:gray',linewidth=.5)
+plt.plot(np.mean(openFrac[:,bergMask==1],1),-sum_z,alpha=1,color='xkcd:black',linewidth=1,linestyle='--',label='Average Bergs')
 plt.plot([0,1],[-maxBergDepth,-maxBergDepth],color = 'xkcd:red',linestyle=':', label='Target Max Depth')
-plt.plot([1-np.max(bergConc)/100,1-np.max(bergConc)/100],[-nz*deltaZ,0],color = 'xkcd:gray',linestyle=':',label='Target Max Berg Conc')
+plt.plot([1-np.max(bergConc)/100,1-np.max(bergConc)/100],[-domain_params['H'],0],color = 'xkcd:gray',linestyle=':',label='Target Max Berg Conc')
 plt.xlabel('Open Fraction of Cells')
 plt.ylabel('Depth [m]')
 # plt.legend()  #not quite room so off for now
@@ -1015,6 +1062,21 @@ if(writeFiles):
     plt.savefig(run_config['run_dir']+'/input/meltMask.png', format='png', dpi=200)
 plt.show()
 
+plt.figure()
+varphi = 1-openFrac
+varphi[varphi == 1] = np.nan
+pc = plt.pcolormesh(x,-sum_z,np.nanmean(varphi,axis=1),cmap='gray_r')
+cbar = plt.colorbar(pc)
+depthHelper = icebergs_depths2D.copy()
+depthHelper[depthHelper == 0] = np.nan
+plt.plot(x,np.nanmedian(-depthHelper,axis=[0,1]),color='xkcd:red')
+plt.suptitle('$\\varphi$')
+plt.ylabel('Depth [m]')
+plt.xlabel('Along fjord [m]')
+cbar.set_label('ice fraction')
+if(writeFiles):
+    plt.savefig(run_config['run_dir']+'/input/draftPlot.png', format='png', dpi=200)
+plt.show()
 ## write iceberg txt files
 # setUpPrint('Saving text files for bergs...')
 # if(writeFiles):
@@ -1029,17 +1091,6 @@ plt.show()
 #             for item in icebergs_length[i,icebergs_length[i,:] > 0]:
 #                 file_handler.write("{}\n".format(item))
 
-icebergs_depths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
-icebergs_widths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
-icebergs_length2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
-
-for k in range(bergMaski):
-    j = bergDict[k+1][0]
-    i = bergDict[k+1][1]
-    icebergs_depths2D[:,j,i] = icebergs_depths[k,:]
-    icebergs_widths2D[:,j,i] = icebergs_widths[k,:]
-    icebergs_length2D[:,j,i] = icebergs_length[k,:]
-
 # write global files
 write_bin('bergMask.bin',bergMask)
 write_bin('bergMaskNums.bin',bergMaskNums)
@@ -1053,11 +1104,7 @@ write_bin('icebergs_depths.bin',icebergs_depths2D)
 write_bin('icebergs_widths.bin',icebergs_widths2D)
 write_bin('icebergs_length.bin',icebergs_length2D)
 
-
-
 setUpPrint('Berg setup is done.')
-
-
 #========================================================================================
 #Update files in INPUT directory
 setUpPrint('====== Cleaning up input/ files =====')
@@ -1120,6 +1167,5 @@ if(makeDirs):
     print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
 elif(writeFiles):
     print("Done! You shouldn't have to rebuild as we only changed run time options here")
-    # shutil.copy('controlMelange.py', run_config['run_dir']+'/input/buildScriptUpdate.py')
 else:
     print('Nothing was saved, I hope you liked the pretty plots at least')

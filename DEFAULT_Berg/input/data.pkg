@@ -1,9 +1,9 @@
 # Packages
  &PACKAGES
  useICEBERG=.TRUE.,
- useSHELFICE=.FALSE.,
  useDiagnostics=.TRUE.,
  useICEPLUME=.TRUE.,
  useOBCS=.TRUE.,
- useKL10=.F.,
+ useKL10=.FALSE.,
+ useSHELFICE=.FALSE.,
  &

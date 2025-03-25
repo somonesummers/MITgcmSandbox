@@ -6,12 +6,12 @@ import sys
 import cmocean
 import fileinput
 import gsw
-import argparse
+# import argparse
 
-parser = argparse.ArgumentParser(description='Plot dynamics at ySlice')
-parser.add_argument('yCrossSection', nargs='?', const=0.0, type=float,
-                    help='optional slice location [m]')
-args = parser.parse_args()
+# parser = argparse.ArgumentParser(description='Plot dynamics at ySlice')
+# parser.add_argument('yCrossSection', nargs='?', const=0.0, type=float,
+#                     help='optional slice location [m]')
+# args = parser.parse_args()
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
@@ -35,11 +35,11 @@ elif(os.path.isfile('../plotHelper.py')):
 else:  
     print('no defaults found')
 
-if(args.yCrossSection != None):
-    print('** Manual ySlice detected **')
-    yCrossSection = args.yCrossSection
-#Overwrite local settings here if desired
-# usePcolor = True
+# if(args.yCrossSection != None):
+#     print('** Manual ySlice detected **')
+#     yCrossSection = args.yCrossSection
+# #Overwrite local settings here if desired
+# # usePcolor = True
 
 print('Plot DPI:',plotDPI,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
 
@@ -87,6 +87,7 @@ else:
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
 z = np.squeeze(mds.rdmds("results/RC"))
+hFacC = mds.rdmds("results/hFacC")
 
 if(os.path.isfile('input/bathymetry.bin')):
     topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
@@ -133,21 +134,25 @@ if(isBerg):
                     openFrac[:,j,i] = 1
                     
 
-ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
-print('cross section is y =', y[ySlice,0], 'index', ySlice)
+print('averaging over all cross sections')
 
-if(isBerg):
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx', 'BRGFlx', 'BRGFlx']
-    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt", 'BRG_TauX', 'BRG_TauY']
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]", "[kN/m^2]", "[kN/m^2]"]
-else:
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
-    name = ["Temp", "Sal", "U", "W", "V"]
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
-for k in range(len(name)):
+dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx', 'BRGFlx', 'BRGFlx']
+name = ["Temp", "Sal", "u", "W", "V", "BRGmltRt", 'BRG_TauX', 'BRG_TauY']
+cbarLabel = ["[C]", "[ppt]", "u [m/s]", "[m/s]", "[m/s]", "[m/d]", "[kN/m^2]", "[kN/m^2]"]
+
+# fig, axs = plt.subplots(2, 2, figsize=(12, 8), layout="constrained")
+plt.figure(figsize=(12, 6))
+ax1 = plt.subplot(2,2,1)
+ax2 = plt.subplot(2,4,3)
+ax3 = plt.subplot(2,4,4)
+ax4 = plt.subplot(2,1,2)
+axes = [ax1, ax2, ax3, ax4]
+labels = ["A","B","C","D"]
+# plt.figure(figsize=(12, 8),layout="constrained")
+for k in [0]:
     print("\t" + name[k])
-    for i in np.arange(startStep, maxStep + 1, sizeStep):
+    for i in [maxStep]:
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
@@ -161,13 +166,13 @@ for k in range(len(name)):
             data = mds.rdmds("results/%s"%(dynName[k]), i)
         
         if k == 0:
-            lvl = tempRange
+            lvl = np.linspace(-0.5,3.0,127)
             cm = tempCmap
         elif k == 1:
             lvl = saltRange
             cm = saltCmap
         elif k == 2:
-            lvl = uRange
+            lvl = np.linspace(-.15,.15,127)
             cm = uCmap
         elif k == 3:
             lvl = wRange
@@ -191,97 +196,111 @@ for k in range(len(name)):
         else:
             kk = k
         if(usePcolor):
-            cp = plt.pcolormesh(
-                np.squeeze(x[ySlice,:]),
+            cp = ax4.pcolormesh(
+                np.squeeze(x[0,:]),
                 np.squeeze(z),
-                np.squeeze(data[kk, :, ySlice, :]),
+                np.squeeze(np.average(data[kk, :, 1:-1, :], weights=openFrac[:,1:-1,:],axis=1)),
                 cmap=cm,
                 vmin=np.min(lvl),
                 vmax=np.max(lvl),
             )
         else:
             cp = plt.contourf(
-                np.squeeze(x[ySlice,:]),
+                np.squeeze(x[0,:]),
                 np.squeeze(z),
-                np.squeeze(data[kk, :, ySlice, :]),
+                np.squeeze(np.average(data[kk, :, 1:-1, :], weights=openFrac[:,1:-1,:],axis=1)),
                 lvl,
                 extend="both",
                 cmap=cm,
             )
-        plt.plot(x[ySlice,:],topo[ySlice,:],color='black')
+        plt.plot(x[0,:],topo[1,:],color='black')
         if(localBergs):
-            # plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
             cp2 = plt.contourf(
-                x[ySlice,:],
+                x[0,:],
                 np.squeeze(z),
-                np.squeeze(openFrac[:, ySlice, :]),
-                [.4,.6,.8,.9,.95],
-                extend="min",
-                alpha=.1,
-                cmap='cmo.gray')
+                np.squeeze(np.average(1-openFrac[:, 1:-1, :],axis=1)),
+                [.05,.1,.2,.4,.8],
+                extend="max",
+                alpha=.5,
+                cmap='cmo.gray_r')
             #cbar2 = plt.colorbar(cp2)
             #cbar2.set_label('Ocean Fraction')
-        cbar = plt.colorbar(cp)
+        cbar = plt.colorbar(cp,ticks=np.linspace(lvl[0],lvl[-1],7))
         cbar.set_label(cbarLabel[k])
-        if(showDensity and (dynName[k] == 'dynDiag')):
-            salt = np.squeeze(data[1,:,ySlice,:])
-            if(i == startStep): #only calc pressure once
-                pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
-            CT = gsw.CT_from_t(salt, data[0,:,ySlice,:], pressure)
-            density = gsw.rho(salt, CT, pressure) - 1000 #in-stu density less 1000
-            densityLevels = np.linspace(25,30,26)
-            cc = plt.contour(
-                np.squeeze(x[ySlice,:]),
-                np.squeeze(z),
-                np.squeeze(density),
-                densityLevels,
-                colors='black',
-                linewidths=0.5,
-                alpha=0.5
-            )
-            plt.clabel(cc, inline=3, fontsize=8)
         if(showZeros):
             if( k == 2 or k == 6 or k == 7):
                 cc = plt.contour(
-                    np.squeeze(x[ySlice,:]),
+                    np.squeeze(x[0,:]),
                     np.squeeze(z),
-                    np.squeeze(data[kk, :, ySlice, :]),
+                    np.squeeze(np.average(data[kk, :, 1:-1, :], weights=openFrac[:,1:-1,:],axis=1)),
                     [0],
                     colors='gray',
                     linewidths=0.5,
                     alpha=0.5
                 )
                 plt.clabel(cc, inline=3, fontsize=8)
-        if(showQuiver):
-            u = np.squeeze(dataQuiv[2, :, ySlice, :])
-            w = np.squeeze(dataQuiv[3, :, ySlice, :])
-            plt.quiver(
-                x[ySlice,:],
-                np.squeeze(z),
-                u/np.sqrt(u**2 + w**2 + 1e-12),
-                w/np.sqrt(u**2 + w**2 + 1e-12),
-                alpha=.5
-                )
-
-
-        plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, ySlice, :]),np.nanmax(data[kk, :, ySlice, :]),np.max(np.isnan(data[kk, :, ySlice, :]))))
-        plt.ylabel('Depth [m]')
-        plt.title("%s y = %i at %.02f days" % (name[k], y[ySlice,0], i/86400.0*dt))
+        cbar = plt.colorbar(cp2,ticks=[.8,.4,.2,.1,0.05])
+        cbar.set_label('Fraction Ice')       
+        # ax4.set_title("Width Averaged %s for $\\lambda$ = 0.20, U = 0.12 m/s" % (name[k]))
+        ax4.set_title("Width Averaged %s after %s Days" %(name[k],maxStep*dt/86400))
+        ax4.set_ylabel('Depth [m]')
+        ax4.set_xlabel('Along Fjord [m]')
         j = i/sizeStep
         
-        str = "figs/side_%s%05i.png" % (name[k],j)
+        # str = "figs/HughesDomain_%s%05i.png" % (name[k],j)
         
-        plt.savefig(str, format='png', dpi=plotDPI)
+        # plt.savefig(str, format='png', dpi=plotDPI)
         # plt.show()
-        plt.close()
-        
-    if(args.yCrossSection != None):
-         os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.yCrossSection, name[k]))
-    else:    
-        os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
-    if(makeMovie):
-        os.system('ffmpeg -r %f -i figs/side_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/autoside_%s.mov' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
+        # plt.close()
 
-#Clean up intermediate pngs
-    if(cleanPNGs):
-        os.system('rm -f figs/side_*.png')
+# Iceberg depths
+bergDepths = np.fromfile('input/icebergs_depths.bin', dtype='>f8')
+# bergDepths = bergDepths.reshape((500,14,160))
+bergDepths[bergDepths == 0] = np.nan
+
+ax3.hist(bergDepths,bins = 50)
+ax3.set_ylabel('Count')
+ax3.set_xlabel('Depth [m]')
+ax3.set_title('Iceberg Depths')
+
+# Iceberg Coverage
+pltHelper = 1-hFacC[0,:,:]
+pltHelper[bergMask == 0] = np.nan
+pc = ax1.pcolormesh(np.squeeze(x[0,:]),np.squeeze(y[:,0]),pltHelper,cmap='cmo.ice_r')
+cbar = plt.colorbar(pc)
+ax1.set_title('Iceberg Surface Areal Fraction $\\lambda$')
+ax1.set_ylabel('Across Fjord [m]')
+ax1.set_xlabel('Along Fjord [m]')
+# ax1.set_xlim([10000,18500])
+ax1.set_xlim([0,42000])
+cbar.set_label('$\\lambda$')
+
+#Icebergs with Depth
+hFacC[:,:,hFacC[0,1,:] == 1] = np.nan #nan an no-berg cells
+for i in np.where(bergMask[1,:]==1)[0]:
+    for j in np.where(bergMask[:,i]==1)[0]:
+        ax2.plot(1-hFacC[:,j,i],z,alpha=.5,color='xkcd:gray',linewidth=.5)
+ax2.plot(1-np.nanmean(openFrac[:,1:-1,bergMask[1,:]==1],axis=(1,2)),z,alpha=1,color='xkcd:black',linewidth=1,linestyle='--',label='Mean')
+hlper = 1-np.nanmean(openFrac[0,1:-1,bergMask[1,:]==1])
+ax2.plot([hlper,hlper],[z[0],z[-1]],alpha=.25,color='xkcd:black',linewidth=1,linestyle='--',label='Surface Mean')
+ax2.set_title('$\\lambda(z)$')
+ax2.set_ylabel('Depth [m]')
+ax2.set_xlabel('$\\lambda$')
+ax2.legend()
+
+
+plt.tight_layout()
+
+for label,ax in zip(labels,axes):
+    ax.text(
+        ax.get_xlim()[0], ax.get_ylim()[1], label,
+        fontsize='x-large', va='bottom',ha='right', fontfamily='sans serif')
+
+str = "figs/HughesDomain.png"
+plt.savefig(str, format='png', dpi=plotDPI)
+plt.show()
+plt.close()
+
+
+
+        
