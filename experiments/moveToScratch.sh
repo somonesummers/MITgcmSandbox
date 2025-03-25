@@ -10,9 +10,9 @@ for NAME in "$@"
 do
 	echo "moving $NAME..."
 	mkdir ../../scratch/exps/$NAME
-	cd $NAME/build
+#	cd $NAME/build
 #	make Clean
-	cd ../..
+#	cd ../..
 	rsync -ah --info=progress2 $NAME ../../scratch/exps/
 	rm -r $NAME
 	ln -s ../../scratch/exps/$NAME .

@@ -31,7 +31,7 @@ C     === Global variables ===
 #include "ICEPLUME.h"
 
 #ifdef ALLOW_SHELFICE
-#include "SHELFICE.H"
+#include "SHELFICE.h"
 #endif
 
 #ifdef ALLOW_PTRACERS

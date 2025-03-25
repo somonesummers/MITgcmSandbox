@@ -77,7 +77,7 @@ setUpPrint('\tMaking experiment to compare mélange realizations')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [20,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'fjord_timeVary_m0'
+run_config['run_name'] = 'fjord_b0_19'
 run_config['ndays'] = 200.0 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -97,8 +97,8 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 iceBergDepth = 200 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 15000 # [meters] of extent of ice
 iceCoverage = 60 # % of ice cover in melange, stay under 90% ideally
-doMelt = 0 # do we actually calculate melt (0/1 = no/yes)
-doBlock = 0 # do we actually calculate melt (0/1 = no/yes)
+doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
+doBlock = 0 # do we actually calculate blocking (0/1 = no/yes)
 #========================================================================================
 # The rest of this should take care of it self mostly
 
@@ -349,9 +349,9 @@ params03['abEps'] = 0.1
 params03['chkptFreq'] = 0.0
 params03['pChkptFreq'] = 864000.0
 params03['taveFreq'] = 0.0
-params03['dumpFreq'] = 864000.0
+params03['dumpFreq'] = 8640000.0
 params03['taveFreq'] = 0.0
-params03['monitorFreq'] = 86400.0
+params03['monitorFreq'] = 864000.0
 params03['monitorSelect'] = 1
 
 
@@ -417,15 +417,15 @@ if run_config['test']:
     run_config['tavg_freq'] = 1 # multiples of timestep
     
 else:
-    run_config['inst_freq'] = 48 # multiples of hours
-    run_config['tavg_freq'] = 48 # multiples of hours
+    run_config['inst_freq'] = 120 # multiples of hours
+    run_config['tavg_freq'] = 120 # multiples of hours
 
 
 #---------specify time averaged fields------#
 # NOTE: many more options available see mitgcm docs
 diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
                     ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY'],
-                    ['icefrntW','icefrntT','icefrntS','icefrntR','icefrntM'],
+                    ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntM'],
                     ]
 diag_fields_max = 0
 diag_fields_avg_name = ['dynDiag','BRGFlx','plumeDiag']
@@ -735,7 +735,7 @@ numBergsPerCell = np.zeros([ny,nx],dtype=np.int64)
 
 # Berg parameters
 bergType = 1 # 1 = block 2 = cone (not implemented)
-alpha = 1.9 * 2 # slope of inverse power law size frequency distribution
+alpha = 1.9 # slope of inverse power law size frequency distribution
 scaling = 1 # 1 = Sulak 2017 2 = Barker 2004
 maxBergDepth = iceBergDepth # (m) - set to zero if 'prescribing' max iceberg width, set at top here
 minBergDepth= 40 # (m)
@@ -1099,7 +1099,7 @@ run_config['extraCommands'] = "".join(extraList)
 # ## Estimate wall clock time
 ncpus = run_config['ncpus_xy'][0]*run_config['ncpus_xy'][1]
 setUpPrint('===== Wall Clock Time =====')
-estTime = int(grid_params['Ny']) * int(grid_params['Nx']) * int(grid_params['Nr']) * int(grid_params['Nt']) *2e-7
+estTime = int(grid_params['Ny']) * int(grid_params['Nx']) * int(grid_params['Nr']) * int(grid_params['Nt']) *2e-8
 setUpPrint('Estimated run time is %.2f hours for one CPU' % (estTime/60))
 setUpPrint('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/ncpus*1.2,ncpus))
 
