@@ -79,12 +79,12 @@ input("Confirm above is accurate before continuing...")
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Alpha_melangeForce'
-run_config['ndays'] = 20 # simulaton time (days)
+run_config['run_name'] = 'Beta'
+run_config['ndays'] = 1 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
-run_config['Lx_m'] = 60000 # domain size in x (m)
+run_config['Lx_m'] = 40000 # domain size in x (m)
 run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
@@ -414,7 +414,7 @@ else:
 diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
                     ['THETA','SALT','UVELMASS','VVELMASS','WVELMASS'],
                     ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY'],
-                    ['icefrntW','icefrntT','icefrntS','icefrntR','icefrntM']
+                    ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntM']
                     ]
 diag_fields_max = 0
 diag_fields_avg_name = ['dynDiag','dynMassDiag','BRGFlx','plumeDiag']

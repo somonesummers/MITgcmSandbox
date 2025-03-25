@@ -19,7 +19,7 @@ zDepth = -50
 plotDPI = 100
 cleanPNGs = True
 usePcolor = True
-showQuiver = True
+showQuiver = False
 showZeros = True
 
 if(os.path.isfile('input/plotHelperLocal.py')):
