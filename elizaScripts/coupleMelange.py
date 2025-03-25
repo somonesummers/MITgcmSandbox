@@ -70,15 +70,14 @@ briefSummaryOfExp = """Coupling MITgcm and Melange1D"""
 
 
 setUpPrint('====== Welcome to the mélange building script =====')
-setUpPrint(briefSummaryOfExp + "\n\tmakeDirs: %s, writeFiles: %s" %(makeDirs,writeFiles))
-input("Confirm above is accurate before continuing...")
+
 #========================================================================================
 #main values to imput 
 
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Beta'
+run_config['run_name'] = 'Beta_250'
 run_config['ndays'] = 1 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -89,6 +88,10 @@ run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m)
 
 grid_params['Nr'] = 25 # num of z-grid points
 
+
+setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s" %(run_config['run_name'],makeDirs,writeFiles))
+input("Confirm above is accurate before continuing...")
+
 # Offshore current =========================
 oscStrength = .3 #[m/s] peak strength of offshore current
 lengthOffShoreCurrent = 5e3 #width of offshore current [m]
@@ -96,12 +99,12 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 150 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 16000 # [meters] of extent of ice
+iceExtent = 30000 # [meters] of extent of ice
 iceCoverage = 80 # % of ice cover in melange, stay under 90% ideally
 doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 # Set median drafts to align with output from melange1D
-forceDraft = True
+forceDraft = False
 #========================================================================================
 # The rest of this should take care of it self mostly
 
@@ -239,7 +242,7 @@ dz = dz_tmp/np.sum(dz_tmp)*domain_params['H']
 sum_z = np.cumsum(dz)
 setUpPrint("dz: \n %s" %dz)
 setUpPrint("z: \n %s"  %sum_z)
-
+np.save(run_config['run_dir']+'/input/dz',dz)
 grid_params['delZ'] = dz
 # grid_params['hFacMinDr'] = dz.min()
 
@@ -336,7 +339,7 @@ params03['abEps'] = 0.1
 #if run_config['testing']:
     
 params03['chkptFreq'] = 0.0
-params03['pChkptFreq'] = 864000.0
+params03['pChkptFreq'] = 86400.0
 params03['taveFreq'] = 0.0
 params03['dumpFreq'] = 864000.0
 params03['taveFreq'] = 0.0
@@ -648,7 +651,7 @@ runoffRad = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
 plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 # Total runoff (m^3/s)
-runoff = 50
+runoff = 250
 
 # velocity (m/s) of subglacial runoff
 wsg = 1
@@ -958,7 +961,7 @@ for k in range(bergMaski):
 if(forceDraft):
     mX=np.load(run_config['run_dir']+'/input/melangeX.npy')
     mH=np.load(run_config['run_dir']+'/input/melangeH.npy')
-    x = np.arange(deltaX/2,deltaX*(nx+.5),deltaX)
+    x_fd = np.arange(deltaX/2,deltaX*(nx+.5),deltaX)
     depthHelper = icebergs_depths2D.copy()
     depthHelper[depthHelper == 0] = np.nan
     depthMedian = np.nanmedian(depthHelper,axis=[0,1])
@@ -1066,11 +1069,11 @@ plt.show()
 plt.figure()
 varphi = 1-openFrac
 varphi[varphi == 1] = np.nan
-pc = plt.pcolormesh(x,-sum_z,np.nanmean(varphi,axis=1),cmap='gray_r')
+pc = plt.pcolormesh(x[0,:],-sum_z,np.nanmean(varphi,axis=1),cmap='gray_r')
 cbar = plt.colorbar(pc)
 depthHelper = icebergs_depths2D.copy()
 depthHelper[depthHelper == 0] = np.nan
-plt.plot(x,np.nanmedian(-depthHelper,axis=[0,1]),color='xkcd:red')
+plt.plot(x[0,:],np.nanmedian(-depthHelper,axis=[0,1]),color='xkcd:red')
 plt.suptitle('$\\varphi$')
 plt.ylabel('Depth [m]')
 plt.xlabel('Along fjord [m]')
@@ -1101,9 +1104,9 @@ write_bin('totalBergArea.bin',SA)
 write_bin('meltMask.bin',meltMask)
 write_bin('driftMask.bin',driftMask)
 write_bin('barrierMask.bin',barrierMask)
-write_bin('icebergs_depths.bin',icebergs_depths2D)
-write_bin('icebergs_widths.bin',icebergs_widths2D)
-write_bin('icebergs_length.bin',icebergs_length2D)
+write_bin('icebergs_depths_init.bin',icebergs_depths2D)
+write_bin('icebergs_widths_init.bin',icebergs_widths2D)
+write_bin('icebergs_length_init.bin',icebergs_length2D)
 
 setUpPrint('Berg setup is done.')
 #========================================================================================
