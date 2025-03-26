@@ -38,6 +38,13 @@ import glob
 import pickle
 import time
 
+# resetStart = True
+# freshStart = False
+# icebergCoverLambda = .8
+# iterationsToRun = 100
+#Define if new run or not, and packing fraction of melange
+sys.path.append('.')
+from melangeModel import *
 
 def sysPrint(stringIn):
         print(stringIn)
@@ -50,8 +57,6 @@ def replaceAll(file,searchExp,replaceExp):
         sys.stdout.write(line)
 
 # This is only needed for a true fresh start
-resetStart = True
-freshStart = False
 if(resetStart):
     input("Resetting this experiment directory, DELETING FILES AND FIGS. Confirm before continuing...")
     #Reset iceberg files
@@ -70,7 +75,7 @@ if(resetStart):
     for line in fileinput.input('input/data'):
             if "nIter0=" in line:
                 startIter = float(line[8:-2])
-            elif "endTime=" in line::
+            elif "endTime=" in line:
                 endTime = float(line[9:-2])
     sysPrint('\tadjust start iteration %i to %i' %(int(startIter),int(0)))
     replaceAll('input/data','nIter0=%i' %(int(startIter)), 'nIter0=%i' % int(0))
@@ -91,7 +96,7 @@ elif(freshStart):
 else:
     sysPrint('Running from existing states...')
 
-iterationsToRun = 100
+
 for ii in range(iterationsToRun):
 
     #Find time steps to take
@@ -148,16 +153,14 @@ for ii in range(iterationsToRun):
         file.close()
         index = int(str(file).split(".")[1].split("_")[1])
         
-    icebergFraction = 0.8
     sysPrint('=== glaciome1D Running, load MITgcm data from end of day %.2f, using melange index %05i === ' %(int(maxStep)*dt/(24*3600),index))
     if(int(maxStep)*dt/(24*3600) - index != 1):
         raise Exception('MITgcm and glaciome1D are out of sync, glaciome index should be 1 behind MITgcm day')
     # os.system("echo ""glaciome1D Running, load MITgcm data from end of day %.2f, using melange index %05i"" > out.txt" %(int(maxStep)*dt/(24*3600),index))
     # data is of list ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY']
     # b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[2,:,:,1:],axis=0),axis=0) # sum vertically, average across fjord
-    b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[0,:,:,1:],axis=0),axis=0)/(dx*dy*icebergFraction)*(24*3600)*1000/917
+    b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[0,:,:,1:],axis=0),axis=0)/(dx*dy*icebergCoverLambda)*(24*3600)*1000/917
     x_mitgcm = x[1:]-x[1] #ensure starts at 0, MITgcm has a glacier for first cell
-
 
     meltHelper = b_mitgcm.copy()
     meltHelper[meltHelper==0] = np.nan
@@ -202,4 +205,4 @@ for ii in range(iterationsToRun):
     os.chdir("results")
     os.system('./mitgcmuv >> ../couplingResults/OutMITgcm%05i.txt' %(index+1))
     os.chdir("../")
-    sysPrint('Seconds to run coupled step: %.4f' % (time.time() - start_time))
+    sysPrint('\t\tSeconds to run coupled step: %.4f' % (time.time() - start_time))

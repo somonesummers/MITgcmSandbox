@@ -15,6 +15,7 @@ import pickle
 import time
 import random
 
+
 def write_bin(fname, data):
     # print(fname + " " + str(np.shape(data)))
     data.astype(">f8").tofile('input/'+fname)
@@ -35,6 +36,16 @@ clipBergs = True
 shadedEdge = True
 fillIn = True
 
+
+# icebergCoverLambda = .80 
+
+
+couplingTimeStep = 1*24*3600 #[s]
+
+#Define model wide parameters
+sys.path.append('.')
+from melangeModel import *
+
 dataMITgcm = mds.rdmds("results/BRGFlx", maxStep)
 
 x = mds.rdmds("results/XC")
@@ -47,15 +58,14 @@ nz = np.squeeze(np.shape(z)[0])
 dz = np.load('input/dz.npy')
 deltaX = x[0,0]*2
 deltaY = y[0,0]*2
+
+#icebergCoverLamba is enforced to remain constant left of here
+icebergRefreshingGate = 3
 maxBergs = 500
 hardMaxDepth = np.max(np.abs(z)) - 5
-#icebergCoverLamba is enforced to remain constant left of here
-icebergCoverLambda = .80
-icebergRefreshingGate = 3
 
 #icebergs are destroyed when they move past here
 icebergRightHandGate = int(nx*.8)
-couplingTimeStep = 1*24*3600 #[s]
 
 files = sorted(glob.glob('couplingResults/MITgcmRun_[0-9][0-9][0-9][0-9][0-9].pickle'))
 # print(files)
@@ -139,7 +149,8 @@ if(advectBergs):
         for i in range(nx-1,0,-1): #i goes from nx-1 to 1 in reverse order
                 #we can skip the first cell as that is a glacier in MITgcm
                 #Depth averaged melt rate for all depths from surface down to depth k
-                avgMelt = np.cumsum(dataMITgcm[2,:,j,i]*dz)/np.cumsum(dz) * couplingTimeStep/(24*3600) # [m]
+                # avgMelt = np.cumsum(dataMITgcm[2,:,j,i]*dz)/np.cumsum(dz) * couplingTimeStep/(24*3600) # [m]
+                #perhaps this below line could use the actual lambda for the location, but be careful about plume cells
                 effectiveMelt = np.nanmean(np.nansum(dataMITgcm[0,:,:,1:],axis=0),axis=0)/(deltaX*deltaY*icebergCoverLambda)*(24*3600)*1000/917 #[m]
                 for k in range(bergsPerCell[j,i]):
                     if(min(bergWidths[k,j,i],bergLength[k,j,i],bergDepths[k,j,i]) > 5):
@@ -237,7 +248,7 @@ if(fillIn):
                 randPower = np.random.normal(0.3,0.016,1)
                 a = (minBergWidth**(alpha+1) + (maxBergWidth**(alpha+1) - minBergWidth**(alpha+1))*random.random())**(1/(alpha+1))
                 b = a / aspectRatio
-                if(tmpBergFac + (a*b)/(deltaX*deltaY) < 0.95):
+                if(tmpBergFac + (a*b)/(deltaX*deltaY) < 0.95): #if bergs are too big, they don't get added, cell left underfull
                     bergWidths[bergsPerCell[j,i],j,i] = a
                     bergLength[bergsPerCell[j,i],j,i] = b
                     bergDepths[bergsPerCell[j,i],j,i] = randScale[0] *(a*b)** randPower[0] * (920/1025)
