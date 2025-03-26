@@ -212,8 +212,8 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
 C-     Explicit case: diagnose directly the iceberg stress, only implemented case
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
-           icebergDragV(i,j,k,bi,bj) = icebergDragV(i,j,k,bi,bj)
-     &                              - cDrag(i,j)*vFld(i,j)*rUnit2mass
+           icebergDragV(i,j,k,bi,bj) = - cDrag(i,j)
+     &                                  * vFld(i,j) * rUnit2mass
           ENDDO
          ENDDO
        ENDIF

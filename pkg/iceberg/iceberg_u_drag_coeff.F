@@ -210,11 +210,11 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
 #ifdef ALLOW_DIAGNOSTICS
       IF ( useDiagnostics ) THEN
        IF ( selectImplicitDrag.EQ.0 ) THEN !this is default
-C-     Explicit case: diagnose directly the Iceberg stress, only implemented case
+C-     Explicit case: diagnose directly the iceberg stress, only implemented case
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
-           icebergDragU(i,j,k,bi,bj) = icebergDragU(i,j,k,bi,bj)
-     &                              - cDrag(i,j)*uFld(i,j)*rUnit2mass
+           icebergDragU(i,j,k,bi,bj) = - cDrag(i,j)
+     &                                  * uFld(i,j) * rUnit2mass
           ENDDO
          ENDDO
        ENDIF

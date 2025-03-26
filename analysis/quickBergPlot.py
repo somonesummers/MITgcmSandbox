@@ -61,16 +61,18 @@ x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
 z = mds.rdmds("results/RC")
 
+dy = y[0,0]*2
+dx = x[0,0]*2
+ny = len(y[:,0])
 
-
-dynName = ['BRGFlx', 'BRGFlx', 'BRGFlx', 'BRGFlx','BRGFlx','BRGFlx','BRGFlx','BRGFlx','BRGFlx']
-name = ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY','BRGfwFlxSum',"BRGhtFlxSum",'BRGarea3D']
-units = ["[m^3/s]", "[W/m^2]", "[m/d]", "[kN/m^2]","[kN/m^2]","[m^3/s]","[W/m^2]",'[m^2]']
+dynName = ['BRGFlx', 'BRGFlx', 'BRGFlx', 'BRGFlx','BRGFlx','BRGFlx','BRGFlx','BRGFlx']#,'BRGFlx']
+name = ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY','BRGfwFlxSum',"BRGhtFlxSum"]#,'BRGarea3D']
+units = ["[m^3/s]", "[W/m^2]", "[m/d]", "[N/m^2]","[N/m^2]","[m^3/s]","[W/m^2]"]#,'[m^2]']
 
 zSlice = np.argmin(np.abs(z[:,0,0]- zDepth))
 print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
-for k in range(len(name)):
+for k in [3,4]:#range(len(name)):
     print('\t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
@@ -93,12 +95,12 @@ for k in range(len(name)):
             cm = "cmo.speed"
             plotData = data[k, zSlice, :, :]
         elif k == 3:
-            lvl = np.linspace(-10,10,127)
-            plotData = data[k, zSlice, :, :]/1000 # Pa to kPa
+            lvl = np.linspace(-1,1,127)
+            plotData = data[k, zSlice, :, :] # Pa
             cm = "cmo.balance"
         elif k == 4:
-            lvl = np.linspace(-10,10,127)
-            plotData = data[k, zSlice, :, :]/1000 # Pa to kPa
+            lvl = np.linspace(-1,1,127)
+            plotData = data[k, zSlice, :, :] # Pa 
             cm = "cmo.balance"
         elif k == 5:
             lvl = np.linspace(0,3,128)
@@ -136,6 +138,8 @@ for k in range(len(name)):
         cbar.set_label(units[k])
         if(k == 6 or k == 5):
             plt.xlabel('Along Fjord [m] %.3f %.3f Total: %i' %(np.nanmin(plotData),np.nanmax(plotData),np.sum(plotData)))
+        elif(k == 3 or k ==4):
+            plt.xlabel('Along Fjord [m] %.3f %.3f Total: %i kN' %(np.nanmin(plotData),np.nanmax(plotData),np.sum(data[k,:,:,:]/1e3)*dy*dx))
         else:
             plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(plotData),np.nanmax(plotData),np.sum(np.isnan(plotData))))
         plt.ylabel('Depth [m]')

@@ -73,7 +73,7 @@ C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
 
       diagName  = 'BRG_TauX'
       diagTitle = 
-     &     'Iceberg bottom stress, zonal. comp., >0 ++uVel'
+     &     'Iceberg drag stress, zonal. comp., >0 ++uVel'
       diagUnits = 'N/m^2           '
       diagCode  = 'UU      MR      '
       diagMate  = diagNum + 2
@@ -82,7 +82,7 @@ C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
 
       diagName  = 'BRG_TauY'
       diagTitle = 
-     &     'Iceberg bottom stress, merid. comp., >0 ++vVel'
+     &     'Iceberg drag stress, merid. comp., >0 ++vVel'
       diagUnits = 'N/m^2           '
       diagCode  = 'VV      MR      '
       diagMate  = diagNum

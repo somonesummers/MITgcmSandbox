@@ -138,7 +138,7 @@ print('averaging over all cross sections')
 if(isBerg):
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx', 'BRGFlx', 'BRGFlx']
     name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt", 'BRG_TauX', 'BRG_TauY']
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]", "[kN/m^2]", "[kN/m^2]"]
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]", "[N/m^2]", "[N/m^2]"]
 else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
     name = ["Temp", "Sal", "U", "W", "V"]
@@ -187,8 +187,6 @@ for k in range(len(name)):
             cm = "cmo.balance"
         if(k > 4):
             kk = k - 3
-            if(k > 5):
-                data = data/1000 #Pa to kPa
         else:
             kk = k
         if(usePcolor):
