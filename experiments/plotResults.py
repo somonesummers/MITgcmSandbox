@@ -132,7 +132,7 @@ for j in toIterate[::subSample]:
     ax4.plot(X*1e-3,B/constant.daysYear,marker='o',color=colors[:,j],linestyle=linestyle,label=name)
     ax4.set_xlabel('Distance Along Fjord [km]')
     ax4.set_ylabel('Meltrate B [m/day]')     
-    ax4.legend()
+    # ax4.legend()
     ax4.grid(alpha=.5)
 
 plt.savefig('figs/melangeView.png',format='png',dpi=150)
