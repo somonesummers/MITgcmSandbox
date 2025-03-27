@@ -72,7 +72,7 @@ units = ["[m^3/s]", "[W/m^2]", "[m/d]", "[N/m^2]","[N/m^2]","[m^3/s]","[W/m^2]"]
 zSlice = np.argmin(np.abs(z[:,0,0]- zDepth))
 print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
-for k in [3,4]:#range(len(name)):
+for k in range(len(name)):
     print('\t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)

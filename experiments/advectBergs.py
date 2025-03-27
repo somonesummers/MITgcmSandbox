@@ -59,13 +59,13 @@ dz = np.load('input/dz.npy')
 deltaX = x[0,0]*2
 deltaY = y[0,0]*2
 
-#icebergCoverLamba is enforced to remain constant left of here
+#Bergs added to top off to icebergCoverLamba left of refreshGate
 icebergRefreshingGate = 3
 maxBergs = 500
 hardMaxDepth = np.max(np.abs(z)) - 5
 
-#icebergs are destroyed when they move past here
-icebergRightHandGate = int(nx*.8)
+#icebergs are destroyed when they move past here. Issues when GLACIOME grows past here
+icebergRightHandGate = int(nx*0.9)
 
 files = sorted(glob.glob('couplingResults/MITgcmRun_[0-9][0-9][0-9][0-9][0-9].pickle'))
 # print(files)

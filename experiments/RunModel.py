@@ -1,25 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Sun Aug 27 12:39:00 2023
+Created on Wed Mar 26 2025
 
-@author: jason
-"""
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Aug 19 19:15:01 2023
-
-@author: jason
-"""
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Aug 16 14:04:35 2023
-
-@author: jason
+@author: psummers8
 """
 
 import numpy as np
@@ -37,7 +20,6 @@ from glaciome1D import constants, glaciome
 import glob
 import pickle
 import time
-
 # resetStart = True
 # freshStart = False
 # icebergCoverLambda = .8
@@ -57,6 +39,7 @@ def replaceAll(file,searchExp,replaceExp):
         sys.stdout.write(line)
 
 # This is only needed for a true fresh start
+print(resetStart,freshStart)
 if(resetStart):
     input("Resetting this experiment directory, DELETING FILES AND FIGS. Confirm before continuing...")
     #Reset iceberg files
@@ -98,10 +81,11 @@ else:
 
 
 for ii in range(iterationsToRun):
-
-    #Find time steps to take
+    # Welcome to the loop. We assume there is a MITgcm file, and a mélange geometry existing.
+    
     start_time = time.time()
 
+    #Find time step to take from MITgcm files
     maxStep = 0
     for file in os.listdir('results'):
         # print(file)
@@ -117,35 +101,23 @@ for ii in range(iterationsToRun):
                 dt = float(line[8:-2])
     # print('\tdt is loaded as', dt)
 
+    #Load all our MITgcm data
 
     x = np.squeeze(mds.rdmds("results/XC")[0,:])
     y = np.squeeze(mds.rdmds("results/YC")[:,0])
+    z = np.squeeze(mds.rdmds("results/RC"))
     dx = 2*x[0]
     dy = 2*y[0]
     ny = len(y)
+    nx = len(x)
+    nz = np.squeeze(np.shape(z)[0])
 
     dataMITgcm = mds.rdmds("results/BRGFlx", maxStep)
+    openFrac = np.fromfile('input/openFrac.bin', dtype='>f8')
+    openFrac = openFrac.reshape((nz,ny,nx))
 
-            
-    # n_pts = 21 # number of grid points
-    # L = 10e3 # ice melange length
-    # Ut = 6e3 # glacier terminus velocity [m/a]; treated as a constant
-    # Uc = 6e3 # glacier calving rate [m/a]; treated as a constant
-    # Ht = 800 # terminus thickness
-    # n = 101 # number of time steps
-    # dt = 0.002# 1/(n_pts-1)/10 # time step [a]; needs to be quite small for this to work
-    # H0_manual = 100 #posit H0 start value, set to None to use default (75 m)
+    # Load mélange geometry
 
-    # # specifying fjord geometry
-    # X_fjord = np.linspace(0e3,400e3,101)
-    # Wt = 4000
-    # W_fjord = Wt + 0/10000*X_fjord
-    # B = -1.0*constant.daysYear
-
-    # first run to steady state
-    # data = glaciome(n_pts, dt, L, Ut, Uc, Ht, B, X_fjord, W_fjord, H0 = H0_manual)
-    #
-    # OR load existing file as start
     files = sorted(glob.glob('couplingResults/MITgcmRun_[0-9][0-9][0-9][0-9][0-9].pickle'))
     # print(files)
     with open(files[-1], 'rb') as file:
@@ -154,20 +126,26 @@ for ii in range(iterationsToRun):
         index = int(str(file).split(".")[1].split("_")[1])
         
     sysPrint('=== glaciome1D Running, load MITgcm data from end of day %.2f, using melange index %05i === ' %(int(maxStep)*dt/(24*3600),index))
+    
+    # make sure nothing funny is going on. Depending on when last cycle failed you may have to delete the highest numbered .pickle file
     if(int(maxStep)*dt/(24*3600) - index != 1):
         raise Exception('MITgcm and glaciome1D are out of sync, glaciome index should be 1 behind MITgcm day')
-    # os.system("echo ""glaciome1D Running, load MITgcm data from end of day %.2f, using melange index %05i"" > out.txt" %(int(maxStep)*dt/(24*3600),index))
+
+    # Calculate melt rate. This is the net Freshwaterflux (sum verically, avg across)/ surface area of melange
+    # It is very imporant to extend meltrate beyond mélange with value of last cell. Otherwise mélange will grow
+    # continuiously. 
+
+    lambdaHelper = 1-openFrac[0,1:-1,1:]
+    lambdaHelper[lambdaHelper == 0] = 0.01
     # data is of list ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY']
-    # b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[2,:,:,1:],axis=0),axis=0) # sum vertically, average across fjord
-    b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[0,:,:,1:],axis=0),axis=0)/(dx*dy*icebergCoverLambda)*(24*3600)*1000/917
+    b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[0,:,1:-1,1:],axis=0)/lambdaHelper,axis=0)/(dx*dy)*(24*3600)*1000/917
+    b_mitgcm[b_mitgcm == 0] = b_mitgcm[b_mitgcm != 0][-1] 
+
     x_mitgcm = x[1:]-x[1] #ensure starts at 0, MITgcm has a glacier for first cell
 
     meltHelper = b_mitgcm.copy()
-    meltHelper[meltHelper==0] = np.nan
-    # meltHelper2 = b_mitgcm2.copy()
-    # meltHelper2[meltHelper2==0] = np.nan
-    sysPrint('\tMelt Rates min/mean/max: %.2f, %.2f, %.2f [m/day]:' %(np.nanmin(meltHelper),np.nanmean(meltHelper),np.nanmax(meltHelper)))
-    # sysPrint('\tMelt Rates2 min/mean/max: %.2f, %.2f, %.2f[m/day]:' %(np.nanmin(meltHelper2),np.nanmean(meltHelper2),np.nanmax(meltHelper2)))
+    meltHelper[meltHelper==0] = np.min(meltHelper[meltHelper != 0])
+    sysPrint('\tMelt Rates min/mean/max: %.2f, %.2f, %.2f [m/day]:' %(np.min(meltHelper),np.mean(meltHelper),np.max(meltHelper)))
     # plt.figure()
     # plt.plot(x_mitgcm,b_mitgcm)
     # plt.show()
@@ -175,18 +153,28 @@ for ii in range(iterationsToRun):
     data.dt = 1.0/365 # 1 day
     data.X_externalGrid = x_mitgcm
     data.B_externalGrid = b_mitgcm*365 #days to years
+
+    # Ready to now run GLACIOME1D. We run 1 timestep with dt set to the coupling timestep. If this creates CLF issues
+    # we can run more steps with a reduced dt, or couple with MITgcm more frequently, but this isn't likely to be needed. 
+
     sysPrint('\tPrevious Length: %.3f, H0: %.3f'%(data.L,data.H0))
+    # data.steadystate()
     data.prognostic(method='lm')
     sysPrint('\tNew      Length: %.3f, H0: %.3f'%(data.L,data.H0))
     sysPrint('\t\tSeconds to run GLACIOME step: %.4f' % (time.time() - start_time))
+    
     H = np.concatenate(([data.H0], data.H, [data.HL]))
     X = data.X
     X_ = np.concatenate(([data.X[0]],data.X_,[data.X[-1]]))
     np.save('input/melangeH',H)
     np.save('input/melangeX',X_)
 
+    # save itermediate steps for plotting
     data.save('couplingResults/MITgcmRun_%05i.pickle' %(index+1))
     sysPrint('\tSaved as MITgcmRun_%05i.pickle' %(index+1))
+
+    # Preparing MITgcm for next run. 
+    # We adust the data file, copy the last pickup file to input directory 
 
     sysPrint('\tPrepping MITgcm for day %.2f' %(index+2))
     newStartTime = (index+1)*24*3600
@@ -200,9 +188,13 @@ for ii in range(iterationsToRun):
     sysPrint('\tadjust end time %i to %i' %(int(newStartTime),int(newStartTime+24*3600)))
     replaceAll('input/data','endTime=%i' %(int(newStartTime)), 'endTime=%i' %(int(newStartTime+24*3600)))
 
+    # We adjust the icebergs to the new mélange geometry. This could be within this script.
+
     os.system('python advectBergs.py >> couplingResults/out.txt')
 
     os.chdir("results")
     os.system('./mitgcmuv >> ../couplingResults/OutMITgcm%05i.txt' %(index+1))
     os.chdir("../")
     sysPrint('\t\tSeconds to run coupled step: %.4f' % (time.time() - start_time))
+
+    # Now start all over again
