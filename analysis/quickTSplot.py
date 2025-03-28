@@ -65,7 +65,7 @@ if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to b
 
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
-os.system('rm -f figs/TSPlot*.png')
+# os.system('rm -f figs/TSPlot*.png')
 # os.system('rm -f figs/TSPlot*.gif')
 
 x = mds.rdmds("results/XC")
@@ -82,16 +82,21 @@ print('cross section is x =', x[0,xSlice],'index', xSlice)
 nMix = 25
 mixingT = np.zeros([2,nMix])
 mixingS = np.zeros([2,nMix])
-mixingT[1,:] = np.linspace(0,10,nMix)
+mixingT[1,:] = np.linspace(-10,10,nMix)
 mixingS[1,:] = np.ones([1,nMix])*50
 
 nMelt = 25
 meltT = np.ones([2,nMelt])*-90
 meltS = np.zeros([2,nMelt])
 meltT[1,:] = np.ones([1,nMelt])*10
-meltS[1,:] = np.linspace(0,10,nMelt)+32
+meltS[1,:] = np.linspace(-10,10,nMelt)+32
 
-for i in np.arange(startStep, maxStep + 1, sizeStep):
+freezeS = [0,50]
+freezeT = [0,-2.809]
+freezeS100 = [0,50]
+freezeT100 = [-.011,-2.919]
+
+for i in [maxStep]:#:np.arange(startStep, maxStep + 1, sizeStep):
     data = mds.rdmds("results/dynDiag", i)
     plt.figure()
     # data_old = mds.rdmds("results/dynDiag", 20*86400/dt)  #breaks if not a 20 day run, fix later
@@ -99,32 +104,37 @@ for i in np.arange(startStep, maxStep + 1, sizeStep):
     #                alpha=.5,s=25,color='black',edgecolor='none')
     for j in range(np.shape(y[1:-1,:])[0]):
         plt.scatter(data[1,:,j+1,xSlice],data[0,:,j+1,xSlice],c=np.squeeze(z),
-                   alpha=.25,s=10,cmap='cmo.deep_r')
+                   alpha=.25,s=10,cmap='viridis')
     sc=plt.scatter(np.mean(data[1,:,1:-1,xSlice],1),np.mean(data[0,:,1:-1,xSlice],1),c=np.squeeze(z),
-                   alpha=1.,s=25,cmap='cmo.deep_r')
+                   alpha=1.,s=25,cmap='viridis')
     plt.plot(mixingS,mixingT,linewidth=.5,color='gray',alpha=.5,linestyle='--')
-    plt.plot(meltS,meltT,linewidth=.5,color='gray',alpha=.5)
-    
+    plt.plot(meltS,meltT,linewidth=.5,color='gray',alpha=.5,linestyle='--')
+    plt.plot(freezeS,freezeT,linewidth=.5,color='red',alpha=.5,linestyle='--')
+    plt.plot(freezeS100,freezeT100,linewidth=.5,color='red',alpha=.5,linestyle='--')
     cbar = plt.colorbar(sc)
     cbar.set_label('Depth [m]')
     ax = plt.gca()
     ax.set_xlim([np.min(saltRange), np.max(saltRange)])
     ax.set_ylim([np.min(tempRange), np.max(tempRange)])
     
-    plt.xlabel('Salt [ppt]')
+    plt.xlabel('Salt [PSU]')
     plt.ylabel('Temperature [C]')
     plt.title("TS x = %i at %.02f days" % (x[0,xSlice], i/86400.0*dt))
     j = i/sizeStep + startStep
     
-    str = "figs/TSPlot%05i.png" % (j)
+    if(args.xCrossSection != None):
+        str = "figs/TSPlot%05i_%05i.png" % (j,args.xCrossSection)
+    else:
+        str = "figs/TSPlot%05i.png" % (j)
     
     plt.savefig(str, format='png', dpi=plotDPI)
+    plt.show()
     plt.close()
-if(args.xCrossSection != None):
-    os.system('magick -delay %f figs/TSPlot*.png -colors 256 -depth 256 figs/TSPlot%i.gif' %(500/((maxStep-startStep)/sizeStep),args.xCrossSection))
-else:
-    os.system('magick -delay %f figs/TSPlot*.png -colors 256 -depth 256 figs/TSPlot.gif' %(500/((maxStep-startStep)/sizeStep)))
+# if(args.xCrossSection != None):
+#     os.system('magick -delay %f figs/TSPlot*.png -colors 256 -depth 256 figs/TSPlot%i.gif' %(500/((maxStep-startStep)/sizeStep),args.xCrossSection))
+# else:
+#     os.system('magick -delay %f figs/TSPlot*.png -colors 256 -depth 256 figs/TSPlot.gif' %(500/((maxStep-startStep)/sizeStep)))
 
-#Clean up intermediate pngs
-if(cleanPNGs):
-    os.system('rm -f figs/TSPlot*.png')
+# #Clean up intermediate pngs
+# if(cleanPNGs):
+#     os.system('rm -f figs/TSPlot*.png')

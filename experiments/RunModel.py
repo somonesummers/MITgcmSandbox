@@ -138,8 +138,8 @@ for ii in range(iterationsToRun):
     lambdaHelper = 1-openFrac[0,1:-1,1:]
     lambdaHelper[lambdaHelper == 0] = 0.01
     # data is of list ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY']
-    b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[0,:,1:-1,1:],axis=0)/lambdaHelper,axis=0)/(dx*dy)*(24*3600)*1000/917
-    b_mitgcm[b_mitgcm == 0] = b_mitgcm[b_mitgcm != 0][-1] 
+    b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[0,:,1:-1,1:],axis=0)/lambdaHelper,axis=0)/(dx*dy)*(24*3600)
+    b_mitgcm[b_mitgcm == 0] = b_mitgcm[b_mitgcm != 0][-1] # We fill in the tail of 0s with the value of the melange toe
 
     x_mitgcm = x[1:]-x[1] #ensure starts at 0, MITgcm has a glacier for first cell
 
@@ -156,11 +156,12 @@ for ii in range(iterationsToRun):
 
     # Ready to now run GLACIOME1D. We run 1 timestep with dt set to the coupling timestep. If this creates CLF issues
     # we can run more steps with a reduced dt, or couple with MITgcm more frequently, but this isn't likely to be needed. 
-
-    sysPrint('\tPrevious Length: %.3f, H0: %.3f'%(data.L,data.H0))
+    oldL = data.L
+    oldH = data.H0
+    sysPrint('\tPrevious Length: %.3f, H0: %.3f'%(oldL, oldH))
     # data.steadystate()
     data.prognostic(method='lm')
-    sysPrint('\tNew      Length: %.3f, H0: %.3f'%(data.L,data.H0))
+    sysPrint('\tNew      Length: %.3f, H0: %.3f, ∆L: %.3f, ∆H0: %.3f'%(data.L,data.H0,data.L-oldL,data.H0-oldH,))
     sysPrint('\t\tSeconds to run GLACIOME step: %.4f' % (time.time() - start_time))
     
     H = np.concatenate(([data.H0], data.H, [data.HL]))

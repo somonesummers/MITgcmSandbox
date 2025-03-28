@@ -64,8 +64,8 @@ z = mds.rdmds("results/RC")
 
 
 dynName = ['plumeDiag', 'plumeDiag', 'plumeDiag', 'plumeDiag','plumeDiag']
-name = ["W", "Temp", "Sal", "Radius", "MeltRate"]
-units = ["[m/s]", "[C]", "[PSU]", "[m]", "[m/day]"]
+name = ["W", "Temp", "Sal", "CellMeltRate", "MeltRate"]
+units = ["[m/s]", "[C]", "[PSU]", "[m/day]", "[m/day]"]
 
 
 if(os.path.isfile('input/plumeMask.bin')):
