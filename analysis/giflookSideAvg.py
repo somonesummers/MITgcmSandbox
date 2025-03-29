@@ -6,6 +6,12 @@ import sys
 import cmocean
 import fileinput
 import gsw
+# import argparse
+
+# parser = argparse.ArgumentParser(description='Plot dynamics at ySlice')
+# parser.add_argument('yCrossSection', nargs='?', const=0.0, type=float,
+#                     help='optional slice location [m]')
+# args = parser.parse_args()
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
@@ -29,8 +35,11 @@ elif(os.path.isfile('../plotHelper.py')):
 else:  
     print('no defaults found')
 
-#Overwrite local settings here if desired
-# usePcolor = True
+# if(args.yCrossSection != None):
+#     print('** Manual ySlice detected **')
+#     yCrossSection = args.yCrossSection
+# #Overwrite local settings here if desired
+# # usePcolor = True
 
 print('Plot DPI:',plotDPI,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
 
@@ -124,61 +133,87 @@ if(isBerg):
                     openFrac[:,j,i] = 1
                     
 
-ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
-print('cross section is y =', y[ySlice,0], 'index', ySlice)
+print('averaging over all cross sections')
 
-
-dynName = ['viscDiag', 'viscDiag']
-name = ['VISCAHZ','VISCAHD']
-cbarLabel = ["[Log10(m^2/s)]", "[Log10(m^2/s)]"]
+if(isBerg):
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx', 'BRGFlx', 'BRGFlx']
+    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt", 'BRG_TauX', 'BRG_TauY']
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]", "[N/m^2]", "[N/m^2]"]
+else:
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
+    name = ["Temp", "Sal", "U", "W", "V"]
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 for k in range(len(name)):
     print("\t" + name[k])
-    for i in [maxStep]:
-        dataQuiv = mds.rdmds("results/dynDiag", i)    
-        data = mds.rdmds("results/%s"%(dynName[k]), i)
-        data[data == 0] = np.nan  
-        data = np.log10(data)
+    for i in np.arange(startStep, maxStep + 1, sizeStep):
+        plt.figure(figsize=(12, 4))
+        # plt.figure()
+        if(showQuiver):
+            dataQuiv = mds.rdmds("results/dynDiag", i)
+        if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
+            localBergs = True
+        else:
+            localBergs = False
+        if((not localBergs) and k==5):
+            #fill melt image with 0s if bergs in run but not frame
+            data = np.zeros(np.shape(mds.rdmds("results/%s"%(dynName[k-1]), i)))
+        else:
+            data = mds.rdmds("results/%s"%(dynName[k]), i)
         
         if k == 0:
-            lvl = np.linspace(-4,2,12)
-            cm = 'cmo.turbid'
+            lvl = tempRange
+            cm = tempCmap
         elif k == 1:
-            lvl = np.linspace(-4,2,12)
-            cm = 'cmo.turbid'
+            lvl = saltRange
+            cm = saltCmap
         elif k == 2:
-            lvl = np.linspace(-4,2,12)
-            cm = 'cmo.turbid'
+            lvl = uRange
+            cm = uCmap
         elif k == 3:
-            lvl = np.linspace(-4,2,12)
-            cm = 'cmo.turbid'
-        kk = k  
+            lvl = wRange
+            cm = wCmap
+        elif k == 4:
+            lvl = vRange
+            cm = vCmap
+        elif k == 5:
+            lvl = meltRange
+            cm = meltCmap
+        elif k == 6:
+            lvl = np.linspace(-10,10,127)
+            cm = "cmo.balance"
+        elif k == 7:
+            lvl = np.linspace(-10,10,127)
+            cm = "cmo.balance"
+        if(k > 4):
+            kk = k - 3
+        else:
+            kk = k
         if(usePcolor):
             cp = plt.pcolormesh(
-                np.squeeze(x[ySlice,:]),
+                np.squeeze(x[0,:]),
                 np.squeeze(z),
-                np.squeeze(data[kk, :, ySlice, :]),
+                np.squeeze(np.average(data[kk, :, 1:-1, :], weights=openFrac[:,1:-1,:],axis=1)),
                 cmap=cm,
                 vmin=np.min(lvl),
                 vmax=np.max(lvl),
             )
         else:
             cp = plt.contourf(
-                np.squeeze(x[ySlice,:]),
+                np.squeeze(x[0,:]),
                 np.squeeze(z),
-                np.squeeze(data[kk, :, ySlice, :]),
+                np.squeeze(np.average(data[kk, :, 1:-1, :], weights=openFrac[:,1:-1,:],axis=1)),
                 lvl,
                 extend="both",
                 cmap=cm,
             )
-        plt.plot(x[ySlice,:],topo[ySlice,:],color='black')
-        if(isBerg):
-            # plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
+        plt.plot(x[0,:],topo[1,:],color='black')
+        if(localBergs):
             cp2 = plt.contourf(
-                x[ySlice,:],
+                x[0,:],
                 np.squeeze(z),
-                np.squeeze(openFrac[:, ySlice, :]),
-                [.1,.5,.9],
+                np.squeeze(np.average(openFrac[:, 1:-1, :],axis=1)),
+                [.4,.6,.8,.9,.95],
                 extend="min",
                 alpha=.1,
                 cmap='cmo.gray')
@@ -186,15 +221,15 @@ for k in range(len(name)):
             #cbar2.set_label('Ocean Fraction')
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
-        if(showDensity):
-            salt = np.squeeze(dataQuiv[1,:,ySlice,:])
+        if(showDensity and (dynName[k] == 'dynDiag')):
+            salt = np.squeeze(np.average(data[1,:,1:-1,:],weights=openFrac[:,1:-1,:],axis=1))
             if(i == startStep): #only calc pressure once
                 pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
-            CT = gsw.CT_from_t(salt, dataQuiv[0,:,ySlice,:], pressure)
+            CT = gsw.CT_from_t(salt, np.average(data[0,:,1:-1,:],weights=openFrac[:,1:-1,:],axis=1), pressure)
             density = gsw.rho(salt, CT, pressure) - 1000 #in-stu density less 1000
             densityLevels = np.linspace(25,30,26)
             cc = plt.contour(
-                np.squeeze(x[ySlice,:]),
+                np.squeeze(x[0,:]),
                 np.squeeze(z),
                 np.squeeze(density),
                 densityLevels,
@@ -203,25 +238,34 @@ for k in range(len(name)):
                 alpha=0.5
             )
             plt.clabel(cc, inline=3, fontsize=8)
-        if(showQuiver):
-            u = np.squeeze(dataQuiv[2, :, ySlice, :])
-            w = np.squeeze(dataQuiv[3, :, ySlice, :])
-            plt.quiver(
-                x[ySlice,:],
-                np.squeeze(z),
-                u/np.sqrt(u**2 + w**2 + 1e-12),
-                w/np.sqrt(u**2 + w**2 + 1e-12),
-                alpha=.5
+        if(showZeros):
+            if( k == 2 or k == 6 or k == 7):
+                cc = plt.contour(
+                    np.squeeze(x[0,:]),
+                    np.squeeze(z),
+                    np.squeeze(np.average(data[kk, :, 1:-1, :], weights=openFrac[:,1:-1,:],axis=1)),
+                    [0],
+                    colors='gray',
+                    linewidths=0.5,
+                    alpha=0.5
                 )
+                plt.clabel(cc, inline=3, fontsize=8)
 
-
-        plt.xlabel('Along Fjord [m] %.3e %.3f nan: %i' %(10**np.nanmin(data[kk, :, ySlice, :]),10**np.nanmax(data[kk, :, ySlice, :]),np.max(np.isnan(data[kk, :, ySlice, :]))))
+        plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, 1:-1, :]),np.nanmax(data[kk, :, 1:-1, :]),np.max(np.isnan(data[kk, :, 1:-1, :]))))
         plt.ylabel('Depth [m]')
-        plt.title("%s y = %i at %.02f days" % (name[k], y[ySlice,0], i/86400.0*dt))
+        plt.title("%s Width Averaged at %.02f days" % (name[k], i/86400.0*dt))
         j = i/sizeStep
         
-        str = "figs/side_%s%05i.png" % (name[k],j)
+        str = "figs/sideAvg_%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
+    
+    os.system('magick -delay %f figs/sideAvg_%s*.png -colors 256 -depth 256 figs/sideAvg_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(makeMovie):
+        os.system('ffmpeg -r %f -i figs/sideAvg_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/sideAvg_%s.mov' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
+
+#Clean up intermediate pngs
+    if(cleanPNGs):
+        os.system('rm -f figs/sideAvg_*.png')

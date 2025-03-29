@@ -55,7 +55,7 @@ if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to b
 
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
-# os.system('rm -f figs/shelfMap*.png')
+os.system('rm -f figs/shelfMap*.png')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
@@ -72,7 +72,7 @@ print('Plots values across bottom of shelf')
 
 for k in range(len(name)):
     print('\t',name[k])
-    for i in [maxStep]:
+    for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0: #
             lvl = np.linspace(0,3,128)
@@ -126,3 +126,8 @@ for k in range(len(name)):
         plt.savefig(str, format='png',dpi=plotDPI)
         # plt.show()
         plt.close()  
+    os.system('magick -delay %f figs/shelfMap%s*.png -colors 256 -depth 256 figs/shelfMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+
+#Clean up intermediate pngs
+    if(cleanPNGs):
+        os.system('rm -f figs/shelfMap*.png')

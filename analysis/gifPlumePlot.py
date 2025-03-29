@@ -54,8 +54,8 @@ if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to b
 
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
-# os.system('rm -f figs/plumePlot*.png')
-# os.system('rm -f figs/plumePlot*.gif')
+os.system('rm -f figs/plumePlot*.png')
+os.system('rm -f figs/plumePlot*.gif')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
@@ -81,7 +81,7 @@ plumeLoc = [plumeLocations[0][0],plumeLocations[1][0]]
 print('Plume Locaion is grid', plumeLoc )
 
 for k in range(len(name)):
-    for i in [maxStep]:
+    for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
             lvl = [1,3]
@@ -115,3 +115,10 @@ for k in range(len(name)):
         
         plt.savefig(str, format='png',dpi=plotDPI)
         plt.close()
+        plt.show()
+
+    os.system('magick -delay %f figs/plumePlot%s*.png -colors 256 -depth 256 figs/plumePlot%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+
+#Clean up intermediate pngs
+    if(cleanPNGs):
+        os.system('rm -f figs/plumePlot*.png')

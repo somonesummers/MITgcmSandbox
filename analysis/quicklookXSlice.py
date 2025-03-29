@@ -75,7 +75,7 @@ if((maxStep-startStep)/sizeStep > 120):   #if more than 50 frames, downscale to 
 
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
-os.system('rm -f figs/sideX*.png')
+# os.system('rm -f figs/sideX*.png')
 # os.system('rm -f figs/autosideX*.gif')
 
 x = mds.rdmds("results/XC")
@@ -142,7 +142,7 @@ else:
 
 for k in range(len(name)):
     print('\t',name[k])
-    for i in np.arange(startStep, maxStep + 1, sizeStep):
+    for i in [maxStep]:
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
             localBergs = True
         else:
@@ -230,7 +230,10 @@ for k in range(len(name)):
         plt.title("%s x = %i at %.02f days" % (name[k], x[0,xSlice], i/86400.0*dt))
         j = i/sizeStep + startStep
         
-        str = "figs/sideX%s%05i.png" % (name[k],j)
+        if(args.xCrossSection != None):
+            str = "figs/sideX%s%05i_i.png" % (name[k],j,args.xCrossSection)
+        else:
+            str = "figs/sideX%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
@@ -239,7 +242,3 @@ for k in range(len(name)):
         os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.xCrossSection, name[k]))
     else:
         os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
-
-#Clean up intermediate pngs
-    if(cleanPNGs):
-        os.system('rm -f figs/sideX*.png')

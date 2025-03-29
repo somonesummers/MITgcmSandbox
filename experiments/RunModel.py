@@ -150,7 +150,7 @@ for ii in range(iterationsToRun):
     # plt.plot(x_mitgcm,b_mitgcm)
     # plt.show()
     # plt.close()
-    data.dt = 1.0/365 # 1 day
+    data.dt = 10.0/365 # 1 day
     data.X_externalGrid = x_mitgcm
     data.B_externalGrid = b_mitgcm*365 #days to years
 

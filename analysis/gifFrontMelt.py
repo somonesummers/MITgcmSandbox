@@ -3,7 +3,6 @@ from matplotlib import pyplot as plt
 import numpy as np
 import os
 import sys
-import cmocean
 import fileinput
 
 # Plot settings from local helper
@@ -11,8 +10,10 @@ zDepth = -50
 plotDPI = 100
 cleanPNGs = True
 
-if(os.path.isfile('input/plotHelperLocal.py')):
-    sys.path.append('input')
+directories = ['fjord_b0','fjord_b1','fjord_m0']
+
+if(os.path.isfile(directories[0] + '/input/plotHelperLocal.py')):
+    sys.path.append(directories[0] + '/input')
     from plotHelperLocal import *
     print('Found experiment plotting settings')
 elif(os.path.isfile('../plotHelper.py')):
@@ -24,7 +25,7 @@ else:
 print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
 dt = 0.0   
-for line in fileinput.input('input/data'):
+for line in fileinput.input(directories[0] + '/input/data'):
         if "deltaT=" in line:
             dt = float(line[8:-2])
 print('dt is loaded as', dt)
@@ -34,7 +35,7 @@ maxStep = 0
 sizeStep = 1e10
 startStep = 1e10
 
-for file in os.listdir('results'):
+for file in os.listdir(directories[0] + '/results'):
     # print(file)
     if "plumeDiag.0" in file:
         words = file.split(".")
@@ -57,19 +58,19 @@ print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 # os.system('rm -f figs/plumePlot*.png')
 # os.system('rm -f figs/plumePlot*.gif')
 
-x = mds.rdmds("results/XC")
-y = mds.rdmds("results/YC")
-z = mds.rdmds("results/RC")
+x = mds.rdmds(directories[0] + "/results/XC")
+y = mds.rdmds(directories[0] + "/results/YC")
+z = mds.rdmds(directories[0] + "/results/RC")
 
 
 
 dynName = ['plumeDiag', 'plumeDiag', 'plumeDiag', 'plumeDiag','plumeDiag']
-name = ["W", "Temp", "Sal", "CellMeltRate", "MeltRate"]
+name = ["W", "Temp", "Sal", "Total Melt Rate", "Plume Melt Rate"]
 units = ["[m/s]", "[C]", "[PSU]", "[m/day]", "[m/day]"]
 
 
-if(os.path.isfile('input/plumeMask.bin')):
-    plumeMask = np.fromfile('input/plumeMask.bin', dtype='>f8')
+if(os.path.isfile(directories[0] + '/input/plumeMask.bin')):
+    plumeMask = np.fromfile(directories[0] + '/input/plumeMask.bin', dtype='>f8')
     plumeMask = plumeMask.reshape(np.shape(x))
     plumeLocations = np.where(plumeMask == 3)
 
@@ -81,8 +82,11 @@ plumeLoc = [plumeLocations[0][0],plumeLocations[1][0]]
 print('Plume Locaion is grid', plumeLoc )
 
 for k in range(len(name)):
-    for i in [maxStep]:
-        data = mds.rdmds("results/%s"%(dynName[k]), i)
+    plt.figure()
+    for folder in directories:
+        i = maxStep
+        data = mds.rdmds(folder + "/results/%s"%(dynName[k]), i)
+        # data[:,:,plumeLoc[0],plumeLoc[1]] = np.nan
         if k == 0:
             lvl = [1,3]
             cm = "xkcd:raspberry"
@@ -101,17 +105,23 @@ for k in range(len(name)):
         elif k == 5:
             lvl = [-0.005, 0.005]
             cm = "xkcd:lavender"
-        plt.figure()
-        plt.plot(data[k,:,plumeLoc[0],plumeLoc[1]],np.squeeze(z),linewidth=1,color=cm)
+        
+        totalMean = np.nanmean(data[k,:,:,plumeLoc[1]])
+        pl = plt.plot(np.nanmean(data[k,:,:,plumeLoc[1]],axis=1),np.squeeze(z),linewidth=1,label=folder)
+        plt.plot([totalMean,totalMean],[np.min(z),np.max(z)],linewidth=1,linestyle='--',color=pl[0].get_color())
         ax = plt.gca()
         # ax.set_xlim(lvl)
 
         plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(data[k, :, plumeLoc[0],plumeLoc[1]]),np.nanmax(data[k, :, plumeLoc[0],plumeLoc[1]]),np.max(np.isnan(data[k, :, plumeLoc[0],plumeLoc[1]]))))
         plt.ylabel('Depth [m]')
-        plt.title("%s x = %i at %.02f days" % (name[k], x[0,plumeLoc[1]], i/86400.0*dt))
+        plt.title("Width Averaged %s at %.02f days" % (name[k], i/86400.0*dt))
         j = i/sizeStep + startStep
-        
-        str = "figs/plumePlot%s%05i.png" % (name[k],j)
-        
-        plt.savefig(str, format='png',dpi=plotDPI)
-        plt.close()
+            
+    str = "figs/iceFront%s%05i.png" % (name[k],j)
+    plt.legend()    
+    plt.savefig(str, format='png',dpi=plotDPI)
+    plt.show()
+    plt.close()
+    
+
+

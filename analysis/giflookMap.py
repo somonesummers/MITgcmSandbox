@@ -76,7 +76,7 @@ else:
     isBerg = False
 
 #Clean up old gifs and pngs
-# os.system('rm -f figs/map*.png')
+os.system('rm -f figs/map*.png')
 # os.system('rm -f figs/autoMap*.gif')
 
 y = mds.rdmds("results/YC")
@@ -123,7 +123,7 @@ else:
 
 for k in range(len(name)):
     print("\t" + name[k])
-    for i in [maxStep]:
+    for i in np.arange(startStep, maxStep + 1, sizeStep):
         plt.figure(figsize=(12, 4))
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
@@ -224,13 +224,17 @@ for k in range(len(name)):
 
         # plt.xlim([-8000, 25000]) # if zooming into a specific region
         j = i/sizeStep + startStep
-        if(args.zDepth != None):
-            str = "figs/map%s%05i_%i.png" % (name[k],j,np.abs(args.zDepth))
-        else:
-            str = "figs/map%s%05i.png" % (name[k],j)
-        
+        str = "figs/map%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
 
+    if(args.zDepth != None):
+        os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], np.abs(args.zDepth), name[k]))
+    else:
+        os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+
+#Clean up intermediate pngs
+    if(cleanPNGs):
+        os.system('rm -f figs/map*.png')

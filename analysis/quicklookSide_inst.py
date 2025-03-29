@@ -55,8 +55,8 @@ if(os.path.isfile('input/bergMask.bin')):
 else:
     isBerg = False
 
-os.system('rm -f figs/sideinst_*.png')
-os.system('rm -f figs/autosideinst_*.gif')
+# os.system('rm -f figs/sideinst_*.png')
+# os.system('rm -f figs/autosideinst_*.gif')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
@@ -119,7 +119,7 @@ cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 for k in range(len(name)):
     #print('k,',k)
-    for i in np.arange(startStep, maxStep + 1, sizeStep):
+    for i in [maxStep]:
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
             lvl = np.linspace(-0.5, 3, 128)
@@ -175,20 +175,3 @@ for k in range(len(name)):
         plt.close()
         #plt.show()
 
-    os.system('magick -delay %f figs/sideinst_%s*.png -colors 256 -depth 256 figs/autosideinst_%s.gif' %(200/((maxStep-startStep)/sizeStep), name[k], name[k]))
-
-# BCT = np.fromfile("T.bound", dtype=">f8")
-# plt.plot(BCT)
-# plt.show()
-#
-# BCS = np.fromfile("S.bound", dtype=">f8")
-# plt.plot(BCS)
-# plt.show()
-#
-# BCU = np.fromfile("U.bound", dtype=">f8")
-# plt.plot(BCU)
-# plt.show()
-#
-#
-if(cleanPNGs):
-    os.system('rm -f figs/sideinst_*.png')

@@ -54,7 +54,7 @@ if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to b
 
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
-# os.system('rm -f figs/bergMap*.png')
+os.system('rm -f figs/bergMap*.png')
 # os.system('rm -f figs/bergMap*.gif')
 
 x = mds.rdmds("results/XC")
@@ -74,7 +74,7 @@ print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
 for k in range(len(name)):
     print('\t',name[k])
-    for i in [maxStep]:
+    for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         if(data.shape[0] < 4 and (k == 3 or k == 4)):
             if(i == startStep):
@@ -151,9 +151,9 @@ for k in range(len(name)):
         plt.savefig(str, format='png',dpi=plotDPI)
         # plt.show()
         plt.close()
-#     if(not (data.shape[0] < 4 and (k == 3 or k == 4))):    
-#         os.system('magick -delay %f figs/bergMap%s*.png -colors 256 -depth 256 figs/bergMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(not (data.shape[0] < 4 and (k == 3 or k == 4))):    
+        os.system('magick -delay %f figs/bergMap%s*.png -colors 256 -depth 256 figs/bergMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
-# #Clean up intermediate pngs
-#     if(cleanPNGs):
-#         os.system('rm -f figs/bergMap*.png')
+#Clean up intermediate pngs
+    if(cleanPNGs):
+        os.system('rm -f figs/bergMap*.png')

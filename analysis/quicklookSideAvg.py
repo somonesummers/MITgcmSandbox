@@ -146,7 +146,7 @@ else:
 
 for k in range(len(name)):
     print("\t" + name[k])
-    for i in np.arange(startStep, maxStep + 1, sizeStep):
+    for i in [maxStep]:
         plt.figure(figsize=(12, 4))
         # plt.figure()
         if(showQuiver):
@@ -261,11 +261,3 @@ for k in range(len(name)):
         plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
-    
-    os.system('magick -delay %f figs/sideAvg_%s*.png -colors 256 -depth 256 figs/sideAvg_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
-    if(makeMovie):
-        os.system('ffmpeg -r %f -i figs/sideAvg_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/sideAvg_%s.mov' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
-
-#Clean up intermediate pngs
-    if(cleanPNGs):
-        os.system('rm -f figs/sideAvg_*.png')

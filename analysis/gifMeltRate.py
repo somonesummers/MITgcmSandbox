@@ -8,8 +8,8 @@ import sys
 
 ddir = ''
 
-# os.system('rm -f figs/fwf*.png')
-# os.system('rm -f figs/autoFwf*.gif')
+os.system('rm -f figs/fwf*.png')
+os.system('rm -f figs/autoFwf*.gif')
 
 maxStep = 0
 sizeStep = 1e10
@@ -72,7 +72,7 @@ topo = topo.reshape(np.shape(x))
 # iceEdge = np.interp(z[0,0,0],ice[0,:],x[0,:])
 
 
-for i in [maxStep]:
+for i in np.arange(startStep, maxStep + 1, sizeStep):
     data = mds.rdmds("%sresults/%s" % (ddir, loadFile ), i)
     if(isShelf):
         dataTemp = np.squeeze(data[0, :, :]*1e-3*3.154e7) #kg/(m^2*s) -> m/yr
@@ -107,6 +107,13 @@ for i in [maxStep]:
     
     #plt.show()
     plt.close()
+
+os.system('magick -delay 5 %sfigs/fwf*.png -colors 256 -depth 256 %sfigs/autoFwf.gif' %(ddir, ddir))
+
+# %%
+
+
+# %%
 
 
 

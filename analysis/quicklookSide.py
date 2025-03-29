@@ -147,7 +147,7 @@ else:
 
 for k in range(len(name)):
     print("\t" + name[k])
-    for i in np.arange(startStep, maxStep + 1, sizeStep):
+    for i in [maxStep]:
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
@@ -269,19 +269,12 @@ for k in range(len(name)):
         plt.title("%s y = %i at %.02f days" % (name[k], y[ySlice,0], i/86400.0*dt))
         j = i/sizeStep
         
-        str = "figs/side_%s%05i.png" % (name[k],j)
+        if(args.yCrossSection != None):
+            str = "figs/side_%s%05i_%i.png" % (name[k],j,args.yCrossSection)
+        else:    
+            str = "figs/side_%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png', dpi=plotDPI)
         # plt.show()
         plt.close()
         
-    if(args.yCrossSection != None):
-         os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.yCrossSection, name[k]))
-    else:    
-        os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
-    if(makeMovie):
-        os.system('ffmpeg -r %f -i figs/side_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/autoside_%s.mov' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
-
-#Clean up intermediate pngs
-    if(cleanPNGs):
-        os.system('rm -f figs/side_*.png')

@@ -68,8 +68,8 @@ if(os.path.isfile('input/bergMask.bin')):
 else:
     isBerg = False
 
-os.system('rm -f figs/state*.png')
-os.system('rm -f figs/state*.gif')
+# os.system('rm -f figs/state*.png')
+# os.system('rm -f figs/state*.gif')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
@@ -133,7 +133,7 @@ else:
     cbarLabel = ["[Pa]","[Pa]"]
 
 for k in range(len(name)):
-    for i in np.arange(startStep, maxStep + 1, sizeStep):
+    for i in [maxStep]:
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)  #only works if same time steps for dynDiag and state vars
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
@@ -206,8 +206,8 @@ for k in range(len(name)):
         plt.close()
         #plt.show()
 
-    os.system('magick -delay %f figs/state%s*.png -colors 256 -depth 256 figs/state%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+#     os.system('magick -delay %f figs/state%s*.png -colors 256 -depth 256 figs/state%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
-#Clean up intermediate pngs
-if(cleanPNGs):
-    os.system('rm -f figs/state*.png')
+# #Clean up intermediate pngs
+# if(cleanPNGs):
+#     os.system('rm -f figs/state*.png')

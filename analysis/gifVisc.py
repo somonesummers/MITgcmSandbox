@@ -134,7 +134,7 @@ cbarLabel = ["[Log10(m^2/s)]", "[Log10(m^2/s)]"]
 
 for k in range(len(name)):
     print("\t" + name[k])
-    for i in [maxStep]:
+    for i in np.arange(startStep, maxStep + 1, sizeStep):
         dataQuiv = mds.rdmds("results/dynDiag", i)    
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         data[data == 0] = np.nan  
@@ -225,3 +225,11 @@ for k in range(len(name)):
         plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
+
+    os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(makeMovie):
+        os.system('ffmpeg -r %f -i figs/side_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/autoside_%s.mov' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
+
+#Clean up intermediate pngs
+    if(cleanPNGs):
+        os.system('rm -f figs/side_*.png')

@@ -57,8 +57,8 @@ print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 print(startStep,sizeStep,maxStep)
 
-# os.system('rm -f figs/sideX_inst*.png')
-# os.system('rm -f figs/autosideX_inst*.gif')
+os.system('rm -f figs/sideX_inst*.png')
+os.system('rm -f figs/autosideX_inst*.gif')
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
@@ -123,7 +123,7 @@ else:
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 for k in range(len(name)):
-    for i in [maxStep]:
+    for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         if k == 0:
             lvl = np.linspace(-0.5, 3, 128)
@@ -179,3 +179,21 @@ for k in range(len(name)):
         plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
+
+    os.system('magick -delay %f figs/sideX_inst%s*.png -colors 256 -depth 256 figs/autosideX_inst_%s.gif' %(200/((maxStep-startStep)/sizeStep), name[k], name[k]))
+
+# BCT = np.fromfile("T.bound", dtype=">f8")
+# plt.plot(BCT)
+# plt.show()
+#
+# BCS = np.fromfile("S.bound", dtype=">f8")
+# plt.plot(BCS)
+# plt.show()
+#
+# BCU = np.fromfile("U.bound", dtype=">f8")
+# plt.plot(BCU)
+# plt.show()
+#
+#
+if(cleanPNGs):
+    os.system('rm -f figs/sideX_inst*.png')
