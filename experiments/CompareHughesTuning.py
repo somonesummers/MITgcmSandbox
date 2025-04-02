@@ -28,7 +28,7 @@ ax4 = plt.subplot(2,3,5)
 ax5 = plt.subplot(2,3,3)
 ax6 = plt.subplot(2,3,6)
 axes = [ax1, ax2, ax3, ax4, ax5, ax6]
-labels = ["A","D","B","E","C","F"]
+labels = ["(a)","(b)","(c)","(d)","(d)","(f)"]
 tune = ["0.002","0.0025","0.003"]
 
 for i in [0,1,2]:
