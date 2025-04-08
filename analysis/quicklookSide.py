@@ -225,7 +225,7 @@ for k in range(len(name)):
         cbar.set_label(cbarLabel[k])
         if(showDensity and (dynName[k] == 'dynDiag')):
             salt = np.squeeze(data[1,:,ySlice,:])
-            if(i == startStep): #only calc pressure once
+            if(i == maxStep): #only calc pressure once
                 pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
             CT = gsw.CT_from_t(salt, data[0,:,ySlice,:], pressure)
             density = gsw.rho(salt, CT, pressure) - 1000 #in-stu density less 1000

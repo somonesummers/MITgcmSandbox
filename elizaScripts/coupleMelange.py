@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
-
-# In[1]:
-
-
-#!/usr/bin/env python
-# coding: utf-8
+# Paul Summers, April 2025
+# Script for generating MITgcm setup for coupling with MELANGE1D
 
 import os
 import numpy as np
@@ -77,13 +73,13 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Beta_250'
+run_config['run_name'] = 'Charlie_test'
 run_config['ndays'] = 1 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-run_config['horiz_res_m'] = 500 # horizontal grid spacing (m)
-run_config['Lx_m'] = 40000 # domain size in x (m)
-run_config['Ly_m'] = 5000 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
+run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
+run_config['Lx_m'] = 50000 # domain size in x (m)
+run_config['Ly_m'] = 4800 + 2 * run_config['horiz_res_m'] # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 grid_params['Nr'] = 25 # num of z-grid points
@@ -99,8 +95,8 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 150 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 30000 # [meters] of extent of ice
-iceCoverage = 80 # % of ice cover in melange, stay under 90% ideally
+iceExtent = 20000 # [meters] of extent of ice
+iceCoverage = 60 # % of ice cover in melange, stay under 90% ideally
 doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 # Set median drafts to align with output from melange1D
@@ -182,7 +178,7 @@ domain_params = {}
 domain_params['Lx'] = run_config['Lx_m'] # domain size in x (m)
 domain_params['Ly'] = run_config['Ly_m'] # domain size in y (m)
 domain_params['L_sponge'] = 5000 # width of eastern sponge layer (m)
-domain_params['H'] = 500 # max domain depth (m)
+domain_params['H'] = 600 # max domain depth (m)
 
 # NOTE: the only thing you may need to change here is the number of z-grid pointsm, which was set above)
 
@@ -299,8 +295,8 @@ params01['no_slip_sides'] = False
 params01['no_slip_bottom'] = False
 params01['rigidLid'] = False
 params01['implicitFreeSurface'] = True
-params01['implicSurfPress'] = 1.0
-params01['implicDiv2DFlow'] = 1.0
+# params01['implicSurfPress'] = 1.0
+# params01['implicDiv2DFlow'] = 1.0
 params01['selectAddFluid'] = 1
 # params01['useRealFreshWaterFlux'] = True #we add fluid above, so I think this is un-needed
 params01['exactConserv'] = True
@@ -333,7 +329,7 @@ params02['cg3dTargetResidual'] = 1e-8
 params03 = {}
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 50
+deltaT = 20
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -651,7 +647,7 @@ runoffRad = np.zeros([grid_params['Ny'],grid_params['Nx'],nt])
 plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 # Total runoff (m^3/s)
-runoff = 250
+runoff = 500
 
 # velocity (m/s) of subglacial runoff
 wsg = 1
@@ -676,13 +672,25 @@ plumeMask[1:-1,icefront] = 1
 # Located 1 cell in from western boundary (need solid barrier behind), and extending across the fjord with (fjord walls either side)
 
 # Specify discharge location
-plumeMask[plume_loc,icefront] = 3 # runoff emerges from centre of grounding line
+# In each grid location, specify:
+# 0 = no glacier ice or runoff
+# 1 = vertical glacier ice (permitting melting), but no input of meltwater runoff
+# 2 = ‘sheet plume’ (Jenkins 2011)
+# 3 = ‘half-conical plume’ (Cowton et al 2015)
+# 4 = both sheet and half-conical plume (NOT IMPLEMENTED)
+# 5 = detaching conical plume (must be permitted in ICEPLUME_OPTIONS.h)
+plumeMask[plume_loc,icefront] = 2 # runoff emerges from centre of grounding line
 
 # specify a runoff velocity of 1 m/s
 runoffVel[plume_loc,icefront,:] = wsg
 
 # calculate channel radius
-runoffRad[plume_loc,icefront,:] = np.sqrt(2*runoff/(np.pi*wsg))
+if(plumeMask[plume_loc,icefront] == 3):
+    runoffRad[plume_loc,icefront,:] = np.sqrt(2 * runoff / (np.pi * wsg))
+elif(plumeMask[plume_loc,icefront] == 2):
+    runoffRad[plume_loc,icefront,:] = runoff/ (run_config['horiz_res_m'] * wsg)
+else:
+    runoffRad[plume_loc,icefront,:] = 0
 
 # Write files
 write_bin("runoffVel.bin", runoffVel)
@@ -1053,6 +1061,17 @@ cbar.set_label('cover resid')
 fig.tight_layout()
 if(writeFiles):
     plt.savefig(run_config['run_dir']+'/input/bergMap.png', format='png', dpi=200)
+plt.show()
+
+fig = plt.figure()
+pc = plt.pcolormesh(barrierMask,cmap='cmo.ice_r')
+cbar = plt.colorbar(pc)
+plt.suptitle('Barrier Mask')
+plt.ylabel('Cell across fjord')
+plt.xlabel("Cell along fjord")
+fig.tight_layout()
+if(writeFiles):
+    plt.savefig(run_config['run_dir']+'/input/barrierMask.png', format='png', dpi=200)
 plt.show()
 
 fig = plt.figure()

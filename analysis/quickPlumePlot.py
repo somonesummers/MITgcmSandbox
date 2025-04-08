@@ -71,7 +71,7 @@ units = ["[m/s]", "[C]", "[PSU]", "[m/day]", "[m/day]"]
 if(os.path.isfile('input/plumeMask.bin')):
     plumeMask = np.fromfile('input/plumeMask.bin', dtype='>f8')
     plumeMask = plumeMask.reshape(np.shape(x))
-    plumeLocations = np.where(plumeMask == 3)
+    plumeLocations = np.where(plumeMask > 1)
 
 else:
     print('No Plumes Found, exiting PlumePlot')
