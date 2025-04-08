@@ -39,22 +39,22 @@ def replaceAll(file,searchExp,replaceExp):
         sys.stdout.write(line)
 
 # This is only needed for a true fresh start
-print(resetStart,freshStart)
+# print(resetStart,freshStart)
 if(resetStart):
-    input("Resetting this experiment directory, DELETING FILES AND FIGS. Confirm before continuing...")
-    #Reset iceberg files
+    input("Resetting this experiment directory, DELETING FILES AND FIGS. Steps to run: %i. Confirm before continuing..." %iterationsToRun)
+    # Reset iceberg files (don't need to do this so long as mélange is roughly similar)
     # os.system('rm input/icebergs_length.bin input/icebergs_depths.bin input/icebergs_widths.bin')
     # os.system('cp input/icebergs_length_init.bin input/icebergs_length.bin')
     # os.system('cp input/icebergs_depths_init.bin input/icebergs_depths.bin')
     # os.system('cp input/icebergs_widths_init.bin input/icebergs_widths.bin')
 
-    #Clean out itermediate save states and figures
+    # Clean out itermediate save states and figures
     os.system("find couplingResults/MITgcmRun_*.pickle ! -name 'MITgcmRun_00000.pickle' -type f -exec rm {} +")
     os.system("rm couplingResults/*.txt")
     os.system("rm input/pickup*.data input/pickup*.meta")
     os.system("rm figs/*")
 
-    #Reset data file
+    # Reset data file with correct start/stop times
     for line in fileinput.input('input/data'):
             if "nIter0=" in line:
                 startIter = float(line[8:-2])
@@ -71,10 +71,15 @@ if(resetStart):
     #Run intial MITgcm, this resets the results folder
     os.system('bash ../makeRun.sh')
 elif(freshStart):
-    sysPrint('Running from fresh start...')
-    input("Resetting the MITgcm directory. Confirm before continuing...")
     #Make couplingResults directory if not there already
     os.system("mkdir -p couplingResults")
+    sysPrint('Running from fresh start...')
+    input("Resetting the MITgcm directory. Steps to run: %i. Confirm before continuing..." %iterationsToRun)
+    #prime the iceberg files
+    os.system('cp input/icebergs_length_init.bin input/icebergs_length.bin')
+    os.system('cp input/icebergs_depths_init.bin input/icebergs_depths.bin')
+    os.system('cp input/icebergs_widths_init.bin input/icebergs_widths.bin')
+    #run initial MITgcm
     os.system('bash ../makeRun.sh')
 else:
     sysPrint('Running from existing states...')
@@ -82,7 +87,8 @@ else:
 
 for ii in range(iterationsToRun):
     # Welcome to the loop. We assume there is a MITgcm file, and a mélange geometry existing.
-    
+    # ii is NOT the final iteration to run, simply just counting up. ii Never actually used. 
+
     start_time = time.time()
 
     #Find time step to take from MITgcm files
@@ -129,7 +135,7 @@ for ii in range(iterationsToRun):
     
     # make sure nothing funny is going on. Depending on when last cycle failed you may have to delete the highest numbered .pickle file
     if(int(maxStep)*dt/(24*3600) - index != 1):
-        raise Exception('MITgcm and glaciome1D are out of sync, glaciome index should be 1 behind MITgcm day')
+        raise Exception('MITgcm (BRGFlx_) and glaciome1D (MITgcmRun_)are out of sync, glaciome index should be 1 behind MITgcm day')
 
     # Calculate melt rate. This is the net Freshwaterflux (sum verically, avg across)/ surface area of melange
     # It is very imporant to extend meltrate beyond mélange with value of last cell. Otherwise mélange will grow

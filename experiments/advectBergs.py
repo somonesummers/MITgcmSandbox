@@ -35,7 +35,7 @@ oceanDensity = 1030 # [kg/m^3]
 
 # Some rules on advecting/melting/sizing
 minBergDepth = 5 # bergs not allowed to shrink/melt smaller than this [m]
-maxLambda = .85 # Cells are full at this lambda
+maxLambda = .80 # Cells are full at this lambda
 scaleMin = 0.2 # percent error allowed between MITgcm effective depth and GLACIOME depth
 # Bergs added to top off to icebergCoverLamba left of refreshGate
 icebergRefreshingGate = 3
@@ -311,12 +311,13 @@ totalBergArea[:,:,:] = np.nan
 # We get effective depth from the geometry files (how deep would all this ice be if packed 100%)
 effectiveDepth = np.nanmean(np.nansum(bergDepths[:,1:-1,:]*bergWidths[:,1:-1,:]*bergLength[:,1:-1,:],axis=0)/(deltaX*deltaY),axis=0)
 
-for i in range(nx):
+print('Melange edge at i=%i' %melangeIndex)
+for i in range(nx): #don't scale up the shaded edge
     for j in range(ny):
         numberOfBergs = len(bergDepths[bergDepths[:,j,i] > 0,j,i])
         # print(i,j,numberOfBergs)
         if(numberOfBergs > 0):
-            if(i < melangeIndex - 1): #Only scale for bergs within melange, not in shadedEdge
+            if(i < (melangeIndex - 1)): #Only scale for bergs within melange, not in shadedEdge
                 scaleFactor =  thicknessLookup(x[0,i]) * iceDensity/oceanDensity * icebergCoverLambda / effectiveDepth[i]
                 scaleFactor = (scaleFactor if abs(scaleFactor - 1) > scaleMin else 1)
                 if(scaleFactor != 1 and j == 1):

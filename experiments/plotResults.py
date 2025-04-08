@@ -78,17 +78,21 @@ ax6.set_ylabel('Mélange Length [m]')
 ax6.set_xlabel('Mélange Volume[km^3]')
 ax6.grid(alpha=.5)
 
+shiftIndex = 0
 if(n > 100):
-    toIterate = toIterate[-100::] - toIterate[-100]
+    shiftIndex = toIterate[-100]
+    # toIterate = toIterate[-100::] - toIterate[-100]
     subSample = 10
     n = 100
     print('\t== Displaying Only Final 100 Steps in Color Plots==')
+    # print(toIterate)
 elif(subSample > 1):
     print('\tSubsampling at %i' %subSample)
-
-for j in toIterate[::subSample]:
+# print(shiftIndex)
+for j in toIterate[shiftIndex::subSample]:
     file = files[j]
     name = file.replace('./', '').replace('.pickle', '').replace('MITgcmRun_','')
+    print(file)
     linestyle = '-'
     with open(files[j], 'rb') as file:
         data = pickle.load(file)
@@ -109,7 +113,7 @@ for j in toIterate[::subSample]:
     colors = makeColors(seedColor[0],n)
     alphaList = np.arange(.1,.5,.4/n)
     alphaList[-subSample] = 1
-    ax1.plot(X*1e-3,(U+data.Ut-data.Uc)/constant.daysYear,marker='o',color=colors[:,j],alpha=alphaList[j],linestyle=linestyle,label=name)
+    ax1.plot(X*1e-3,(U+data.Ut-data.Uc)/constant.daysYear,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
     # ax1.plot(X*1e-3,(U+data.Ut-data.Uc)/constant.daysYear,marker='o',color=seedColor[j],linestyle=linestyle,label=names[j])
     ax1.set_xlabel('Distance Along Fjord [km]')
     ax1.set_ylabel('Speed [m/day]')
@@ -119,7 +123,7 @@ for j in toIterate[::subSample]:
     colors = makeColors(seedColor[1],n)
     ax2.plot([-2,20],[0,0],color='xkcd:ocean blue',linestyle='--',linewidth=0.5)
     ax2.plot(np.append(X_,X_[::-1])*1e-3,np.append(-constant.rho/constant.rho_w*H,(1-constant.rho/constant.rho_w)*H[::-1]),
-        marker='o',color=colors[:,j],alpha=alphaList[j],linestyle=linestyle,label=name)
+        marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
     ax2.set_xlabel('Distance Along Fjord [km]')
     ax2.set_ylabel('Elevation [m]')
     # ax2.legend()
@@ -127,7 +131,7 @@ for j in toIterate[::subSample]:
     ax2.grid(alpha=.5)
 
     colors = makeColors(seedColor[2],n)
-    ax3.plot(X_*1e-3,gg,marker='o',color=colors[:,j],alpha=alphaList[j],linestyle=linestyle,label=name)
+    ax3.plot(X_*1e-3,gg,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
     ax3.set_xlabel('Distance Along Fjord [km]')
     ax3.set_ylabel('$g^{\\prime}$')
     ax3.grid(alpha=.5)
@@ -138,7 +142,7 @@ for j in toIterate[::subSample]:
     # ax4.set_ylabel('$\\mu_w$')  
 
     colors = makeColors(seedColor[3],n)   
-    ax4.plot(X*1e-3,B/constant.daysYear,marker='o',color=colors[:,j],alpha=alphaList[j],linestyle=linestyle,label=name)
+    ax4.plot(X*1e-3,B/constant.daysYear,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
     ax4.set_xlabel('Distance Along Fjord [km]')
     ax4.set_ylabel('Meltrate B [m/day]')     
     # ax4.legend()
