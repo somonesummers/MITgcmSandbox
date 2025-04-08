@@ -41,7 +41,8 @@ def replaceAll(file,searchExp,replaceExp):
 # This is only needed for a true fresh start
 # print(resetStart,freshStart)
 if(resetStart):
-    input("Resetting this experiment directory, DELETING FILES AND FIGS. Steps to run: %i. Confirm before continuing..." %iterationsToRun)
+    sysPrint("Resetting this experiment directory, DELETING FILES AND FIGS. Steps to run: %i..." %iterationsToRun)
+    time.sleep(1)
     # Reset iceberg files (don't need to do this so long as mélange is roughly similar)
     # os.system('rm input/icebergs_length.bin input/icebergs_depths.bin input/icebergs_widths.bin')
     # os.system('cp input/icebergs_length_init.bin input/icebergs_length.bin')
@@ -74,7 +75,8 @@ elif(freshStart):
     #Make couplingResults directory if not there already
     os.system("mkdir -p couplingResults")
     sysPrint('Running from fresh start...')
-    input("Resetting the MITgcm directory. Steps to run: %i. Confirm before continuing..." %iterationsToRun)
+    sysPrint("Resetting the MITgcm directory. Steps to run: %i..." %iterationsToRun)
+    time.sleep(1)
     #prime the iceberg files
     os.system('cp input/icebergs_length_init.bin input/icebergs_length.bin')
     os.system('cp input/icebergs_depths_init.bin input/icebergs_depths.bin')
@@ -83,6 +85,7 @@ elif(freshStart):
     os.system('bash ../makeRun.sh')
 else:
     sysPrint('Running from existing states...')
+    time.sleep(1)
 
 
 for ii in range(iterationsToRun):
