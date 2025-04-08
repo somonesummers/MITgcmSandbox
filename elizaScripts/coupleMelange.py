@@ -1179,6 +1179,14 @@ setUpPrint('Estimated run time is %.2f hours for %i CPUs\n' % (estTime/60/ncpus*
 comptime_hrs = estTime/60/ncpus*1.2 
 
 if(makeDirs):
+    print(os.getcwd())
+    #some coupling files
+    os.makedirs("%s/couplingResults" %run_config['run_dir'], exist_ok=True)
+    os.makedirs("%s/figs" %run_config['run_dir'], exist_ok=True)
+    os.system("ln -s ~/MITgcmSandbox/experiments/advectBergs.py %s" %run_config['run_dir'])
+    os.system("ln -s ~/MITgcmSandbox/experiments/RunModelMpi.py %s" %run_config['run_dir'])
+    os.system("cp ../experiments/melangeModelExample.py %s/melangeModel.py" %run_config['run_dir'])
+
     if os.path.isfile(run_config['run_dir']+'/input/setupReport.txt'):   
         os.remove(run_config['run_dir']+'/input/setupReport.txt')
         setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')

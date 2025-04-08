@@ -24,7 +24,8 @@ do
   rsync -ah --info=progress2 psummers8@login-phoenix-rh7.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/output* $EXP/
   rsync -ah --info=progress2 psummers8@login-phoenix-rh7.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/input/ $EXP/input
   rsync -ah --info=progress2 psummers8@login-phoenix-rh7.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/results/ $EXP/results
-
+  rsync -ah --info=progress2 psummers8@login-phoenix-rh7.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/couplingResults/ $EXP/couplingResults
+  rsync -ah --info=progress2 psummers8@login-phoenix-rh7.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/figs/ $EXP/figs
 
   # rsync -ah --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/output* $EXP/
   # rsync -ah --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/input/ $EXP/input
