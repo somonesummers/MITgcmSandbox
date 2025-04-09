@@ -152,6 +152,6 @@ plt.savefig('figs/melangeView.png',format='png',dpi=150)
 plt.show()
 plt.close()
 
-# print("Making melange gif")
-# os.system('magick -delay %f figs/advectBergs*.png -colors 256 -depth 256 figs/advectBergs.gif' %(500/n))
+print("Making melange gif")
+os.system('magick -delay %f figs/advectBergs*.png -colors 256 -depth 256 figs/advectBergs.gif' %(500/n))
 

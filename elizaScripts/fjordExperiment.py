@@ -1,11 +1,5 @@
 #!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
-#!/usr/bin/env python
-# coding: utf-8
+#Paul Summers Feb 2025, used to generate fjord scale paper 
 
 import os
 import numpy as np

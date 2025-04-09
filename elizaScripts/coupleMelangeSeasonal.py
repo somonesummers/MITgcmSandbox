@@ -2,6 +2,7 @@
 # coding: utf-8
 # Paul Summers, April 2025
 # Script for generating MITgcm setup for coupling with MELANGE1D
+# Including seasonal forcing of plume for now, BCs also enabled
 
 import os
 import numpy as np
