@@ -179,10 +179,10 @@ for k in range(len(name)):
             lvl = meltRange
             cm = meltCmap
         elif k == 6:
-            lvl = np.linspace(-10,10,127)
+            lvl = np.linspace(-1,1,127)
             cm = "cmo.balance"
         elif k == 7:
-            lvl = np.linspace(-10,10,127)
+            lvl = np.linspace(-1,1,127)
             cm = "cmo.balance"
         if(k > 4):
             kk = k - 3

@@ -66,7 +66,7 @@ for file in os.listdir('results'):
             sizeStep = abs(int(words[1]) - startStep)
 
 
-if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to be less than 50
+if((maxStep-startStep)/sizeStep > 60):   #if more than # frames, downscale to be less than #
     dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
@@ -180,10 +180,10 @@ for k in range(len(name)):
             lvl = meltRange
             cm = meltCmap
         elif k == 6:
-            lvl = np.linspace(-10,10,127)
+            lvl = np.linspace(-1,1,127)
             cm = "cmo.balance"
         elif k == 7:
-            lvl = np.linspace(-10,10,127)
+            lvl = np.linspace(-1,1,127)
             cm = "cmo.balance"
         if(k > 4):
             kk = k - 3
