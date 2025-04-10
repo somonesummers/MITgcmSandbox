@@ -82,7 +82,7 @@ elif(freshStart):
     os.system('cp input/icebergs_depths_init.bin input/icebergs_depths.bin')
     os.system('cp input/icebergs_widths_init.bin input/icebergs_widths.bin')
     #run initial MITgcm
-    os.system('bash ../makeRunMpi.sh')
+    os.system('bash ../makeRunMpi.sh > MITgcmInitOut.txt')
 else:
     sysPrint('Running from existing states...')
     time.sleep(1)
