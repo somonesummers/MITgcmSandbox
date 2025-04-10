@@ -207,7 +207,7 @@ for ii in range(iterationsToRun):
     os.chdir("../")
 
     dataMITgcmOcean = mds.rdmds("results/dynDiag", int((newStartTime + 24*3600)/dt))
-    maxU = np.max(dataMITgcmOcean[2:4,:,:,:])
+    maxU = np.max((dataMITgcmOcean[2,:,:,:]**2 + dataMITgcmOcean[3,:,:,:]**2 + dataMITgcmOcean[2,:,:,:]**2)**(.5))
     S_adv = 2 * (maxU * dt)/(dx * (1-0.8)) # 0.8 is max ice fraction. This could come from advectBerg method as we have it calced there
     sysPrint("\t stability S_adv = %.06f, ideally less than 0.5" %S_adv)
 

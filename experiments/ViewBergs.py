@@ -27,6 +27,9 @@ for file in os.listdir('results'):
             maxStep = int(words[1])
 
 dataMITgcm = mds.rdmds("results/BRGFlx", maxStep)
+dataMITgcmOcean = mds.rdmds("results/BRGFlx", maxStep)
+
+spd = (dataMITgcmOcean[2,:,:,:]**2 + dataMITgcmOcean[3,:,:,:]**2  + dataMITgcmOcean[4,:,:,:]**2)**(0.5)
 
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
@@ -96,6 +99,7 @@ openFrac = openFrac.reshape((nz,ny,nx))
 if(np.min([np.min(bergDepths),np.min(bergLength),np.min(bergWidths)]) != 0):
     print('negative iceberg dimentions values found')
 
+print('expect mask error at plume')
 for i in range(nx):
     for j in range(ny):
         if len(bergDepths[bergDepths[:,j,i] > 0,j,i]) != bergsPerCell[j,i]:
@@ -109,18 +113,24 @@ for i in range(nx):
         if np.nanmax(openFrac[:,j,i]) > 1 or np.nanmin(openFrac[:,j,i]) < 0:
             print('open frac error',j,i)
 
-
-
 varphi = 1-openFrac
 varphi[varphi == 1] = np.nan
 depthHelper = bergDepths.copy()
 depthHelper[depthHelper == 0] = np.nan
 effectiveDepth = np.nanmean(np.nansum((1-openFrac) * dz[:,None,None],axis=0),axis=0)
 # effectiveDepth[1] = np.nanmean(np.nansum(1-openFrac[:,,]))
-print('Max lambda is:',np.nanmax(varphi[0,:,:]))
+print('maxStep',maxStep)
+print('Max Lambda is:',np.nanmax(varphi[0,:,:]))
+print('Max ocean speed: %.03f m/s' %np.max(spd))
+deltaT = 10
+CFL = 2 * (spd * deltaT)/(deltaX*(1 - (varphi[0,:,:])))
+print('Max CFL: %.03f [<0.5]' %np.max(CFL))
 
+
+print('openFrac function of depth at 6,1')
 print(openFrac[:,6,1])
-print(effectiveDepth[1:2])
+print('effectiveDepth first 5 Y (exclude glacier)')
+print(effectiveDepth[1:5])
 
 # print(bergDepths[:,6,1],bergWidths[:,6,1],bergLength[:,6,1])
 
