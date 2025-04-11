@@ -96,7 +96,7 @@ freezeT = [0,-2.809]
 freezeS100 = [0,50]
 freezeT100 = [-.011,-2.919]
 
-for i in [maxStep]:#:np.arange(startStep, maxStep + 1, sizeStep):
+for i in np.arange(startStep, maxStep + 1, sizeStep):
     data = mds.rdmds("results/dynDiag", i)
     plt.figure()
     # data_old = mds.rdmds("results/dynDiag", 20*86400/dt)  #breaks if not a 20 day run, fix later
@@ -122,19 +122,17 @@ for i in [maxStep]:#:np.arange(startStep, maxStep + 1, sizeStep):
     plt.title("TS x = %i at %.02f days" % (x[0,xSlice], i/86400.0*dt))
     j = i/sizeStep + startStep
     
-    if(args.xCrossSection != None):
-        str = "figs/TSPlot%05i_%05i.png" % (j,args.xCrossSection)
-    else:
-        str = "figs/TSPlot%05i.png" % (j)
+
+    str = "figs/tmpTSPlot%05i.png" % (j)
     
     plt.savefig(str, format='png', dpi=plotDPI)
-    plt.show()
+    # plt.show()
     plt.close()
-# if(args.xCrossSection != None):
-#     os.system('magick -delay %f figs/TSPlot*.png -colors 256 -depth 256 figs/TSPlot%i.gif' %(500/((maxStep-startStep)/sizeStep),args.xCrossSection))
-# else:
-#     os.system('magick -delay %f figs/TSPlot*.png -colors 256 -depth 256 figs/TSPlot.gif' %(500/((maxStep-startStep)/sizeStep)))
+if(args.xCrossSection != None):
+    os.system('magick -delay %f figs/tmpTSPlot*.png -colors 256 -depth 256 figs/TSPlot%i.gif' %(500/((maxStep-startStep)/sizeStep),args.xCrossSection))
+else:
+    os.system('magick -delay %f figs/tmpTSPlot*.png -colors 256 -depth 256 figs/TSPlot.gif' %(500/((maxStep-startStep)/sizeStep)))
 
 # #Clean up intermediate pngs
-# if(cleanPNGs):
-#     os.system('rm -f figs/TSPlot*.png')
+if(cleanPNGs):
+    os.system('rm -f figs/tmpTSPlot*.png')
