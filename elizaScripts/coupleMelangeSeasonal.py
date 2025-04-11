@@ -74,7 +74,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [10,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'echo_test'
+run_config['run_name'] = 'echo_X400_Z30'
 run_config['ndays'] = 1 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -83,7 +83,7 @@ run_config['Lx_m'] = 80000 # domain size in x (m)
 run_config['Ly_m'] = 4800 + (2 * run_config['horiz_res_m']) # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 50 # num of z-grid points
+grid_params['Nr'] = 30 # num of z-grid points
 
 
 setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s" %(run_config['run_name'],makeDirs,writeFiles))
