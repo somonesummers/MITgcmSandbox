@@ -79,7 +79,7 @@ run_config['ndays'] = 1 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
-run_config['Lx_m'] = 64000 # domain size in x (m)
+run_config['Lx_m'] = 80000 # domain size in x (m)
 run_config['Ly_m'] = 4800 + (2 * run_config['horiz_res_m']) # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
@@ -330,7 +330,7 @@ params02['cg3dTargetResidual'] = 1e-8
 params03 = {}
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 20
+deltaT = 10
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -340,7 +340,7 @@ params03['pChkptFreq'] = 86400.0
 params03['taveFreq'] = 0.0
 params03['dumpFreq'] = 864000.0
 params03['taveFreq'] = 0.0
-params03['monitorFreq'] = 86400.0
+params03['monitorFreq'] = 21600.0 # 6 hours
 params03['monitorSelect'] = 1
 
 # Force with yearly cycle
@@ -406,22 +406,18 @@ if run_config['test']:
     run_config['tavg_freq'] = 1 # multiples of timestep
     
 else:
-    run_config['inst_freq'] = 12 # multiples of hours
-    run_config['tavg_freq'] = 12 # multiples of hours
+    run_config['inst_freq'] = 24 # multiples of hours (must be at least every day for coupling to get iceberg melt rates)
+    run_config['tavg_freq'] = 24 # multiples of hours 
 
 
 #---------specify time averaged fields------#
 # NOTE: many more options available see mitgcm docs
 diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
-                    ['THETA','SALT','UVELMASS','VVELMASS','WVELMASS'],
                     ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY'],
-                    ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntM']
+                    ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntR']
                     ]
 diag_fields_max = 0
-diag_fields_avg_name = ['dynDiag','dynMassDiag','BRGFlx','plumeDiag']
-# diag_fields_avg = ['UVEL', 'VVEL', 'WVEL', 'UVELSQ', 'VVELSQ', 'WVELSQ',
-#                   'UVELTH', 'VVELTH', 'WVELTH', 'THETA', 'THETASQ',
-#                   'PHIHYD', 'LaUH1TH', 'LaVH1TH', 'LaHw1TH','LaHs1TH']
+diag_fields_avg_name = ['dynDiag','BRGFlx','plumeDiag']
 
 numdiags_avg = len(diag_fields_avg)
 numdiags_avg_total = 0
@@ -451,19 +447,20 @@ for ii in range(numdiags_avg):
 
     
 #--------specify instanteous fields (i.e. snapshots)--------#
-diag_fields_inst = [['THETA','SALT','UVEL','WVEL','VVEL']]
-diag_fields_names = ['dynDiag']
-numdiags_inst = len(diag_fields_inst)
-diag_phase_inst = 0.0
+#removed for now to reduce file sizes, can add by just uncommenting
+# diag_fields_inst = [['THETA','SALT','UVEL','WVEL','VVEL']]
+# diag_fields_names = ['dynDiag']
+# numdiags_inst = len(diag_fields_inst)
+# diag_phase_inst = 0.0
 
-for ii in range(numdiags_inst):
-    n = numdiags_avg+ii+1
-    if len(diag_fields_inst[ii]) > diag_fields_max:
-        diag_fields_max = len(diag_fields_inst[ii])
-    diag_params01['fields(1:%i,%s)'%(len(diag_fields_inst[ii]),n)] = "','".join(diag_fields_inst[ii])
-    diag_params01['fileName(%s)'%n] = diag_fields_names[ii] + '_inst'
-    diag_params01['frequency(%s)'%n] = diag_freq_inst
-    diag_params01['timePhase(%s)'%n] = diag_phase_inst
+# for ii in range(numdiags_inst):
+#     n = numdiags_avg+ii+1
+#     if len(diag_fields_inst[ii]) > diag_fields_max:
+#         diag_fields_max = len(diag_fields_inst[ii])
+#     diag_params01['fields(1:%i,%s)'%(len(diag_fields_inst[ii]),n)] = "','".join(diag_fields_inst[ii])
+#     diag_params01['fileName(%s)'%n] = diag_fields_names[ii] + '_inst'
+#     diag_params01['frequency(%s)'%n] = diag_freq_inst
+#     diag_params01['timePhase(%s)'%n] = diag_phase_inst
 
 setUpPrint('Diagnostic Settings')
 setUpPrint(diag_params01)
@@ -645,7 +642,8 @@ runoffRad = np.zeros([nt,grid_params['Ny'],grid_params['Nx']])
 plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 # Total runoff (m^3/s)
-runoff = 505 + 500 * np.sin(np.pi * np.arange(nt)/12.5)
+runoff = -1800 * np.sin(np.pi * np.arange(nt)/12.5) - 900
+runoff[runoff <  25 ] = 25
 # runoff = 500 * np.ones(nt)
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
