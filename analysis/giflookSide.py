@@ -263,7 +263,7 @@ for k in range(len(name)):
                 alpha=.5
                 )
 
-
+        # plt.xlim([0, 10000])
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, ySlice, :]),np.nanmax(data[kk, :, ySlice, :]),np.max(np.isnan(data[kk, :, ySlice, :]))))
         plt.ylabel('Depth [m]')
         plt.title("%s y = %i at %.02f days" % (name[k], y[ySlice,0], i/86400.0*dt))

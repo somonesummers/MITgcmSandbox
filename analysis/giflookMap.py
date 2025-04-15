@@ -225,7 +225,7 @@ for k in range(len(name)):
         # plt.xlim([-8000, 25000]) # if zooming into a specific region
         j = i/sizeStep + startStep
         str = "figs/map%s%05i.png" % (name[k],j)
-        
+        # plt.xlim([0,1000])        
         plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()

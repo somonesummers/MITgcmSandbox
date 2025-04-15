@@ -5,6 +5,7 @@ import os
 import sys
 import cmocean
 import fileinput
+import gsw
 
 # Plot settings from local helper
 zDepth = -50
@@ -58,15 +59,17 @@ os.system('rm -f figs/plumePlot*.png')
 os.system('rm -f figs/plumePlot*.gif')
 
 x = mds.rdmds("results/XC")
+dx = x[0,0]*2
 y = mds.rdmds("results/YC")
 z = mds.rdmds("results/RC")
 
 
 
-dynName = ['plumeDiag', 'plumeDiag', 'plumeDiag', 'plumeDiag','plumeDiag']
-name = ["W", "Temp", "Sal", "CellMeltRate", "MeltRate"]
-units = ["[m/s]", "[C]", "[PSU]", "[m/day]", "[m/day]"]
+dynName = 'plumeDiag'
+name = ["W", "Temp", "Sal", "CellMeltRate", "RadiusThickness","Flux","Density"]
+units = ["[m/s]", "[C]", "[PSU]", "[m/day]", "[m]","[m^3/s]","[kg/m^3]"]
 
+ #amb is T,S,U,W,V
 
 if(os.path.isfile('input/plumeMask.bin')):
     plumeMask = np.fromfile('input/plumeMask.bin', dtype='>f8')
@@ -78,35 +81,78 @@ else:
     exit()
 
 plumeLoc = [plumeLocations[0][0],plumeLocations[1][0]]
+plumeType = np.max(plumeMask)
 print('Plume Locaion is grid', plumeLoc )
 
+peakDownFjord = 2
 for k in range(len(name)):
+    print("\t %s" %name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
-        data = mds.rdmds("results/%s"%(dynName[k]), i)
+        j = plumeLoc[0]
+        data = mds.rdmds("results/%s"%(dynName), i)
         if k == 0:
             lvl = [1,3]
             cm = "xkcd:raspberry"
+            plotData = data[k,:,j,plumeLoc[1]]
+            ambData = mds.rdmds("results/dynDiag", i)
+            plotData2 = np.squeeze(ambData[3,:,j,plumeLoc[1]])
+            plotData22 = np.squeeze(ambData[3,:,j,plumeLoc[1]+peakDownFjord])
+            plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5)*10)
         elif k == 1:
             lvl = [33.5,35]
             cm = "xkcd:green"
+            plotData = data[k,:,j,plumeLoc[1]]
+            ambData = mds.rdmds("results/dynDiag", i)
+            plotData2 = np.squeeze(ambData[0,:,j,plumeLoc[1]])
+            plotData22 = np.squeeze(ambData[0,:,j,plumeLoc[1]+peakDownFjord])
+            plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5)*10)
         elif k == 2:
             lvl = [-0.5, 0.5]
             cm = "xkcd:rose"
+            plotData = data[k,:,j,plumeLoc[1]]
+            ambData = mds.rdmds("results/dynDiag", i)
+            plotData2 = np.squeeze(ambData[1,:,j,plumeLoc[1]])
+            plotData22 = np.squeeze(ambData[1,:,j,plumeLoc[1]+peakDownFjord])
+            plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5)*10)
         elif k == 3:
             lvl = [-0.5, 0.5]
             cm = "xkcd:violet"
+            plotData = data[k,:,j,plumeLoc[1]]
         elif k == 4:
             lvl = [-0.005, 0.005]
             cm = "xkcd:lavender"
+            plotData = data[k,:,j,plumeLoc[1]]
         elif k == 5:
             lvl = [-0.005, 0.005]
-            cm = "xkcd:lavender"
+            cm = "xkcd:twilight"
+            if(plumeType == 2):
+                plotData = data[0,:,j,plumeLoc[1]]*dx*data[4,:,j,plumeLoc[1]]
+        elif k == 6:
+            ambData = mds.rdmds("results/dynDiag", i)
+            cm = "xkcd:pumpkin"
+            salt = np.squeeze(data[2,:,j,plumeLoc[1]])
+            if(i == startStep): #only calc pressure once
+                pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 /10e3
+            CT = gsw.CT_from_t(salt, data[1,:,j,plumeLoc[1]], pressure)
+            plotData = gsw.rho(salt, CT, pressure) - 1000 #in-stu density less 1000
+            ambS = np.squeeze(ambData[1,:,j,plumeLoc[1]])
+            ambCT = gsw.CT_from_t(salt, ambData[0,:,j,plumeLoc[1]], pressure)
+            plotData2 = gsw.rho(ambS, ambCT, pressure) - 1000 #in-stu density less 1000
+
+            ambS = np.squeeze(ambData[1,:,j,plumeLoc[1]+peakDownFjord])
+            ambCT = gsw.CT_from_t(salt, ambData[0,:,j,plumeLoc[1]+peakDownFjord], pressure)
+            plotData22 = gsw.rho(ambS, ambCT, pressure) - 1000 #in-stu density less 1000
+            plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5)*10)
         plt.figure()
-        plt.plot(data[k,:,plumeLoc[0],plumeLoc[1]],np.squeeze(z),linewidth=1,color=cm)
+        plt.plot(plotData,np.squeeze(z),linewidth=1,color=cm)
+        if(k == 6 or k < 3):
+            plt.plot(plotData2,np.squeeze(z),linewidth=1,color=cm,linestyle='--',label="Ambient")
+            plt.plot(plotData22,np.squeeze(z),linewidth=1,color=cm,linestyle=':',label="Ambient %i cells Down Fjord" %peakDownFjord)
+            plt.plot(plotData3,np.squeeze(z),linewidth=1,color='xkcd:periwinkle',linestyle='--',label='Amb Speed [cm/s]')
+            plt.legend()
         ax = plt.gca()
         # ax.set_xlim(lvl)
-
-        plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(data[k, :, plumeLoc[0],plumeLoc[1]]),np.nanmax(data[k, :, plumeLoc[0],plumeLoc[1]]),np.max(np.isnan(data[k, :, plumeLoc[0],plumeLoc[1]]))))
+        plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(plotData),np.nanmax(plotData),np.max(np.isnan(plotData))))
         plt.ylabel('Depth [m]')
         plt.title("%s x = %i at %.02f days" % (name[k], x[0,plumeLoc[1]], i/86400.0*dt))
         j = i/sizeStep + startStep
