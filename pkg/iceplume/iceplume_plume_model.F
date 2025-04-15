@@ -186,7 +186,7 @@ C Decide which plume model to use
 
 #endif /* ICEPLUME_ALLOW_DETACHED_PLUME */
 
-        ENDIF
+        ENDIF !plumeOptions
 
 C Test to see if neutral buoyancy has now been reached.
 C If solver returns ISTATE = -1, then it has been unable to meet required tolerances
@@ -210,11 +210,10 @@ C Calculate plume density
         ELSE
          tambient = .5*(tprof(IOUT-1)+tprof(IOUT))
          sambient = .5*(sprof(IOUT-1)+sprof(IOUT))
-        ENDIF
+        ENDIF !IOUT.EQ.Ktop
 
 C Calculate ambient density
         rho_ambient = RHO(tambient,sambient,depth)
-
         IF ( rho_plume .GT. rho_ambient ) ISTATE = -1
 
 C If ISTATE is now < 0, then plume has reached neutral buoyancy 
@@ -227,7 +226,7 @@ C Other values are kept for use in determining plume outflow properties.
          Y(1) = 0.D0
          Y(2) = 0.D0
 
-        ELSE
+        ELSE !ISTATE .LT. 0
 
 C If the plume has not reached neutral buoyancy, then we assign a depth at which to calculate the next value and loop round to call the plume model again.
 C Make sure we're not at the surface
@@ -241,23 +240,16 @@ C Define present depth
 C Define next depth
 
           TOUT = zProf(IOUT-1)
-         ELSE 
-C           Once at at top of ocean (esp under SHELFICE) values are 0
+         ELSE !iout .GT. Ktop
+C           Once at at top of ocean (esp under SHELFICE) force out
             Y(1) = 0.0
             Y(2) = 0.0
-            Y(3) = 0.0
-            Y(4) = 0.0
-            Y(5) = 0.0
-            Y(6) = 0.0
-#ifdef ICEPLUME_ALLOW_DETACHED_PLUME
-            Y(7) = 0.0
-            Y(8) = 0.0
-#endif /* ICEPLUME_ALLOW_DETACHED_PLUME */
-         ENDIF !iout.NE.SURF
+            ISTATE = -1
+         ENDIF !iout .GT> Ktop
         ENDIF !ISTATE.LT.0
 
 C This section is entered once the plume has reached neutral buoyancy
-       ELSE
+       ELSE !ISTATE.GT.0
 
 C Once plume has reached neutral buoyancy, no plume values
         Y(1) = 0.0
