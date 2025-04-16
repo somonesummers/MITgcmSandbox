@@ -180,11 +180,11 @@ for k in range(len(name)):
             cm = meltCmap
             kk = k - 3
         elif k == 6:
-            lvl = np.linspace(0,0.02,128)
+            lvl = np.linspace(0,0.05,128)
             cm = "cmo.matter"
             kk = 0
         elif k == 7:
-            lvl = np.linspace(0,0.02,128)
+            lvl = np.linspace(0,0.05,128)
             cm = "cmo.matter"
             kk = 1
         if(usePcolor):

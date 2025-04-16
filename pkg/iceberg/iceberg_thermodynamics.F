@@ -486,7 +486,7 @@ C      Print per iceberg data to text file
       ENDIF ! Stop checking if time is at dumpFreq  
 #endif /* ALLOW_PER_BERG_DIAG */      
        
-      ELSE ! berg doesn't reach this far down the water column
+      ELSE ! berg doesnt reach this far down the water column
        
 C     Set variables to 0
       melt_rate_berg = 0.D0

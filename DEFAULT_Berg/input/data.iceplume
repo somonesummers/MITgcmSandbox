@@ -22,4 +22,7 @@
  &
 
  &ICEPLUME_PARM03
+ ptracerMaskFile='pTracerMask.bin'
+ useInputPtracers=.TRUE.,
+
  &

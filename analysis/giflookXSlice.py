@@ -130,11 +130,10 @@ if(isBerg):
 xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
 print('cross section is x =', x[0,xSlice],'index', xSlice)
 
-
 if(isBerg):
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx']
-    name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]"]
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx','ptraceDiag','ptraceDiag']
+    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'ptrace01','ptrace02']
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]"]
 else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
     name = ["Temp", "Sal", "U", "W", "V"]
@@ -152,13 +151,14 @@ for k in range(len(name)):
             data = np.zeros(np.shape(mds.rdmds("results/%s"%(dynName[k-1]), i)))
         else:
             data = mds.rdmds("results/%s"%(dynName[k]), i)
+        kk = k
         if k == 0:
             lvl = tempRange
             cm = tempCmap
         elif k == 1:
             lvl = saltRange
             cm = saltCmap
-        elif k == 2: 
+        elif k == 2:
             lvl = uRange
             cm = uCmap
         elif k == 3:
@@ -170,10 +170,15 @@ for k in range(len(name)):
         elif k == 5:
             lvl = meltRange
             cm = meltCmap
-        if(k == 5):
-            kk = 2
-        else:
-            kk = k
+            kk = k - 3
+        elif k == 6:
+            lvl = np.linspace(0,0.05,101)
+            cm = "cmo.matter"
+            kk = 0
+        elif k == 7:
+            lvl = np.linspace(0,0.05,101)
+            cm = "cmo.matter"
+            kk = 1
         if(usePcolor):
             cp = plt.pcolormesh(
                 np.squeeze(y[:,xSlice]),

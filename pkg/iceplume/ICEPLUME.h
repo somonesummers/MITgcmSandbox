@@ -175,7 +175,7 @@ C Header file pkg/ICEPLUME
      &	    runoffVelfile,
      &	    runoffRadfile,
      &      plumeMaskFile
-C Again, doesn't like MAX_LEN_FNAM
+C Again, doesnt like MAX_LEN_FNAM
       CHARACTER*(512)
      &	    runoffVelfile,
      &	    runoffRadfile,

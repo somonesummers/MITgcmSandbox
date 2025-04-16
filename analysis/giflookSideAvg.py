@@ -136,9 +136,9 @@ if(isBerg):
 print('averaging over all cross sections')
 
 if(isBerg):
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx', 'BRGFlx', 'BRGFlx']
-    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt", 'BRG_TauX', 'BRG_TauY']
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]", "[N/m^2]", "[N/m^2]"]
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx','ptraceDiag','ptraceDiag']
+    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'ptrace01','ptrace02']
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]"]
 else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
     name = ["Temp", "Sal", "U", "W", "V"]
@@ -147,8 +147,6 @@ else:
 for k in range(len(name)):
     print("\t" + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
-        plt.figure(figsize=(12, 4))
-        # plt.figure()
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
@@ -160,7 +158,7 @@ for k in range(len(name)):
             data = np.zeros(np.shape(mds.rdmds("results/%s"%(dynName[k-1]), i)))
         else:
             data = mds.rdmds("results/%s"%(dynName[k]), i)
-        
+        kk = k
         if k == 0:
             lvl = tempRange
             cm = tempCmap
@@ -179,16 +177,15 @@ for k in range(len(name)):
         elif k == 5:
             lvl = meltRange
             cm = meltCmap
-        elif k == 6:
-            lvl = np.linspace(-1,1,127)
-            cm = "cmo.balance"
-        elif k == 7:
-            lvl = np.linspace(-1,1,127)
-            cm = "cmo.balance"
-        if(k > 4):
             kk = k - 3
-        else:
-            kk = k
+        elif k == 6:
+            lvl = np.linspace(0,0.05,127)
+            cm = "cmo.matter"
+            kk = 0
+        elif k == 7:
+            lvl = np.linspace(0,0.05,128)
+            cm = "cmo.matter"
+            kk = 1
         if(usePcolor):
             cp = plt.pcolormesh(
                 np.squeeze(x[0,:]),

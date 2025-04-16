@@ -63,7 +63,9 @@ def setUpPrint(msg):
 email = 'psummers8@gatech.edu'
 # set high level run configurations
 
-briefSummaryOfExp = """Coupling MITgcm and Melange1D"""
+briefSummaryOfExp = """Coupling MITgcm and Melange1D
+Allows for seasonal forcing (plume only for now)
+Enables pTracers for plume and icebergs seperately"""
 
 
 setUpPrint('====== Welcome to the mélange building script =====')
@@ -74,8 +76,8 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'plume_test'
-run_config['ndays'] = 10 # simulaton time (days)
+run_config['run_name'] = 'tracer_test'
+run_config['ndays'] = 2 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
@@ -415,10 +417,11 @@ else:
 # NOTE: many more options available see mitgcm docs
 diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
                     ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY'],
-                    ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntR']
+                    ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntR'],
+                    ['TRAC01','TRAC02']
                     ]
 diag_fields_max = 0
-diag_fields_avg_name = ['dynDiag','BRGFlx','plumeDiag']
+diag_fields_avg_name = ['dynDiag','BRGFlx','plumeDiag','ptraceDiag']
 
 numdiags_avg = len(diag_fields_avg)
 numdiags_avg_total = 0
@@ -489,14 +492,17 @@ obcs_params01['useOBCSprescribe']= True
 obcs_params01['OBEsFile']='EBCs.bin'
 obcs_params01['OBEtFile']='EBCt.bin'
 obcs_params01 ['OBEvFile']='EBCv.bin'
+obcs_params01 ['OBEptrFile']='EBCptr.bin'
 #North
 obcs_params01['OBNsFile']='NsBCs.bin'  
 obcs_params01['OBNtFile']='NsBCt.bin'  
 obcs_params01 ['OBNvFile']='NsBCv.bin'
+obcs_params01 ['OBNptrFile']='NsBCptr.bin'
 #South
 obcs_params01['OBSsFile']='NsBCs.bin'
 obcs_params01['OBStFile']='NsBCt.bin'
 obcs_params01 ['OBSvFile']='NsBCv.bin'
+obcs_params01 ['OBSptrFile']='NsBCptr.bin'
 
 obcs_params03['spongeThickness'] = int(domain_params['L_sponge'] / run_config['horiz_res_m']) #grid cells
 obcs_params03['Urelaxobcsinner'] = 86400.0
@@ -585,6 +591,7 @@ S_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 T_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 V_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 W_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
+Ptr_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 
 z_tmp =  np.asarray([  0,  10,   50,  100,  200,  300, 500]); #must be increasing, so do depth as positive, see negs later for z[:]
 t_tmp =  np.asarray([  1,   1,  1.5,  1.8,  2.1,  2.3, 2.6]);
@@ -605,6 +612,7 @@ for j in np.arange(0,grid_params['Ny']):
 #BC for V at East side
 Ve = np.zeros([nt,grid_params['Nr'],grid_params['Ny']])
 Ve[:,:,:] = oscStrength #[m/s]
+Ptr_e = np.zeros([nt,grid_params['Nr'],grid_params['Ny']])
 
 #N/S BCs
 for i in np.arange(fjordEnd,grid_params['Nx']):
@@ -622,6 +630,8 @@ write_bin("NsBCs.bin", S_ns)
 write_bin("NsBCt.bin", T_ns)
 write_bin("NsBCv.bin", V_ns)
 write_bin("NsBCW.bin", W_ns)
+write_bin("NsBCptr.bin", Ptr_ns)
+write_bin("EBCptr.bin", Ptr_e)
 
 plt.figure()
 plt.plot(s2[:,1,1] - 34, z, 'b', label="Sref - 34")
@@ -684,10 +694,18 @@ elif(plumeMask[plume_loc,icefront] == 2):
 else:
     runoffRad[:,plume_loc,icefront] = 0
 
+#Tracer Mask, which locations have tracers, and which one, included in input mass
+nTracers = 2 #increase here if we'd like to have more tracers
+# MUST MATCH PTRACERS_SIZE.h
+tracerMask = np.zeros([nTracers,grid_params['Ny'],grid_params['Nx']])
+tracerMask[0,plume_loc,icefront] = 1
+
 # Write files
 write_bin("runoffVel.bin", runoffVel)
 write_bin("runoffRad.bin", runoffRad)
 write_bin("plumeMask.bin", plumeMask)
+write_bin("pTracerMask.bin", tracerMask)
+
 
 plt.figure(1)
 plt.pcolormesh(x,y,plumeMask)
@@ -698,8 +716,10 @@ plt.show()
 plt.close()
 
 plt.figure()
-plt.plot(runoffRad[:,plume_loc,icefront],label='Radius')
-plt.plot(runoffVel[:,plume_loc,icefront],label='Vel')
+time = np.arange(nt)*params03['ExternForcingPeriod']/86400
+plt.plot(time,runoffRad[:,plume_loc,icefront],label='Radius [m]')
+plt.plot(time,runoffVel[:,plume_loc,icefront],label='Vel [m/s]')
+plt.xlabel('days')
 plt.legend()
 if(writeFiles):
     plt.savefig("%sforcingVelocity" % (run_config['run_dir']+'/input/'))
@@ -1009,7 +1029,9 @@ if(forceDraft):
                 openFrac[:,j,i] = 1
                 SA[:,j,i] = 0
 
-
+# Tracers for all Bergs, just set to 1 everywhere
+brgTracerMask = np.zeros([nTracers,grid_params['Ny'],grid_params['Nx']])
+brgTracerMask[1,:,:] = 1.0 
 
 # Plots for reference on whats happening berg-wise
 fig = plt.figure()
@@ -1128,6 +1150,7 @@ write_bin('barrierMask.bin',barrierMask)
 write_bin('icebergs_depths_init.bin',icebergs_depths2D)
 write_bin('icebergs_widths_init.bin',icebergs_widths2D)
 write_bin('icebergs_length_init.bin',icebergs_length2D)
+write_bin('brg_tracerMask.bin',brgTracerMask)
 
 setUpPrint('Berg setup is done.')
 #========================================================================================

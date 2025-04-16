@@ -113,29 +113,29 @@ name = ["Temp", "Sal", "U", "W", "V"]
 cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 if(isBerg):
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag', 'BRGFlx']
-    name = ["Temp", "Sal", "U", "W", "V","SPD","BRGmltRt"]
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]","[m/s]", "[m/d]"]
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag','dynDiag']
+    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'ptrace01','ptrace02','SPD']
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]","[m/s]"]
 else:
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
-    name = ["Temp", "Sal", "U", "W", "V","SPD"]
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]","[m/s]"]
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
+    name = ["Temp", "Sal", "U", "W", "V"]
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 for k in range(len(name)):
     print("\t" + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
-        plt.figure(figsize=(12, 4))
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
             localBergs = True
         else:
             localBergs = False
-        if((not localBergs) and dynName[k]=='BRGFlx'):
+        if((not localBergs) and k==5):
             #fill melt image with 0s if bergs in run but not frame
             data = np.zeros(np.shape(mds.rdmds("results/%s"%(dynName[k-1]), i)))
         else:
             data = mds.rdmds("results/%s"%(dynName[k]), i)
+        kk = k
         if k == 0:
             lvl = tempRange
             cm = tempCmap
@@ -152,15 +152,20 @@ for k in range(len(name)):
             lvl = vRange
             cm = vCmap
         elif k == 5:
-            lvl = np.linspace(0,np.max(uRange),128)
-            cm = 'cmo.speed'
-        elif k == 6:
             lvl = meltRange
             cm = meltCmap
-        if(k == 6):
-            kk = 2
-        else:
-            kk = k
+            kk = k - 3
+        elif k == 6:
+            lvl = np.linspace(0,0.05,128)
+            cm = "cmo.matter"
+            kk = 0
+        elif k == 7:
+            lvl = np.linspace(0,0.05,128)
+            cm = "cmo.matter"
+            kk = 1
+        elif k == 8:
+            lvl = uRange
+            cm = 'cmo.speed'
 
         if(name[k] == "SPD"):
             dataPlot = np.sqrt(data[2, zSlice, :, :]**2 + data[3, zSlice, :, :]**2 + data[4, zSlice, :, :]**2)
