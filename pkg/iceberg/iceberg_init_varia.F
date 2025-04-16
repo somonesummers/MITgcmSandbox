@@ -68,7 +68,7 @@ C     brg_CDragQuadFld used in iceberg_u/v_drag_coeff
             brg_ptr_Addmass3D(I,J,K,bi,bj,iTracer)
      &                 = 0
             ENDDO
-#endif ALLOW_PTRACERS            
+#endif /* ALLOW_PTRACERS */            
           ENDDO !k
          ENDDO !i
         ENDDO !j

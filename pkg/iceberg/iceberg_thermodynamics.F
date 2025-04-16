@@ -559,7 +559,7 @@ C     Or simply the area of ice in the cell divided by the volume of the cell
      &      * ( icebergArea3D(I,J,K,bi,bj)
      &     / (dxG(I,J,bi,bj) * dyG(I,J,bi,bj) * abs(drF(K))) )
      
-      #ifdef ALLOW_PTRACERS
+#ifdef ALLOW_PTRACERS
 C     Input tracer mass
       DO iTracer = 1,PTRACERS_num
        IF(brg_useInputPtracers .EQ. 1) THEN
@@ -572,7 +572,7 @@ C     Input tracer mass
         ENDIF
        ENDIF
       ENDDO
-      #endif /* ALLOW_PTRACERS */
+#endif /* ALLOW_PTRACERS */
 
       ENDIF ! stop checking for freshwater (if not, then these variables are already set to 0)
 
