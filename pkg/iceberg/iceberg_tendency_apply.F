@@ -26,6 +26,9 @@ C     !USES:
 #include "EEPARAMS.h"
 c#include "GRID.h"
 c#include "DYNVARS.h"
+#ifdef ALLOW_PTRACERS
+#include "PTRACERS_SIZE.h"
+#endif /* ALLOW_PTRACERS */
 #include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 
@@ -76,6 +79,9 @@ C     !INPUT PARAMETERS:
 #include "EEPARAMS.h"
 c#include "GRID.h"
 c#include "DYNVARS.h"
+#ifdef ALLOW_PTRACERS
+#include "PTRACERS_SIZE.h"
+#endif /* ALLOW_PTRACERS */
 #include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 

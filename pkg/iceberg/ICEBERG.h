@@ -56,6 +56,7 @@ C                                        (1:n = 2, 2:n = 2, 3: n = 1 + .75*hFacC
 C     brg_SelectFill                  :: select how frontal area scales with hFacC (def: 3)
 C                                        (1:linear, 2:quad, 3:quartic)
 C     brg_DragForm                    :: form drag across iceberg (default = 0.0025)
+C     brg_useInputPtracers            :: select if using ptracers input
 
 C=============================================================================
 C     FIELDS
@@ -77,9 +78,11 @@ CEOP
 
       COMMON /ICEBERG_PARMS_I/
      &     brg_SelectDrag,
-     &     brg_SelectFill
+     &     brg_SelectFill,
+     &     brg_useInputPtracers
       INTEGER brg_SelectDrag
       INTEGER brg_SelectFill
+      INTEGER brg_useInputPtracers
 
       COMMON /ICEBERG_PARMS_R/
      &     icebergRho,
@@ -178,5 +181,23 @@ CEOP
       _RS icebergDragU(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RS icebergDragV(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
 #endif /* ALLOW_DIAGNOSTICS */
+
+#ifdef ALLOW_PTRACERS
+C Parameters relating to PTRACERS
+
+      COMMON /ICEBERG_PTRACERS_RL/
+     &     brg_ptr_addMass3D,
+     &     brg_ptracerMask
+      _RL brg_ptr_addMass3d
+     &     (1-OLx:sNx+OLx,1-Oly:sNy+Oly,Nr,nSx,nSy,PTRACERS_num)
+      _RL brg_ptracerMask
+     &     (1-Olx:sNx+Olx,1-Oly:sNy+Oly,PTRACERS_num,nSx,nSy)
+   
+      COMMON /ICEBERG_PTRACERS_FILES/
+     &     brg_ptracerMaskFile
+      CHARACTER*(512) 
+     &     brg_ptracerMaskFile
+
+#endif /* ALLOW_PTRACERS */
 
 #endif /* ALLOW_ICEBERG */

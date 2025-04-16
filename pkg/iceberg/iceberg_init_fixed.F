@@ -17,6 +17,9 @@ C     === Global variables ===
 #include "EEPARAMS.h"
 #include "PARAMS.h"
 #include "GRID.h"
+#ifdef ALLOW_PTRACERS
+#include "PTRACERS_SIZE.h"
+#endif /* ALLOW_PTRACERS */
 #include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 
@@ -27,7 +30,7 @@ C     myThid -  Number of this instance of ICEBERG_INIT_FIXED
 #ifdef ALLOW_ICEBERG
 C     === Local variables ===
 C     I,J,K,bi,bj - Loop counters, helpers for hFactors
-      INTEGER I, J, K, bi, bj, Im1, Jm1
+      INTEGER I, J, K, bi, bj, Im1, Jm1, iTracer
 
 C      Read iceberg mask
        IF (ICEBERGmaskFile .NE. ' ' ) THEN
@@ -186,10 +189,30 @@ C      &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(I,Jm1,K,bi,bj))
        ENDDO !bi
       ENDDO !bj        
 
+#ifdef ALLOW_PTRACERS
+C     Initialize tracer mask
+      DO bi = 1,nSx
+       DO bj = 1,nSy
+        DO I = 1-Olx,sNx+Olx
+         DO J = 1-Oly,sNy+Oly
+           DO iTracer = 1,PTRACERS_num
+            brg_ptracerMask (I,J,iTracer,bi,bj) = 0. _d 0
+           ENDDO
+         ENDDO
+        ENDDO
+       ENDDO
+      ENDDO
+
+C      Read ptracer mask data
+       IF ( brg_ptracerMaskFile .NE. ' ' ) THEN
+        CALL READ_REC_3D_RL
+     &     (brg_ptracerMaskFile,precFloat64,PTRACERS_num,
+     &      brg_ptracerMask,1,0,myThid)
+       ENDIF
+#endif /* ALLOW_PTRACERS */
+
       ENDIF !endif Berg OpenFrac file exists
    
-
-
 #ifdef ALLOW_DIAGNOSTICS
       IF ( useDiagnostics ) THEN
        CALL ICEBERG_DIAGNOSTICS_INIT(myThid)

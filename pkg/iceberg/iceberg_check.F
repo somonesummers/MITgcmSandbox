@@ -14,8 +14,12 @@ C     === Global variables ===
 #include "SIZE.h"
 #include "EEPARAMS.h"
 #include "PARAMS.h"
+#ifdef ALLOW_PTRACERS
+#include "PTRACERS_SIZE.h"
+#endif /* ALLOW_PTRACERS */
 #include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
+
 
 C     === Routine arguments ===
 C     myThid -  Number of this instance of ICEBERG_CHECK

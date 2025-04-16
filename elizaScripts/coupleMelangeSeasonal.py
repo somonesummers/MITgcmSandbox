@@ -73,17 +73,17 @@ setUpPrint('====== Welcome to the mélange building script =====')
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [10,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'echo_X400_Z30'
-run_config['ndays'] = 1 # simulaton time (days)
+run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'plume_test'
+run_config['ndays'] = 10 # simulaton time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
-run_config['Lx_m'] = 80000 # domain size in x (m)
+run_config['Lx_m'] = 40000 # domain size in x (m)
 run_config['Ly_m'] = 4800 + (2 * run_config['horiz_res_m']) # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 30 # num of z-grid points
+grid_params['Nr'] = 50 # num of z-grid points
 
 
 setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s" %(run_config['run_name'],makeDirs,writeFiles))
@@ -344,9 +344,10 @@ params03['monitorFreq'] = 21600.0 # 6 hours
 params03['monitorSelect'] = 1
 
 # Force with yearly cycle
+nt = 25
 params03['periodicExternalForcing'] = True
-params03['ExternForcingPeriod'] = 365*86400/25
-params03['ExternForcingCycle'] = 365*86400 
+params03['ExternForcingPeriod'] = 10*86400/nt
+params03['ExternForcingCycle'] = 10*86400 
 
 if run_config['test']:
     nTimeSteps = 10
@@ -406,8 +407,8 @@ if run_config['test']:
     run_config['tavg_freq'] = 1 # multiples of timestep
     
 else:
-    run_config['inst_freq'] = 24 # multiples of hours (must be at least every day for coupling to get iceberg melt rates)
-    run_config['tavg_freq'] = 24 # multiples of hours 
+    run_config['inst_freq'] = 6 # multiples of hours (must be at least every day for coupling to get iceberg melt rates)
+    run_config['tavg_freq'] = 6 # multiples of hours 
 
 
 #---------specify time averaged fields------#
@@ -642,9 +643,9 @@ runoffRad = np.zeros([nt,grid_params['Ny'],grid_params['Nx']])
 plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 # Total runoff (m^3/s)
-runoff = -1800 * np.sin(np.pi * np.arange(nt)/12.5) - 900
-runoff[runoff <  25 ] = 25
-# runoff = 500 * np.ones(nt)
+# runoff = -1800 * np.sin(np.pi * np.arange(nt)/12.5) - 900
+# runoff[runoff <  25 ] = 25
+runoff = 1000 * np.arange(nt)/nt
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
 # velocity (m/s) of subglacial runoff

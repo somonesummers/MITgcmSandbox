@@ -22,6 +22,9 @@ C !USES: ===============================================================
 #include "EEPARAMS.h"
 #include "PARAMS.h"
 #include "GRID.h"
+#ifdef ALLOW_PTRACERS
+#include "PTRACERS_SIZE.h"
+#endif /* ALLOW_PTRACERS */
 #include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 

@@ -16,6 +16,9 @@ C !USES: ===============================================================
       IMPLICIT NONE
 #include "SIZE.h"
 #include "EEPARAMS.h"
+#ifdef ALLOW_PTRACERS
+#include "PTRACERS_SIZE.h"
+#endif /* ALLOW_PTRACERS */
 #include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 #include "PARAMS.h"
@@ -58,6 +61,12 @@ CEOP
      &     ICEBERGbarrierFile, ICEBERGopenFracFile,
      &     ICEBERGareaFile
 
+#ifdef ALLOW_PTRACERS
+C    PARM02 - inputs relating to passive tracers
+      NAMELIST /ICEBERG_PARM02/
+     &     brg_ptracerMaskFile,
+     &     brg_useInputPtracers
+#endif /* ALLOW_PTRACERS */ 
 
 C Set defaults values for parameters in ICEBERG.h
       icebergRho                   =  917.0 _d 0
@@ -87,6 +96,12 @@ C Set defaults values for parameters in ICEBERG.h
       ICEBERGopenFracFile          = ' '
       ICEBERGareaFile              = ' '
 
+#ifdef ALLOW_PTRACERS
+C Default values for PARM02
+       brg_ptracerMaskFile= ' '
+       brg_useInputPtracers = 0
+#endif /* ALLOW_PTRACERS */
+
 C Open and read the data.iceberg file
       WRITE(msgBuf,'(A)') ' ICEBERG_READPARMS: opening data.iceberg'
       CALL PRINT_MESSAGE(msgBuf, standardMessageUnit,
@@ -96,6 +111,9 @@ C Open and read the data.iceberg file
      O                   iUnit,
      I                   myThid )
       READ(UNIT=iUnit,NML=ICEBERG_PARM01)
+#ifdef ALLOW_PTRACERS
+      READ(UNIT=iUnit,NML=ICEBERG_PARM02)
+#endif /* ALLOW_PTRACERS */
       WRITE(msgBuf,'(A)')
      &  ' ICEBERG_READPARMS: finished reading data.iceberg'
       CALL PRINT_MESSAGE(msgBuf, standardMessageUnit,

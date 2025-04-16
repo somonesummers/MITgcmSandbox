@@ -18,11 +18,20 @@ C     === Global variables ===
 #include "EEPARAMS.h"
 #include "PARAMS.h"
 #include "GRID.h"
+#ifdef ALLOW_PTRACERS
+#include "PTRACERS_SIZE.h"
+#endif /* ALLOW_PTRACERS */
 #include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
+
 #ifdef ALLOW_COST
-# include "ICEBERG_COST.h"
+#include "ICEBERG_COST.h"
 #endif /* ALLOW_COST */
+
+#ifdef ALLOW_PTRACERS
+#include "PTRACERS_PARAMS.h"
+#include "PTRACERS_FIELDS.h"
+#endif /* ALLOW_PTRACERS */
 
 C     === Routine arguments ===
 C     myThid -  Number of this instance of ICEBERG_INIT_VARIA
@@ -32,7 +41,7 @@ CEndOfInterface
 #ifdef ALLOW_ICEBERG
 C     === Local variables ===
 C     i,j,bi,bj,K - Loop counters
-      INTEGER i, j, bi, bj, K
+      INTEGER i, j, bi, bj, K, iTracer
 CEOP
 
 C     Update the spatially varying version of the drag coefficient
@@ -54,6 +63,12 @@ C     brg_CDragQuadFld used in iceberg_u/v_drag_coeff
              icebergDragV(i,j,k,bi,bj) = 0.
             ENDIF
 #endif /* ALLOW_DIAGNOSTICS */
+#ifdef ALLOW_PTRACERS
+            DO iTracer = 1,PTRACERS_num
+            brg_ptr_Addmass3D(I,J,K,bi,bj,iTracer)
+     &                 = 0
+            ENDDO
+#endif ALLOW_PTRACERS            
           ENDDO !k
          ENDDO !i
         ENDDO !j

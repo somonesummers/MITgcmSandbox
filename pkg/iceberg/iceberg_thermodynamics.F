@@ -29,8 +29,17 @@ C     === Global variables ===
 #include "GRID.h"
 #include "DYNVARS.h"
 #include "FFIELDS.h"
+#ifdef ALLOW_PTRACERS
+#include "PTRACERS_SIZE.h"
+#endif /* ALLOW_PTRACERS */
 #include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
+
+#ifdef ALLOW_PTRACERS
+#include "PTRACERS_PARAMS.h"
+#include "PTRACERS_START.h"
+#include "PTRACERS_FIELDS.h"
+#endif
 
 C     !INPUT/OUTPUT PARAMETERS:
 C     === Routine arguments ===
@@ -83,7 +92,7 @@ C     icebergTendT3D :: temperature tendency from all icebergs (K ^s-1)
 C     icebergTendS3D :: salt tendency from all icebergs (psy s^-1)
 C     icebergMeltRate3D :: cell-average melt rate from all icebergs (m d^-1)
 C
-      INTEGER I,J,K,bi,bj,n, cellNum, numBergs, bergBottomCell
+      INTEGER I,J,K,bi,bj,n, cellNum, numBergs, bergBottomCell, iTracer
       _RL bergDepth, bergLength, bergWidth
       _RL cellBottomDepth
       _RL remainder
@@ -521,7 +530,8 @@ C     Loop through water column again and calculate variables of interest
       
 C    Only calculate if necessary
       IF ( abs(icebergFWFlux3D(I,J,K,bi,bj)) .GT. 0.D0 ) THEN
-        
+      
+
 C    Convert freshwater (m^3 s^-1) to melt rate (m d^-1)
       icebergMeltRate3D(I,J,K,bi,bj) = 
      &       (icebergFWFlux3D(I,J,K,bi,bj)/icebergArea3D(I,J,K,bi,bj))
@@ -549,6 +559,21 @@ C     Or simply the area of ice in the cell divided by the volume of the cell
      &      * ( icebergArea3D(I,J,K,bi,bj)
      &     / (dxG(I,J,bi,bj) * dyG(I,J,bi,bj) * abs(drF(K))) )
      
+      #ifdef ALLOW_PTRACERS
+C     Input tracer mass
+      DO iTracer = 1,PTRACERS_num
+       IF(brg_useInputPtracers .EQ. 1) THEN
+        IF (brg_ptracerMask(I,J,iTracer,bi,bj) .NE. 0 ) THEN
+         !this is a mass flux of tracer. Mask contains concentration
+         brg_ptr_addMass3D(I,J,K,bi,bj,iTracer) = 
+     &    brg_ptracerMask(I,J,iTracer,bi,bj) * 1000.0 * !m^3 to kg
+     &    icebergFWFlux3D(I,J,K,bi,bj)
+
+        ENDIF
+       ENDIF
+      ENDDO
+      #endif /* ALLOW_PTRACERS */
+
       ENDIF ! stop checking for freshwater (if not, then these variables are already set to 0)
 
       ENDDO ! stop looping through water column

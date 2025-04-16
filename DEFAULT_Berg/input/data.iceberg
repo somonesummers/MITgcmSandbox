@@ -18,3 +18,9 @@
  brg_GamT = 0.022,
  brg_GamS = 0.00062,
  &
+
+ &ICEBERG_PARM02
+ brg_useInputPtracers = 1,
+ brg_ptracerMaskFile = 'brg_tracerMask.bin',
+ &
+

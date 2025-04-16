@@ -17,6 +17,9 @@ C     !USES:
       IMPLICIT NONE
 #include "EEPARAMS.h"
 #include "SIZE.h"
+#ifdef ALLOW_PTRACERS
+#include "PTRACERS_SIZE.h"
+#endif /* ALLOW_PTRACERS */
 #include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
 
