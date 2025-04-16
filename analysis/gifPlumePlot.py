@@ -85,49 +85,54 @@ plumeType = np.max(plumeMask)
 print('Plume Locaion is grid', plumeLoc )
 
 peakDownFjord = 2
+farFjord = -20 #try to get out of boundary layer
 for k in range(len(name)):
     print("\t %s" %name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         j = plumeLoc[0]
         data = mds.rdmds("results/%s"%(dynName), i)
         if k == 0:
-            lvl = [1,3]
+            lvl = [-.5,2] 
             cm = "xkcd:raspberry"
             plotData = data[k,:,j,plumeLoc[1]]
             ambData = mds.rdmds("results/dynDiag", i)
             plotData2 = np.squeeze(ambData[3,:,j,plumeLoc[1]])
             plotData22 = np.squeeze(ambData[3,:,j,plumeLoc[1]+peakDownFjord])
             plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5)*10)
+            plotData4 = np.squeeze(ambData[3,:,j,farFjord])
         elif k == 1:
-            lvl = [33.5,35]
-            cm = "xkcd:green"
+            lvl = tempRange
+            cm = "xkcd:rose"
             plotData = data[k,:,j,plumeLoc[1]]
             ambData = mds.rdmds("results/dynDiag", i)
             plotData2 = np.squeeze(ambData[0,:,j,plumeLoc[1]])
             plotData22 = np.squeeze(ambData[0,:,j,plumeLoc[1]+peakDownFjord])
             plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5)*10)
+            plotData4 = np.squeeze(ambData[0,:,j,farFjord])
         elif k == 2:
-            lvl = [-0.5, 0.5]
-            cm = "xkcd:rose"
+            lvl = saltRange
+            cm = "xkcd:green"
             plotData = data[k,:,j,plumeLoc[1]]
             ambData = mds.rdmds("results/dynDiag", i)
             plotData2 = np.squeeze(ambData[1,:,j,plumeLoc[1]])
             plotData22 = np.squeeze(ambData[1,:,j,plumeLoc[1]+peakDownFjord])
             plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5)*10)
+            plotData4 = np.squeeze(ambData[1,:,j,farFjord])
         elif k == 3:
-            lvl = [-0.5, 0.5]
+            lvl = [-.1, 9]
             cm = "xkcd:violet"
             plotData = data[k,:,j,plumeLoc[1]]
         elif k == 4:
-            lvl = [-0.005, 0.005]
+            lvl = [-1, 45]
             cm = "xkcd:lavender"
             plotData = data[k,:,j,plumeLoc[1]]
         elif k == 5:
-            lvl = [-0.005, 0.005]
+            lvl = [-10,30000]
             cm = "xkcd:twilight"
             if(plumeType == 2):
                 plotData = data[0,:,j,plumeLoc[1]]*dx*data[4,:,j,plumeLoc[1]]
         elif k == 6:
+            lvl = [20,30]
             ambData = mds.rdmds("results/dynDiag", i)
             cm = "xkcd:pumpkin"
             salt = np.squeeze(data[2,:,j,plumeLoc[1]])
@@ -142,16 +147,23 @@ for k in range(len(name)):
             ambS = np.squeeze(ambData[1,:,j,plumeLoc[1]+peakDownFjord])
             ambCT = gsw.CT_from_t(salt, ambData[0,:,j,plumeLoc[1]+peakDownFjord], pressure)
             plotData22 = gsw.rho(ambS, ambCT, pressure) - 1000 #in-stu density less 1000
+            
             plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5)*10)
+
+            ambS = np.squeeze(ambData[1,:,j,farFjord])
+            ambCT = gsw.CT_from_t(salt, ambData[0,:,j,farFjord], pressure)
+            plotData4 = gsw.rho(ambS, ambCT, pressure) - 1000 #in-stu density less 1000
+
         plt.figure()
         plt.plot(plotData,np.squeeze(z),linewidth=1,color=cm)
         if(k == 6 or k < 3):
             plt.plot(plotData2,np.squeeze(z),linewidth=1,color=cm,linestyle='--',label="Ambient")
             plt.plot(plotData22,np.squeeze(z),linewidth=1,color=cm,linestyle=':',label="Ambient %i cells Down Fjord" %peakDownFjord)
             plt.plot(plotData3,np.squeeze(z),linewidth=1,color='xkcd:periwinkle',linestyle='--',label='Amb Speed [cm/s]')
-            plt.legend()
+            plt.plot(plotData4,np.squeeze(z),linewidth=1,color='xkcd:gray',linestyle='--',label='fjord mouth',alpha=.5)
+            plt.legend(loc='lower left')
         ax = plt.gca()
-        # ax.set_xlim(lvl)
+        ax.set_xlim([np.min(lvl),np.max(lvl)])
         plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(plotData),np.nanmax(plotData),np.max(np.isnan(plotData))))
         plt.ylabel('Depth [m]')
         plt.title("%s x = %i at %.02f days" % (name[k], x[0,plumeLoc[1]], i/86400.0*dt))
