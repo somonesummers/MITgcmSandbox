@@ -130,60 +130,34 @@ if(isBerg):
 xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
 print('cross section is x =', x[0,xSlice],'index', xSlice)
 
-if(isBerg):
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx','ptraceDiag','ptraceDiag']
-    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg']
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]"]
-else:
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
-    name = ["Temp", "Sal", "U", "W", "V"]
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
+
+dynName = ['ptraceDiag','ptraceDiag']
+name = ['TracerTotal','TracerFrac']
+cbarLabel = ["[Vol Frac]","[- Bergs/ + Plume]"]
 
 for k in range(len(name)):
     print('\t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
-        if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
-            localBergs = True
-        else:
-            localBergs = False
-        if((not localBergs) and k==5):
-            #fill melt image with 0s if bergs in run but not frame
-            data = np.zeros(np.shape(mds.rdmds("results/%s"%(dynName[k-1]), i)))
-        else:
-            data = mds.rdmds("results/%s"%(dynName[k]), i)
-        kk = k
+        data = mds.rdmds("results/%s"%(dynName[k]), i)
+        lvl = np.linspace(1,1,101)
+        cm = "cmo.balance"
+        tracerConc = data[0,:,:,:] + data[1,:,:,:] + 1e-8
+        tracerFrac = (((data[0,:,:,:]) / tracerConc) * 2) - 1 # -1 all Plume, +1 all Melt
+        tracerFrac[tracerConc < 1e-7] = 0
+        tracerConc[tracerConc < 1e-7] = 0
         if k == 0:
-            lvl = tempRange
-            cm = tempCmap
-        elif k == 1:
-            lvl = saltRange
-            cm = saltCmap
-        elif k == 2:
-            lvl = uRange
-            cm = uCmap
-        elif k == 3:
-            lvl = wRange
-            cm = wCmap
-        elif k == 4:
-            lvl = vRange
-            cm = vCmap
-        elif k == 5:
-            lvl = meltRange
-            cm = meltCmap
-            kk = k - 3
-        elif k == 6:
-            lvl = np.linspace(0,0.05,101)
-            cm = "cmo.matter"
-            kk = 0
-        elif k == 7:
-            lvl = np.linspace(0,0.05,101)
-            cm = "cmo.matter"
-            kk = 1
+            plotData = tracerConc
+            lvl = np.linspace(0,.1,101)
+            cm = "cmo.turbid"
+        else:
+            plotData = tracerFrac
+            lvl = np.linspace(-1,1,101)
+            cm = "cmo.diff"
         if(usePcolor):
             cp = plt.pcolormesh(
                 np.squeeze(y[:,xSlice]),
                 np.squeeze(z),
-                np.squeeze(data[kk, :, :, xSlice]),
+                np.squeeze(plotData[ :, :, xSlice]),
                 cmap=cm,
                 vmin=np.min(lvl),
                 vmax=np.max(lvl),
@@ -192,45 +166,26 @@ for k in range(len(name)):
             cp = plt.contourf(
                 np.squeeze(y[:,xSlice]),
                 np.squeeze(z),
-                np.squeeze(data[kk, :, :, xSlice]),
+                np.squeeze(plotData[:, :, xSlice]),
                 lvl,
                 extend="both",
                 cmap=cm,
             )
-        if(showDensity and (dynName[k] == 'dynDiag')):
-            salt = np.squeeze(data[1,:,:,xSlice])
-            if(i == startStep): #only calc pressure once
-                pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
-            CT = gsw.CT_from_t(salt, data[0,:,:,xSlice], pressure)
-            density = gsw.rho(salt, CT, pressure) - 1000 #in-stu density less 1000
-            densityLevels = np.linspace(25,30,26)
-            cc = plt.contour(
-                np.squeeze(y[:,xSlice]),
-                np.squeeze(z),
-                np.squeeze(density),
-                densityLevels,
-                colors='black',
-                linewidths=0.5,
-                alpha=0.5
-            )
-            plt.clabel(cc, inline=3, fontsize=8)
+        cc = plt.contour(
+                    np.squeeze(y[:,xSlice]),
+                    np.squeeze(z),
+                    np.squeeze(plotData[:, :, xSlice]),
+                    [0],
+                    colors='gray',
+                    linewidths=0.5,
+                    alpha=0.5
+                )
+        plt.clabel(cc, inline=3, fontsize=8)
         plt.plot(y[:,xSlice],topo[:,xSlice],color='black')
         # plt.plot(y[:,xSlice],ice[:,xSlice],color='gray')
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
-        if(localBergs):
-            # plt.plot(y[:,xSlice],-np.max(maxDepth,axis=1),color='gray',linestyle='dotted')
-            cp2 = plt.contourf(
-                np.squeeze(y[:,xSlice]),
-                np.squeeze(z),
-                np.squeeze(openFrac[:, :, xSlice]),
-                [.4,.6,.8,.9,.95],
-                extend="min",
-                alpha=.1,
-                cmap='cmo.gray')
-            #cbar2 = plt.colorbar(cp2)
-            #cbar2.set_label('Ocean Fraction')
-        plt.xlabel('Across Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, :, xSlice]),np.nanmax(data[kk, :, :, xSlice]),np.max(np.isnan(data[kk, :, :, xSlice]))))
+        plt.xlabel('Across Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(plotData[ :, :, xSlice]),np.nanmax(plotData[ :, :, xSlice]),np.max(np.isnan(plotData[ :, :, xSlice]))))
         plt.ylabel('Depth [m]')
         plt.title("%s x = %i at %.02f days" % (name[k], x[0,xSlice], i/86400.0*dt))
         j = i/sizeStep + startStep
@@ -238,8 +193,9 @@ for k in range(len(name)):
         str = "figs/sideX%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png', dpi=plotDPI)
+        # plt.show()
         plt.close()
-        #plt.show()
+
     if(args.xCrossSection != None):
         os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.xCrossSection, name[k]))
     else:

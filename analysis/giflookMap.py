@@ -114,7 +114,7 @@ cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 if(isBerg):
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag','dynDiag']
-    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'ptrace01','ptrace02','SPD']
+    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg','SPD']
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]","[m/s]"]
 else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
@@ -171,6 +171,8 @@ for k in range(len(name)):
             dataPlot = np.sqrt(data[2, zSlice, :, :]**2 + data[3, zSlice, :, :]**2 + data[4, zSlice, :, :]**2)
         else:
             dataPlot = data[kk, zSlice, :, :]
+
+        plt.figure(figsize=(10, 4))
         if(usePcolor):
             cp = plt.pcolormesh(
                 np.squeeze(x),
@@ -189,7 +191,7 @@ for k in range(len(name)):
                 extend="both",
                 cmap=cm,
             )
-        cbar = plt.colorbar(cp)
+        cbar = plt.colorbar(cp,orientation="horizontal",fraction=0.06)
         cbar.set_label(cbarLabel[k])
         ax1 = plt.gca()
         ax1.set_aspect('equal')
@@ -231,9 +233,10 @@ for k in range(len(name)):
         j = i/sizeStep + startStep
         str = "figs/map%s%05i.png" % (name[k],j)
         # plt.xlim([0,1000])        
+        plt.tight_layout()
         plt.savefig(str, format='png', dpi=plotDPI)
+        # plt.show()
         plt.close()
-        #plt.show()
 
     if(args.zDepth != None):
         os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], np.abs(args.zDepth), name[k]))

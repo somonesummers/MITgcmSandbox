@@ -75,17 +75,17 @@ setUpPrint('====== Welcome to the mélange building script =====')
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'tracer_sgd500_noMelange'
-run_config['ndays'] = 100 # simulation time (days)
+run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'BCtracersTest2'
+run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
-run_config['Lx_m'] = 80000 # domain size in x (m)
+run_config['Lx_m'] = 20000 # domain size in x (m)
 run_config['Ly_m'] = 4800 + (2 * run_config['horiz_res_m']) # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 50 # num of z-grid points
+grid_params['Nr'] = 30 # num of z-grid points
 
 
 setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s" %(run_config['run_name'],makeDirs,writeFiles))
@@ -479,6 +479,11 @@ diag_params = [diag_params01, diag_params02]
 # Boundary Conditions
 setUpPrint('====== Boundary Conditions =====')
 
+
+#Tracer Mask, which locations have tracers, and which one, included in input mass
+nTracers = 2 #increase here if we'd like to have more tracers
+# MUST MATCH PTRACERS_SIZE.h
+
 obcs_params01 = {}
 obcs_params02 = {}
 obcs_params03 = {}
@@ -492,17 +497,17 @@ obcs_params01['useOBCSprescribe']= True
 obcs_params01['OBEsFile']='EBCs.bin'
 obcs_params01['OBEtFile']='EBCt.bin'
 obcs_params01 ['OBEvFile']='EBCv.bin'
-obcs_params01 ['OBEptrFile']='EBCptr.bin'
+obcs_params01 ['OBEptrFile']="EBCptr.bin','EBCptr.bin" #must match nTracers if you want to zero them all at BCs
 #North
 obcs_params01['OBNsFile']='NsBCs.bin'  
 obcs_params01['OBNtFile']='NsBCt.bin'  
 obcs_params01 ['OBNvFile']='NsBCv.bin'
-obcs_params01 ['OBNptrFile']='NsBCptr.bin'
+obcs_params01 ['OBNptrFile']="NsBCptr.bin','NsBCptr.bin" #must match nTracers if you want to zero them all at BCs
 #South
 obcs_params01['OBSsFile']='NsBCs.bin'
 obcs_params01['OBStFile']='NsBCt.bin'
 obcs_params01 ['OBSvFile']='NsBCv.bin'
-obcs_params01 ['OBSptrFile']='NsBCptr.bin'
+obcs_params01 ['OBSptrFile']="NsBCptr.bin','NsBCptr.bin" #must match nTracers if you want to zero them all at BCs
 
 obcs_params03['spongeThickness'] = int(domain_params['L_sponge'] / run_config['horiz_res_m']) #grid cells
 obcs_params03['Urelaxobcsinner'] = 86400.0
@@ -694,9 +699,6 @@ elif(plumeMask[plume_loc,icefront] == 2):
 else:
     runoffRad[:,plume_loc,icefront] = 0
 
-#Tracer Mask, which locations have tracers, and which one, included in input mass
-nTracers = 2 #increase here if we'd like to have more tracers
-# MUST MATCH PTRACERS_SIZE.h
 tracerMask = np.zeros([nTracers,grid_params['Ny'],grid_params['Nx']])
 tracerMask[0,plume_loc,icefront] = 1
 

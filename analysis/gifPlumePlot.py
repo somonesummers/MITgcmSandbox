@@ -163,6 +163,7 @@ for k in range(len(name)):
             plt.plot(plotData4,np.squeeze(z),linewidth=1,color='xkcd:gray',linestyle='--',label='fjord mouth',alpha=.5)
             plt.legend(loc='lower left')
         ax = plt.gca()
+        plt.grid(alpha=.5)
         ax.set_xlim([np.min(lvl),np.max(lvl)])
         plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(plotData),np.nanmax(plotData),np.max(np.isnan(plotData))))
         plt.ylabel('Depth [m]')
