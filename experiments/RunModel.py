@@ -190,8 +190,8 @@ for ii in range(iterationsToRun):
     newStartTime = (index+1)*24*3600
     oldStartTime = (index)*24*3600
     sysPrint('\tmoving pickup')
-    shutil.copy2('results/pickup.%010i.001.001.data' %int(newStartTime/dt), 'input')
-    shutil.copy2('results/pickup.%010i.001.001.meta' %int(newStartTime/dt), 'input')
+    #os.system('mv results/pickup.%010i.*' %int(newStartTime/dt), 'input') #we dont have to move them, run in same results folder
+    os.system('rm results/pickup.%010i.*' %int((oldStartTime-24*3600)/dt)) #save last one, but delete 2 ago
 
     sysPrint('\tadjust start iteration %i to %i' %(int(oldStartTime/dt),int(newStartTime/dt)))
     replaceAll('input/data','nIter0=%i' %(int(oldStartTime/dt)), 'nIter0=%i' % int(newStartTime/dt))
