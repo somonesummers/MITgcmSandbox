@@ -33,6 +33,8 @@ print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
 #Total melt over time
 
+MANUAL_PLUME_RATE = 25 #m^3/s
+
 for j in range(len(folders)):
     folder = folders[j]
 
@@ -78,7 +80,7 @@ for j in range(len(folders)):
         	fwOverTime[i] = np.nansum(data[0,:,:,:]) * sizeStep * dt
         else:
 	        fwOverTime[i] = fwOverTime[i-1] + np.nansum(data[0,:,:,:]) * sizeStep * dt
-        plumeOverTime[i] = 500*(i)*sizeStep*dt
+        plumeOverTime[i] = MANUAL_PLUME_RATE*(i)*sizeStep*dt
         dataTracer = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'ptraceDiag'), timeSteps[i])
         dataTracer = dataTracer * dz[None,:,None,None] * 400 * 400 * hFacC
         TracerPlumeTime[i] = np.nansum(dataTracer[0,:,:,:])

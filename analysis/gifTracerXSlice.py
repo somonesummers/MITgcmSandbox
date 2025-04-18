@@ -131,9 +131,9 @@ xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
 print('cross section is x =', x[0,xSlice],'index', xSlice)
 
 
-dynName = ['ptraceDiag','ptraceDiag']
-name = ['TracerTotal','TracerFrac']
-cbarLabel = ["[Vol Frac]","[- Bergs/ + Plume]"]
+dynName = ['ptraceDiag','ptraceDiag','ptraceDiag','ptraceDiag']
+name = ['TracerTotal','TracerFrac','PlumeAdvect','BergAdvect']
+cbarLabel = ["[Vol Frac]","[- Bergs/ + Plume]",'[tracer-m/s]','[tracer-m/s]']
 
 for k in range(len(name)):
     print('\t',name[k])
@@ -149,10 +149,22 @@ for k in range(len(name)):
             plotData = tracerConc
             lvl = np.linspace(0,.1,101)
             cm = "cmo.turbid"
-        else:
+        elif k == 1: 
             plotData = tracerFrac
             lvl = np.linspace(-1,1,101)
             cm = "cmo.diff"
+        elif k == 2: 
+            dataVel = mds.rdmds("results/dynDiag", i)
+            #["Temp", "Sal", "U", "W", "V"]
+            plotData = data[0,:,:,:] * dataVel[2,:,:,:]
+            lvl = np.linspace(-.005,.005,101)
+            cm = "cmo.balance"
+        elif k == 3: 
+            dataVel = mds.rdmds("results/dynDiag", i)
+            #["Temp", "Sal", "U", "W", "V"]
+            plotData = data[1,:,:,:] * dataVel[2,:,:,:]
+            lvl = np.linspace(-.005,.005,101)
+            cm = "cmo.balance"
         if(usePcolor):
             cp = plt.pcolormesh(
                 np.squeeze(y[:,xSlice]),

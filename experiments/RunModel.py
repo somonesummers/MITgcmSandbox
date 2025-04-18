@@ -52,7 +52,6 @@ if(resetStart):
     # Clean out itermediate save states and figures
     os.system("find couplingResults/MITgcmRun_*.pickle ! -name 'MITgcmRun_00000.pickle' -type f -exec rm {} +")
     os.system("rm couplingResults/*.txt")
-    os.system("rm input/pickup*.data input/pickup*.meta")
     os.system("rm figs/*")
 
     # Reset data file with correct start/stop times
@@ -63,6 +62,7 @@ if(resetStart):
                 endTime = float(line[9:-2])
     sysPrint('\tadjust start iteration %i to %i' %(int(startIter),int(0)))
     replaceAll('input/data','nIter0=%i' %(int(startIter)), 'nIter0=%i' % int(0))
+    # replaceAll('input/data.ptracers','Iter0=%i' %(int(startIter)), 'Iter0=%i' % int(0))
     sysPrint('\tadjust end time %i to %i' %(int(endTime),int(86400)))
     replaceAll('input/data','endTime=%i' %(int(endTime)), 'endTime=%i' %(int(86400)))
 
@@ -189,12 +189,12 @@ for ii in range(iterationsToRun):
     sysPrint('\tPrepping MITgcm for day %.2f' %(index+2))
     newStartTime = (index+1)*24*3600
     oldStartTime = (index)*24*3600
-    sysPrint('\tmoving pickup')
-    #os.system('mv results/pickup.%010i.*' %int(newStartTime/dt), 'input') #we dont have to move them, run in same results folder
-    os.system('rm results/pickup.%010i.*' %int((oldStartTime-24*3600)/dt)) #save last one, but delete 2 ago
+    sysPrint('\tremoving old pickups, keeping last 2')
+    os.system('rm results/pick*.%010i.*' %int((oldStartTime-24*3600)/dt)) #save last one, but delete 2 ago
 
     sysPrint('\tadjust start iteration %i to %i' %(int(oldStartTime/dt),int(newStartTime/dt)))
     replaceAll('input/data','nIter0=%i' %(int(oldStartTime/dt)), 'nIter0=%i' % int(newStartTime/dt))
+    # replaceAll('input/data.ptracers','Iter0=%i' %(int(oldStartTime/dt)), 'Iter0=%i' % int(newStartTime/dt))
     sysPrint('\tadjust end time %i to %i' %(int(newStartTime),int(newStartTime+24*3600)))
     replaceAll('input/data','endTime=%i' %(int(newStartTime)), 'endTime=%i' %(int(newStartTime+24*3600)))
 

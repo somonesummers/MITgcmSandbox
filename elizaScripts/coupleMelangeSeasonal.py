@@ -76,12 +76,12 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'BCtracersTest2'
+run_config['run_name'] = 'couplintTest'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
-run_config['Lx_m'] = 20000 # domain size in x (m)
+run_config['Lx_m'] = 40000 # domain size in x (m)
 run_config['Ly_m'] = 4800 + (2 * run_config['horiz_res_m']) # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
@@ -92,7 +92,7 @@ setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s
 input("Confirm above is accurate before continuing...")
 
 # Offshore current =========================
-oscStrength = .3 #[m/s] peak strength of offshore current
+oscStrength = .1 #[m/s] peak strength of offshore current
 lengthOffShoreCurrent = 5e3 #width of offshore current [m]
 indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
@@ -180,7 +180,7 @@ setUpPrint('====== Domain Size and Parameters =====')
 domain_params = {}
 domain_params['Lx'] = run_config['Lx_m'] # domain size in x (m)
 domain_params['Ly'] = run_config['Ly_m'] # domain size in y (m)
-domain_params['L_sponge'] = 5000 # width of eastern sponge layer (m)
+domain_params['L_sponge'] = 6000 # width of eastern sponge layer (m)
 domain_params['H'] = 600 # max domain depth (m)
 
 # NOTE: the only thing you may need to change here is the number of z-grid pointsm, which was set above)
@@ -330,6 +330,7 @@ params02['cg3dTargetResidual'] = 1e-8
 
 # time stepping parameters 
 params03 = {}
+params03['dumpInitAndLast'] = False  #Reduce number of dumped files
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
 deltaT = 10
@@ -346,7 +347,7 @@ params03['monitorFreq'] = 21600.0 # 6 hours
 params03['monitorSelect'] = 1
 
 # Force with yearly cycle
-nt = 25
+nt = 24
 params03['periodicExternalForcing'] = True
 params03['ExternForcingPeriod'] = 365*86400/nt
 params03['ExternForcingCycle'] = 365*86400 
@@ -491,7 +492,7 @@ obcs_params03 = {}
 obcs_params01['OB_singleIeast'] = -1
 obcs_params01['OB_Jsouth(%i:%i)'%(grid_params['Nx']-indexOSC+1,grid_params['Nx'])] = np.ones(indexOSC,dtype=int)
 obcs_params01['OB_Jnorth(%i:%i)'%(grid_params['Nx']-indexOSC+1,grid_params['Nx'])] = -1*np.ones(indexOSC,dtype=int)
-obcs_params01['useOBCSsponge'] = False
+obcs_params01['useOBCSsponge'] = True
 obcs_params01['useOBCSprescribe']= True
 #East
 obcs_params01['OBEsFile']='EBCs.bin'
@@ -531,9 +532,6 @@ if(makeDirs):
 #========================================================================================
 #Domain initialization and saving
 setUpPrint('====== Domain Initialization =====')
-
-#time varying forcing
-nt = 25
 
 def write_bin(fname, data):
     setUpPrint(fname + " " + str(np.shape(data)))
@@ -658,9 +656,9 @@ runoffRad = np.zeros([nt,grid_params['Ny'],grid_params['Nx']])
 plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 # Total runoff (m^3/s)
-# runoff = -1800 * np.sin(np.pi * np.arange(nt)/12.5) - 900
-# runoff[runoff <  25 ] = 25
-runoff = 500 * np.ones(nt)
+runoff = -1800 * np.sin(np.pi * np.arange(nt)/12.5) - 900
+runoff[runoff <  25 ] = 25
+# runoff = 500 * np.ones(nt)
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
 # velocity (m/s) of subglacial runoff
@@ -748,7 +746,7 @@ write_bin("EBCu.bin", EBCu)
 setUpPrint('====== Making mélange =====')
 #Make Masks
 
-hfacThreshold = .95
+hfacThreshold = .8
 
 nz = grid_params['Nr']
 ny = grid_params['Ny']

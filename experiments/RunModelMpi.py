@@ -63,6 +63,8 @@ if(resetStart):
                 endTime = float(line[9:-2])
     sysPrint('\tadjust start iteration %i to %i' %(int(startIter),int(0)))
     replaceAll('input/data','nIter0=%i' %(int(startIter)), 'nIter0=%i' % int(0))
+    # So ptracers Iter0 should actually be 0, it is when the tracer exp starts, not what to load
+    # replaceAll('input/data.ptracers','Iter0=%i' %(int(startIter)), 'Iter0=%i' % int(0))
     sysPrint('\tadjust end time %i to %i' %(int(endTime),int(86400)))
     replaceAll('input/data','endTime=%i' %(int(endTime)), 'endTime=%i' %(int(86400)))
 
@@ -81,6 +83,7 @@ elif(freshStart):
     os.system('cp input/icebergs_length_init.bin input/icebergs_length.bin')
     os.system('cp input/icebergs_depths_init.bin input/icebergs_depths.bin')
     os.system('cp input/icebergs_widths_init.bin input/icebergs_widths.bin')
+    
     #run initial MITgcm
     os.system('bash ../makeRunMpi.sh > MITgcmInitOut.txt')
 else:
@@ -190,8 +193,8 @@ for ii in range(iterationsToRun):
     newStartTime = (index+1)*24*3600
     oldStartTime = (index)*24*3600
     sysPrint('\tmoving pickup')
-    # os.system('mv results/pickup.%010i.*' %int(newStartTime/dt), 'input') #dont need to move as run in results folder
-    os.system('rm results/pickup.%010i.*' %int((oldStartTime-24*3600)/dt)) #save last one, but delete 2 ago
+    sysPrint('\tremoving old pickups, keeping last 2')
+    os.system('rm results/pick*.%010i.*' %int((oldStartTime-24*3600)/dt)) #save last one, but delete 2 ago
 
     sysPrint('\tadjust start iteration %i to %i' %(int(oldStartTime/dt),int(newStartTime/dt)))
     replaceAll('input/data','nIter0=%i' %(int(oldStartTime/dt)), 'nIter0=%i' % int(newStartTime/dt))
