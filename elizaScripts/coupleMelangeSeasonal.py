@@ -64,7 +64,7 @@ email = 'psummers8@gatech.edu'
 # set high level run configurations
 
 briefSummaryOfExp = """Coupling MITgcm and Melange1D
-Allows for seasonal forcing (plume only for now)
+Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately"""
 
 
@@ -75,17 +75,17 @@ setUpPrint('====== Welcome to the mélange building script =====')
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'BC_Testyear'
+run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
+run_config['run_name'] = 'forcingControlPlume'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
-run_config['Lx_m'] = 60000 # domain size in x (m)
+run_config['Lx_m'] = 80000 # domain size in x (m)
 run_config['Ly_m'] = 4800 + (2 * run_config['horiz_res_m']) # domain size in y (m) with walls
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
-grid_params['Nr'] = 30 # num of z-grid points
+grid_params['Nr'] = 32 # num of z-grid points
 
 
 setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s" %(run_config['run_name'],makeDirs,writeFiles))
@@ -98,7 +98,7 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 150 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 10000 # [meters] of extent of ice
+iceExtent = 25000 # [meters] of extent of ice
 iceCoverage = 60 # % of ice cover in melange, stay under 90% ideally
 doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
@@ -333,7 +333,7 @@ params03 = {}
 params03['dumpInitAndLast'] = False  #Reduce number of dumped files
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 50
+deltaT = 25
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -341,7 +341,7 @@ params03['abEps'] = 0.1
 params03['chkptFreq'] = 0.0
 params03['pChkptFreq'] = 86400.0
 params03['taveFreq'] = 0.0
-params03['dumpFreq'] = 8640000.0
+params03['dumpFreq'] = 0.0
 params03['taveFreq'] = 0.0
 params03['monitorFreq'] = 21600.0 # 6 hours
 params03['monitorSelect'] = 1
@@ -350,7 +350,7 @@ params03['monitorSelect'] = 1
 nt = 24
 daysOfCycle = 365
 ForcingValue = np.sin(2*np.pi * np.arange(nt)/nt) # This sets temp variations at BCs
-# ForcingValue = 1  # This sets temp variations at BCs
+# ForcingValue = np.zeros(nt)  # This sets temp variations at BCs
 params03['periodicExternalForcing'] = True
 params03['ExternForcingPeriod'] = daysOfCycle*86400/nt
 params03['ExternForcingCycle'] = daysOfCycle*86400 
@@ -413,8 +413,8 @@ if run_config['test']:
     run_config['tavg_freq'] = 1 # multiples of timestep
     
 else:
-    run_config['inst_freq'] = 72 # multiples of hours (must be at least every day for coupling to get iceberg melt rates)
-    run_config['tavg_freq'] = 72 # multiples of hours 
+    run_config['inst_freq'] = 24 # multiples of hours (must be at least every day for coupling to get iceberg melt rates)
+    run_config['tavg_freq'] = 24 # multiples of hours 
 
 
 #---------specify time averaged fields------#
@@ -629,8 +629,8 @@ for i in np.arange(fjordEnd,grid_params['Nx']):
         V_ns[k,:,i] = oscStrength * (i-fjordEnd)/indexOSC #[m/s] along coast flow
 
 #Seasonal Variation in Temp
-T_ns = T_ns + ForcingValue[:, None, None]
-T2 = T2 + ForcingValue[:, None, None]
+#T_ns = T_ns + ForcingValue[:, None, None]
+#T2 = T2 + ForcingValue[:, None, None]
 
 write_bin("T.init", t2)
 write_bin("S.init", s2)
@@ -667,10 +667,10 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 ## Seasonal Peak
 # runoff = -1800 * np.sin(np.pi * np.arange(nt)/12.5) - 900
 # runoff[runoff <  25 ] = 25
-## cosine
+## sine
 runoff = 250 + 200 * ForcingValue
 ## Constant
-# runoff = 300 * np.ones(nt)
+# runoff = 250 * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
