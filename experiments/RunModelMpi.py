@@ -69,7 +69,7 @@ if(resetStart):
     replaceAll('input/data','endTime=%i' %(int(endTime)), 'endTime=%i' %(int(86400)))
 
     #Set melange to length consistent with initial glaciome1d size
-    os.system('python advectBergs.py >> couplingResults/out.txt')
+    os.system("~/.conda/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
 
     #Run intial MITgcm, this resets the results folder
     os.system('bash ../makeRun.sh')
@@ -80,9 +80,9 @@ elif(freshStart):
     sysPrint("Resetting the MITgcm directory. Steps to run: %i..." %iterationsToRun)
     time.sleep(1)
     #prime the iceberg files
-    os.system('cp input/icebergs_length_init.bin input/icebergs_length.bin')
-    os.system('cp input/icebergs_depths_init.bin input/icebergs_depths.bin')
-    os.system('cp input/icebergs_widths_init.bin input/icebergs_widths.bin')
+    #os.system('cp input/icebergs_length_init.bin input/icebergs_length.bin')
+    #os.system('cp input/icebergs_depths_init.bin input/icebergs_depths.bin')
+    #os.system('cp input/icebergs_widths_init.bin input/icebergs_widths.bin')
     
     #run initial MITgcm
     os.system('bash ../makeRunMpi.sh > MITgcmInitOut.txt')
@@ -107,10 +107,13 @@ for ii in range(iterationsToRun):
             if int(words[1]) > maxStep:
                 maxStep = int(words[1])
 
-    dt = 0.0   
+    dt = 0.0
+    oldStartIter = 0   
     for line in fileinput.input('input/data'):
             if "deltaT=" in line:
                 dt = float(line[8:-2])
+            if "nIter0" in line:
+                oldStartIter = int(line[8:-2])
     # print('\tdt is loaded as', dt)
 
     #Load all our MITgcm data
@@ -194,19 +197,19 @@ for ii in range(iterationsToRun):
 
     sysPrint('\tPrepping MITgcm for day %.2f' %(index+2))
     newStartTime = (index+1)*24*3600
-    oldStartTime = (index)*24*3600
+    oldStartTime = (oldStartIter)*dt*24*3600 #read directly now
     sysPrint('\tmoving pickup')
     sysPrint('\tremoving old pickups, keeping last 2')
     os.system('rm results/pick*.%010i.*' %int((oldStartTime-24*3600)/dt)) #save last one, but delete 2 ago
 
-    sysPrint('\tadjust start iteration %i to %i' %(int(oldStartTime/dt),int(newStartTime/dt)))
-    replaceAll('input/data','nIter0=%i' %(int(oldStartTime/dt)), 'nIter0=%i' % int(newStartTime/dt))
+    sysPrint('\tadjust start iteration %i to %i' %(oldStartIter,int(newStartTime/dt)))
+    replaceAll('input/data','nIter0=%i' %(int(oldStartIter)), 'nIter0=%i' % int(newStartTime/dt))
     sysPrint('\tadjust end time %i to %i' %(int(newStartTime),int(newStartTime+24*3600)))
     replaceAll('input/data','endTime=%i' %(int(newStartTime)), 'endTime=%i' %(int(newStartTime+24*3600)))
 
     # We adjust the icebergs to the new mélange geometry. This could be within this script.
 
-    os.system('python advectBergs.py >> couplingResults/out.txt')
+    os.system("~/.conda/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
 
     os.chdir("results")
     os.system('srun ./mitgcmuv >> ../couplingResults/OutMITgcm%05i.txt' %(index+1))
