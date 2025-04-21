@@ -145,6 +145,7 @@ for k in range(len(name)):
         tracerFrac = (((data[0,:,:,:]) / tracerConc) * 2) - 1 # -1 all Plume, +1 all Melt
         tracerFrac[tracerConc < 1e-7] = 0
         tracerConc[tracerConc < 1e-7] = 0
+        dataVel = mds.rdmds("results/dynDiag", i)
         if k == 0:
             plotData = tracerConc
             lvl = np.linspace(0,.1,101)
@@ -154,13 +155,11 @@ for k in range(len(name)):
             lvl = np.linspace(-1,1,101)
             cm = "cmo.diff"
         elif k == 2: 
-            dataVel = mds.rdmds("results/dynDiag", i)
             #["Temp", "Sal", "U", "W", "V"]
             plotData = data[0,:,:,:] * dataVel[2,:,:,:]
             lvl = np.linspace(-.005,.005,101)
             cm = "cmo.balance"
         elif k == 3: 
-            dataVel = mds.rdmds("results/dynDiag", i)
             #["Temp", "Sal", "U", "W", "V"]
             plotData = data[1,:,:,:] * dataVel[2,:,:,:]
             lvl = np.linspace(-.005,.005,101)
@@ -183,6 +182,17 @@ for k in range(len(name)):
                 extend="both",
                 cmap=cm,
             )
+        if(k == 1 or k == 2):
+            cc0 = plt.contour(
+                    np.squeeze(y[:,xSlice]),
+                    np.squeeze(z),
+                    np.squeeze(dataVel[2,:, :, xSlice]),
+                    [0],
+                    colors='white',
+                    linestyles='--',
+                    linewidths=2,
+                    alpha=0.5
+                )
         cc = plt.contour(
                     np.squeeze(y[:,xSlice]),
                     np.squeeze(z),

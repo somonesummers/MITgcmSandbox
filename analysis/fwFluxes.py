@@ -31,10 +31,9 @@ else:
     print('no defaults found')
 print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
+
+
 #Total melt over time
-
-MANUAL_PLUME_RATE = 25 #m^3/s
-
 for j in range(len(folders)):
     folder = folders[j]
 
@@ -43,8 +42,12 @@ for j in range(len(folders)):
             if "deltaT=" in line:
                 dt = float(line[8:-2])
     print('dt is loaded as', dt)
-    dz = np.load('input/dz.npy')
 
+    dz = np.load('input/dz.npy')
+    x = mds.rdmds("results/XC")
+    y = mds.rdmds("results/YC")
+    dy = y[0,0]/2
+    z = np.squeeze(mds.rdmds("results/RC"))
     hFacC = mds.rdmds("results/hFacC")
 
     #Find time steps to take
@@ -72,30 +75,42 @@ for j in range(len(folders)):
     timeSteps = np.arange(startStep, maxStep + 1, sizeStep)
     fwOverTime = np.zeros(np.shape(timeSteps))
     plumeOverTime = np.zeros(np.shape(timeSteps))
-    TracerPlumeTime = np.zeros(np.shape(timeSteps))
-    TracerBergTime = np.zeros(np.shape(timeSteps))
+    tempOverTime = np.zeros(np.shape(timeSteps))
+    tempOverTime2 = np.zeros(np.shape(timeSteps))
     for i in range(len(timeSteps)):
+        #name = ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY']
         data = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), timeSteps[i])
-        if i == 0:
-        	fwOverTime[i] = np.nansum(data[0,:,:,:]) * sizeStep * dt
-        else:
-	        fwOverTime[i] = fwOverTime[i-1] + np.nansum(data[0,:,:,:]) * sizeStep * dt
-        plumeOverTime[i] = MANUAL_PLUME_RATE*(i)*sizeStep*dt
-        dataTracer = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'ptraceDiag'), timeSteps[i])
-        dataTracer = dataTracer * dz[None,:,None,None] * 400 * 400 * hFacC
-        TracerPlumeTime[i] = np.nansum(dataTracer[0,:,:,:])
-        TracerBergTime[i] = np.nansum(dataTracer[1,:,:,:])
+        dataHelper = data.copy()
+        #name = ["W", "Temp", "Sal", "CellMeltRate", "RadiusThickness","Flux","Density"]
+        dataPlume = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'plumeDiag'), timeSteps[i])
+        # ["Temp", "Sal", "U", "W", "V"]
+        dataOcean = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'dynDiag'), timeSteps[i])
+        dataOcean[0,data[0,:,:,:] == 0] = np.nan #average over just the melange
 
-    plt.plot(timeSteps*dt/86400,fwOverTime,label='Berg Melt',color='xkcd:blue')
-    plt.plot(timeSteps*dt/86400,plumeOverTime,label='Plume Water (manually set)',color='xkcd:red')
-    plt.plot(timeSteps*dt/86400,TracerBergTime,label='Berg Trace',color='xkcd:blue',linestyle='--')
-    plt.plot(timeSteps*dt/86400,TracerPlumeTime,label='Plume Trace',color='xkcd:red',linestyle='--')
+        dataOceanBelow = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'dynDiag'), timeSteps[i])
+        dataHelper[0,:,data[0,0,:,:] == 0] = np.nan #nan place with no melange at surface
+        dataOceanBelow[0,dataHelper[0,:,:,:] != 0] = np.nan
+        
+        tempOverTime[i] = np.nanmean(dataOcean[0,:,:,:])
+        tempOverTime2[i] = np.nanmean(dataOceanBelow[0,:,:,:])
+        fwOverTime[i] = np.nansum(data[0,:,:,:])
+        plumeOverTime[i] = np.nanmax(dataPlume[0,-1,:,:] * dataPlume[4,-1,:,:] * dy) #assume sheet here 
+        # this is a little high as some water has entrained
+
+    plt.plot(timeSteps*dt/86400,fwOverTime,label='Iceberg Melt',color='xkcd:blue')
+    plt.plot(timeSteps*dt/86400,plumeOverTime,label='Plume Water',color='xkcd:red')
+    ax1 = plt.gca()
+    ax2=ax1.twinx()
+    ax2.plot(timeSteps*dt/86400,tempOverTime,label='Mélage Temp',color='xkcd:pumpkin')
+    ax2.plot(timeSteps*dt/86400,tempOverTime2,label='Below Mélage Temp',color='xkcd:twilight')
 plt.grid(alpha=.5)
-plt.legend()
+ax1.legend()
+ax2.legend()
 plt.title('Fresh Water Over Time')
-plt.ylabel('Total water [m^3]')
+ax1.set_ylabel('Total water [m^3]')
+ax2.set_ylabel('Mélange Temperature [C]',color='xkcd:orange')
 plt.xlabel('Time [days]')
-plt.savefig('figs/waterMass.png', format='png',dpi=plotDPI)
+plt.savefig('figs/waterFlux.png', format='png',dpi=plotDPI)
 plt.show()
 plt.close()
 
