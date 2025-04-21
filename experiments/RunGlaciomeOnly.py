@@ -17,9 +17,9 @@ import time
 
 
 n_pts = 21 # number of grid points
-L = 15e3 # ice melange length
-Ut = 6e3 # glacier terminus velocity [m/a]; treated as a constant
-Uc = 6e3 # glacier calving rate [m/a]; treated as a constant
+L = 8e3 # ice melange length
+Ut = 1e3 # glacier terminus velocity [m/a]; treated as a constant
+Uc = 1e3 # glacier calving rate [m/a]; treated as a constant
 Ht = 600 # terminus thickness
 dt = 0.002# 1/(n_pts-1)/10 # time step [a]; needs to be quite small for this to work
 # H0_manual = 94 #posit H0 start value, set to None to use default (75 m)

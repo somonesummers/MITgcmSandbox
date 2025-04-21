@@ -169,6 +169,8 @@ for ii in range(iterationsToRun):
     oldH = data.H0
     sysPrint('\tPrevious Length: %.3f, H0: %.3f'%(oldL, oldH))
     # data.steadystate()
+    if(False):
+        data.Uc = customValue
     data.prognostic(method='lm')
     sysPrint('\tNew      Length: %.3f, H0: %.3f, ∆L: %.3f, ∆H0: %.3f'%(data.L,data.H0,data.L-oldL,data.H0-oldH,))
     sysPrint('\t\tSeconds to run GLACIOME step: %.4f' % (time.time() - start_time))

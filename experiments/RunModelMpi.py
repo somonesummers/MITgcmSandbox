@@ -170,6 +170,9 @@ for ii in range(iterationsToRun):
     # we can run more steps with a reduced dt, or couple with MITgcm more frequently, but this isn't likely to be needed. 
     oldL = data.L
     oldH = data.H0
+    if(False):
+        data.Uc = customValue
+        sysPrint('\tNew Uc: %.3f'%(data.Uc))
     sysPrint('\tPrevious Length: %.3f, H0: %.3f'%(oldL, oldH))
     # data.steadystate()
     data.prognostic(method='lm')
