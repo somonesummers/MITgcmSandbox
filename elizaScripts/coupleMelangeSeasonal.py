@@ -1202,7 +1202,7 @@ cluster_params['run_dir'] = os.path.join(cluster_params['exps_dir'], run_config[
 cluster_params['cpus_per_node'] = 10 
 
 #extra run commands for the sbatch script
-extraList = []
+extraList = ["# ~/.conda/envs/MITgcm/bin/python RunModelMpi.py"]
 
 run_config['extraCommands'] = "".join(extraList)
      

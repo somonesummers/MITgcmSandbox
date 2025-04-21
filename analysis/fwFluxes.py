@@ -80,7 +80,6 @@ for j in range(len(folders)):
     for i in range(len(timeSteps)):
         #name = ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY']
         data = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), timeSteps[i])
-        dataHelper = data.copy()
         #name = ["W", "Temp", "Sal", "CellMeltRate", "RadiusThickness","Flux","Density"]
         dataPlume = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'plumeDiag'), timeSteps[i])
         # ["Temp", "Sal", "U", "W", "V"]
@@ -88,8 +87,7 @@ for j in range(len(folders)):
         dataOcean[0,data[0,:,:,:] == 0] = np.nan #average over just the melange
 
         dataOceanBelow = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'dynDiag'), timeSteps[i])
-        dataHelper[0,:,data[0,0,:,:] == 0] = np.nan #nan place with no melange at surface
-        dataOceanBelow[0,dataHelper[0,:,:,:] != 0] = np.nan
+        dataOceanBelow[:,z > -300,:,:] = np.nan #nan above 300 meters depth
         
         tempOverTime[i] = np.nanmean(dataOcean[0,:,:,:])
         tempOverTime2[i] = np.nanmean(dataOceanBelow[0,:,:,:])
@@ -97,12 +95,14 @@ for j in range(len(folders)):
         plumeOverTime[i] = np.nanmax(dataPlume[0,-1,:,:] * dataPlume[4,-1,:,:] * dy) #assume sheet here 
         # this is a little high as some water has entrained
 
-    plt.plot(timeSteps*dt/86400,fwOverTime,label='Iceberg Melt',color='xkcd:blue')
+    plt.plot(timeSteps*dt/86400,fwOverTime,label='Iceberg Meltwater',color='xkcd:blue')
     plt.plot(timeSteps*dt/86400,plumeOverTime,label='Plume Water',color='xkcd:red')
+    plt.grid(alpha=.5)
     ax1 = plt.gca()
     ax2=ax1.twinx()
-    ax2.plot(timeSteps*dt/86400,tempOverTime,label='Mélage Temp',color='xkcd:pumpkin')
-    ax2.plot(timeSteps*dt/86400,tempOverTime2,label='Below Mélage Temp',color='xkcd:twilight')
+    ax2.grid(alpha=.1,color="xkcd:pumpkin")
+    ax2.plot(timeSteps*dt/86400,tempOverTime,label='Mélange Avg Temp',color='xkcd:pumpkin')
+    ax2.plot(timeSteps*dt/86400,tempOverTime2,label='Below 300 m Avg Temp',color='xkcd:twilight')
 plt.grid(alpha=.5)
 ax1.legend()
 ax2.legend()
