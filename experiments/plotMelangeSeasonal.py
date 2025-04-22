@@ -51,6 +51,7 @@ subSample = max([int(np.ceil(n / 10)),1])
 toIterate = np.arange(n)
 H0Time = np.zeros(np.shape(toIterate))
 VTime = np.zeros(np.shape(toIterate))
+UcTime = np.zeros(np.shape(toIterate))
 lengthTime = np.zeros(np.shape(toIterate))
 iterationNumber = np.zeros(np.shape(toIterate))
 for j in toIterate:
@@ -65,18 +66,33 @@ for j in toIterate:
     W = np.concatenate(([data.W0], data.W, [data.WL]))
     VTime[j] = simpson(H*W, x=X_)*1e-9
     lengthTime[j]=data.X[-1]
+    UcTime[j] = data.Uc
     iterationNumber[j]=int(it)
-ax5.plot(iterationNumber,H0Time,'-o')
-ax5.set_ylabel('Mélange Max Thickness (H0) [m]')
+
+ax2.plot(iterationNumber,UcTime/constant.daysYear,'-')
+sca=ax2.scatter(iterationNumber,UcTime/constant.daysYear,s=None,c=iterationNumber,cmap='viridis')
+cbar=plt.colorbar(sca)
+cbar.set_label('Iteration [Days]')
+ax2.set_ylabel('Calving Speed [m/day]')
+ax2.set_xlabel('Iteration [Days]')
+ax2.grid(alpha=.5)
+
+ax5.plot(iterationNumber,lengthTime,'-')
+sca=ax5.scatter(iterationNumber,lengthTime,s=None,c=iterationNumber,cmap='viridis')
+cbar=plt.colorbar(sca)
+cbar.set_label('Iteration [Days]')
+ax5.set_ylabel('Mélange length [m]')
 ax5.set_xlabel('Iteration [Days]')
 ax5.grid(alpha=.5)
-ax6.plot(VTime,lengthTime,'-')
-sca=ax6.scatter(VTime,lengthTime,s=None,c=iterationNumber,cmap='viridis')
+
+ax6.plot(H0Time,lengthTime,'-')
+sca=ax6.scatter(H0Time,lengthTime,s=None,c=iterationNumber,cmap='viridis')
 cbar=plt.colorbar(sca)
 cbar.set_label('Iteration [Days]')
 ax6.set_ylabel('Mélange Length [m]')
-ax6.set_xlabel('Mélange Volume[km^3]')
+ax6.set_xlabel('Mélange H0 [m]')
 ax6.grid(alpha=.5)
+
 
 shiftIndex = 0
 if(n > 100):
@@ -120,16 +136,6 @@ for j in toIterate[shiftIndex::subSample]:
     ax1.grid(alpha=.5)
     # ax1.legend()
 
-    colors = makeColors(seedColor[1],n)
-    ax2.plot([-2,20],[0,0],color='xkcd:ocean blue',linestyle='--',linewidth=0.5)
-    ax2.plot(np.append(X_,X_[::-1])*1e-3,np.append(-constant.rho/constant.rho_w*H,(1-constant.rho/constant.rho_w)*H[::-1]),
-        marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
-    ax2.set_xlabel('Distance Along Fjord [km]')
-    ax2.set_ylabel('Elevation [m]')
-    # ax2.legend()
-    ax2.set_xlim(ax1.get_xlim())
-    ax2.grid(alpha=.5)
-
     colors = makeColors(seedColor[2],n)
     ax3.plot(X_*1e-3,gg,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
     ax3.set_xlabel('Distance Along Fjord [km]')
@@ -148,10 +154,10 @@ for j in toIterate[shiftIndex::subSample]:
     # ax4.legend()
     ax4.grid(alpha=.5)
 
-plt.savefig('figs/melangeView.png',format='png',dpi=150)
+plt.savefig('figs/melangeSeasonalView.png',format='png',dpi=150)
 plt.show()
 plt.close()
 
-print("Making melange gif")
-os.system('magick -delay %f figs/advectBergs*.png -colors 256 -depth 256 figs/advectBergs.gif' %(500/n))
+# print("Making melange gif")
+# os.system('magick -delay %f figs/advectBergs*.png -colors 256 -depth 256 figs/advectBergs.gif' %(500/n))
 

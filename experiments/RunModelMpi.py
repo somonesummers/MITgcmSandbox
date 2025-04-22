@@ -26,6 +26,8 @@ import time
 # iterationsToRun = 100
 #Define if new run or not, and packing fraction of melange
 sys.path.append('.')
+
+forceMelange = False
 from melangeModel import *
 
 def sysPrint(stringIn):
@@ -173,8 +175,9 @@ for ii in range(iterationsToRun):
     # we can run more steps with a reduced dt, or couple with MITgcm more frequently, but this isn't likely to be needed. 
     oldL = data.L
     oldH = data.H0
-    if(False):
-        data.Uc = customValue
+    if(forceMelange):
+        data.Uc = 6000 + 1000 * np.sin(2 * np.pi * index/365)
+        data.Ut = 6000 + 1000 * np.sin(2 * np.pi * index/365) # Must change together unless terminus moving
         sysPrint('\tNew Uc: %.3f'%(data.Uc))
     sysPrint('\tPrevious Length: %.3f, H0: %.3f'%(oldL, oldH))
     # data.steadystate()
@@ -212,7 +215,8 @@ for ii in range(iterationsToRun):
     os.system("~/.conda/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
 
     os.chdir("results")
-    os.system('srun ./mitgcmuv >> ../couplingResults/OutMITgcm%05i.txt' %(index+1))
+    # os.system('srun ./mitgcmuv >> ../couplingResults/OutMITgcm%05i.txt' %(index+1))
+    os.system('srun ./mitgcmuv') # srun has no outputs
     os.chdir("../")
 
     dataMITgcmOcean = mds.rdmds("results/dynDiag", int((newStartTime + 24*3600)/dt))
