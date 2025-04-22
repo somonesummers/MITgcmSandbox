@@ -197,7 +197,7 @@ for ii in range(iterationsToRun):
 
     sysPrint('\tPrepping MITgcm for day %.2f' %(index+2))
     newStartTime = (index+1)*24*3600
-    oldStartTime = (oldStartIter)*dt*24*3600 #read directly now
+    oldStartTime = (oldStartIter)*dt #read directly now
     sysPrint('\tmoving pickup')
     sysPrint('\tremoving old pickups, keeping last 2')
     os.system('rm results/pick*.%010i.*' %int((oldStartTime-24*3600)/dt)) #save last one, but delete 2 ago

@@ -47,6 +47,7 @@ for j in range(len(folders)):
     x = mds.rdmds("results/XC")
     y = mds.rdmds("results/YC")
     dy = y[0,0]/2
+    dx = x[0,0]/2
     z = np.squeeze(mds.rdmds("results/RC"))
     hFacC = mds.rdmds("results/hFacC")
 
@@ -88,7 +89,8 @@ for j in range(len(folders)):
 
         dataOceanBelow = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'dynDiag'), timeSteps[i])
         dataOceanBelow[:,z > -300,:,:] = np.nan #nan above 300 meters depth
-        
+        dataOceanBelow[:,:,:,int(10000/dx):] = np.nan #beyond 10km in X to nan
+
         tempOverTime[i] = np.nanmean(dataOcean[0,:,:,:])
         tempOverTime2[i] = np.nanmean(dataOceanBelow[0,:,:,:])
         fwOverTime[i] = np.nansum(data[0,:,:,:])
