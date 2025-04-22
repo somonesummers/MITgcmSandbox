@@ -108,10 +108,11 @@ for j in range(len(folders)):
 plt.grid(alpha=.5)
 ax1.legend()
 ax2.legend()
+ax1.set_xlabel('Time [days]')
 plt.title('Fresh Water Over Time')
 ax1.set_ylabel('Total water [m^3]')
 ax2.set_ylabel('Mélange Temperature [C]',color='xkcd:orange')
-plt.xlabel('Time [days]')
+
 plt.savefig('figs/waterFlux.png', format='png',dpi=plotDPI)
 plt.show()
 plt.close()
