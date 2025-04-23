@@ -65,7 +65,13 @@ email = 'psummers8@gatech.edu'
 
 briefSummaryOfExp = """Coupling MITgcm and Melange1D
 Allows for seasonal forcing (plume and off shore)
-Enables pTracers for plume and icebergs seperately"""
+Enables pTracers for plume and icebergs seperately
+need to still: 
+Copy MITgcmPickup/iceberg/GLACIOME files from origin of choice
+move MITgcmRun_00000.pickle to proper place
+reset input/data
+rm pickup_tracers if reseting tracers
+input/data.ptracers ptracerInt0=1 for reseting tracers"""
 
 
 setUpPrint('====== Welcome to the mélange building script =====')
