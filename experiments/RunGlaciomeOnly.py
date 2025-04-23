@@ -17,7 +17,7 @@ import time
 
 
 n_pts = 21 # number of grid points
-L = 8e3 # ice melange length
+L = 18e3 # ice melange length
 Ut = 1e3 # glacier terminus velocity [m/a]; treated as a constant
 Uc = 1e3 # glacier calving rate [m/a]; treated as a constant
 Ht = 600 # terminus thickness
@@ -28,7 +28,7 @@ dt = 0.002# 1/(n_pts-1)/10 # time step [a]; needs to be quite small for this to 
 X_fjord = np.linspace(0e3,400e3,101)
 Wt = 4800
 W_fjord = Wt + 0/10000*X_fjord
-B = -0.6*365
+B = -0.4*365
 
 # first run to steady state
 data = glaciome(n_pts, dt, L, Ut, Uc, Ht, B, X_fjord, W_fjord, H0 = None)

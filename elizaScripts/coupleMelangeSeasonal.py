@@ -82,7 +82,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'forcingControlPlume'
+run_config['run_name'] = 'winterEQ'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -339,7 +339,7 @@ params03 = {}
 params03['dumpInitAndLast'] = False  #Reduce number of dumped files
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 25
+deltaT = 40
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -627,14 +627,14 @@ Ve = np.zeros([nt,grid_params['Nr'],grid_params['Ny']])
 Ve[:,:,:] = oscStrength #[m/s]
 Ptr_e = np.zeros([nt,grid_params['Nr'],grid_params['Ny']])
 
-#N/S BCs
+## N/S BCs
 for i in np.arange(fjordEnd,grid_params['Nx']):
     for k in range(nt):
         T_ns[k,:,i] = t_int(-1 * z[:])
         S_ns[k,:,i] = s_int(-1 * z[:])
         V_ns[k,:,i] = oscStrength * (i-fjordEnd)/indexOSC #[m/s] along coast flow
 
-#Seasonal Variation in Temp
+## Seasonal Variation in Temp
 #T_ns = T_ns + ForcingValue[:, None, None]
 #T2 = T2 + ForcingValue[:, None, None]
 
@@ -674,9 +674,9 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 # runoff = -1800 * np.sin(np.pi * np.arange(nt)/12.5) - 900
 # runoff[runoff <  25 ] = 25
 ## sine
-runoff = 250 + 200 * ForcingValue
+# runoff = 250 + 200 * ForcingValue
 ## Constant
-# runoff = 250 * np.ones(nt)
+runoff = 50 * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
