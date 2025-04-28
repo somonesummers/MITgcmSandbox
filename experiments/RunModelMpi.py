@@ -176,8 +176,8 @@ for ii in range(iterationsToRun):
     oldL = data.L
     oldH = data.H0
     if(forceMelange):
-        data.Uc = 6000 + 1000 * np.sin(2 * np.pi * index/365)
-        data.Ut = 6000 + 1000 * np.sin(2 * np.pi * index/365) # Must change together unless terminus moving
+        data.Uc = 6000 - 2 * index
+        data.Ut = 6000 - 2 * index # Must change together unless terminus moving
         sysPrint('\tNew Uc: %.3f m/year'%(data.Uc))
     sysPrint('\tPrevious Length: %.3f, H0: %.3f'%(oldL, oldH))
     # data.steadystate()

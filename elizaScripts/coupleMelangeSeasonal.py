@@ -66,6 +66,7 @@ email = 'psummers8@gatech.edu'
 briefSummaryOfExp = """Coupling MITgcm and Melange1D
 Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
+Running 2000 day linear ramp of forcing variables
 need to still: 
 Copy MITgcmPickup/iceberg/GLACIOME files from origin of choice
 move MITgcmRun_00000.pickle to proper place
@@ -82,7 +83,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'winterEQ'
+run_config['run_name'] = 'MNC_Test'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -104,7 +105,7 @@ indexOSC = int(lengthOffShoreCurrent/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 150 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 25000 # [meters] of extent of ice
+iceExtent = 30000 # [meters] of extent of ice
 iceCoverage = 60 # % of ice cover in melange, stay under 90% ideally
 doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
@@ -339,7 +340,7 @@ params03 = {}
 params03['dumpInitAndLast'] = False  #Reduce number of dumped files
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 40
+deltaT = 30
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -354,8 +355,9 @@ params03['monitorSelect'] = 1
 
 # Force with yearly cycle
 nt = 24
-daysOfCycle = 365
-ForcingValue = np.sin(2*np.pi * np.arange(nt)/nt) # This sets temp variations at BCs
+daysOfCycle = 2000
+# ForcingValue = np.sin(2*np.pi * np.arange(nt)/nt) # This sets temp variations at BCs
+ForcingValue = 5 * np.arange(nt)/float(nt)
 # ForcingValue = np.zeros(nt)  # This sets temp variations at BCs
 params03['periodicExternalForcing'] = True
 params03['ExternForcingPeriod'] = daysOfCycle*86400/nt
@@ -635,8 +637,8 @@ for i in np.arange(fjordEnd,grid_params['Nx']):
         V_ns[k,:,i] = oscStrength * (i-fjordEnd)/indexOSC #[m/s] along coast flow
 
 ## Seasonal Variation in Temp
-#T_ns = T_ns + ForcingValue[:, None, None]
-#T2 = T2 + ForcingValue[:, None, None]
+# T_ns = T_ns + ForcingValue[:, None, None]
+# T2 = T2 + ForcingValue[:, None, None]
 
 write_bin("T.init", t2)
 write_bin("S.init", s2)
@@ -673,10 +675,10 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 ## Seasonal Peak
 # runoff = -1800 * np.sin(np.pi * np.arange(nt)/12.5) - 900
 # runoff[runoff <  25 ] = 25
-## sine
-# runoff = 250 + 200 * ForcingValue
+## linear ramp
+# runoff = 250 + 5000 * np.arange(nt)/float(nt)
 ## Constant
-runoff = 50 * np.ones(nt)
+runoff = 250 * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
