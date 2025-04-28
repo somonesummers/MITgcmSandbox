@@ -17,9 +17,9 @@ wCmap = "cmo.curl"
 meltCmap = "cmo.rain"
 
 # Color Ranges
-saltRange = np.linspace(31, 35, 128)
-tempRange = np.linspace(-2, 3.0, 128)
-uRange = np.linspace(-.2, .2, 127)
-vRange = np.linspace(-.2, .2, 127)
-wRange = np.linspace(-.005, .005, 127)
-meltRange = np.linspace(0,.5,128)
+saltRange = np.linspace(31, 35, 31)
+tempRange = np.linspace(-2, 3.0, 31)
+uRange = np.linspace(-.2, .2, 31)
+vRange = np.linspace(-.2, .2, 31)
+wRange = np.linspace(-.005, .005, 31)
+meltRange = np.linspace(0,.5,31)

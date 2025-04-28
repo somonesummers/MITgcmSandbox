@@ -215,9 +215,21 @@ for ii in range(iterationsToRun):
     os.system("~/.conda/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
 
     os.chdir("results")
-    # os.system('srun ./mitgcmuv >> ../couplingResults/OutMITgcm%05i.txt' %(index+1))
-    os.system('srun ./mitgcmuv') # srun has no outputs
+    os.system('srun ./mitgcmuv') # srun has no outputs, all in STDOUT/STDERR.*.*
+
+    # Create global files to reduce file counts
+    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
+
+    endIter = int((newStartTime + 24*3600)/dt)
+    sysPrint('\tcondensing grid files to global files')
+    for k in range(len(prefixes)):
+        sysPrint('\t\t %s' %prefixes[k])
+        dataTemp = mds.rdmds("%s"%(prefixes[k]), endIter)
+        mds.wrmds('%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
+        os.system('rm %s.0*.*' %(prefixes[k],endIter))
     os.chdir("../")
+
+
 
     dataMITgcmOcean = mds.rdmds("results/dynDiag", int((newStartTime + 24*3600)/dt))
     maxU = np.max((dataMITgcmOcean[2,:,:,:]**2 + dataMITgcmOcean[3,:,:,:]**2 + dataMITgcmOcean[2,:,:,:]**2)**(.5))
