@@ -83,7 +83,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'MNC_Test'
+run_config['run_name'] = 'LinearPlumeTemp'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -340,7 +340,7 @@ params03 = {}
 params03['dumpInitAndLast'] = False  #Reduce number of dumped files
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 30
+deltaT = 10
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -637,8 +637,10 @@ for i in np.arange(fjordEnd,grid_params['Nx']):
         V_ns[k,:,i] = oscStrength * (i-fjordEnd)/indexOSC #[m/s] along coast flow
 
 ## Seasonal Variation in Temp
-# T_ns = T_ns + ForcingValue[:, None, None]
-# T2 = T2 + ForcingValue[:, None, None]
+T_ns = T_ns + ForcingValue[:, None, None]
+T2 = T2 + ForcingValue[:, None, None]
+T_ns[0,:,:] = T_ns[-1,:,:]
+T2[0,:,:] = T2[-1,:,:]
 
 write_bin("T.init", t2)
 write_bin("S.init", s2)
@@ -676,9 +678,9 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 # runoff = -1800 * np.sin(np.pi * np.arange(nt)/12.5) - 900
 # runoff[runoff <  25 ] = 25
 ## linear ramp
-# runoff = 250 + 5000 * np.arange(nt)/float(nt)
+runoff = 250 + 1250 * np.arange(nt)/float(nt)
 ## Constant
-runoff = 250 * np.ones(nt)
+# runoff = 250 * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
