@@ -78,6 +78,7 @@ if(resetStart):
 elif(freshStart):
     #Make couplingResults directory if not there already
     os.system("mkdir -p couplingResults")
+    os.system("rm -f couplingResults/out.txt")
     sysPrint('Running from fresh start...')
     sysPrint("Resetting the MITgcm directory. Steps to run: %i..." %iterationsToRun)
     time.sleep(1)
@@ -86,8 +87,29 @@ elif(freshStart):
     #os.system('cp input/icebergs_depths_init.bin input/icebergs_depths.bin')
     #os.system('cp input/icebergs_widths_init.bin input/icebergs_widths.bin')
     
-    #run initial MITgcm
+    # run initial MITgcm
     os.system('bash ../makeRunMpi.sh > MITgcmInitOut.txt')
+
+    # Clean tile level files
+    dt = 0.0
+    oldStartIter = 0   
+    for line in fileinput.input('input/data'):
+            if "deltaT=" in line:
+                dt = float(line[8:-2])
+            if "nIter0" in line:
+                oldStartIter = int(line[8:-2])
+
+    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
+    os.chdir("results")
+    endIter = int((24*3600)/dt)
+    sysPrint('\tcondensing grid files to global files')
+    for k in range(len(prefixes)):
+        sysPrint('\t\t %s' %prefixes[k])
+        dataTemp = mds.rdmds("%s"%(prefixes[k]), endIter)
+        mds.wrmds('%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
+        os.system('rm %s%010i.0*.*' %(prefixes[k],endIter)) #picks out tile level files
+    os.chdir("../")
+
 else:
     sysPrint('Running from existing states...')
     time.sleep(1)
@@ -226,7 +248,7 @@ for ii in range(iterationsToRun):
         sysPrint('\t\t %s' %prefixes[k])
         dataTemp = mds.rdmds("%s"%(prefixes[k]), endIter)
         mds.wrmds('%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
-        os.system('rm %s.0*.*' %(prefixes[k],endIter))
+        os.system('rm %s%010i.0*.*' %(prefixes[k],endIter))
     os.chdir("../")
 
 
