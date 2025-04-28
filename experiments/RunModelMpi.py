@@ -163,12 +163,23 @@ for ii in range(iterationsToRun):
         file.close()
         index = int(str(file).split(".")[1].split("_")[1])
         
-    sysPrint('=== glaciome1D Running, load MITgcm data from end of day %.2f, using melange index %05i === ' %(int(maxStep)*dt/(24*3600),index))
-    
     # make sure nothing funny is going on. Depending on when last cycle failed you may have to delete the highest numbered .pickle file
     if(int(maxStep)*dt/(24*3600) - index != 1):
-        raise Exception('MITgcm (BRGFlx_) and glaciome1D (MITgcmRun_)are out of sync, glaciome index should be 1 behind MITgcm day')
+        if(int(maxStep)*dt/(24*3600) - index == 0):
+            #sometimes on restart MITgcm is forward, so autodelete and retake glaciome1d step if so
+            sysPrint('glaciome1d 1 step ahead, deleting couplingResults/MITgcmRun_%05i.pickle' %index)
+            os.system('rm couplingResults/MITgcmRun_%05i.pickle' %index)
+            files = sorted(glob.glob('couplingResults/MITgcmRun_[0-9][0-9][0-9][0-9][0-9].pickle'))
+            # print(files)
+            with open(files[-1], 'rb') as file:
+                data = pickle.load(file)
+                file.close()
+                index = int(str(file).split(".")[1].split("_")[1])
+        else:
+            sysPrint('*** ERROR load MITgcm data from end of day %.2f, using melange index %05i ***' %(int(maxStep)*dt/(24*3600),index))
+            raise Exception('MITgcm (BRGFlx_) and glaciome1D (MITgcmRun_)are out of sync, glaciome index should be 1 behind MITgcm day')
 
+    sysPrint('=== glaciome1D Running, load MITgcm data from end of day %.2f, using melange index %05i === ' %(int(maxStep)*dt/(24*3600),index))
     # Calculate melt rate. This is the net Freshwaterflux (sum verically, avg across)/ surface area of melange
     # It is very imporant to extend meltrate beyond mélange with value of last cell. Otherwise mélange will grow
     # continuiously. 
@@ -243,9 +254,9 @@ for ii in range(iterationsToRun):
     prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
 
     endIter = int((newStartTime + 24*3600)/dt)
-    sysPrintUpDir('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)
+    sysPrint('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
-        sysPrintUpDir('\t\t == %s ==' %prefixes[k])
+        sysPrint('\t\t == %s ==' %prefixes[k])
         dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter)
         mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
         os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],endIter))
@@ -266,7 +277,7 @@ prefixes = ['Depth','DXC','DXF','DXG','DXV','DYC','DYF','DYG','DYU','hFacC','hFa
                     'maskInC','maskInS','maskInW','RAC','RAS','RAW','RAZ','XC','XG','YC','YG']
 sysPrint('\tcondensing grid tile files to global files')
 for k in range(len(prefixes)):
-    sysPrintUpDir('\t\t== %s ==' %prefixes[k])
+    sysPrint('\t\t== %s ==' %prefixes[k])
     dataTemp = mds.rdmds("results/%s"%(prefixes[k]))
     mds.wrmds('results/%s' %prefixes[k],dataTemp,dataprec='float32')
     os.system('rm results/%s.0*.0*' %(prefixes[k])) #picks out tile level files
