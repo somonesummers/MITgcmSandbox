@@ -102,7 +102,7 @@ elif(freshStart):
     prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
     os.chdir("results")
     endIter = int((24*3600)/dt)
-    sysPrint('\tcondensing grid files to global files')
+    sysPrint('\tcondensing grid files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t %s' %prefixes[k])
         dataTemp = mds.rdmds("%s"%(prefixes[k]), endIter)
@@ -243,7 +243,7 @@ for ii in range(iterationsToRun):
     prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
 
     endIter = int((newStartTime + 24*3600)/dt)
-    sysPrint('\tcondensing grid files to global files')
+    sysPrint('\tcondensing grid files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t %s' %prefixes[k])
         dataTemp = mds.rdmds("%s"%(prefixes[k]), endIter)
