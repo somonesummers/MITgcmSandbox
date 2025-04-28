@@ -69,11 +69,11 @@ for j in toIterate:
     UcTime[j] = data.Uc
     iterationNumber[j]=int(it)
 
-ax2.plot(iterationNumber,UcTime/constant.daysYear,'-')
-sca=ax2.scatter(iterationNumber,UcTime/constant.daysYear,s=None,c=iterationNumber,cmap='viridis')
+ax2.plot(iterationNumber,UcTime,'-')
+sca=ax2.scatter(iterationNumber,UcTime,s=None,c=iterationNumber,cmap='viridis')
 cbar=plt.colorbar(sca)
 cbar.set_label('Iteration [Days]')
-ax2.set_ylabel('Calving Speed [m/day]')
+ax2.set_ylabel('Calving Speed [m/yr]')
 ax2.set_xlabel('Iteration [Days]')
 ax2.grid(alpha=.5)
 
@@ -95,12 +95,12 @@ ax6.grid(alpha=.5)
 
 
 shiftIndex = 0
-if(n > 100):
-    shiftIndex = toIterate[-100]
+if(n > 360):
+    shiftIndex = toIterate[-360]
     # toIterate = toIterate[-100::] - toIterate[-100]
-    subSample = 10
-    n = 100
-    print('\t== Displaying Only Final 100 Steps in Color Plots==')
+    subSample = 60
+    n = 360
+    print('\t== Displaying Only Final 360 Steps in Color Plots==')
     # print(toIterate)
 elif(subSample > 1):
     print('\tSubsampling at %i' %subSample)
