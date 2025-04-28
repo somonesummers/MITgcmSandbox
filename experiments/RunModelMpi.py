@@ -251,12 +251,11 @@ for ii in range(iterationsToRun):
         os.system('rm %s%010i.0*.*' %(prefixes[k],endIter))
     os.chdir("../")
 
-
-
-    dataMITgcmOcean = mds.rdmds("results/dynDiag", int((newStartTime + 24*3600)/dt))
-    maxU = np.max((dataMITgcmOcean[2,:,:,:]**2 + dataMITgcmOcean[3,:,:,:]**2 + dataMITgcmOcean[2,:,:,:]**2)**(.5))
-    S_adv = 2 * (maxU * dt)/(dx * (1-0.8))
-    sysPrint("\t stability S_adv = %.06f, ideally less than 0.5" %S_adv)
+    ## this is in MITgcm monitor stats, dont need to monitor here
+    # dataMITgcmOcean = mds.rdmds("results/dynDiag", int((newStartTime + 24*3600)/dt))
+    # maxU = np.max((dataMITgcmOcean[2,:,:,:]**2 + dataMITgcmOcean[3,:,:,:]**2 + dataMITgcmOcean[2,:,:,:]**2)**(.5))
+    # S_adv = 2 * (maxU * dt)/(dx * (1-0.8))
+    # sysPrint("\t stability S_adv = %.06f, ideally less than 0.5" %S_adv)
     
     sysPrint('\t\tSeconds to run coupled step: %.4f' % (time.time() - start_time))
 
