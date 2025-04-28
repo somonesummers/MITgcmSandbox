@@ -151,7 +151,7 @@ for k in range(len(name)):
         # plt.figure()
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
-        if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
+        if(isBerg):
             localBergs = True
         else:
             localBergs = False

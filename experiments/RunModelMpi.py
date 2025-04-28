@@ -99,25 +99,15 @@ elif(freshStart):
             if "nIter0" in line:
                 oldStartIter = int(line[8:-2])
 
-    prefixes = ['Depth','DXC','DXF','DXG','DXV','DYC','DYF','DYG','DYU','hFacC','hFacS','hFacW',
-                    'maskInC','maskInS','maskInW','RAC','RAS','RAW','RAZ','XC','XG','YC','YG']
-    os.chdir("results")
-    sysPrint('\tcondensing grid tile files to global files')
-    for k in range(len(prefixes)):
-        sysPrint('\t\t== %s ==' %prefixes[k])
-        dataTemp = mds.rdmds("%s"%(prefixes[k]))
-        mds.wrmds('%s' %prefixes[k],dataTemp,dataprec='float32')
-        os.system('rm %s.0*.0*' %(prefixes[k])) #picks out tile level files
-
     prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
     endIter = int((24*3600)/dt)
     sysPrint('\tcondensing diagnostic tile files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t == %s ==' %prefixes[k])
-        dataTemp = mds.rdmds("%s"%(prefixes[k]), endIter)
-        mds.wrmds('%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
-        os.system('rm %s.%010i.0*.0*' %(prefixes[k],endIter)) #picks out tile level files
-    os.chdir("../")
+        dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter)
+        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
+        os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],endIter)) #picks out tile level files
+
 
 else:
     sysPrint('Running from existing states...')
@@ -247,18 +237,19 @@ for ii in range(iterationsToRun):
 
     os.chdir("results")
     os.system('srun ./mitgcmuv') # srun has no outputs, all in STDOUT/STDERR.*.*
-
+    os.chdir("../")
+    
     # Create global files to reduce file counts
     prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
 
     endIter = int((newStartTime + 24*3600)/dt)
-    sysPrint('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)
+    sysPrintUpDir('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
-        sysPrint('\t\t == %s ==' %prefixes[k])
-        dataTemp = mds.rdmds("%s"%(prefixes[k]), endIter)
-        mds.wrmds('%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
-        os.system('rm %s.%010i.0*.0*' %(prefixes[k],endIter))
-    os.chdir("../")
+        sysPrintUpDir('\t\t == %s ==' %prefixes[k])
+        dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter)
+        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
+        os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],endIter))
+
 
     ## this is in MITgcm monitor stats, dont need to monitor here
     # dataMITgcmOcean = mds.rdmds("results/dynDiag", int((newStartTime + 24*3600)/dt))
@@ -269,3 +260,13 @@ for ii in range(iterationsToRun):
     sysPrint('\t\tSeconds to run coupled step: %.4f' % (time.time() - start_time))
 
     # Now start all over again
+
+## After final iteration, we can clean up the tile files to global files, mostly for conistancy
+prefixes = ['Depth','DXC','DXF','DXG','DXV','DYC','DYF','DYG','DYU','hFacC','hFacS','hFacW',
+                    'maskInC','maskInS','maskInW','RAC','RAS','RAW','RAZ','XC','XG','YC','YG']
+sysPrint('\tcondensing grid tile files to global files')
+for k in range(len(prefixes)):
+    sysPrintUpDir('\t\t== %s ==' %prefixes[k])
+    dataTemp = mds.rdmds("results/%s"%(prefixes[k]))
+    mds.wrmds('results/%s' %prefixes[k],dataTemp,dataprec='float32')
+    os.system('rm results/%s.0*.0*' %(prefixes[k])) #picks out tile level files
