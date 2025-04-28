@@ -80,7 +80,7 @@ elif(freshStart):
     os.system("mkdir -p couplingResults")
     os.system("rm -f couplingResults/out.txt")
     sysPrint('Running from fresh start...')
-    sysPrint("Resetting the MITgcm directory. Steps to run: %i..." %iterationsToRun)
+    sysPrint("Assuming fresh MITgcm directory. Steps to run: %i..." %iterationsToRun)
     time.sleep(1)
     #prime the iceberg files
     #os.system('cp input/icebergs_length_init.bin input/icebergs_length.bin')
@@ -99,15 +99,24 @@ elif(freshStart):
             if "nIter0" in line:
                 oldStartIter = int(line[8:-2])
 
-    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
+    prefixes = ['Depth','DXC','DXF','DXG','DXV','DYC','DYF','DYG','DYU','hFacC','hFacS','hFacW',
+                    'maskInC','maskInS','maskInW','RAC','RAS','RAW','RAZ','XC','XG','YC','YG']
     os.chdir("results")
-    endIter = int((24*3600)/dt)
-    sysPrint('\tcondensing grid files to global files iter:%i' %endIter)
+    sysPrint('\tcondensing grid tile files to global files')
     for k in range(len(prefixes)):
-        sysPrint('\t\t %s' %prefixes[k])
+        sysPrint('\t\t== %s ==' %prefixes[k])
+        dataTemp = mds.rdmds("%s"%(prefixes[k]))
+        mds.wrmds('%s' %prefixes[k],dataTemp,dataprec='float32')
+        os.system('rm %s.0*.0*' %(prefixes[k])) #picks out tile level files
+
+    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
+    endIter = int((24*3600)/dt)
+    sysPrint('\tcondensing diagnostic tile files to global files iter:%i' %endIter)
+    for k in range(len(prefixes)):
+        sysPrint('\t\t == %s ==' %prefixes[k])
         dataTemp = mds.rdmds("%s"%(prefixes[k]), endIter)
         mds.wrmds('%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
-        os.system('rm %s%010i.0*.*' %(prefixes[k],endIter)) #picks out tile level files
+        os.system('rm %s.%010i.0*.0*' %(prefixes[k],endIter)) #picks out tile level files
     os.chdir("../")
 
 else:
@@ -243,12 +252,12 @@ for ii in range(iterationsToRun):
     prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
 
     endIter = int((newStartTime + 24*3600)/dt)
-    sysPrint('\tcondensing grid files to global files iter:%i' %endIter)
+    sysPrint('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
-        sysPrint('\t\t %s' %prefixes[k])
+        sysPrint('\t\t == %s ==' %prefixes[k])
         dataTemp = mds.rdmds("%s"%(prefixes[k]), endIter)
         mds.wrmds('%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
-        os.system('rm %s%010i.0*.*' %(prefixes[k],endIter))
+        os.system('rm %s.%010i.0*.0*' %(prefixes[k],endIter))
     os.chdir("../")
 
     ## this is in MITgcm monitor stats, dont need to monitor here
