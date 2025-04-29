@@ -16,6 +16,7 @@ import sys
 import glob
 import cmocean
 from bisect import bisect_left
+import gsw
 
 OSX = platform.system()
 
@@ -26,8 +27,8 @@ if OSX == 'Darwin':
     sys.path.append('/Users/psummers8/Documents/MITgcm/MITgcm/elizaScripts/main_scripts')
 else:
     sys.path.append('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/elizaScripts/main_scripts')
-import build_domain_funcs as build_domain 
-import run_config_funcs as rcf # import helpter functions
+
+import run_config_funcs as rcf # type: ignore # import helpter functions
 
 #Set up new folder
 makeDirs = True
@@ -607,9 +608,26 @@ V_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 W_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 Ptr_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 
-z_tmp =  np.asarray([  0,  10,   50,  100,  200,  300, 500]); #must be increasing, so do depth as positive, see negs later for z[:]
-t_tmp =  np.asarray([  1,   1,  1.5,  1.8,  2.1,  2.3, 2.6]);
-s_tmp =  np.asarray([ 33,33.2, 33.8, 34.0, 34.3, 34.4,34.6]);
+# Sermilik Winter like 2 layer
+t_avg = 1
+t_del = 4
+s_avg = 33.5
+s_del = 2
+pyclineDepth = 175
+pyclineThickness = 30
+z_tmp =  np.arange(0,600,20); #must be increasing, so do depth as positive, see negs later for z[:]
+t_tmp =  t_del * 2/np.pi * np.arctan(2 * (z_tmp - pyclineDepth)/pyclineThickness) + t_avg
+s_tmp =  s_del * 2/np.pi * np.arctan(2 * (z_tmp - pyclineDepth)/pyclineThickness) + s_avg
+
+# # Sermilik Winter like 
+# z_tmp =  np.asarray([   0,  100,  200,  250,  300,  500,  600]); #must be increasing, so do depth as positive, see negs later for z[:]
+# t_tmp =  np.asarray([-2.2,   -2,   -1,    0,  1.8,  1.9,  2.0]);
+# s_tmp =  np.asarray([-1.2,   -1,  -.5, 0.25,  0.8,  0.9,  1.0]) + 33;
+
+# # Old Default
+# z_tmp =  np.asarray([  0,  10,   50,  100,  200,  300, 500]); #must be increasing, so do depth as positive, see negs later for z[:]
+# t_tmp =  np.asarray([  1,   1,  1.5,  1.8,  2.1,  2.3, 2.6]);
+# s_tmp =  np.asarray([ 33,33.2, 33.8, 34.0, 34.3, 34.4,34.6]);
 t_int = interpolate.PchipInterpolator(z_tmp, t_tmp)
 s_int = interpolate.PchipInterpolator(z_tmp, s_tmp)
 for j in np.arange(0,grid_params['Ny']):
@@ -654,9 +672,16 @@ write_bin("NsBCW.bin", W_ns)
 write_bin("NsBCptr.bin", Ptr_ns)
 write_bin("EBCptr.bin", Ptr_e)
 
+pressure = -1 * np.ones(np.shape(t2[:,0,0])) * 1020 * 9.81 * z /(1e4)
+print(pressure)
+CT = gsw.CT_from_t(s2[:,0,0], t2[:,0,0], 0)
+density = gsw.rho(s2[:,0,0], CT, 0) 
+density = density - np.mean(density) #in-stu density less mean
 plt.figure()
 plt.plot(s2[:,1,1] - 34, z, 'b', label="Sref - 34")
 plt.plot(t2[:,1,1], z, 'r', label="Tref")
+plt.plot(CT, z, 'r--',label="$\\theta$ref")
+plt.plot(density, z, label="∆ Density",color='xkcd:pumpkin')
 plt.scatter(s_tmp - 34,-z_tmp,color='b')
 plt.scatter(t_tmp,-z_tmp,color='r')
 plt.legend()
