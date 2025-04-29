@@ -95,6 +95,7 @@ run_config['Ly_m'] = 4800 + (2 * run_config['horiz_res_m']) # domain size in y (
 
 grid_params['Nr'] = 32 # num of z-grid points
 
+run_config['make_icebergs'] = False # Do we make bergs? No if running from spin-up
 
 setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s" %(run_config['run_name'],makeDirs,writeFiles))
 input("Confirm above is accurate before continuing...")
@@ -657,8 +658,12 @@ for i in np.arange(fjordEnd,grid_params['Nx']):
 ## Seasonal Variation in Temp
 T_ns = T_ns + ForcingValue[:, None, None]
 T2 = T2 + ForcingValue[:, None, None]
-T_ns[0,:,:] = T_ns[-1,:,:]
-T2[0,:,:] = T2[-1,:,:]
+T_ns[-1,:,:] = T_ns[0,:,:]
+T2[-1,:,:] = T2[0,:,:]
+
+sampleTForcing = T2[:,int(grid_params['Nr']/2),0]
+setUpPrint('Sample BC Temp change, mid depth:')
+setUpPrint(sampleTForcing)
 
 write_bin("T.init", t2)
 write_bin("S.init", s2)
@@ -673,7 +678,6 @@ write_bin("NsBCptr.bin", Ptr_ns)
 write_bin("EBCptr.bin", Ptr_e)
 
 pressure = -1 * np.ones(np.shape(t2[:,0,0])) * 1020 * 9.81 * z /(1e4)
-print(pressure)
 CT = gsw.CT_from_t(s2[:,0,0], t2[:,0,0], 0)
 density = gsw.rho(s2[:,0,0], CT, 0) 
 density = density - np.mean(density) #in-stu density less mean
@@ -704,6 +708,7 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 # runoff[runoff <  25 ] = 25
 ## linear ramp
 runoff = 250 + 1250 * np.arange(nt)/float(nt)
+runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
 ## Constant
 # runoff = 250 * np.ones(nt)
 
@@ -765,12 +770,21 @@ plt.close()
 
 plt.figure()
 time = np.arange(nt)*params03['ExternForcingPeriod']/86400
-plt.plot(time,runoffRad[:,plume_loc,icefront],label='Radius [m]')
-plt.plot(time,runoffVel[:,plume_loc,icefront],label='Vel [m/s]')
-plt.xlabel('days')
-plt.legend()
+if(plumeMask[plume_loc,icefront] == 3):
+    plt.plot(time,runoffRad[:,plume_loc,icefront]**2 * np.pi * wsg,'SGD',linewidth=3, linestyle='--')
+elif(plumeMask[plume_loc,icefront] == 2):
+    plt.plot(time,runoffRad[:,plume_loc,icefront] * run_config['horiz_res_m'] * wsg,label='SGD',linewidth=3, linestyle='--')
+ax1=plt.gca()
+ax2=ax1.twinx()
+ax2.plot(time,sampleTForcing,label='T mid-depth',color='r')
+sampleTForcing
+ax1.set_xlabel('Time [days]')
+ax1.set_ylabel('SGD [$m^3/s$]')
+ax2.set_ylabel('Temp [C]')
+ax1.legend()
+ax2.legend()
 if(writeFiles):
-    plt.savefig("%sforcingVelocity" % (run_config['run_dir']+'/input/'))
+    plt.savefig("%splumeForcing" % (run_config['run_dir']+'/input/'))
 plt.show()
 plt.close()
 
@@ -789,418 +803,419 @@ if np.max(runoff) > 0:
 setUpPrint(EBCu[:,0,0])
 write_bin("EBCu.bin", EBCu)
 
-#=======================================================================================
-# Make Bergs, now all in python
-setUpPrint('====== Making mélange =====')
-#Make Masks
+if(run_config['make_icebergs']):
+    #=======================================================================================
+    # Make Bergs, now all in python
+    setUpPrint('====== Making mélange =====')
+    #Make Masks
 
-hfacThreshold = .8
+    hfacThreshold = .8
 
-nz = grid_params['Nr']
-ny = grid_params['Ny']
-nx = grid_params['Nx']
+    nz = grid_params['Nr']
+    ny = grid_params['Ny']
+    nx = grid_params['Nx']
 
-deltaY = run_config['horiz_res_m']
-deltaX = run_config['horiz_res_m']
+    deltaY = run_config['horiz_res_m']
+    deltaX = run_config['horiz_res_m']
 
-bergMask = np.zeros([ny,nx])
-driftMask = np.zeros([ny,nx])
-meltMask = np.zeros([ny,nx])
-barrierMask = np.zeros([ny,nx])
-bergConc = np.zeros([ny,nx])
-bergMaskNums = np.zeros([ny,nx])
-numBergsPerCell = np.zeros([ny,nx],dtype=np.int64)
+    bergMask = np.zeros([ny,nx])
+    driftMask = np.zeros([ny,nx])
+    meltMask = np.zeros([ny,nx])
+    barrierMask = np.zeros([ny,nx])
+    bergConc = np.zeros([ny,nx])
+    bergMaskNums = np.zeros([ny,nx])
+    numBergsPerCell = np.zeros([ny,nx],dtype=np.int64)
 
-# Berg parameters
-bergType = 1 # 1 = block 2 = cone (not implemented)
-alpha = 1.9 * 2 # slope of inverse power law size frequency distribution
-scaling = 1 # 1 = Sulak 2017 2 = Barker 2004
-maxBergDepth = iceBergDepth # (m) - set to zero if 'prescribing' max iceberg width, set at top here
-minBergDepth= 40 # (m)
-maxBergWidth = 0 # (m) - set to zero if 'prescribing' max iceberg depth
-minBergWidth = 40 # (m)
+    # Berg parameters
+    bergType = 1 # 1 = block 2 = cone (not implemented)
+    alpha = 1.9 * 2 # slope of inverse power law size frequency distribution
+    scaling = 1 # 1 = Sulak 2017 2 = Barker 2004
+    maxBergDepth = iceBergDepth # (m) - set to zero if 'prescribing' max iceberg width, set at top here
+    minBergDepth= 40 # (m)
+    maxBergWidth = 0 # (m) - set to zero if 'prescribing' max iceberg depth
+    minBergWidth = 40 # (m)
 
-iceStart = 1
-iceExtentIndex = int(np.round((iceExtent)/run_config['horiz_res_m']))
+    iceStart = 1
+    iceExtentIndex = int(np.round((iceExtent)/run_config['horiz_res_m']))
 
-# Iceberg mask
-bergMask[1:-1,iceStart:iceExtentIndex] = 1 # icebergs in inner 5 km, all oriented east-west
+    # Iceberg mask
+    bergMask[1:-1,iceStart:iceExtentIndex] = 1 # icebergs in inner 5 km, all oriented east-west
 
-# Drift mask, No drift for Melange experiments, but can toggle on here if you want
-# driftMask[1:-1,1:iceExtentIndex] = 1 # calculate effect of iceberg drift on melt rates 
+    # Drift mask, No drift for Melange experiments, but can toggle on here if you want
+    # driftMask[1:-1,1:iceExtentIndex] = 1 # calculate effect of iceberg drift on melt rates 
 
-# Melt mask, only let bergs melt in this region (make melt water, these don't change size)
-meltMask[1:-1,iceStart:iceExtentIndex] = doMelt # Allow focus on blocking effect only
+    # Melt mask, only let bergs melt in this region (make melt water, these don't change size)
+    meltMask[1:-1,iceStart:iceExtentIndex] = doMelt # Allow focus on blocking effect only
 
-# Barrier mask
-barrierMask[1:-1,iceStart:iceExtentIndex] = doBlock # make icebergs a physical barrier to water flow
-barrierMask[plume_loc,icefront] = 0 #Plume code struggles with hFac adjustments
+    # Barrier mask
+    barrierMask[1:-1,iceStart:iceExtentIndex] = doBlock # make icebergs a physical barrier to water flow
+    barrierMask[plume_loc,icefront] = 0 #Plume code struggles with hFac adjustments
 
-# Iceberg concentration (# of each surface cell that is filled in plan view)
-# bergConc[1:-1,iceStart:iceExtentIndex] = np.linspace(iceCoverage,10,(iceExtentIndex-1)) # iceberg concentration set at top
-bergConc[1:-1,iceStart:iceExtentIndex] = iceCoverage # iceberg concentration set at top
+    # Iceberg concentration (# of each surface cell that is filled in plan view)
+    # bergConc[1:-1,iceStart:iceExtentIndex] = np.linspace(iceCoverage,10,(iceExtentIndex-1)) # iceberg concentration set at top
+    bergConc[1:-1,iceStart:iceExtentIndex] = iceCoverage # iceberg concentration set at top
 
-# print(bergConc[1:-1,1:iceExtentIndex])
+    # print(bergConc[1:-1,1:iceExtentIndex])
 
-desiredBergArea = np.sum(bergConc/100.0*deltaX*deltaY)
-bergMaskArea = np.sum(bergMask*deltaX*deltaY)
-setUpPrint('Area where bergs live: ' + str(bergMaskArea) + ' m^2')
-setUpPrint('Desired berg area: ' + str(desiredBergArea) + ' m^2')
-setUpPrint('Ratio: ' + str(desiredBergArea/bergMaskArea*100) + '%')
+    desiredBergArea = np.sum(bergConc/100.0*deltaX*deltaY)
+    bergMaskArea = np.sum(bergMask*deltaX*deltaY)
+    setUpPrint('Area where bergs live: ' + str(bergMaskArea) + ' m^2')
+    setUpPrint('Desired berg area: ' + str(desiredBergArea) + ' m^2')
+    setUpPrint('Ratio: ' + str(desiredBergArea/bergMaskArea*100) + '%')
 
-if(scaling == 1): # then use Sulak17 volume-area scaling volume = 6.0*area^1.30
-    # assumes volume = L*W*D and W = L/1.62 (Dowdeswell et al 1992)
-    if(maxBergWidth==0):
-        maxBergWidth = 0.0642449*maxBergDepth**(5/3)
-        # minBergWidth = 0.0642449*minBergDepth**(5/3)
-    elif(maxBergDepth==0):
-        maxBergDepth = 5.19155*maxBergWidth**(5/3)
-        minBergDepth = 5.19155*minBergWidth**(5/3)
-elif(scaling == 2): # Then use Barker04 width-depth relationship
-    # Depth = 2.91*Width^0.71
-    if(maxBergWidth==0):
-        maxBergWidth = (100*10**(58/71)*maxBergDepth**(100/71)) / (291*291**(29/71))
-        #minBergWidth = (100*10**(58/71)*minBergDepth**(100/71)) / (291*291**(29/71))        
-    elif(maxBergDepth==0):
-        maxBergDepth = 2.91*maxBergWidth^0.71
-        minBergDepth = 2.91*minBergWidth^0.71
+    if(scaling == 1): # then use Sulak17 volume-area scaling volume = 6.0*area^1.30
+        # assumes volume = L*W*D and W = L/1.62 (Dowdeswell et al 1992)
+        if(maxBergWidth==0):
+            maxBergWidth = 0.0642449*maxBergDepth**(5/3)
+            # minBergWidth = 0.0642449*minBergDepth**(5/3)
+        elif(maxBergDepth==0):
+            maxBergDepth = 5.19155*maxBergWidth**(5/3)
+            minBergDepth = 5.19155*minBergWidth**(5/3)
+    elif(scaling == 2): # Then use Barker04 width-depth relationship
+        # Depth = 2.91*Width^0.71
+        if(maxBergWidth==0):
+            maxBergWidth = (100*10**(58/71)*maxBergDepth**(100/71)) / (291*291**(29/71))
+            #minBergWidth = (100*10**(58/71)*minBergDepth**(100/71)) / (291*291**(29/71))        
+        elif(maxBergDepth==0):
+            maxBergDepth = 2.91*maxBergWidth^0.71
+            minBergDepth = 2.91*minBergWidth^0.71
 
-numberOfBergs = 50 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
-bergTopArea = 0
-areaResidual = 1
-# Generate the Inverse Power Law cumulative distribution function
-# over the range minBergWidth-maxBergWidth with a slope of alpha.
-setUpPrint('Making bergs, this can take a few loops...')
-loop_count = 1
+    numberOfBergs = 50 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
+    bergTopArea = 0
+    areaResidual = 1
+    # Generate the Inverse Power Law cumulative distribution function
+    # over the range minBergWidth-maxBergWidth with a slope of alpha.
+    setUpPrint('Making bergs, this can take a few loops...')
+    loop_count = 1
 
-np.random.seed(2)
-setUpPrint('random seed set, not really random anymore')
+    np.random.seed(2)
+    setUpPrint('random seed set, not really random anymore')
 
-while(np.abs(areaResidual) > .005 ): # Create random power dist of bergs, ensure correct surface area
-    numberOfBergs = round(numberOfBergs * (1 + areaResidual))  
-    setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
-    x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
-    inversePowerLawPDF_width = ((alpha-1) / minBergWidth) * (x_width/minBergWidth) ** (-alpha)
-        # Get the CDF numerically
-    inversePowerLawCDF_width = np.cumsum(inversePowerLawPDF_width)
-        # Normalize
-    inversePowerLawCDF_width = inversePowerLawCDF_width / inversePowerLawCDF_width[-1]
+    while(np.abs(areaResidual) > .005 ): # Create random power dist of bergs, ensure correct surface area
+        numberOfBergs = round(numberOfBergs * (1 + areaResidual))  
+        setUpPrint('\tnumberOfBergs: ' + str(numberOfBergs))
+        x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
+        inversePowerLawPDF_width = ((alpha-1) / minBergWidth) * (x_width/minBergWidth) ** (-alpha)
+            # Get the CDF numerically
+        inversePowerLawCDF_width = np.cumsum(inversePowerLawPDF_width)
+            # Normalize
+        inversePowerLawCDF_width = inversePowerLawCDF_width / inversePowerLawCDF_width[-1]
+            
+            # Generate number_of_bergs uniformly distributed random numbers.
+        uniformlyDistributedRandomNumbers = np.random.uniform(0,1,numberOfBergs)
         
-        # Generate number_of_bergs uniformly distributed random numbers.
-    uniformlyDistributedRandomNumbers = np.random.uniform(0,1,numberOfBergs)
-    
-    inversePowerLawDistNumbers_width = np.zeros(uniformlyDistributedRandomNumbers.size);
+        inversePowerLawDistNumbers_width = np.zeros(uniformlyDistributedRandomNumbers.size);
 
-    nearestIndex_width = [0] * uniformlyDistributedRandomNumbers.size
+        nearestIndex_width = [0] * uniformlyDistributedRandomNumbers.size
 
-    nearestIndex_width = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_width)
+        nearestIndex_width = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_width)
 
 
-    inversePowerLawDistNumbers_width = x_width[nearestIndex_width];
-    inversePowerLawDistNumbers_length = inversePowerLawDistNumbers_width/1.12 # Widths are bigger 
+        inversePowerLawDistNumbers_width = x_width[nearestIndex_width];
+        inversePowerLawDistNumbers_length = inversePowerLawDistNumbers_width/1.12 # Widths are bigger 
 
-    randScale = np.random.normal(6,1.22,numberOfBergs)
-    randPower = np.random.normal(0.3,0.016,numberOfBergs)
-    inversePowerLawDistNumbers_depth = randScale * (inversePowerLawDistNumbers_width*inversePowerLawDistNumbers_length) ** randPower * (920/1025)
-    inversePowerLawDistNumbers_depth[inversePowerLawDistNumbers_depth < 5.123] = 5.123 #doest like round numbers, cap low end of bergs
+        randScale = np.random.normal(6,1.22,numberOfBergs)
+        randPower = np.random.normal(0.3,0.016,numberOfBergs)
+        inversePowerLawDistNumbers_depth = randScale * (inversePowerLawDistNumbers_width*inversePowerLawDistNumbers_length) ** randPower * (920/1025)
+        inversePowerLawDistNumbers_depth[inversePowerLawDistNumbers_depth < 5.123] = 5.123 #doest like round numbers, cap low end of bergs
 
-    tooWide = np.count_nonzero(inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold))  #disallow completely full cells
-    tooLong = np.count_nonzero(inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold))
-    inversePowerLawDistNumbers_width[inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max width is grid cell (assumed square)
-    inversePowerLawDistNumbers_length[inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max length is grid cell (assumed square)
-    if(tooLong + tooWide > 0):
-        setUpPrint('\t\tBergs clipped: %i for width, %i for length' % (tooWide, tooLong))
-    
-    bergTopArea = sum(inversePowerLawDistNumbers_width*inversePowerLawDistNumbers_length)
-    areaResidual = (desiredBergArea - bergTopArea)/desiredBergArea
-    setUpPrint('\t\t%.2f %% Bergs' % (bergTopArea/bergMaskArea*100))
-    setUpPrint('\t\tareaResidual %.2f %%' % (areaResidual * 100))
-    loop_count += 1
-setUpPrint('====== Success! Found our bergs =====')
-setUpPrint('Width min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_width),np.mean(inversePowerLawDistNumbers_width),np.max(inversePowerLawDistNumbers_width)))
-setUpPrint('Depth min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth)))
-setUpPrint('Total Berg Area %f' % bergTopArea)
-setUpPrint('Total Berg fract: %.2f %%' % (bergTopArea/bergMaskArea*100))
+        tooWide = np.count_nonzero(inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold))  #disallow completely full cells
+        tooLong = np.count_nonzero(inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold))
+        inversePowerLawDistNumbers_width[inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max width is grid cell (assumed square)
+        inversePowerLawDistNumbers_length[inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max length is grid cell (assumed square)
+        if(tooLong + tooWide > 0):
+            setUpPrint('\t\tBergs clipped: %i for width, %i for length' % (tooWide, tooLong))
+        
+        bergTopArea = sum(inversePowerLawDistNumbers_width*inversePowerLawDistNumbers_length)
+        areaResidual = (desiredBergArea - bergTopArea)/desiredBergArea
+        setUpPrint('\t\t%.2f %% Bergs' % (bergTopArea/bergMaskArea*100))
+        setUpPrint('\t\tareaResidual %.2f %%' % (areaResidual * 100))
+        loop_count += 1
+    setUpPrint('====== Success! Found our bergs =====')
+    setUpPrint('Width min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_width),np.mean(inversePowerLawDistNumbers_width),np.max(inversePowerLawDistNumbers_width)))
+    setUpPrint('Depth min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth)))
+    setUpPrint('Total Berg Area %f' % bergTopArea)
+    setUpPrint('Total Berg fract: %.2f %%' % (bergTopArea/bergMaskArea*100))
 
-# Now we sort these berg into cell, randomly 
-bergMaski = 0  #Bad name, but this is the count of cells that will recieve bergs
-bergDict = {}
+    # Now we sort these berg into cell, randomly 
+    bergMaski = 0  #Bad name, but this is the count of cells that will recieve bergs
+    bergDict = {}
 
-for j in range(ny):
-    for i in range(nx):
-        if(bergMask[j,i] == 1):
-            # print('i,j, bergmask',i,j,bergMask[j,i])
-            bergMaski = 1 + bergMaski #Needs to start at 1, as non-bergs will be 0
-            bergMaskNums[j,i] = bergMaski #Assign Mask Nums, not random as we'll randomly place bergs in cells
-            bergDict[bergMaski] = [j,i] #This lets us do 1-D loops for the whole grid
-setUpPrint('%i cells with bergs' % bergMaski)
+    for j in range(ny):
+        for i in range(nx):
+            if(bergMask[j,i] == 1):
+                # print('i,j, bergmask',i,j,bergMask[j,i])
+                bergMaski = 1 + bergMaski #Needs to start at 1, as non-bergs will be 0
+                bergMaskNums[j,i] = bergMaski #Assign Mask Nums, not random as we'll randomly place bergs in cells
+                bergDict[bergMaski] = [j,i] #This lets us do 1-D loops for the whole grid
+    setUpPrint('%i cells with bergs' % bergMaski)
 
-# Sort my bergs
-sorted_indices = np.argsort(-inversePowerLawDistNumbers_depth) # Sort backwards to get descending from big to small bergs 
-sorted_depth = inversePowerLawDistNumbers_depth[sorted_indices]
-sorted_width = inversePowerLawDistNumbers_width[sorted_indices]
-sorted_length = inversePowerLawDistNumbers_length[sorted_indices]
-assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) # In this script, every berg has a home
+    # Sort my bergs
+    sorted_indices = np.argsort(-inversePowerLawDistNumbers_depth) # Sort backwards to get descending from big to small bergs 
+    sorted_depth = inversePowerLawDistNumbers_depth[sorted_indices]
+    sorted_width = inversePowerLawDistNumbers_width[sorted_indices]
+    sorted_length = inversePowerLawDistNumbers_length[sorted_indices]
+    assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) # In this script, every berg has a home
 
-# Array for bergs
-bergsPerCellLimit = 500
-icebergs_depths = np.zeros([bergMaski,bergsPerCellLimit])
-icebergs_widths = np.zeros([bergMaski,bergsPerCellLimit])
-icebergs_length = np.zeros([bergMaski,bergsPerCellLimit])  #careful, not plural as to length match
+    # Array for bergs
+    bergsPerCellLimit = 500
+    icebergs_depths = np.zeros([bergMaski,bergsPerCellLimit])
+    icebergs_widths = np.zeros([bergMaski,bergsPerCellLimit])
+    icebergs_length = np.zeros([bergMaski,bergsPerCellLimit])  #careful, not plural as to length match
 
-np.random.seed(2)
-assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) #every Berg has a spot
+    np.random.seed(2)
+    assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) #every Berg has a spot
 
-icebergs_per_cell = np.zeros([bergMaski],dtype=np.int16)
-icebergs_area_per_cell = np.zeros([bergMaski])
+    icebergs_per_cell = np.zeros([bergMaski],dtype=np.int16)
+    icebergs_area_per_cell = np.zeros([bergMaski])
 
-for i in range(numberOfBergs): 
-    j = assignedCell[i]
-    # print('looking at mask number',j,'at berg',i)
-    # print('Berg number', icebergs_per_cell[j],'in this cell')
-    bergArea = sorted_width[i] * sorted_length[i]
-    loopLimiter = 0
-    while(bergArea > (deltaX * deltaY  * (bergConc[bergDict[j+1][0],bergDict[j+1][1]]/100) - icebergs_area_per_cell[j])): #if above 'full', pick random new cell, accept with decreasing probability
-        j_old = j
-        j = np.random.randint(0,bergMaski)
-        loopLimiter += 1
-        if((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY) < hfacThreshold - .01): #only consider accepting if under 95
-            odds = np.abs(np.random.normal(0,.5,1))  #randomly accepts those that are big in overfull cells, but at decreasing frequency
-            overFull = ((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY)*100 - bergConc[bergDict[j+1][0],bergDict[j+1][1]])
-            if(odds > overFull):
-                 # print('accepting overfull')
-                 assignedCell[i] = j  #if we it a shuffling critera
-                 break
-        if(loopLimiter > bergMaski*20): #eventually we have to force some in
-            indexesAllowed = np.where((deltaX * deltaY * hfacThreshold - icebergs_area_per_cell)  > bergArea)
-            randi = np.random.randint(0,len(indexesAllowed[0]))
-            j = indexesAllowed[0][randi]
-            assignedCell[i] = j  #if we it a shuffling critera, must line up for calculation below
-            # setUpPrint('\t Randomly missed, will force into cell with room: %i' % j)
-            if((np.min(icebergs_area_per_cell) + bergArea)/(deltaX * deltaY) > hfacThreshold):
-                setUpPrint('WARNING cell very full: %.2f%%' %((np.min(icebergs_area_per_cell) + bergArea)*100/(deltaX * deltaY)))
-            break
-     
-    icebergs_depths[j,icebergs_per_cell[j]] = sorted_depth[i]
-    icebergs_widths[j,icebergs_per_cell[j]] = sorted_width[i]
-    icebergs_length[j,icebergs_per_cell[j]] = sorted_length[i]
-    icebergs_per_cell[j] += 1
-    # icebergs_area_per_cell[j] = np.sum(icebergs_widths[j,:]*icebergs_length[j,:])
-    icebergs_area_per_cell[j] += bergArea
-setUpPrint('Bergs per cell and filled faction at surface for spot check')     
-setUpPrint(icebergs_per_cell)
-setUpPrint(np.round(icebergs_area_per_cell/(deltaX*deltaY),2))
-setUpPrint('Max fill is: %.2f%%' % (np.nanmax(icebergs_area_per_cell/(deltaX*deltaY))*100))
+    for i in range(numberOfBergs): 
+        j = assignedCell[i]
+        # print('looking at mask number',j,'at berg',i)
+        # print('Berg number', icebergs_per_cell[j],'in this cell')
+        bergArea = sorted_width[i] * sorted_length[i]
+        loopLimiter = 0
+        while(bergArea > (deltaX * deltaY  * (bergConc[bergDict[j+1][0],bergDict[j+1][1]]/100) - icebergs_area_per_cell[j])): #if above 'full', pick random new cell, accept with decreasing probability
+            j_old = j
+            j = np.random.randint(0,bergMaski)
+            loopLimiter += 1
+            if((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY) < hfacThreshold - .01): #only consider accepting if under 95
+                odds = np.abs(np.random.normal(0,.5,1))  #randomly accepts those that are big in overfull cells, but at decreasing frequency
+                overFull = ((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY)*100 - bergConc[bergDict[j+1][0],bergDict[j+1][1]])
+                if(odds > overFull):
+                    # print('accepting overfull')
+                    assignedCell[i] = j  #if we it a shuffling critera
+                    break
+            if(loopLimiter > bergMaski*20): #eventually we have to force some in
+                indexesAllowed = np.where((deltaX * deltaY * hfacThreshold - icebergs_area_per_cell)  > bergArea)
+                randi = np.random.randint(0,len(indexesAllowed[0]))
+                j = indexesAllowed[0][randi]
+                assignedCell[i] = j  #if we it a shuffling critera, must line up for calculation below
+                # setUpPrint('\t Randomly missed, will force into cell with room: %i' % j)
+                if((np.min(icebergs_area_per_cell) + bergArea)/(deltaX * deltaY) > hfacThreshold):
+                    setUpPrint('WARNING cell very full: %.2f%%' %((np.min(icebergs_area_per_cell) + bergArea)*100/(deltaX * deltaY)))
+                break
+        
+        icebergs_depths[j,icebergs_per_cell[j]] = sorted_depth[i]
+        icebergs_widths[j,icebergs_per_cell[j]] = sorted_width[i]
+        icebergs_length[j,icebergs_per_cell[j]] = sorted_length[i]
+        icebergs_per_cell[j] += 1
+        # icebergs_area_per_cell[j] = np.sum(icebergs_widths[j,:]*icebergs_length[j,:])
+        icebergs_area_per_cell[j] += bergArea
+    setUpPrint('Bergs per cell and filled faction at surface for spot check')     
+    setUpPrint(icebergs_per_cell)
+    setUpPrint(np.round(icebergs_area_per_cell/(deltaX*deltaY),2))
+    setUpPrint('Max fill is: %.2f%%' % (np.nanmax(icebergs_area_per_cell/(deltaX*deltaY))*100))
 
-# All bergs now sorted 
-openFrac = np.zeros([nz,ny,nx])
-SA = np.zeros([nz,ny,nx])
-SA[:,:,:] = np.nan
+    # All bergs now sorted 
+    openFrac = np.zeros([nz,ny,nx])
+    SA = np.zeros([nz,ny,nx])
+    SA[:,:,:] = np.nan
 
-#This loop knows where all bergs are already, different from searching for all bergs across entire grid
-for i in range(bergMaski):
-    bergCount = icebergs_per_cell[i]
-    numBergsPerCell[bergDict[i+1][0],bergDict[i+1][1]] = bergCount
-    if(bergCount > 0):
-        lengths = icebergs_length[i,icebergs_length[i,:] > 0] #return only non-zeros
-        widths = icebergs_widths[i,icebergs_widths[i,:] > 0] #return only non-zeros
-        depths = icebergs_depths[i,icebergs_depths[i,:] > 0] #return only non-zeros
-        for k in range(nz):
-            cellVolume = deltaX*deltaY*dz[k]
-            d_bot = sum_z[k] #bottom of depth bin
-            d_top = sum_z[k] - dz[k]
-            volume1 = dz[k] * lengths[depths > d_bot] * widths[depths > d_bot]
-            SA1 = dz[k]*2*(lengths[depths > d_bot] + widths[depths > d_bot])
-            partialFill = (depths < d_bot) & (depths > d_top)
-            #partial fill
-            volume2 = (depths[partialFill] - d_top) * lengths[partialFill] * widths[partialFill]
-            #partial sides
-            SA2 = (depths[partialFill] - d_top)*2*(lengths[partialFill] + widths[partialFill]) 
-            #bottom
-            SA3 = lengths[partialFill] * widths[partialFill]
-            #print(np.sum(volume1), np.sum(volume2))
-            openFrac[k,bergDict[i+1][0],bergDict[i+1][1]] = 1-((np.sum(volume1) + np.sum(volume2))/cellVolume)
-            SA[k,bergDict[i+1][0],bergDict[i+1][1]] = np.sum(SA1) + np.sum(SA2) + np.sum(SA3)
-    elif(bergCount == 0):
-        openFrac[:,bergDict[i+1][0],bergDict[i+1][1]] = 1
-        SA[:,bergDict[i+1][0],bergDict[i+1][1]] = 0
+    #This loop knows where all bergs are already, different from searching for all bergs across entire grid
+    for i in range(bergMaski):
+        bergCount = icebergs_per_cell[i]
+        numBergsPerCell[bergDict[i+1][0],bergDict[i+1][1]] = bergCount
+        if(bergCount > 0):
+            lengths = icebergs_length[i,icebergs_length[i,:] > 0] #return only non-zeros
+            widths = icebergs_widths[i,icebergs_widths[i,:] > 0] #return only non-zeros
+            depths = icebergs_depths[i,icebergs_depths[i,:] > 0] #return only non-zeros
+            for k in range(nz):
+                cellVolume = deltaX*deltaY*dz[k]
+                d_bot = sum_z[k] #bottom of depth bin
+                d_top = sum_z[k] - dz[k]
+                volume1 = dz[k] * lengths[depths > d_bot] * widths[depths > d_bot]
+                SA1 = dz[k]*2*(lengths[depths > d_bot] + widths[depths > d_bot])
+                partialFill = (depths < d_bot) & (depths > d_top)
+                #partial fill
+                volume2 = (depths[partialFill] - d_top) * lengths[partialFill] * widths[partialFill]
+                #partial sides
+                SA2 = (depths[partialFill] - d_top)*2*(lengths[partialFill] + widths[partialFill]) 
+                #bottom
+                SA3 = lengths[partialFill] * widths[partialFill]
+                #print(np.sum(volume1), np.sum(volume2))
+                openFrac[k,bergDict[i+1][0],bergDict[i+1][1]] = 1-((np.sum(volume1) + np.sum(volume2))/cellVolume)
+                SA[k,bergDict[i+1][0],bergDict[i+1][1]] = np.sum(SA1) + np.sum(SA2) + np.sum(SA3)
+        elif(bergCount == 0):
+            openFrac[:,bergDict[i+1][0],bergDict[i+1][1]] = 1
+            SA[:,bergDict[i+1][0],bergDict[i+1][1]] = 0
 
-icebergs_depths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
-icebergs_widths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
-icebergs_length2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
+    icebergs_depths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
+    icebergs_widths2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
+    icebergs_length2D = np.zeros([bergsPerCellLimit,grid_params['Ny'],grid_params['Nx']])
 
-for k in range(bergMaski):
-    j = bergDict[k+1][0]
-    i = bergDict[k+1][1]
-    icebergs_depths2D[:,j,i] = icebergs_depths[k,:]
-    icebergs_widths2D[:,j,i] = icebergs_widths[k,:]
-    icebergs_length2D[:,j,i] = icebergs_length[k,:]
+    for k in range(bergMaski):
+        j = bergDict[k+1][0]
+        i = bergDict[k+1][1]
+        icebergs_depths2D[:,j,i] = icebergs_depths[k,:]
+        icebergs_widths2D[:,j,i] = icebergs_widths[k,:]
+        icebergs_length2D[:,j,i] = icebergs_length[k,:]
 
-if(forceDraft):
-    mX=np.load(run_config['run_dir']+'/input/melangeX.npy')
-    mH=np.load(run_config['run_dir']+'/input/melangeH.npy')
-    x_fd = np.arange(deltaX/2,deltaX*(nx+.5),deltaX)
+    if(forceDraft):
+        mX=np.load(run_config['run_dir']+'/input/melangeX.npy')
+        mH=np.load(run_config['run_dir']+'/input/melangeH.npy')
+        x_fd = np.arange(deltaX/2,deltaX*(nx+.5),deltaX)
+        depthHelper = icebergs_depths2D.copy()
+        depthHelper[depthHelper == 0] = np.nan
+        depthMedian = np.nanmedian(depthHelper,axis=[0,1])
+        del depthHelper
+        for i in range(nx):
+            for j in range(ny):
+                if(~np.isnan(depthMedian[i])):
+                    icebergs_depths2D[:,j,i] = icebergs_depths2D[:,j,i]/depthMedian[i]*np.interp(x,mX,mH,0,0)[i]
+                    # pass
+
+        for i in range(nx):
+            for j in range(ny):
+                numberOfBergs = len(icebergs_length2D[icebergs_length2D[:,j,i] > 0])
+                if(numberOfBergs > 0):
+                    lengths = icebergs_length2D[icebergs_length2D[:,j,i] > 0,j,i] #return only non-zeros
+                    widths = icebergs_widths2D[icebergs_widths2D[:,j,i] > 0,j,i] #return only non-zeros
+                    depths = icebergs_depths2D[icebergs_depths2D[:,j,i] > 0,j,i] #return only non-zeros
+                    for k in range(nz):
+                        cellVolume = deltaX*deltaY*dz[k]
+                        d_bot = sum_z[k] #bottom of depth bin
+                        d_top = sum_z[k] - dz[k]
+                        volume1 = dz[k] * lengths[depths > d_bot] * widths[depths > d_bot]
+                        SA1 = dz[k]*2*(lengths[depths > d_bot] + widths[depths > d_bot])
+                        partialFill = (depths < d_bot) & (depths > d_top)
+                        #partial fill
+                        volume2 = (depths[partialFill] - d_top) * lengths[partialFill] * widths[partialFill]
+                        #partial sides
+                        SA2 = (depths[partialFill] - d_top)*2*(lengths[partialFill] + widths[partialFill]) 
+                        #bottom
+                        SA3 = lengths[partialFill] * widths[partialFill]
+                        #print(np.sum(volume1), np.sum(volume2))
+                        openFrac[k,j,i] = 1-((np.sum(volume1) + np.sum(volume2))/cellVolume)
+                        SA[k,j,i] = np.sum(SA1) + np.sum(SA2) + np.sum(SA3)
+                elif(bergCount == 0):
+                    openFrac[:,j,i] = 1
+                    SA[:,j,i] = 0
+
+    # Tracers for all Bergs, just set to 1 everywhere
+    brgTracerMask = np.zeros([nTracers,grid_params['Ny'],grid_params['Nx']])
+    brgTracerMask[1,:,:] = 1.0 
+
+    # Plots for reference on whats happening berg-wise
+    fig = plt.figure()
+    plt.subplot(2,2,1)
+    for i in range(bergMaski):
+        plt.plot(openFrac[:,bergDict[i+1][0],bergDict[i+1][1]],-sum_z,alpha=.5,color='xkcd:gray',linewidth=.5)
+    plt.plot(np.mean(openFrac[:,bergMask==1],1),-sum_z,alpha=1,color='xkcd:black',linewidth=1,linestyle='--',label='Average Bergs')
+    plt.plot([0,1],[-maxBergDepth,-maxBergDepth],color = 'xkcd:red',linestyle=':', label='Target Max Depth')
+    plt.plot([1-np.max(bergConc)/100,1-np.max(bergConc)/100],[-domain_params['H'],0],color = 'xkcd:gray',linestyle=':',label='Target Max Berg Conc')
+    plt.xlabel('Open Fraction of Cells')
+    plt.ylabel('Depth [m]')
+    # plt.legend()  #not quite room so off for now
+
+    plt.subplot(2,2,2)
+    plt.hist(inversePowerLawDistNumbers_depth,bins = 50)
+    plt.ylabel('Count')
+    plt.xlabel('Depth [m]')
+
+    plt.subplot(2,2,3)
+    plt.hist(inversePowerLawDistNumbers_width,bins = 50)
+    plt.ylabel('Count')
+    plt.xlabel('Width [m]')
+
+    plt.subplot(2,2,4)
+    plt.hist(inversePowerLawDistNumbers_length,bins = 50)
+    plt.ylabel('Count')
+    plt.xlabel('Length [m]')
+    fig.tight_layout()
+    if(writeFiles):
+        plt.savefig(run_config['run_dir']+'/input/bergStatistics.png', format='png', dpi=200)
+    plt.show()
+
+    fig = plt.figure()
+    pltHelper = 1-openFrac[0,:,:]
+    pltHelper[bergMask == 0] = np.nan
+    plt.subplot(211)
+    pc = plt.pcolormesh(pltHelper,cmap='cmo.ice_r')
+    cbar = plt.colorbar(pc)
+    plt.suptitle('Iceberg Cover and Residual')
+    plt.ylabel('Cell across fjord')
+    cbar.set_label('iceberg cover')
+
+    plt.subplot(212)
+    pc = plt.pcolormesh(pltHelper - bergConc/100,cmap='cmo.ice')
+    cbar = plt.colorbar(pc)
+    pc_min = np.nanmin(pltHelper) * 100
+    pc_max = np.nanmax(pltHelper) * 100
+    plt.xlabel("Cell along fjord, Ice coverage is %.2f%% - %.2f%%" % (pc_min, pc_max))
+    plt.ylabel('Cell across fjord')
+    cbar.set_label('cover resid')
+    fig.tight_layout()
+    if(writeFiles):
+        plt.savefig(run_config['run_dir']+'/input/bergMap.png', format='png', dpi=200)
+    plt.show()
+
+    fig = plt.figure()
+    pc = plt.pcolormesh(barrierMask,cmap='cmo.ice_r')
+    cbar = plt.colorbar(pc)
+    plt.suptitle('Barrier Mask')
+    plt.ylabel('Cell across fjord')
+    plt.xlabel("Cell along fjord")
+    fig.tight_layout()
+    if(writeFiles):
+        plt.savefig(run_config['run_dir']+'/input/barrierMask.png', format='png', dpi=200)
+    plt.show()
+
+    fig = plt.figure()
+    pc = plt.pcolormesh(meltMask,cmap='cmo.ice_r')
+    cbar = plt.colorbar(pc)
+    plt.suptitle('Melt Mask')
+    plt.ylabel('Cell across fjord')
+    plt.xlabel("Cell along fjord")
+    fig.tight_layout()
+    if(writeFiles):
+        plt.savefig(run_config['run_dir']+'/input/meltMask.png', format='png', dpi=200)
+    plt.show()
+
+    plt.figure()
+    varphi = 1-openFrac
+    varphi[varphi == 1] = np.nan
+    pc = plt.pcolormesh(x[0,:],-sum_z,np.nanmean(varphi,axis=1),cmap='gray_r')
+    cbar = plt.colorbar(pc)
     depthHelper = icebergs_depths2D.copy()
     depthHelper[depthHelper == 0] = np.nan
-    depthMedian = np.nanmedian(depthHelper,axis=[0,1])
-    del depthHelper
-    for i in range(nx):
-        for j in range(ny):
-            if(~np.isnan(depthMedian[i])):
-                icebergs_depths2D[:,j,i] = icebergs_depths2D[:,j,i]/depthMedian[i]*np.interp(x,mX,mH,0,0)[i]
-                # pass
+    plt.plot(x[0,:],np.nanmedian(-depthHelper,axis=[0,1]),color='xkcd:red')
+    plt.suptitle('$\\varphi$')
+    plt.ylabel('Depth [m]')
+    plt.xlabel('Along fjord [m]')
+    cbar.set_label('ice fraction')
+    if(writeFiles):
+        plt.savefig(run_config['run_dir']+'/input/draftPlot.png', format='png', dpi=200)
+    plt.show()
+    ## write iceberg txt files
+    # setUpPrint('Saving text files for bergs...')
+    # if(writeFiles):
+    #     for i in range(bergMaski):
+    #         with open(run_config['run_dir'] + '/input/iceberg_depth_%05i.txt' % (i+1) , 'w') as file_handler:
+    #             for item in icebergs_depths[i,icebergs_depths[i,:] > 0]:
+    #                 file_handler.write("{}\n".format(item))
+    #         with open(run_config['run_dir']+'/input/iceberg_width_%05i.txt' % (i+1) , 'w') as file_handler:
+    #             for item in icebergs_widths[i,icebergs_widths[i,:] > 0]:
+    #                 file_handler.write("{}\n".format(item))
+    #         with open(run_config['run_dir'] + '/input/iceberg_length_%05i.txt' % (i+1) , 'w') as file_handler:
+    #             for item in icebergs_length[i,icebergs_length[i,:] > 0]:
+    #                 file_handler.write("{}\n".format(item))
 
-    for i in range(nx):
-        for j in range(ny):
-            numberOfBergs = len(icebergs_length2D[icebergs_length2D[:,j,i] > 0])
-            if(numberOfBergs > 0):
-                lengths = icebergs_length2D[icebergs_length2D[:,j,i] > 0,j,i] #return only non-zeros
-                widths = icebergs_widths2D[icebergs_widths2D[:,j,i] > 0,j,i] #return only non-zeros
-                depths = icebergs_depths2D[icebergs_depths2D[:,j,i] > 0,j,i] #return only non-zeros
-                for k in range(nz):
-                    cellVolume = deltaX*deltaY*dz[k]
-                    d_bot = sum_z[k] #bottom of depth bin
-                    d_top = sum_z[k] - dz[k]
-                    volume1 = dz[k] * lengths[depths > d_bot] * widths[depths > d_bot]
-                    SA1 = dz[k]*2*(lengths[depths > d_bot] + widths[depths > d_bot])
-                    partialFill = (depths < d_bot) & (depths > d_top)
-                    #partial fill
-                    volume2 = (depths[partialFill] - d_top) * lengths[partialFill] * widths[partialFill]
-                    #partial sides
-                    SA2 = (depths[partialFill] - d_top)*2*(lengths[partialFill] + widths[partialFill]) 
-                    #bottom
-                    SA3 = lengths[partialFill] * widths[partialFill]
-                    #print(np.sum(volume1), np.sum(volume2))
-                    openFrac[k,j,i] = 1-((np.sum(volume1) + np.sum(volume2))/cellVolume)
-                    SA[k,j,i] = np.sum(SA1) + np.sum(SA2) + np.sum(SA3)
-            elif(bergCount == 0):
-                openFrac[:,j,i] = 1
-                SA[:,j,i] = 0
+    # write global files
+    write_bin('bergMask.bin',bergMask)
+    write_bin('bergMaskNums.bin',bergMaskNums)
+    write_bin('numBergsPerCell.bin',numBergsPerCell)
+    write_bin('openFrac.bin',openFrac)
+    write_bin('totalBergArea.bin',SA)
+    write_bin('meltMask.bin',meltMask)
+    write_bin('driftMask.bin',driftMask)
+    write_bin('barrierMask.bin',barrierMask)
+    write_bin('icebergs_depths_init.bin',icebergs_depths2D)
+    write_bin('icebergs_widths_init.bin',icebergs_widths2D)
+    write_bin('icebergs_length_init.bin',icebergs_length2D)
+    write_bin('brg_tracerMask.bin',brgTracerMask)
 
-# Tracers for all Bergs, just set to 1 everywhere
-brgTracerMask = np.zeros([nTracers,grid_params['Ny'],grid_params['Nx']])
-brgTracerMask[1,:,:] = 1.0 
-
-# Plots for reference on whats happening berg-wise
-fig = plt.figure()
-plt.subplot(2,2,1)
-for i in range(bergMaski):
-    plt.plot(openFrac[:,bergDict[i+1][0],bergDict[i+1][1]],-sum_z,alpha=.5,color='xkcd:gray',linewidth=.5)
-plt.plot(np.mean(openFrac[:,bergMask==1],1),-sum_z,alpha=1,color='xkcd:black',linewidth=1,linestyle='--',label='Average Bergs')
-plt.plot([0,1],[-maxBergDepth,-maxBergDepth],color = 'xkcd:red',linestyle=':', label='Target Max Depth')
-plt.plot([1-np.max(bergConc)/100,1-np.max(bergConc)/100],[-domain_params['H'],0],color = 'xkcd:gray',linestyle=':',label='Target Max Berg Conc')
-plt.xlabel('Open Fraction of Cells')
-plt.ylabel('Depth [m]')
-# plt.legend()  #not quite room so off for now
-
-plt.subplot(2,2,2)
-plt.hist(inversePowerLawDistNumbers_depth,bins = 50)
-plt.ylabel('Count')
-plt.xlabel('Depth [m]')
-
-plt.subplot(2,2,3)
-plt.hist(inversePowerLawDistNumbers_width,bins = 50)
-plt.ylabel('Count')
-plt.xlabel('Width [m]')
-
-plt.subplot(2,2,4)
-plt.hist(inversePowerLawDistNumbers_length,bins = 50)
-plt.ylabel('Count')
-plt.xlabel('Length [m]')
-fig.tight_layout()
-if(writeFiles):
-    plt.savefig(run_config['run_dir']+'/input/bergStatistics.png', format='png', dpi=200)
-plt.show()
-
-fig = plt.figure()
-pltHelper = 1-openFrac[0,:,:]
-pltHelper[bergMask == 0] = np.nan
-plt.subplot(211)
-pc = plt.pcolormesh(pltHelper,cmap='cmo.ice_r')
-cbar = plt.colorbar(pc)
-plt.suptitle('Iceberg Cover and Residual')
-plt.ylabel('Cell across fjord')
-cbar.set_label('iceberg cover')
-
-plt.subplot(212)
-pc = plt.pcolormesh(pltHelper - bergConc/100,cmap='cmo.ice')
-cbar = plt.colorbar(pc)
-pc_min = np.nanmin(pltHelper) * 100
-pc_max = np.nanmax(pltHelper) * 100
-plt.xlabel("Cell along fjord, Ice coverage is %.2f%% - %.2f%%" % (pc_min, pc_max))
-plt.ylabel('Cell across fjord')
-cbar.set_label('cover resid')
-fig.tight_layout()
-if(writeFiles):
-    plt.savefig(run_config['run_dir']+'/input/bergMap.png', format='png', dpi=200)
-plt.show()
-
-fig = plt.figure()
-pc = plt.pcolormesh(barrierMask,cmap='cmo.ice_r')
-cbar = plt.colorbar(pc)
-plt.suptitle('Barrier Mask')
-plt.ylabel('Cell across fjord')
-plt.xlabel("Cell along fjord")
-fig.tight_layout()
-if(writeFiles):
-    plt.savefig(run_config['run_dir']+'/input/barrierMask.png', format='png', dpi=200)
-plt.show()
-
-fig = plt.figure()
-pc = plt.pcolormesh(meltMask,cmap='cmo.ice_r')
-cbar = plt.colorbar(pc)
-plt.suptitle('Melt Mask')
-plt.ylabel('Cell across fjord')
-plt.xlabel("Cell along fjord")
-fig.tight_layout()
-if(writeFiles):
-    plt.savefig(run_config['run_dir']+'/input/meltMask.png', format='png', dpi=200)
-plt.show()
-
-plt.figure()
-varphi = 1-openFrac
-varphi[varphi == 1] = np.nan
-pc = plt.pcolormesh(x[0,:],-sum_z,np.nanmean(varphi,axis=1),cmap='gray_r')
-cbar = plt.colorbar(pc)
-depthHelper = icebergs_depths2D.copy()
-depthHelper[depthHelper == 0] = np.nan
-plt.plot(x[0,:],np.nanmedian(-depthHelper,axis=[0,1]),color='xkcd:red')
-plt.suptitle('$\\varphi$')
-plt.ylabel('Depth [m]')
-plt.xlabel('Along fjord [m]')
-cbar.set_label('ice fraction')
-if(writeFiles):
-    plt.savefig(run_config['run_dir']+'/input/draftPlot.png', format='png', dpi=200)
-plt.show()
-## write iceberg txt files
-# setUpPrint('Saving text files for bergs...')
-# if(writeFiles):
-#     for i in range(bergMaski):
-#         with open(run_config['run_dir'] + '/input/iceberg_depth_%05i.txt' % (i+1) , 'w') as file_handler:
-#             for item in icebergs_depths[i,icebergs_depths[i,:] > 0]:
-#                 file_handler.write("{}\n".format(item))
-#         with open(run_config['run_dir']+'/input/iceberg_width_%05i.txt' % (i+1) , 'w') as file_handler:
-#             for item in icebergs_widths[i,icebergs_widths[i,:] > 0]:
-#                 file_handler.write("{}\n".format(item))
-#         with open(run_config['run_dir'] + '/input/iceberg_length_%05i.txt' % (i+1) , 'w') as file_handler:
-#             for item in icebergs_length[i,icebergs_length[i,:] > 0]:
-#                 file_handler.write("{}\n".format(item))
-
-# write global files
-write_bin('bergMask.bin',bergMask)
-write_bin('bergMaskNums.bin',bergMaskNums)
-write_bin('numBergsPerCell.bin',numBergsPerCell)
-write_bin('openFrac.bin',openFrac)
-write_bin('totalBergArea.bin',SA)
-write_bin('meltMask.bin',meltMask)
-write_bin('driftMask.bin',driftMask)
-write_bin('barrierMask.bin',barrierMask)
-write_bin('icebergs_depths_init.bin',icebergs_depths2D)
-write_bin('icebergs_widths_init.bin',icebergs_widths2D)
-write_bin('icebergs_length_init.bin',icebergs_length2D)
-write_bin('brg_tracerMask.bin',brgTracerMask)
-
-setUpPrint('Berg setup is done.')
+    setUpPrint('Berg setup is done.')
 #========================================================================================
 #Update files in INPUT directory
 setUpPrint('====== Cleaning up input/ files =====')
