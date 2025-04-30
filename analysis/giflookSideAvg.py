@@ -224,7 +224,7 @@ for k in range(len(name)):
                 pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
             CT = gsw.CT_from_t(salt, np.average(data[0,:,1:-1,:],weights=openFrac[:,1:-1,:],axis=1), pressure)
             density = gsw.rho(salt, CT, 0) - 1000 #in-stu density less 1000
-            densityLevels = np.linspace(25,28,31)
+            densityLevels = np.linspace(25,28,16)
             cc = plt.contour(
                 np.squeeze(x[0,:]),
                 np.squeeze(z),

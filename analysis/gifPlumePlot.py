@@ -66,7 +66,7 @@ z = mds.rdmds("results/RC")
 
 
 dynName = 'plumeDiag'
-name = ["W", "Temp", "Sal", "CellMeltRate", "RadiusThickness","Flux","Density"]
+name = ["W", "Temp", "Sal", "CellMeltRate", "RadiusThickness","Flux","DensityABS"]
 units = ["[m/s]", "[C]", "[PSU]", "[m/day]", "[m]","[m^3/s]","[kg/m^3]"]
 
  #amb is T,S,U,W,V
@@ -132,27 +132,28 @@ for k in range(len(name)):
             if(plumeType == 2):
                 plotData = data[0,:,j,plumeLoc[1]]*dx*data[4,:,j,plumeLoc[1]]
         elif k == 6:
-            lvl = [20,30]
+            rho0 = 1020
+            lvl = [0,10]
             ambData = mds.rdmds("results/dynDiag", i)
             cm = "xkcd:pumpkin"
             salt = np.squeeze(data[2,:,j,plumeLoc[1]])
             if(i == startStep): #only calc pressure once
-                pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 /10e3
+                pressure = -1 * np.ones(salt.shape) * 1028 * 9.81 /10e3
             CT = gsw.CT_from_t(salt, data[1,:,j,plumeLoc[1]], pressure)
-            plotData = gsw.rho(salt, CT, pressure) - 1000 #in-stu density less 1000
+            plotData = gsw.rho(salt, CT, pressure) - rho0 #in-stu density less rho0
             ambS = np.squeeze(ambData[1,:,j,plumeLoc[1]])
             ambCT = gsw.CT_from_t(salt, ambData[0,:,j,plumeLoc[1]], pressure)
-            plotData2 = gsw.rho(ambS, ambCT, pressure) - 1000 #in-stu density less 1000
+            plotData2 = gsw.rho(ambS, ambCT, pressure) - rho0 #in-stu density less rho0
 
             ambS = np.squeeze(ambData[1,:,j,plumeLoc[1]+peakDownFjord])
             ambCT = gsw.CT_from_t(salt, ambData[0,:,j,plumeLoc[1]+peakDownFjord], pressure)
-            plotData22 = gsw.rho(ambS, ambCT, pressure) - 1000 #in-stu density less 1000
+            plotData22 = gsw.rho(ambS, ambCT, pressure) - rho0 #in-stu density less rho0
             
             plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5)*10)
 
             ambS = np.squeeze(ambData[1,:,j,farFjord])
             ambCT = gsw.CT_from_t(salt, ambData[0,:,j,farFjord], pressure)
-            plotData4 = gsw.rho(ambS, ambCT, pressure) - 1000 #in-stu density less 1000
+            plotData4 = gsw.rho(ambS, ambCT, pressure) - rho0 #in-stu density less rho0
 
         plt.figure()
         plt.plot(plotData,np.squeeze(z),linewidth=1,color=cm)
