@@ -130,11 +130,7 @@ for k in range(len(name)):
             localBergs = True
         else:
             localBergs = False
-        if((not localBergs) and k==5):
-            #fill melt image with 0s if bergs in run but not frame
-            data = np.zeros(np.shape(mds.rdmds("results/%s"%(dynName[k-1]), i)))
-        else:
-            data = mds.rdmds("results/%s"%(dynName[k]), i)
+        data = mds.rdmds("results/%s"%(dynName[k]), i)
         kk = k
         if k == 0:
             lvl = tempRange
