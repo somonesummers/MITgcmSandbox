@@ -16,7 +16,6 @@ import sys
 import glob
 import cmocean
 from bisect import bisect_left
-import gsw
 
 OSX = platform.system()
 
@@ -24,6 +23,7 @@ from scipy.interpolate import make_interp_spline
 
 import sys
 if OSX == 'Darwin':
+    import gsw
     sys.path.append('/Users/psummers8/Documents/MITgcm/MITgcm/elizaScripts/main_scripts')
 else:
     sys.path.append('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/elizaScripts/main_scripts')
@@ -67,7 +67,7 @@ email = 'psummers8@gatech.edu'
 briefSummaryOfExp = """Coupling MITgcm and Melange1D
 Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
-Running 2000 day linear ramp of forcing variables
+Running 1000 day linear ramp of forcing variables
 need to still: 
 Copy MITgcmPickup/iceberg/GLACIOME files from origin of choice
 move MITgcmRun_00000.pickle to proper place
@@ -84,7 +84,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'LinearPlumeTemp'
+run_config['run_name'] = 'PlumeTemp2layer'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -342,7 +342,7 @@ params03 = {}
 params03['dumpInitAndLast'] = False  #Reduce number of dumped files
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 10
+deltaT = 25
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -356,8 +356,8 @@ params03['monitorFreq'] = 21600.0 # 6 hours
 params03['monitorSelect'] = 1
 
 # Force with yearly cycle
-nt = 24
-daysOfCycle = 2000
+nt = 50
+daysOfCycle = 1000
 # ForcingValue = np.sin(2*np.pi * np.arange(nt)/nt) # This sets temp variations at BCs
 ForcingValue = 5 * np.arange(nt)/float(nt)
 # ForcingValue = np.zeros(nt)  # This sets temp variations at BCs
@@ -610,8 +610,8 @@ W_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 Ptr_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 
 # Sermilik Winter like 2 layer
-t_avg = 1
-t_del = 4
+t_avg = 2
+t_del = 2.5
 s_avg = 33.5
 s_del = 2
 pyclineDepth = 175
@@ -677,15 +677,17 @@ write_bin("NsBCW.bin", W_ns)
 write_bin("NsBCptr.bin", Ptr_ns)
 write_bin("EBCptr.bin", Ptr_e)
 
-pressure = -1 * np.ones(np.shape(t2[:,0,0])) * 1020 * 9.81 * z /(1e4)
-CT = gsw.CT_from_t(s2[:,0,0], t2[:,0,0], 0)
-density = gsw.rho(s2[:,0,0], CT, 0) 
-density = density - np.mean(density) #in-stu density less mean
+if OSX == 'Darwin':  #only work on Mac for now, can't get gsw installed on PACE
+    pressure = -1 * np.ones(np.shape(t2[:,0,0])) * 1020 * 9.81 * z /(1e4)
+    CT = gsw.CT_from_t(s2[:,0,0], t2[:,0,0], 0)
+    density = gsw.rho(s2[:,0,0], CT, 0) 
+    density = density - np.mean(density) #in-stu density less mean
 plt.figure()
 plt.plot(s2[:,1,1] - 34, z, 'b', label="Sref - 34")
 plt.plot(t2[:,1,1], z, 'r', label="Tref")
-plt.plot(CT, z, 'r--',label="$\\theta$ref")
-plt.plot(density, z, label="∆ Density",color='xkcd:pumpkin')
+if OSX == 'Darwin':
+    plt.plot(CT, z, 'r--',label="$\\theta$ref")
+    plt.plot(density, z, label="∆ Density",color='xkcd:pumpkin')
 plt.scatter(s_tmp - 34,-z_tmp,color='b')
 plt.scatter(t_tmp,-z_tmp,color='r')
 plt.legend()

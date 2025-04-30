@@ -234,7 +234,7 @@ for ii in range(iterationsToRun):
     newStartTime = (index+1)*24*3600
     oldStartTime = (oldStartIter)*dt #read directly now
     sysPrint('\tmoving pickup')
-    sysPrint('\tremoving old pickups, keeping last 2')
+    sysPrint('\tremoving old pickups iter %010i, keeping last 2' %int(int((oldStartTime-24*3600)/dt)))
     os.system('rm results/pick*.%010i.*' %int((oldStartTime-24*3600)/dt)) #save last one, but delete 2 ago
 
     sysPrint('\tadjust start iteration %i to %i' %(oldStartIter,int(newStartTime/dt)))
