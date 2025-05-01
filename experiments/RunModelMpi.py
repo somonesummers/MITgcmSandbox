@@ -20,6 +20,9 @@ from glaciome1D import constants, glaciome
 import glob
 import pickle
 import time
+import copy
+import signal
+
 # resetStart = True
 # freshStart = False
 # icebergCoverLambda = .8
@@ -39,6 +42,10 @@ def replaceAll(file,searchExp,replaceExp):
         if searchExp in line:
             line = line.replace(searchExp,replaceExp)
         sys.stdout.write(line)
+
+def handler(signum, frame):
+    sysPrint("** glaciome1d seems frozen, sad. Revert to old state **")
+    raise Exception("Timeout")
 
 # This is only needed for a true fresh start
 # print(resetStart,freshStart)
@@ -178,7 +185,8 @@ for ii in range(iterationsToRun):
         else:
             sysPrint('*** ERROR load MITgcm data from end of day %.2f, using melange index %05i ***' %(int(maxStep)*dt/(24*3600),index))
             raise Exception('MITgcm (BRGFlx_) and glaciome1D (MITgcmRun_)are out of sync, glaciome index should be 1 behind MITgcm day')
-
+    
+    dataCopy = copy.deepcopy(data) #grab copy just in case we revert
     sysPrint('=== glaciome1D Running, load MITgcm data from end of day %.2f, using melange index %05i === ' %(int(maxStep)*dt/(24*3600),index))
     # Calculate melt rate. This is the net Freshwaterflux (sum verically, avg across)/ surface area of melange
     # It is very imporant to extend meltrate beyond mélange with value of last cell. Otherwise mélange will grow
@@ -191,7 +199,7 @@ for ii in range(iterationsToRun):
     b_mitgcm[b_mitgcm == 0] = b_mitgcm[b_mitgcm != 0][-1] # We fill in the tail of 0s with the value of the melange toe
 
     x_mitgcm = x[1:]-x[1] #ensure starts at 0, MITgcm has a glacier for first cell
-
+    
     meltHelper = b_mitgcm.copy()
     meltHelper[meltHelper==0] = np.min(meltHelper[meltHelper != 0])
     sysPrint('\tMelt Rates min/mean/max: %.2f, %.2f, %.2f [m/day]:' %(np.min(meltHelper),np.mean(meltHelper),np.max(meltHelper)))
@@ -213,15 +221,26 @@ for ii in range(iterationsToRun):
         sysPrint('\tNew Uc: %.3f m/year'%(data.Uc))
     sysPrint('\tPrevious Length: %.3f, H0: %.3f'%(oldL, oldH))
     # data.steadystate()
-    data.prognostic(method='lm')
+
+    signal.signal(signal.SIGALRM,handler) #setting a timer for glaciome
+    signal.alarm(120) #if its not done in 2 minutes, its probably collapsing
+    try:
+        data.prognostic(method='lm')
+    except (Exception):
+        data = dataCopy
+    signal.alarm(0) #turn the alarm off, because we made it
     sysPrint('\tNew      Length: %.3f, H0: %.3f, ∆L: %.3f, ∆H0: %.3f'%(data.L,data.H0,data.L-oldL,data.H0-oldH,))
     sysPrint('\t\tSeconds to run GLACIOME step: %.4f' % (time.time() - start_time))
     
-    H = np.concatenate(([data.H0], data.H, [data.HL]))
-    X = data.X
-    X_ = np.concatenate(([data.X[0]],data.X_,[data.X[-1]]))
-    np.save('input/melangeH',H)
-    np.save('input/melangeX',X_)
+    if(data.H0 < 25.0 or data.L < 300): #limit small size of melang, GLACIOME gets slow 
+        data = dataCopy
+        sysPrint('\t\t** Melange below minimum size, revert to old size **')
+    # Advect bergs reads pickle directly, dont need these anymore
+    #H = np.concatenate(([data.H0], data.H, [data.HL]))
+    #X = data.X
+    #X_ = np.concatenate(([data.X[0]],data.X_,[data.X[-1]]))
+    #np.save('input/melangeH',H)
+    #np.save('input/melangeX',X_)
 
     # save itermediate steps for plotting
     data.save('couplingResults/MITgcmRun_%05i.pickle' %(index+1))

@@ -415,7 +415,7 @@ del depthHelper
 print('\t\tMax lambda/Depth/Width is: %.3f/%.3f/%.3f' %(np.max(varphi[0,:,:]),np.max(bergDepths),np.max(bergWidths)))
 
 plt.tight_layout() 
-plt.savefig('figs/advectBergs%08d.png' %maxStep,format='png',dpi=150)
+# plt.savefig('figs/advectBergs%08d.png' %maxStep,format='png',dpi=150)
 
 # I toggle this for troubleshooting purposes
 if(True):

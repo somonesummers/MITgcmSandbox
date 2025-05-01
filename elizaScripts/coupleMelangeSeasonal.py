@@ -84,7 +84,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'PlumeTemp2layer'
+run_config['run_name'] = '2layerLowStratReverse'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -611,14 +611,14 @@ Ptr_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 
 # Sermilik Winter like 2 layer
 t_avg = 2
-t_del = 2.5
+t_del = 5
 s_avg = 33.5
 s_del = 2
 pyclineDepth = 175
 pyclineThickness = 30
 z_tmp =  np.arange(0,600,20); #must be increasing, so do depth as positive, see negs later for z[:]
-t_tmp =  t_del * 2/np.pi * np.arctan(2 * (z_tmp - pyclineDepth)/pyclineThickness) + t_avg
-s_tmp =  s_del * 2/np.pi * np.arctan(2 * (z_tmp - pyclineDepth)/pyclineThickness) + s_avg
+t_tmp =  t_del / np.pi * np.arctan(2 * (z_tmp - pyclineDepth)/pyclineThickness) + t_avg
+s_tmp =  s_del / np.pi * np.arctan(2 * (z_tmp - pyclineDepth)/pyclineThickness) + s_avg
 
 # # Sermilik Winter like 
 # z_tmp =  np.asarray([   0,  100,  200,  250,  300,  500,  600]); #must be increasing, so do depth as positive, see negs later for z[:]
@@ -656,6 +656,7 @@ for i in np.arange(fjordEnd,grid_params['Nx']):
         V_ns[k,:,i] = oscStrength * (i-fjordEnd)/indexOSC #[m/s] along coast flow
 
 ## Seasonal Variation in Temp
+ForcingValue = ForcingValue[::-1] #flipping forcing for melange building
 T_ns = T_ns + ForcingValue[:, None, None]
 T2 = T2 + ForcingValue[:, None, None]
 T_ns[-1,:,:] = T_ns[0,:,:]
@@ -711,6 +712,7 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 ## linear ramp
 runoff = 250 + 1250 * np.arange(nt)/float(nt)
 runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
+runoff = runoff[::-1] #flipping around for building melange
 ## Constant
 # runoff = 250 * np.ones(nt)
 
