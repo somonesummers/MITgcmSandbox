@@ -68,7 +68,7 @@ for j in range(len(folders)):
             if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
                 sizeStep = abs(int(words[1]) - startStep)
     
-    maxFrames = 50
+    maxFrames = 150
     if((maxStep-startStep)/sizeStep > maxFrames):   #if more than # frames, downscale to be less than #
         dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/maxFrames)
         print('Reducing time resolution by', dwnScale)

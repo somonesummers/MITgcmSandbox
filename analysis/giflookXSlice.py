@@ -146,11 +146,7 @@ for k in range(len(name)):
             localBergs = True
         else:
             localBergs = False
-        if((not localBergs) and k==5):
-            #fill melt image with 0s if bergs in run but not frame
-            data = np.zeros(np.shape(mds.rdmds("results/%s"%(dynName[k-1]), i)))
-        else:
-            data = mds.rdmds("results/%s"%(dynName[k]), i)
+        data = mds.rdmds("results/%s"%(dynName[k]), i)
         kk = k
         if k == 0:
             lvl = tempRange
@@ -203,7 +199,7 @@ for k in range(len(name)):
                 pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
             CT = gsw.CT_from_t(salt, data[0,:,:,xSlice], pressure)
             density = gsw.rho(salt, CT, 0) - 1000 #in-stu density less 1000
-            densityLevels = np.linspace(25,28,31)
+            densityLevels = np.linspace(25,28,16)
             cc = plt.contour(
                 np.squeeze(y[:,xSlice]),
                 np.squeeze(z),
