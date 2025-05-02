@@ -251,9 +251,8 @@ for ii in range(iterationsToRun):
 
     sysPrint('\tPrepping MITgcm for day %.2f' %(index+2))
     newStartTime = (index+1)*24*3600
-    oldStartTime = (oldStartIter)*dt #read directly now
-    sysPrint('\tmoving pickup')
-    sysPrint('\tremoving old pickups iter %010i, keeping last 2' %int(int((oldStartTime-24*3600)/dt)))
+    oldStartTime = (oldStartIter)*dt #read directly from input/data now
+    #sysPrint('\tremoving old pickups iter %010i, keeping last 2' %int(int((oldStartTime-24*3600)/dt)))
     os.system('rm results/pick*.%010i.*' %int((oldStartTime-24*3600)/dt)) #save last one, but delete 2 ago
 
     sysPrint('\tadjust start iteration %i to %i' %(oldStartIter,int(newStartTime/dt)))
@@ -261,8 +260,18 @@ for ii in range(iterationsToRun):
     sysPrint('\tadjust end time %i to %i' %(int(newStartTime),int(newStartTime+24*3600)))
     replaceAll('input/data','endTime=%i' %(int(newStartTime)), 'endTime=%i' %(int(newStartTime+24*3600)))
 
-    # We adjust the icebergs to the new mélange geometry. This could be within this script.
+    if(index > 1 and index % 100 == 0):
+        # Reset prtracers every 100 steps, avoid saturation.
+        # We read old value, then replace it with new in ptracer file
+        # We also must delete the ptracer pickup files to start at tracers=0
+        sysPrint('\t\t PTRACERS RESET every 100 iterations')
+        for line in fileinput.input('input/data.ptracers'):
+            if "Iter0" in line:
+                oldStartIterPt = int(line[16:-2])
+        replaceAll('input/data.ptracers','PTRACERS_Iter0=%i' %(int(oldStartIterPt)), 'PTRACERS_Iter0=%i' % int(newStartTime/dt))
+        os.system('rm results/pickup_ptracers.%010i.*' %int((newStartTime)/dt))
 
+    # We adjust the icebergs to the new mélange geometry. This could be within this script.
     os.system("~/.conda/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
 
     os.chdir("results")
