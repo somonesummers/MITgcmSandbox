@@ -180,9 +180,9 @@ if(advectBergs):
                                 bergWidthsNew[bergsPerCellNew[j,i + advect],j,i + advect] = bergWidths[k,j,i] #- avgMelt[depthIndex]
                                 bergLengthNew[bergsPerCellNew[j,i + advect],j,i + advect] = bergLength[k,j,i] #- avgMelt[depthIndex]
                                 if((bergDepths[k,j,i] - effectiveMelt[i]) > minBergDepth):
-                                    bergDepthsNew[bergsPerCellNew[j,i + advect],j,i + advect] = bergDepths[k,j,i] - effectiveMelt[i]
+                                    bergDepthsNew[bergsPerCellNew[j,i + advect],j,i + advect] = bergDepths[k,j,i] - effectiveMelt[i] # melt big bergs
                                 else:
-                                    bergDepthsNew[bergsPerCellNew[j,i + advect],j,i + advect] = bergDepths[k,j,i]
+                                    bergDepthsNew[bergsPerCellNew[j,i + advect],j,i + advect] = bergDepths[k,j,i] # too little to melt
                                 # if(avgMelt[depthIndex] > 0):
                                     # print('%f %f %f to %f %f %f' %(bergWidths[k,j,i],bergLength[k,j,i],bergDepths[k,j,i],
                                     #     bergWidths[k,j,i]-avgMelt[depthIndex],
@@ -194,9 +194,9 @@ if(advectBergs):
                                 bergWidthsNew[bergsPerCellNew[j,i],j,i] = bergWidths[k,j,i]# - avgMelt[depthIndex]
                                 bergLengthNew[bergsPerCellNew[j,i],j,i] = bergLength[k,j,i]# - avgMelt[depthIndex]
                                 if((bergDepths[k,j,i] - effectiveMelt[i]) > minBergDepth)
-                                    bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] # melt big bergs
+                                    bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] - effectiveMelt[i] # melt big bergs
                                 else:
-                                    bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] - effectiveMelt[i] # youre too little!
+                                    bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] # youre too little!
                                 bergsPerCellNew[j,i] += 1
                         else:
                             # print('Iceberg has left the zone and is lost. Index: %i' %(i + advect))
