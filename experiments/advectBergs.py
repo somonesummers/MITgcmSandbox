@@ -193,7 +193,7 @@ if(advectBergs):
                                 # print('Cell too full, iceberg melts, but does not move')
                                 bergWidthsNew[bergsPerCellNew[j,i],j,i] = bergWidths[k,j,i]# - avgMelt[depthIndex]
                                 bergLengthNew[bergsPerCellNew[j,i],j,i] = bergLength[k,j,i]# - avgMelt[depthIndex]
-                                if((bergDepths[k,j,i] - effectiveMelt[i]) > minBergDepth)
+                                if((bergDepths[k,j,i] - effectiveMelt[i]) > minBergDepth):
                                     bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] - effectiveMelt[i] # melt big bergs
                                 else:
                                     bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] # youre too little!
