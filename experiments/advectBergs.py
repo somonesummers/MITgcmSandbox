@@ -193,7 +193,10 @@ if(advectBergs):
                                 # print('Cell too full, iceberg melts, but does not move')
                                 bergWidthsNew[bergsPerCellNew[j,i],j,i] = bergWidths[k,j,i]# - avgMelt[depthIndex]
                                 bergLengthNew[bergsPerCellNew[j,i],j,i] = bergLength[k,j,i]# - avgMelt[depthIndex]
-                                bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] - effectiveMelt[i]
+                                if((bergDepths[k,j,i] - effectiveMelt[i]) > minBergDepth)
+                                    bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] # melt big bergs
+                                else:
+                                    bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] - effectiveMelt[i] # youre too little!
                                 bergsPerCellNew[j,i] += 1
                         else:
                             # print('Iceberg has left the zone and is lost. Index: %i' %(i + advect))
@@ -316,9 +319,9 @@ for i in range(nx): #don't scale up the shaded edge
                 bergDepths[bergDepths[:,j,i] > maxBergDepth,j,i] = maxBergDepth - random.random() # set max depth, bump em down a bit. Integer depth can cause problems
                 bergDepths[(bergDepths[:,j,i] > 0) & (bergDepths[:,j,i] < minBergDepth),j,i] = minBergDepth + random.random() # set min depth, bump em up a bit can cause problems
                 bergDepths[bergDepths[:,j,i] > hardMaxDepth,j,i] = hardMaxDepth # this ensures we don't have crashing issues
-            lengths = bergLength[bergLength[:,j,i] > 0,j,i] #return only non-zeros
+            lengths = bergLength[bergLength[:,j,i] > 0,j,i] #return only non-zeros 
             widths = bergWidths[bergWidths[:,j,i] > 0,j,i] #return only non-zeros
-            depths = bergDepths[bergDepths[:,j,i] > 0,j,i] #return only non-zeros
+            depths = bergDepths[bergDepths[:,j,i] > 0,j,i] #return only non-zeros (negatives should have been blocked before here)
             for k in range(nz):
                 cellVolume = deltaX*deltaY*dz[k]
                 d_bot = sum_z[k] #bottom of depth bin
