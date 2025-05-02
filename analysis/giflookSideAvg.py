@@ -65,6 +65,9 @@ for file in os.listdir('results'):
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
 
+## Custom timeshots available here
+# startStep = int(((maxStep - startStep)/startStep) * 1 / 2 )* startStep 
+# maxStep = maxStep - 10 * sizeStep
 
 if((maxStep-startStep)/sizeStep > 60):   #if more than # frames, downscale to be less than #
     dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)
@@ -186,6 +189,7 @@ for k in range(len(name)):
             lvl = np.linspace(0,0.05,128)
             cm = "cmo.matter"
             kk = 1
+        plt.figure(figsize=(12, 5))
         if(usePcolor):
             cp = plt.pcolormesh(
                 np.squeeze(x[0,:]),
@@ -254,7 +258,7 @@ for k in range(len(name)):
         j = i/sizeStep
         
         str = "figs/sideAvg_%s%05i.png" % (name[k],j)
-        
+        plt.tight_layout()
         plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()

@@ -201,8 +201,10 @@ if(advectBergs):
                         else:
                             # print('Iceberg has left the zone and is lost. Index: %i' %(i + advect))
                             pass
-                    else:
-                        print('\t\t**small iceberg discarded second filter [W,L,D]: [%.3f,%.3f,%.3f]**' %(bergWidths[k,j,i],bergLength[k,j,i],bergDepths[k,j,i]))
+                    else: 
+                        # I try to set the minimum berg size such that this doesnt happen in the melange
+                        # You may want to rely on this option like this for freely drifting bergs, but for now its a warning as it should happen
+                        print('\t\t** WARNING small iceberg discarded second filter [W,L,D]: [%.3f,%.3f,%.3f] WARNING **' %(bergWidths[k,j,i],bergLength[k,j,i],bergDepths[k,j,i]))
     del i,j,k
 
     # Now sorted, we can put the new arrays into the old arrays
