@@ -44,7 +44,7 @@ def replaceAll(file,searchExp,replaceExp):
         sys.stdout.write(line)
 
 def handler(signum, frame):
-    sysPrint("** glaciome1d seems frozen, sad. Revert to old state **")
+    sysPrint("WARNING glaciome1d seems frozen, sad. Revert to old state")
     raise Exception("Timeout")
 
 # This is only needed for a true fresh start
@@ -183,7 +183,7 @@ for ii in range(iterationsToRun):
                 file.close()
                 index = int(str(file).split(".")[1].split("_")[1])
         else:
-            sysPrint('*** ERROR load MITgcm data from end of day %.2f, using melange index %05i ***' %(int(maxStep)*dt/(24*3600),index))
+            sysPrint('ERROR load MITgcm data from end of day %.2f, using melange index %05i' %(int(maxStep)*dt/(24*3600),index))
             raise Exception('MITgcm (BRGFlx_) and glaciome1D (MITgcmRun_)are out of sync, glaciome index should be 1 behind MITgcm day')
     
     dataCopy = copy.deepcopy(data) #grab copy just in case we revert
@@ -234,7 +234,7 @@ for ii in range(iterationsToRun):
     
     if(data.H0 < 25.0 or data.L < 300): #limit small size of melang, GLACIOME gets slow 
         data = dataCopy
-        sysPrint('\t\t** Melange below minimum size, revert to old size **')
+        sysPrint('\t\t WARNING Melange below minimum size, revert to old size')
     # Advect bergs reads pickle directly, dont need these anymore
     #H = np.concatenate(([data.H0], data.H, [data.HL]))
     #X = data.X
