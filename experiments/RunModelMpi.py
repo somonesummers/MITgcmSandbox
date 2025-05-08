@@ -212,6 +212,11 @@ for ii in range(iterationsToRun):
     lambdaHelper = 1-openFrac[0,1:-1,1:]
     lambdaHelper[lambdaHelper == 0] = 0.01
     # data is of list ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY']
+    # Vertically sum all of the fresh water fluxes [m^3/s] cells/ divide by surface area 
+    # (lamdba helper and dx*dy) of bergs in that cell [m/s]. dx*dy is outside the sum 
+    # because it is constant, but still in the demnominator. Now a 'effective vertical melt rate' over surface
+    # area at surface. Then average this value across the fjord, and multiply by seconds in a day to get 
+    # vertical melt per day, the value glaciome wants. 
     b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[0,:,1:-1,1:],axis=0)/lambdaHelper,axis=0)/(dx*dy)*(24*3600)
     b_mitgcm[b_mitgcm == 0] = b_mitgcm[b_mitgcm != 0][-1] # We fill in the tail of 0s with the value of the melange toe
 

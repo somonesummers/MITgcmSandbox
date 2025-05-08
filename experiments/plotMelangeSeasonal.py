@@ -95,11 +95,11 @@ ax6.grid(alpha=.5)
 
 
 shiftIndex = 0
-if(n > 360):
-    shiftIndex = toIterate[-360]
+if(n > 720):
+    shiftIndex = toIterate[-720]
     # toIterate = toIterate[-100::] - toIterate[-100]
     subSample = 60
-    n = 360
+    n = 720
     print('\t== Displaying Only Final 360 Steps in Color Plots==')
     # print(toIterate)
 elif(subSample > 1):

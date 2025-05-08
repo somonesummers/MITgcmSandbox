@@ -15,6 +15,7 @@ from glaciome1D import constants, glaciome
 
 import glob
 import pickle
+import argparse
 
 def makeColors(seedColor, n):
     color1 = 'xkcd:light ' + seedColor
@@ -25,12 +26,22 @@ def makeColors(seedColor, n):
     colors = np.stack((rlin,glin,blin), axis=0)
     return colors
 
-saveProfiles = False
+# Take input options. Some defaults are set here, so be aware
+parser = argparse.ArgumentParser(description='Plot options for melange profiles')
+parser.add_argument('-f','--files', nargs=1, default=['couplingResults/MITgcm_'],
+                    help='file string used to name pickle files FILES00000.pickle [default = couplingResults/MITgcm_]')
+parser.add_argument('-u','--Uc', nargs=1, default=[0],type=int,
+                    help='Plot Uc instead of side view [defaut = 0]')
+parser.add_argument('-n','--NumView', nargs=1, default=[100], type=int,
+                    help='How many iterations to look back for cascade plots [defaut = 100]')
+args = parser.parse_args()
+
+print(args)
+fileStr = args.files[0]
+files = sorted(glob.glob('%s*.pickle'%fileStr))
 
 constant = constants()
 
-files = sorted(glob.glob('couplingResults/MITgcm*.pickle'))
-# files = (glob.glob('./temp*.pickle'))
 
 # files = files[0:2]
 # file = files[0]
@@ -59,15 +70,27 @@ for j in toIterate:
     with open(files[j], 'rb') as fileName:
         data = pickle.load(fileName)
         fileName.close()
-    it = file.replace('./', '').replace('.pickle', '').replace('couplingResults/MITgcmRun_','')
+    it = file.replace('./', '').replace('.pickle', '').replace(fileStr,'')
     H0Time[j]=data.H0
     X_ = np.concatenate(([data.X[0]], data.X_, [data.X[-1]]))
     H = np.concatenate(([data.H0], data.H, [data.HL]))
     W = np.concatenate(([data.W0], data.W, [data.WL]))
     VTime[j] = simpson(H*W, x=X_)*1e-9
     lengthTime[j]=data.X[-1]
-    UcTime = data.Uc
+    UcTime[j] = data.Uc
     iterationNumber[j]=int(it)
+
+
+if(args.Uc[0] == 1):
+    ax2.plot(iterationNumber,UcTime,'-')
+    sca=ax2.scatter(iterationNumber,UcTime,s=None,c=iterationNumber,cmap='viridis')
+    # cbar=plt.colorbar(sca)
+    # cbar.set_label('Iteration [Days]')
+    ax2.set_ylabel('Calving Speed [m/yr]')
+    ax2.set_xlabel('Iteration [Days]')
+    ax2.grid(alpha=.5)
+
+
 ax5.plot(iterationNumber,lengthTime,'-')
 sca=ax5.scatter(iterationNumber,lengthTime,s=None,c=iterationNumber,cmap='viridis')
 cbar=plt.colorbar(sca)
@@ -86,19 +109,20 @@ ax6.grid(alpha=.5)
 
 
 shiftIndex = 0
-if(n > 100):
-    shiftIndex = toIterate[-100]
+limit = args.NumView[0]
+if(n > limit):
+    shiftIndex = toIterate[-limit]
     # toIterate = toIterate[-100::] - toIterate[-100]
-    subSample = 10
-    n = 100
-    print('\t== Displaying Only Final 100 Steps in Color Plots==')
+    subSample = 10 #fraction we pick
+    n = limit
+    print('\t== Displaying Only Final %i Steps in Color Plots==' %limit)
     # print(toIterate)
 elif(subSample > 1):
     print('\tSubsampling at %i' %subSample)
 # print(shiftIndex)
 for j in toIterate[shiftIndex::subSample]:
     file = files[j]
-    name = file.replace('./', '').replace('.pickle', '').replace('MITgcmRun_','')
+    name = file.replace('./', '').replace('.pickle', '').replace(fileStr,'')
     print(file)
     linestyle = '-'
     with open(files[j], 'rb') as file:
@@ -111,9 +135,6 @@ for j in toIterate[shiftIndex::subSample]:
     B = np.concatenate((data.B,[1.5*data.B[-1]-0.5*data.B[-2]]))
     gg = np.concatenate(([1.5*data.gg[0]-0.5*data.gg[1]],data.gg,[1.5*data.gg[-1]-0.5*data.gg[-2]]))
     muW = data.muW# np.concatenate(([3*data.muW[0]-3*data.muW[1]+data.muW[2]],data.muW,[3*data.muW[-1]-3*data.muW[-2]+data.muW[-3]]))
-    if saveProfiles:
-        np.save(name + 'H',H)
-        np.save(name + 'X',X)
     X = X-X[0]
     X_ = X_-X_[0]
 
@@ -127,15 +148,16 @@ for j in toIterate[shiftIndex::subSample]:
     ax1.grid(alpha=.5)
     # ax1.legend()
 
-    colors = makeColors(seedColor[1],n)
-    ax2.plot([-2,20],[0,0],color='xkcd:ocean blue',linestyle='--',linewidth=0.5)
-    ax2.plot(np.append(X_,X_[::-1])*1e-3,np.append(-constant.rho/constant.rho_w*H,(1-constant.rho/constant.rho_w)*H[::-1]),
-        marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
-    ax2.set_xlabel('Distance Along Fjord [km]')
-    ax2.set_ylabel('Elevation [m]')
-    # ax2.legend()
-    ax2.set_xlim(ax1.get_xlim())
-    ax2.grid(alpha=.5)
+    if(args.Uc[0] == 0):
+        colors = makeColors(seedColor[1],n)
+        ax2.plot([-2,20],[0,0],color='xkcd:ocean blue',linestyle='--',linewidth=0.5)
+        ax2.plot(np.append(X_,X_[::-1])*1e-3,np.append(-constant.rho/constant.rho_w*H,(1-constant.rho/constant.rho_w)*H[::-1]),
+            marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
+        ax2.set_xlabel('Distance Along Fjord [km]')
+        ax2.set_ylabel('Elevation [m]')
+        # ax2.legend()
+        ax2.set_xlim(ax1.get_xlim())
+        ax2.grid(alpha=.5)
 
     colors = makeColors(seedColor[2],n)
     ax3.plot(X_*1e-3,gg,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
@@ -155,7 +177,13 @@ for j in toIterate[shiftIndex::subSample]:
     # ax4.legend()
     ax4.grid(alpha=.5)
 
-plt.savefig('figs/melangeView.png',format='png',dpi=150)
+strTemp = 'View'
+if(args.Uc[0] == 1):
+    strTemp = 'ViewUc'
+dirStr = ''
+if(os.path.isdir('figs')):
+    dirStr = 'figs/'
+plt.savefig('%smelange%s.png' %(dirStr,strTemp),format='png',dpi=150)
 plt.show()
 plt.close()
 
