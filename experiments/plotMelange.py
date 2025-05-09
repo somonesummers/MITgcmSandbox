@@ -36,7 +36,7 @@ parser.add_argument('-n','--NumView', nargs=1, default=[100], type=int,
                     help='How many iterations to look back for cascade plots [defaut = 100]')
 args = parser.parse_args()
 
-print(args)
+# print(args)
 fileStr = args.files[0]
 files = sorted(glob.glob('%s*.pickle'%fileStr))
 
@@ -113,7 +113,7 @@ limit = args.NumView[0]
 if(n > limit):
     shiftIndex = toIterate[-limit]
     # toIterate = toIterate[-100::] - toIterate[-100]
-    subSample = 10 #fraction we pick
+    subSample = round(limit /10) #fraction we pick
     n = limit
     print('\t== Displaying Only Final %i Steps in Color Plots==' %limit)
     # print(toIterate)

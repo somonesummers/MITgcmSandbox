@@ -7,7 +7,7 @@ import matplotlib.colors as mcolors
 import sys
 from scipy.integrate import simpson
 import argparse
-
+import os
 # sys.path.append('/hdd/glaciome/models/glaciome1D')
 # sys.path.insert(0, '')
 sys.path.append('/Users/psummers8/Documents/glaciome1D')
@@ -156,6 +156,9 @@ ax4_2.grid(alpha=.25,color='xkcd:lilac')
 ax4.set_title('Speed and $g^{\\prime}$')
 ax4.set_xlabel(drivingLabel)
 
-plt.savefig('autoRamp%sResults%s.png' %(forceString,xString),format='png',dpi=150)
+dirStr = ''
+if(os.path.isdir('figs')):
+    dirStr = 'figs/'
+plt.savefig('%sautoRamp%sResults%s.png' %(dirStr,forceString,xString),format='png',dpi=150)
 plt.show()
 plt.close()
