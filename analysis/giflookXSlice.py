@@ -197,7 +197,7 @@ for k in range(len(name)):
             salt = np.squeeze(data[1,:,:,xSlice])
             if(i == startStep): #only calc pressure once
                 pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
-            CT = gsw.CT_from_t(salt, data[0,:,:,xSlice], pressure)
+            CT = gsw.CT_from_t(salt, data[0,:,:,xSlice], 0)
             density = gsw.rho(salt, CT, 0) - 1000 #in-stu density less 1000
             densityLevels = np.linspace(25,28,16)
             cc = plt.contour(

@@ -73,6 +73,7 @@ for j in toIterate:
     spdTime[j]=np.mean(data.U)
     gTime[j]=np.mean(data.gg)
     iterationNumber[j]=int(it)
+timeTime = timeTime - timeTime[0] # shift to start at t=0
 
 # timeTime = (timeTime - timeTime[0])/5 #if pre-code fix for total time
 if(args.rampVariable[0] == 0):

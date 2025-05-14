@@ -6,17 +6,24 @@ import sys
 import cmocean
 import fileinput
 import xarray as xr
+import argparse
+
+# Take input options. Some defaults are set here, so be aware
+parser = argparse.ArgumentParser(description='Plot options for fresh water flux over time')
+parser.add_argument('-f','--folder', nargs=1, default=['results'],
+                    help='folder where resuls are [default = results]')
+parser.add_argument('-s','--silent', action='count', default=0,
+                    help='Option to silence showing of plots')
+parser.add_argument('-n','--numFrames', nargs=1, default=[150],type=int,
+                    help='Max number of samples from time series [defaut = 150]')
+args = parser.parse_args()
 
 # Pick cross section to view from file or default
-yCrossSection = 1000
-xCrossSection = 5000
-zDepth = -50
 plotDPI = 300
-cleanPNGs = True
 
 folders = ['.']
 colors = ['xkcd:blue','xkcd:green']
-resultFolder = '/results'
+resultFolder = '/%s' %args.folder[0]
 fileEnding = ""
 
 if(os.path.isfile('input/plotHelperLocal.py')):
@@ -29,7 +36,7 @@ elif(os.path.isfile('../plotHelper.py')):
     from plotHelper import *
 else:  
     print('no defaults found')
-print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
+print('Plot DPI:',plotDPI)
 
 
 
@@ -68,7 +75,7 @@ for j in range(len(folders)):
             if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
                 sizeStep = abs(int(words[1]) - startStep)
     
-    maxFrames = 150
+    maxFrames = args.numFrames[0]
     if((maxStep-startStep)/sizeStep > maxFrames):   #if more than # frames, downscale to be less than #
         dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/maxFrames)
         print('Reducing time resolution by', dwnScale)
@@ -115,15 +122,18 @@ for j in range(len(folders)):
     ax2.grid(alpha=.1,color="xkcd:pumpkin")
     ax2.plot(timeSteps*dt/86400,tempOverTime,label='Mélange Avg Temp',color='xkcd:pumpkin')
     ax2.plot(timeSteps*dt/86400,tempOverTime2,label='Below 300 m Avg Temp',color='xkcd:twilight')
+    ax1.plot([],[],label='Mélange Avg Temp',color='xkcd:pumpkin') #add to ax1 for legened
+    ax1.plot([],[],label='Below 300 m Avg Temp',color='xkcd:twilight') # add to ax1 for legend
 plt.grid(alpha=.5)
 ax1.legend()
-ax2.legend()
+# ax2.legend()
 ax1.set_xlabel('Time [days]')
 plt.title('Fresh Water Over Time')
 ax1.set_ylabel('Total water [m^3]')
 ax2.set_ylabel('Mélange Temperature [C]',color='xkcd:orange')
 
 plt.savefig('figs/waterFlux.png', format='png',dpi=plotDPI)
-plt.show()
+if(args.silent == 0):
+    plt.show()
 plt.close()
 
