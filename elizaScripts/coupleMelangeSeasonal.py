@@ -67,7 +67,7 @@ email = 'psummers8@gatech.edu'
 briefSummaryOfExp = """Coupling MITgcm and Melange1D
 Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
-Running 1000 day linear ramp of forcing variables
+Building equ finding for more cases (plume, T, Uc in name)
 need to still: 
 Copy MITgcmPickup/iceberg/GLACIOME files from origin of choice
 move MITgcmRun_00000.pickle to proper place
@@ -84,7 +84,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = '2layerLowStratReverse'
+run_config['run_name'] = 'Golf_0_0_9'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -242,7 +242,7 @@ grid_params['delX'] = (domain_params['Lx']/grid_params['Nx'])*np.ones(grid_param
 grid_params['delY'] = (domain_params['Ly']/grid_params['Ny'])*np.ones(grid_params['Ny'])
 
 
-# dz = domain_params['H']/grid_params['Nr']*np.ones(grid_params['Nr']);
+ # dz = domain_params['H']/grid_params['Nr']*np.ones(grid_params['Nr']);
 
 # I'm smitten with myself for how well this works to make a smooth dz profile
 dz_tmp = np.linspace(1,7,grid_params['Nr'])
@@ -356,10 +356,10 @@ params03['monitorFreq'] = 21600.0 # 6 hours
 params03['monitorSelect'] = 1
 
 # Force with yearly cycle
-nt = 50
+nt = 10
 daysOfCycle = 1000
 # ForcingValue = np.sin(2*np.pi * np.arange(nt)/nt) # This sets temp variations at BCs
-ForcingValue = 5 * np.arange(nt)/float(nt)
+ForcingValue = 0 * np.ones(nt)
 # ForcingValue = np.zeros(nt)  # This sets temp variations at BCs
 params03['periodicExternalForcing'] = True
 params03['ExternForcingPeriod'] = daysOfCycle*86400/nt
@@ -656,7 +656,7 @@ for i in np.arange(fjordEnd,grid_params['Nx']):
         V_ns[k,:,i] = oscStrength * (i-fjordEnd)/indexOSC #[m/s] along coast flow
 
 ## Seasonal Variation in Temp
-ForcingValue = ForcingValue[::-1] #flipping forcing for melange building
+# ForcingValue = ForcingValue[::-1] #flipping forcing for melange building
 T_ns = T_ns + ForcingValue[:, None, None]
 T2 = T2 + ForcingValue[:, None, None]
 T_ns[-1,:,:] = T_ns[0,:,:]
@@ -710,11 +710,11 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 # runoff = -1800 * np.sin(np.pi * np.arange(nt)/12.5) - 900
 # runoff[runoff <  25 ] = 25
 ## linear ramp
-runoff = 250 + 1250 * np.arange(nt)/float(nt)
-runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
-runoff = runoff[::-1] #flipping around for building melange
+# runoff = 250 + 1250 * np.arange(nt)/float(nt)
+# runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
+# runoff = runoff[::-1] #flipping around for building melange
 ## Constant
-# runoff = 250 * np.ones(nt)
+runoff = 1000 * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)

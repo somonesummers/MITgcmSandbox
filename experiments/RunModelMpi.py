@@ -303,7 +303,7 @@ for ii in range(iterationsToRun):
         sysPrint('\t\t PTRACERS RESET every 100 iterations')
         for line in fileinput.input('input/data.ptracers'):
             if "Iter0" in line:
-                oldStartIterPt = int(line[16:-2])
+                oldStartIterPt = int(line[16:-1])# This assumes this is last line in data.prtacers. make -2 if more lines after
         replaceAll('input/data.ptracers','PTRACERS_Iter0=%i' %(int(oldStartIterPt)), 'PTRACERS_Iter0=%i' % int(newStartTime/dt))
         os.system('rm results/pickup_ptracers.%010i.*' %int((newStartTime)/dt))
 
