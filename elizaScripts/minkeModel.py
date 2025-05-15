@@ -31,7 +31,7 @@ else:
 import run_config_funcs as rcf # type: ignore # import helpter functions
 
 #Set up new folder
-makeDirs = False
+makeDirs = True
 #Write input files, this lets us update the inputs with a full new run
 writeFiles = True
 
@@ -83,7 +83,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
+run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
 run_config['run_name'] = 'Bravo_0_0_6'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
