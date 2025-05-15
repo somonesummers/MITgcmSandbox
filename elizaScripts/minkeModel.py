@@ -326,7 +326,7 @@ params01['gravity'] = g
 
 # misc
 params01['hFacMin'] = 0.05
-params01['nonHydrostatic'] = False
+params01['nonHydrostatic'] = True
 params01['readBinaryPrec'] = 64
 params01['useSmag3D'] = True
 params01['smag3D_coeff'] = 1e-4
@@ -346,7 +346,7 @@ params03 = {}
 params03['dumpInitAndLast'] = False  #Reduce number of dumped files
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 25
+deltaT = 40
 params03['abEps'] = 0.1
 
 #if run_config['testing']:

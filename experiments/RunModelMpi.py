@@ -58,9 +58,11 @@ def handler(signum, frame):
     sysPrint("WARNING glaciome1d seems frozen, sad. Revert to old state")
     raise Exception("Timeout")
 
-# Track failed melange runs
+# Track exceptions
 glmeWarningFlag = False
 glmeWarningCount = 0
+mitgcmWarningFlag = False
+mitgcmWarningCount = 0
 
 # This used to reset the directory to initial conditions, currently out of date, doesnt work for spun up starts
 if(resetStart):
@@ -218,13 +220,32 @@ for ii in range(iterationsToRun):
     # area at surface. Then average this value across the fjord, and multiply by seconds in a day to get 
     # vertical melt per day, the value glaciome wants. 
     b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[0,:,1:-1,1:],axis=0)/lambdaHelper,axis=0)/(dx*dy)*(24*3600)
-    b_mitgcm[b_mitgcm == 0] = b_mitgcm[b_mitgcm != 0][-1] # We fill in the tail of 0s with the value of the melange toe
+
+    if(np.mean(b_mitgcm)==0):
+        # This means MITgcm has had an overflow. We can try once to re-advect bergs and try again. To do this, we delete the 
+        # last BRGFlx file and skipping the rest of this loop with a CONTINUE statement. This consumes one iteration of the 
+        # main loop that we will not get back. Also increment counter of how many of these weve had to ensure we dont get more
+        # than 1 in a row
+        if(mitgcmWarningFlag): #throw error if already in erroring state
+            sysPrint('ERROR MITgcm failed 2x in a row')
+            raise Exception('ERROR MITgcm failed 2x in a row')
+        mitgcmWarningFlag = True #This is our first error in a row, activate error flag, count and warn
+        mitgcmWarningCount = mitgcmWarningCount + 1
+        sysPrint('\t\t WARNING MITgcm NANs, shuffling bergs and trying again. Failure %i' %mitgcmWarningCount)
+        os.system('rm results/BRGFlx.%010i.*' %maxStep) #Delete last BRGFlx
+        continue # This skips rest of loop. Next loop will delete last GLACIOME automatically, 
+                 # run GLACIOME again, advect bergs, run MITgcm and hopefully resolve error. This technically does
+                 # iterate the Melange for 2 days in 1 day of Ocean. Use carefully. Shorter timesteps should reduce
+                 # this error from occuring.
+    else:
+        mitgcmWarningFlag = False
+
+    # Now error are dealt with, We fill in the tail of 0s with the value of the melange toe 
+    b_mitgcm[b_mitgcm == 0] = b_mitgcm[b_mitgcm != 0][-1]# if MITgcm has overflow error, this line fails
 
     x_mitgcm = x[1:]-x[1] #ensure starts at 0, MITgcm has a glacier for first cell
     
-    meltHelper = b_mitgcm.copy()
-    meltHelper[meltHelper==0] = np.min(meltHelper[meltHelper != 0]) # if MITgcm has overflow error, this line fails
-    sysPrint('\tMelt Rates min/mean/max: %.2f, %.2f, %.2f [m/day]:' %(np.min(meltHelper),np.mean(meltHelper),np.max(meltHelper)))
+    sysPrint('\tMelt Rates min/mean/max: %.2f, %.2f, %.2f [m/day]:' %(np.min(b_mitgcm),np.mean(b_mitgcm),np.max(b_mitgcm)))
     # plt.figure()
     # plt.plot(x_mitgcm,b_mitgcm)
     # plt.show()
