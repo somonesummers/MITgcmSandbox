@@ -31,7 +31,7 @@ else:
 import run_config_funcs as rcf # type: ignore # import helpter functions
 
 #Set up new folder
-makeDirs = False
+makeDirs = True
 #Write input files, this lets us update the inputs with a full new run
 writeFiles = True
 
