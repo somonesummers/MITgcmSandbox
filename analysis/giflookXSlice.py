@@ -9,8 +9,10 @@ import gsw
 import argparse
 
 parser = argparse.ArgumentParser(description='Plot dynamics at xCrossSection')
-parser.add_argument('xCrossSection', nargs='?', const=0.0, type=float,
+parser.add_argument('-x','--xCrossSection', nargs=1, default=None, type=float,
                     help='optional x location [m]')
+parser.add_argument('-q','--quick', action='count', default=0,
+                    help='quick option for last from only')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -139,6 +141,9 @@ else:
     name = ["Temp", "Sal", "U", "W", "V"]
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
+if(args.quick > 0):
+    startStep = maxStep
+    cleanPNGs = False
 for k in range(len(name)):
     print('\t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
@@ -236,10 +241,11 @@ for k in range(len(name)):
         plt.savefig(str, format='png', dpi=plotDPI)
         plt.close()
         #plt.show()
-    if(args.xCrossSection != None):
-        os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.xCrossSection, name[k]))
-    else:
-        os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(args.quick == 0):
+        if(args.xCrossSection != None):
+            os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.xCrossSection[0], name[k]))
+        else:
+            os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
     if(cleanPNGs):

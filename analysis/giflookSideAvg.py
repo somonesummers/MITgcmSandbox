@@ -6,12 +6,12 @@ import sys
 import cmocean
 import fileinput
 import gsw
-# import argparse
+import argparse
 
-# parser = argparse.ArgumentParser(description='Plot dynamics at ySlice')
-# parser.add_argument('yCrossSection', nargs='?', const=0.0, type=float,
-#                     help='optional slice location [m]')
-# args = parser.parse_args()
+parser = argparse.ArgumentParser(description='Plot dynamics width averaged')
+parser.add_argument('-q','--quick', action='count', default=0,
+                    help='quick option for last from only')
+args = parser.parse_args()
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
@@ -134,6 +134,8 @@ if(isBerg):
             for i in range(np.shape(x)[1]):
                 if bergMask[j,i] == 0:
                     openFrac[:,j,i] = 1
+                if topo[j,i] == 0 and i > 1:
+                    openFrac[:,j,i] = 0 #zero weight non-ocean cell
                     
 
 print('averaging over all cross sections')
@@ -147,6 +149,9 @@ else:
     name = ["Temp", "Sal", "U", "W", "V"]
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
+if(args.quick > 0):
+    startStep = maxStep
+    cleanPNGs = False
 for k in range(len(name)):
     print("\t" + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
@@ -208,16 +213,17 @@ for k in range(len(name)):
                 extend="both",
                 cmap=cm,
             )
-        plt.plot(x[0,:],topo[1,:],color='black')
+        plt.plot(x[0,:],topo[int(np.shape(x)[0]/2),:],color='black')
         if(localBergs):
-            cp2 = plt.contourf(
-                x[0,:],
-                np.squeeze(z),
-                np.squeeze(np.average(openFrac[:, 1:-1, :],axis=1)),
-                [.4,.6,.8,.9,.95],
-                extend="min",
-                alpha=.1,
-                cmap='cmo.gray')
+            pass
+            # cp2 = plt.contourf(
+            #     x[0,:],
+            #     np.squeeze(z),
+            #     np.squeeze(np.average(openFrac[:, 1:-1, :],axis=1)),
+            #     [.4,.6,.8,.9,.95],
+            #     extend="min",
+            #     alpha=.1,
+            #     cmap='cmo.gray')
             #cbar2 = plt.colorbar(cp2)
             #cbar2.set_label('Ocean Fraction')
         cbar = plt.colorbar(cp)
@@ -263,9 +269,10 @@ for k in range(len(name)):
         plt.close()
         #plt.show()
     
-    os.system('magick -delay %f figs/sideAvg_%s*.png -colors 256 -depth 256 figs/sideAvg_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
-    if(makeMovie):
-        os.system('ffmpeg -r %f -i figs/sideAvg_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/sideAvg_%s.mov' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(args.quick == 0):
+        os.system('magick -delay %f figs/sideAvg_%s*.png -colors 256 -depth 256 figs/sideAvg_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+        if(makeMovie):
+            os.system('ffmpeg -r %f -i figs/sideAvg_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/sideAvg_%s.mov' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
     if(cleanPNGs):

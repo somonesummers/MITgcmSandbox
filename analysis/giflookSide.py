@@ -9,8 +9,10 @@ import gsw
 import argparse
 
 parser = argparse.ArgumentParser(description='Plot dynamics at ySlice')
-parser.add_argument('yCrossSection', nargs='?', const=0.0, type=float,
+parser.add_argument('-y','--yCrossSection', nargs=1, type=float,default = None,
                     help='optional slice location [m]')
+parser.add_argument('-q','--quick', action='count', default=0,
+                    help='quick option for last frame only')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -145,6 +147,10 @@ else:
     name = ["Temp", "Sal", "U", "W", "V"]
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
+if(args.quick > 0):
+    startStep = maxStep
+    cleanPNGs = False
+
 for k in range(len(name)):
     print("\t" + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
@@ -267,13 +273,13 @@ for k in range(len(name)):
         plt.savefig(str, format='png', dpi=plotDPI)
         # plt.show()
         plt.close()
-        
-    if(args.yCrossSection != None):
-         os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.yCrossSection, name[k]))
-    else:    
-        os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
-    if(makeMovie):
-        os.system('ffmpeg -r %f -i figs/side_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/autoside_%s.mov' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(args.quick == 0):    
+        if(args.yCrossSection != None):
+             os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.yCrossSection[0], name[k]))
+        else:    
+            os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+        if(makeMovie):
+            os.system('ffmpeg -r %f -i figs/side_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/autoside_%s.mov' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
     if(cleanPNGs):

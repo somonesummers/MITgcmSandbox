@@ -8,8 +8,10 @@ import fileinput
 import argparse
 
 parser = argparse.ArgumentParser(description='Plot dynamics at zDepth')
-parser.add_argument('zDepth', nargs='?', const=0.0, type=float,
+parser.add_argument('-z','--zDepth', nargs=1, type=float,default=None,
                     help='optional depth location [m]')
+parser.add_argument('-q','--quick', action='count', default=0,
+                    help='quick option for last frame only')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -84,6 +86,11 @@ y = mds.rdmds("results/YC")
 x = mds.rdmds("results/XC")
 z = mds.rdmds("results/RC")
 
+if(os.path.isfile('input/bathymetry.bin')):
+    topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
+    topo = topo.reshape(np.shape(x))
+else:
+    topo = np.zeros(np.shape(x))
 
 
 if(os.path.isfile('input/bathymetry.bin')):
@@ -120,6 +127,10 @@ else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
     name = ["Temp", "Sal", "U", "W", "V"]
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
+
+if(args.quick > 0):
+    startStep = maxStep
+    cleanPNGs = False
 
 for k in range(len(name)):
     print("\t" + name[k])
@@ -193,7 +204,12 @@ for k in range(len(name)):
         ax1.set_aspect('equal')
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(dataPlot),np.nanmax(dataPlot),np.max(np.isnan(dataPlot))))
         plt.ylabel('Across Fjord [m]')
-        plt.title("%s depth %f at %.02f days" % (name[k], z[zSlice,0,0] ,i/86400.0*dt))
+        plt.title("%s depth %.2f m at %.02f days" % (name[k], z[zSlice,0,0] ,i/86400.0*dt))
+        plt.contour(x,
+                    y,
+                    topo,
+                    [zDepth],
+                    colors = 'black')
         if(showQuiver):
             u = np.squeeze(dataQuiv[2, zSlice, :, :])
             v = np.squeeze(dataQuiv[4, zSlice, :, :])
@@ -233,11 +249,11 @@ for k in range(len(name)):
         plt.savefig(str, format='png', dpi=plotDPI)
         # plt.show()
         plt.close()
-
-    if(args.zDepth != None):
-        os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], np.abs(args.zDepth), name[k]))
-    else:
-        os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(args.quick == 0):
+        if(args.zDepth != None):
+            os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], np.abs(args.zDepth[0]), name[k]))
+        else:
+            os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
     if(cleanPNGs):

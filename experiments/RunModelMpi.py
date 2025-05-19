@@ -61,7 +61,7 @@ def handler(signum, frame):
 # Track exceptions
 glmeWarningFlag = False
 glmeWarningCount = 0
-mitgcmWarningFlag = False
+mitgcmWarningFlag = 0
 mitgcmWarningCount = 0
 
 # This used to reset the directory to initial conditions, currently out of date, doesnt work for spun up starts
@@ -226,19 +226,19 @@ for ii in range(iterationsToRun):
         # last BRGFlx file and skipping the rest of this loop with a CONTINUE statement. This consumes one iteration of the 
         # main loop that we will not get back. Also increment counter of how many of these weve had to ensure we dont get more
         # than 1 in a row
-        if(mitgcmWarningFlag): #throw error if already in erroring state
+        mitgcmWarningFlag = mitgcmWarningFlag + 2 #increment by 2, this is the error window
+        if(mitgcmWarningFlag > 2): #throw error if already in erroring state
             sysPrint('ERROR MITgcm failed 2x in a row')
             raise Exception('ERROR MITgcm failed 2x in a row')
-        mitgcmWarningFlag = True #This is our first error in a row, activate error flag, count and warn
         mitgcmWarningCount = mitgcmWarningCount + 1
         sysPrint('\t\t WARNING MITgcm NANs, shuffling bergs and trying again. Failure %i' %mitgcmWarningCount)
         os.system('rm results/BRGFlx.%010i.*' %maxStep) #Delete last BRGFlx
         continue # This skips rest of loop. Next loop will delete last GLACIOME automatically, 
                  # run GLACIOME again, advect bergs, run MITgcm and hopefully resolve error. This technically does
-                 # iterate the Melange for 2 days in 1 day of Ocean. Use carefully. Shorter timesteps should reduce
+                 # iterate the Melange for 2 days in 1 day of Ocean. Use carefully. Shorter MITgcm timesteps (dt) should reduce
                  # this error from occuring.
     else:
-        mitgcmWarningFlag = False
+        mitgcmWarningFlag = 0 if mitgcmWarningFlag == 0 else mitgcmWarningFlag - 1
 
     # Now error are dealt with, We fill in the tail of 0s with the value of the melange toe 
     b_mitgcm[b_mitgcm == 0] = b_mitgcm[b_mitgcm != 0][-1]# if MITgcm has overflow error, this line fails

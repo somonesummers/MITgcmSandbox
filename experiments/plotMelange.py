@@ -87,7 +87,7 @@ if(args.Uc[0] == 1):
     # cbar=plt.colorbar(sca)
     # cbar.set_label('Iteration [Days]')
     ax2.set_ylabel('Calving Speed [m/yr]')
-    ax2.set_xlabel('Iteration [Days]')
+    ax2.set_xlabel('Iteration [ ]')
     ax2.grid(alpha=.5)
 
 
@@ -96,7 +96,7 @@ sca=ax5.scatter(iterationNumber,lengthTime,s=None,c=iterationNumber,cmap='viridi
 cbar=plt.colorbar(sca)
 cbar.set_label('Iteration [Days]')
 ax5.set_ylabel('Mélange length [m]')
-ax5.set_xlabel('Iteration [Days]')
+ax5.set_xlabel('Iteration [ ]')
 ax5.grid(alpha=.5)
 
 ax6.plot(H0Time,lengthTime,'-')

@@ -6,6 +6,12 @@ import sys
 import cmocean
 import fileinput
 import gsw
+import argparse
+
+parser = argparse.ArgumentParser(description='Plot Plume variables')
+parser.add_argument('-q','--quick', action='count', default=0,
+                    help='quick option for last frame only')
+args = parser.parse_args()
 
 # Plot settings from local helper
 zDepth = -50
@@ -86,6 +92,11 @@ print('Plume Locaion is grid', plumeLoc )
 
 peakDownFjord = 2
 farFjord = -20 #try to get out of boundary layer
+
+if(args.quick > 0):
+    startStep = maxStep
+    cleanPNGs = False
+
 for k in range(len(name)):
     print("\t %s" %name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
@@ -176,8 +187,8 @@ for k in range(len(name)):
         plt.savefig(str, format='png',dpi=plotDPI)
         plt.close()
         plt.show()
-
-    os.system('magick -delay %f figs/plumePlot%s*.png -colors 256 -depth 256 figs/plumePlot%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(args.quick == 0):
+        os.system('magick -delay %f figs/plumePlot%s*.png -colors 256 -depth 256 figs/plumePlot%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
     if(cleanPNGs):

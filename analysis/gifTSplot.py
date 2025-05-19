@@ -8,8 +8,10 @@ import fileinput
 import argparse
 
 parser = argparse.ArgumentParser(description='Plot TS at one xCrossSection')
-parser.add_argument('xCrossSection', nargs='?', const=0.0, type=float,
+parser.add_argument('-x','--xCrossSection', nargs=1, type=float,default = None,
                     help='optional cross section location [m]')
+parser.add_argument('-q','--quick', action='count', default=0,
+                    help='quick option for last frame only')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -96,6 +98,10 @@ freezeT = [0,-2.809]
 freezeS100 = [0,50]
 freezeT100 = [-.011,-2.919]
 
+if(args.quick > 0):
+    startStep = maxStep
+    cleanPNGs = False
+
 for i in np.arange(startStep, maxStep + 1, sizeStep):
     data = mds.rdmds("results/dynDiag", i)
     plt.figure()
@@ -128,10 +134,11 @@ for i in np.arange(startStep, maxStep + 1, sizeStep):
     plt.savefig(str, format='png', dpi=plotDPI)
     # plt.show()
     plt.close()
-if(args.xCrossSection != None):
-    os.system('magick -delay %f figs/tmpTSPlot*.png -colors 256 -depth 256 figs/TSPlot%i.gif' %(500/((maxStep-startStep)/sizeStep),args.xCrossSection))
-else:
-    os.system('magick -delay %f figs/tmpTSPlot*.png -colors 256 -depth 256 figs/TSPlot.gif' %(500/((maxStep-startStep)/sizeStep)))
+if(args.quick == 0):
+    if(args.xCrossSection != None):
+        os.system('magick -delay %f figs/tmpTSPlot*.png -colors 256 -depth 256 figs/TSPlot%i.gif' %(500/((maxStep-startStep)/sizeStep),args.xCrossSection[0]))
+    else:
+        os.system('magick -delay %f figs/tmpTSPlot*.png -colors 256 -depth 256 figs/TSPlot.gif' %(500/((maxStep-startStep)/sizeStep)))
 
 # #Clean up intermediate pngs
 if(cleanPNGs):
