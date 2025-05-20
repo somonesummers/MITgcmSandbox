@@ -108,6 +108,8 @@ thicknessLookup = interp1d(X_,H,bounds_error=False,fill_value=[0])
 # Now we load the iceberg geometry and mask files
 
 #2D Fields 
+bathymetry  = np.fromfile('input/bathymetry.bin', dtype='>f8')
+bathymetry  = bathymetry.reshape((ny,nx))
 plumeMask  = np.fromfile('input/plumeMask.bin', dtype='>f8')
 plumeMask  = plumeMask.reshape((ny,nx))
 bergWidths = np.fromfile('input/icebergs_widths.bin', dtype='>f8')
@@ -155,7 +157,8 @@ if(advectBergs):
     for j in range(ny):
         for i in range(nx-1,0,-1): #i goes from nx-1 to 1 in reverse order
                 # We can skip the first cell as that is a glacier in MITgcm
-
+                if(bathymetry[j,i] == 0):
+                    continue #This is a wall, no bergs here
                 # Total freshwater flux / area of bergs in cell 
                 # perhaps this below line could use the actual lambda for the location, but be careful about plume cells
                 effectiveMelt = np.nanmean(np.nansum(dataMITgcm[0,:,:,1:],axis=0),axis=0)/(deltaX*deltaY*icebergPhi)*(24*3600)*1000/917 #[m]
@@ -252,10 +255,11 @@ if(fillIn):
     # importantly we must use length*widths for area as we haven't recalculated OpenFrac
     generatedDepths = []
     generatedWidths = []
-    for j in range(ny-2):
-        j += 1 # we skip the fjord walls
+    for j in range(ny):
         for i in range(np.max([maxMove,icebergRefreshingGate])):
             i += 1 # we skip the first cell in MITgcm which is the glacier
+            if(bathymetry[j,i] == 0):
+                continue #This is a wall, no bergs here
             tmpBergFac = np.sum(bergWidths[:,j,i] * bergLength[:,j,i])/(deltaX*deltaY)
             while(tmpBergFac < icebergCoverLambda):
                 # We keep trying to add while cell is underfull
