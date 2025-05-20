@@ -12,6 +12,8 @@ parser.add_argument('-z','--zDepth', nargs=1, type=float,default=None,
                     help='optional depth location [m]')
 parser.add_argument('-q','--quick', action='count', default=0,
                     help='quick option for last frame only')
+parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
+                    help='option specification of views to plot [default = all]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -21,7 +23,7 @@ zDepth = -50
 plotDPI = 100
 cleanPNGs = True
 usePcolor = True
-showQuiver = False
+showQuiver = True
 showZeros = True
 
 if(os.path.isfile('input/plotHelperLocal.py')):
@@ -131,8 +133,11 @@ else:
 if(args.quick > 0):
     startStep = maxStep
     cleanPNGs = False
-
-for k in range(len(name)):
+if(args.kValues == None):
+    kList = range(len(name))
+else:
+    kList = args.kValues
+for k in kList:
     print("\t" + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         if(showQuiver):
@@ -163,15 +168,15 @@ for k in range(len(name)):
             cm = meltCmap
             kk = k - 3
         elif k == 6:
-            lvl = np.linspace(0,0.05,128)
+            lvl = np.linspace(0,0.05,31)
             cm = "cmo.matter"
             kk = 0
         elif k == 7:
-            lvl = np.linspace(0,0.05,128)
+            lvl = np.linspace(0,0.05,31)
             cm = "cmo.matter"
             kk = 1
         elif k == 8:
-            lvl = uRange
+            lvl = np.linspace(0,np.max(uRange),31)
             cm = 'cmo.speed'
 
         if(name[k] == "SPD"):
@@ -198,7 +203,7 @@ for k in range(len(name)):
                 extend="both",
                 cmap=cm,
             )
-        cbar = plt.colorbar(cp,orientation="horizontal",fraction=0.06)
+        cbar = plt.colorbar(cp,orientation="horizontal",fraction=0.06,format='%.2f')
         cbar.set_label(cbarLabel[k])
         ax1 = plt.gca()
         ax1.set_aspect('equal')
@@ -211,14 +216,18 @@ for k in range(len(name)):
                     [zDepth],
                     colors = 'black')
         if(showQuiver):
-            u = np.squeeze(dataQuiv[2, zSlice, :, :])
-            v = np.squeeze(dataQuiv[4, zSlice, :, :])
+            downSampleX = 5
+            downSampleY = 3
+            u = np.squeeze(dataQuiv[2, zSlice, :, :])[::downSampleY,::downSampleX]
+            v = np.squeeze(dataQuiv[4, zSlice, :, :])[::downSampleY,::downSampleX]
             plt.quiver(
-                np.squeeze(x),
-                np.squeeze(y),
+                np.squeeze(x)[::downSampleY,::downSampleX],
+                np.squeeze(y)[::downSampleY,::downSampleX],
                 u/np.sqrt(u**2 + v**2 + 1e-12),
                 v/np.sqrt(u**2 + v**2 + 1e-12),
-                alpha=.5
+                alpha=.2,
+                width = .001, #width of line
+                scale = 120
                 )
         if(showZeros and (k == 2 or k == 3 or k == 4)):
             cc = plt.contour(

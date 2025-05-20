@@ -1299,7 +1299,7 @@ if(makeDirs):
         os.remove(run_config['run_dir']+'/input/setupReport.txt')
         setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')
     shutil.move('setupReport.txt', run_config['run_dir']+'/input')
-    shutil.copy('coupleMelangeSeasonal.py', run_config['run_dir']+'/input/buildScript.py')
+    shutil.copy('minkeModel.py', run_config['run_dir']+'/input/buildScript.py')
     replaceAll(run_config['run_dir']+'/input/buildScript.py','makeDirs = True', 'makeDirs = False') 
     rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
     setupNotes.close()
