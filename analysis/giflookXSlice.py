@@ -13,6 +13,8 @@ parser.add_argument('-x','--xCrossSection', nargs=1, default=None, type=float,
                     help='optional x location [m]')
 parser.add_argument('-q','--quick', action='count', default=0,
                     help='quick option for last from only')
+parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
+                    help='option specification of views to plot [default = all]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -144,7 +146,11 @@ else:
 if(args.quick > 0):
     startStep = maxStep
     cleanPNGs = False
-for k in range(len(name)):
+if(args.kValues == None):
+    kList = range(len(name))
+else:
+    kList = args.kValues
+for k in kList:
     print('\t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
