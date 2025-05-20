@@ -219,8 +219,8 @@ for k in kList:
                 extend="both",
                 cmap=cm,
             )
-        if(k == 5): #special bounds to highlight refreezing areas
-            cp.cmap.set_under('r')
+        # if(k == 5): #special bounds to highlight refreezing areas
+        #     cp.cmap.set_under('r')
         plt.plot(x[0,:],topo[int(np.shape(x)[0]/2),:],color='black')
         if(localBergs):
             pass

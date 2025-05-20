@@ -319,7 +319,7 @@ for i in range(nx): #don't scale up the shaded edge
             if(i < (melangeIndex - 1)): #Only scale for bergs within melange, not in shadedEdge
                 scaleFactor =  thicknessLookup(x[0,i]) * iceDensity/oceanDensity * icebergCoverLambda / effectiveDepth[i]
                 scaleFactor = (scaleFactor if abs(scaleFactor - 1) > scaleMin else 1)
-                if(scaleFactor != 1 and j == 1):
+                if(scaleFactor != 1 and j == int(ny/2)):
                     print('\t\t\tbergs are adjusted: %.3f i=%i, nB: %i' %(scaleFactor,i,np.sum(bergsPerCell[:,i])))
                 bergDepths[:,j,i] = bergDepths[:,j,i] * scaleFactor
                 bergDepths[bergDepths[:,j,i] > maxBergDepth,j,i] = maxBergDepth - random.random() # set max depth, bump em down a bit. Integer depth can cause problems
@@ -401,8 +401,8 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=RuntimeWarning)
     plt.plot(x[0,:],-effectiveDepth/icebergCoverLambda,color='xkcd:red',linestyle='--',label='$D_{eff}$')
     plt.plot(x[0,:],-np.nanmean(depthHelper[:,1:-1,:],axis=(0,1)),color='xkcd:orange',linestyle='--',label='$<D>$')
-plt.plot(X_,-H*iceDensity/oceanDensity,color='xkcd:green',linestyle='--')
-plt.plot([glaciome_L,glaciome_L],[20,-600],linestyle='--',color='cyan')
+plt.plot(X_,-H*iceDensity/oceanDensity,color='xkcd:green',linestyle='--',label='GLACIOME profile')
+plt.plot([glaciome_L,glaciome_L],[20,-600],linestyle='--',color='cyan',label='Mélange Front')
 plt.suptitle('$\\varphi$')
 plt.legend()
 plt.ylabel('Depth [m]')
