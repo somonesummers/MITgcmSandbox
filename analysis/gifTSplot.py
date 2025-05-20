@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(description='Plot TS at one xCrossSection')
 parser.add_argument('-x','--xCrossSection', nargs=1, type=float,default = None,
                     help='optional cross section location [m]')
 parser.add_argument('-q','--quick', action='count', default=0,
-                    help='quick option for last frame only')
+                    help='quick option for last frame only, double to show plot(s)')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -132,7 +132,8 @@ for i in np.arange(startStep, maxStep + 1, sizeStep):
     str = "figs/tmpTSPlot%05i.png" % (j)
     
     plt.savefig(str, format='png', dpi=plotDPI)
-    # plt.show()
+    if(args.quick > 1):
+        plt.show()
     plt.close()
 if(args.quick == 0):
     if(args.xCrossSection != None):
