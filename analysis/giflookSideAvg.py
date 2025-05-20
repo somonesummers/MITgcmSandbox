@@ -219,6 +219,8 @@ for k in kList:
                 extend="both",
                 cmap=cm,
             )
+        if(k == 5): #special bounds to highlight refreezing areas
+            cp.cmap.set_under('r')
         plt.plot(x[0,:],topo[int(np.shape(x)[0]/2),:],color='black')
         if(localBergs):
             pass
@@ -272,8 +274,10 @@ for k in kList:
         str = "figs/sideAvg_%s%05i.png" % (name[k],j)
         plt.tight_layout()
         plt.savefig(str, format='png', dpi=plotDPI)
+        if(args.quick > 1):
+            plt.show()
         plt.close()
-        #plt.show()
+
     
     if(args.quick == 0):
         os.system('magick -delay %f figs/sideAvg_%s*.png -colors 256 -depth 256 figs/sideAvg_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))

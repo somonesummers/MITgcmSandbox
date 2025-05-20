@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description='Plot dynamics at xCrossSection')
 parser.add_argument('-x','--xCrossSection', nargs=1, default=None, type=float,
                     help='optional x location [m]')
 parser.add_argument('-q','--quick', action='count', default=0,
-                    help='quick option for last from only')
+                    help='quick option for last from only, double to show plot(s)')
 parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
                     help='option specification of views to plot [default = all]')
 args = parser.parse_args()
@@ -245,8 +245,10 @@ for k in kList:
         str = "figs/sideX%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png', dpi=plotDPI)
+        if(args.quick > 1):
+            plt.show()
         plt.close()
-        #plt.show()
+
     if(args.quick == 0):
         if(args.xCrossSection != None):
             os.system('magick -delay %f figs/sideX%s*.png -colors 256 -depth 256 figs/autosideX_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.xCrossSection[0], name[k]))
