@@ -67,7 +67,12 @@ email = 'psummers8@gatech.edu'
 briefSummaryOfExp = """Coupling MITgcm and Melange1D
 Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
-Building equ finding for more cases (plume, T, Uc in name)
+
+Running to equalibrium for thick wall case
+w# for ind of wall width
+c# how far(ind) from wall center current is 
+sgd# for plume rate
+
 need to still: 
 Copy MITgcmPickup/iceberg/GLACIOME files from origin of choice
 move MITgcmRun_00000.pickle to proper place
@@ -83,8 +88,8 @@ setUpPrint('====== Welcome to the mélange building script =====')
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'BC_1'
+run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
+run_config['run_name'] = 'EQ_w5_c3_sgd250'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -102,16 +107,16 @@ setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s
 input("Confirm above is accurate before continuing...")
 
 # Variables to adjust ======================
-assign_deltaT = 0
-assign_plumeSGD = 0
+assign_deltaT = 0 # [C]
+assign_plumeSGD = 250 #[m^3/s]
 
 # Offshore current =========================
-oscStrength = .1 #[m/s] peak strength of offshore current
+oscStrength = 0.10 #[m/s] peak strength of offshore current
 lengthOffShoreLength = 10e3 #width of offshore region [m]
 indexOSC = int(lengthOffShoreLength/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
-iceBergDepth = 150 # max iceberg depth [meters], used for ICEBERG package
+iceBergDepth = 400 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 15000 # [meters] of extent of ice
 iceCoverage = 60 # % of ice cover in melange, stay under 90% ideally
 doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
@@ -347,7 +352,7 @@ params03 = {}
 params03['dumpInitAndLast'] = False  #Reduce number of dumped files
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 50
+deltaT = 25
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -428,8 +433,8 @@ if run_config['test']:
     run_config['tavg_freq'] = 1 # multiples of timestep
     
 else:
-    run_config['inst_freq'] = 6 # multiples of hours (must be at least every day for coupling to get iceberg melt rates)
-    run_config['tavg_freq'] = 6 # multiples of hours 
+    run_config['inst_freq'] = 24 # multiples of hours (must be at least every day for coupling to get iceberg melt rates)
+    run_config['tavg_freq'] = 24 # multiples of hours 
 
 
 #---------specify time averaged fields------#
@@ -657,7 +662,7 @@ Ptr_e = np.zeros([nt,grid_params['Nr'],grid_params['Ny']])
 
 ## N/S BCs
 #coastal flow location and width
-mean = indexOSC/4 + fjordEnd
+mean = 3 + fjordEnd
 std_dev = 1
 
 for i in np.arange(fjordEnd,grid_params['Nx']):
@@ -829,7 +834,7 @@ if(run_config['make_icebergs']):
     setUpPrint('====== Making mélange =====')
     #Make Masks
 
-    hfacThreshold = .8
+    hfacThreshold = .9
 
     nz = grid_params['Nr']
     ny = grid_params['Ny']
@@ -941,8 +946,8 @@ if(run_config['make_icebergs']):
 
         tooWide = np.count_nonzero(inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold))  #disallow completely full cells
         tooLong = np.count_nonzero(inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold))
-        inversePowerLawDistNumbers_width[inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max width is grid cell (assumed square)
-        inversePowerLawDistNumbers_length[inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) # Max length is grid cell (assumed square)
+        inversePowerLawDistNumbers_width[inversePowerLawDistNumbers_width > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) - .01  # Max width is grid cell (assumed square)
+        inversePowerLawDistNumbers_length[inversePowerLawDistNumbers_length > deltaX * np.sqrt(hfacThreshold)] = deltaX * np.sqrt(hfacThreshold) - .01 # Max length is grid cell (assumed square)
         if(tooLong + tooWide > 0):
             setUpPrint('\t\tBergs clipped: %i for width, %i for length' % (tooWide, tooLong))
         
@@ -953,7 +958,7 @@ if(run_config['make_icebergs']):
         loop_count += 1
     setUpPrint('====== Success! Found our bergs =====')
     setUpPrint('Width min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_width),np.mean(inversePowerLawDistNumbers_width),np.max(inversePowerLawDistNumbers_width)))
-    setUpPrint('Depth min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth)))
+    setUpPrint('Depth min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_depth),np.mean(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth)))
     setUpPrint('Total Berg Area %f' % bergTopArea)
     setUpPrint('Total Berg fract: %.2f %%' % (bergTopArea/bergMaskArea*100))
 
@@ -993,6 +998,7 @@ if(run_config['make_icebergs']):
         j = assignedCell[i]
         # print('looking at mask number',j,'at berg',i)
         # print('Berg number', icebergs_per_cell[j],'in this cell')
+        # print('Width, Length',sorted_width[i], sorted_length[i])
         bergArea = sorted_width[i] * sorted_length[i]
         loopLimiter = 0
         while(bergArea > (deltaX * deltaY  * (bergConc[bergDict[j+1][0],bergDict[j+1][1]]/100) - icebergs_area_per_cell[j])): #if above 'full', pick random new cell, accept with decreasing probability
@@ -1008,10 +1014,11 @@ if(run_config['make_icebergs']):
                     break
             if(loopLimiter > bergMaski*20): #eventually we have to force some in
                 indexesAllowed = np.where((deltaX * deltaY * hfacThreshold - icebergs_area_per_cell)  > bergArea)
+                # print(indexesAllowed)
                 randi = np.random.randint(0,len(indexesAllowed[0]))
                 j = indexesAllowed[0][randi]
                 assignedCell[i] = j  #if we it a shuffling critera, must line up for calculation below
-                # setUpPrint('\t Randomly missed, will force into cell with room: %i' % j)
+                setUpPrint('\t Randomly missed, will force into cell with room: %i' % j)
                 if((np.min(icebergs_area_per_cell) + bergArea)/(deltaX * deltaY) > hfacThreshold):
                     setUpPrint('WARNING cell very full: %.2f%%' %((np.min(icebergs_area_per_cell) + bergArea)*100/(deltaX * deltaY)))
                 break
