@@ -89,7 +89,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'EQ_w5_c3_sgd250'
+run_config['run_name'] = 'EQ_w5_c1_sgd250'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -117,7 +117,7 @@ indexOSC = int(lengthOffShoreLength/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 400 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 15000 # [meters] of extent of ice
+iceExtent = 25000 # [meters] of extent of ice
 iceCoverage = 60 # % of ice cover in melange, stay under 90% ideally
 doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
@@ -662,7 +662,7 @@ Ptr_e = np.zeros([nt,grid_params['Nr'],grid_params['Ny']])
 
 ## N/S BCs
 #coastal flow location and width
-mean = 3 + fjordEnd
+mean = 1 + fjordEnd
 std_dev = 1
 
 for i in np.arange(fjordEnd,grid_params['Nx']):

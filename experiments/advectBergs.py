@@ -319,7 +319,7 @@ for i in range(nx): #don't scale up the shaded edge
             if(i < (melangeIndex - 1)): #Only scale for bergs within melange, not in shadedEdge
                 scaleFactor =  thicknessLookup(x[0,i]) * iceDensity/oceanDensity * icebergCoverLambda / effectiveDepth[i]
                 scaleFactor = (scaleFactor if abs(scaleFactor - 1) > scaleMin else 1)
-                if(scaleFactor != 1 and j == 1):
+                if(scaleFactor != 1 and j == int(ny/2)):
                     print('\t\t\tbergs are adjusted: %.3f i=%i, nB: %i' %(scaleFactor,i,np.sum(bergsPerCell[:,i])))
                 bergDepths[:,j,i] = bergDepths[:,j,i] * scaleFactor
                 bergDepths[bergDepths[:,j,i] > maxBergDepth,j,i] = maxBergDepth - random.random() # set max depth, bump em down a bit. Integer depth can cause problems

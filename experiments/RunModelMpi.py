@@ -61,7 +61,7 @@ def handler(signum, frame):
 # Track exceptions
 glmeWarningFlag = False
 glmeWarningCount = 0
-mitgcmWarningFlag = 0
+mitgcmWarningFlag = 1 #if it fails first run, should error
 mitgcmWarningCount = 0
 
 # This used to reset the directory to initial conditions, currently out of date, doesnt work for spun up starts
@@ -241,8 +241,11 @@ for ii in range(iterationsToRun):
         mitgcmWarningFlag = 0 if mitgcmWarningFlag == 0 else mitgcmWarningFlag - 1
 
     # Now error are dealt with, We fill in the tail of 0s with the value of the melange toe 
-    b_mitgcm[b_mitgcm == 0] = b_mitgcm[b_mitgcm != 0][-1]# if MITgcm has overflow error, this line fails
-
+    if(False):
+        sysPrint('\t == forcing growth == ')
+        b_mitgcm[b_mitgcm != 0] = 0
+    else:
+        b_mitgcm[b_mitgcm == 0] = b_mitgcm[b_mitgcm != 0][-1]# if MITgcm has overflow error, this line fails
     x_mitgcm = x[1:]-x[1] #ensure starts at 0, MITgcm has a glacier for first cell
     
     sysPrint('\tMelt Rates min/mean/max: %.2f, %.2f, %.2f [m/day]:' %(np.min(b_mitgcm),np.mean(b_mitgcm),np.max(b_mitgcm)))
