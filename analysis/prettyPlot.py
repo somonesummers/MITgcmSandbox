@@ -18,6 +18,12 @@ parser.add_argument('-i','--iteration', nargs='?', type=int, default = None,
                     help='optional specification iteration to plot [default = None]')
 parser.add_argument('-f','--files', nargs='?', default='couplingResults/MITgcmRun_',
                     help='file string used to name pickle files FILES00000.pickle [default = couplingResults/MITgcmRun_]')
+parser.add_argument('--noDensity', action='count', default=0,
+                    help='quick option to disable density levels')
+parser.add_argument('--noZero', action='count', default=0,
+                    help='quick option to disable 0 contour in speed')
+parser.add_argument('--noBergs', action='count', default=0,
+                    help='quick option to disable berg contours')
 args = parser.parse_args()
 
 
@@ -32,8 +38,18 @@ elif(os.path.isfile('../plotHelper.py')):
 else:  
     print('no defaults found')
 usePcolor = False
-showDensity = False
+showDensity = True
+showZeros = True
+showBergs = True
 plotDPI = 300
+
+if(args.noDensity > 0):
+    showDensity = False
+if(args.noZero > 0):
+    showZeros = False
+if(args.noBergs > 0):
+    showBergs = False
+
 print('Plot DPI:',plotDPI,'; usePcolor:', usePcolor)
 
 dt = 0.0   
@@ -75,6 +91,7 @@ if(os.path.isfile('input/bergMask.bin')):
     print('Found icebergs for this run')
 else:
     isBerg = False
+
 
 # os.system('rm -f figs/side_*.png')
 # os.system('rm -f figs/autoside_*.gif')
@@ -214,16 +231,17 @@ for ax, k in zip([ax1,ax2],[0,2]):
             plt.clabel(cc, inline=3, fontsize=8)
     ax.set_title(f"{name[k]} at {int(i*dt/86400)} days")
     ## Berg shading
-    bergShading = dataBerg[2,:,:,:]
-    bergShading[bergShading > 0] = .9
-    cp2 = ax.contourf(
-    x[0,:],
-    np.squeeze(z),
-    np.squeeze(np.average(bergShading,axis=1)),
-    [.25,.5,.75,.9],
-    extend="max",
-    alpha=.2,
-    cmap='cmo.gray_r')
+    if(showBergs):
+        bergShading = dataBerg[2,:,:,:]
+        bergShading[bergShading > 0] = 1
+        cp2 = ax.contourf(
+        x[0,:],
+        np.squeeze(z),
+        np.squeeze(np.average(bergShading,axis=1)),
+        [.25,.5,.75,.9],
+        extend="max",
+        alpha=.2,
+        cmap='cmo.gray_r')
     # cbar2 = plt.colorbar(cp2)
     # cbar2.set_label('Ocean Fraction')
     ax.set_xlim([0,50])        
@@ -316,9 +334,15 @@ ax4_2.tick_params(axis='y',labelcolor='xkcd:mulberry')
 ax4.set_xlabel(drivingLabel)
 ax4.set_title('Mélange Size')
 
-
-str = f"figs/prettyPlot_{i:010}.png"
+sOption = ''
+if(args.noDensity > 0):
+    sOption = sOption + '_nD'
+if(args.noZero > 0):
+    sOption = sOption + '_nZ'
+if(args.noBergs > 0):
+    sOption = sOption + '_nB'
+strTmp = f"figs/prettyPlot_{i:010}{sOption}.png"
 # plt.tight_layout()
-plt.savefig(str, format='png', dpi=plotDPI)
+plt.savefig(strTmp, format='png', dpi=plotDPI)
 plt.show()
 plt.close()

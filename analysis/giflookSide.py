@@ -189,12 +189,12 @@ for k in kList:
             cm = meltCmap
             kk = k - 3
         elif k == 6:
-            lvl = np.linspace(0,0.05,128)
-            cm = "cmo.matter"
+            lvl = plumeTracerRange
+            cm = plumeTracerCmap
             kk = 0
         elif k == 7:
-            lvl = np.linspace(0,0.05,128)
-            cm = "cmo.matter"
+            lvl = bergTracerRange
+            cm = bergTracerCmap
             kk = 1
         if(usePcolor):
             cp = plt.pcolormesh(

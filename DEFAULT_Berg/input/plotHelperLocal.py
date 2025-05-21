@@ -15,6 +15,8 @@ uCmap = "cmo.balance"
 vCmap = "cmo.balance"
 wCmap = "cmo.curl"
 meltCmap = "cmo.rain"
+bergTracerCmap = "Blues"
+plumeTracerCmap = "YlOrBr"
 
 # Color Ranges
 saltRange = np.linspace(31, 35, 31)
@@ -23,3 +25,5 @@ uRange = np.linspace(-.2, .2, 31)
 vRange = np.linspace(-.2, .2, 31)
 wRange = np.linspace(-.005, .005, 31)
 meltRange = np.linspace(0,.5,31)
+bergTracerRange = np.linspace(0,0.10,31)
+plumeTracerRange = np.linspace(0,0.05,31)
