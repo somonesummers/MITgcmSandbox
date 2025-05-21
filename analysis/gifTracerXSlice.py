@@ -12,7 +12,11 @@ parser = argparse.ArgumentParser(description='Plot dynamics at xCrossSection')
 parser.add_argument('-x','--xCrossSection', nargs=1, default=None, type=float,
                     help='optional x location [m]')
 parser.add_argument('-q','--quick', action='count', default=0,
-                    help='quick option for last from only')
+                    help='quick option for last from only, double to show plot(s)')
+parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
+                    help='option specification of views to plot [default = all]')
+parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
+                    help='optional specification of numFrames [default = 60]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -70,8 +74,8 @@ for file in os.listdir('results'):
             sizeStep = abs(int(words[1]) - startStep)
 
 
-if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to be less than 50
-    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)
+if((maxStep-startStep)/sizeStep > args.numFrames):   #if more than numFrames, downscale to be less than numFrames
+    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/args.numFrames)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
@@ -141,8 +145,11 @@ if(args.quick > 0):
     print(args)
     startStep = maxStep
     cleanPNGs = False
-
-for k in range(len(name)):
+if(args.kValues == None):
+    kList = range(len(name))
+else:
+    kList = args.kValues
+for k in kList:
     print('\t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         data = mds.rdmds("results/%s"%(dynName[k]), i)
@@ -222,7 +229,8 @@ for k in range(len(name)):
         str = "figs/sideX%s%05i.png" % (name[k],j)
         
         plt.savefig(str, format='png', dpi=plotDPI)
-        # plt.show()
+        if(args.quick > 1):
+            plt.show()
         plt.close()
     if(args.quick == 0):
         if(args.xCrossSection != None):

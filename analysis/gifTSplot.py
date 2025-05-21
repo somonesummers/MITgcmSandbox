@@ -12,6 +12,8 @@ parser.add_argument('-x','--xCrossSection', nargs=1, type=float,default = None,
                     help='optional cross section location [m]')
 parser.add_argument('-q','--quick', action='count', default=0,
                     help='quick option for last frame only, double to show plot(s)')
+parser.add_argument('-n','--numFrames', nargs=1, type=int, default = [60],
+                    help='optional specification of numFrames [default = 60]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -60,8 +62,8 @@ for file in os.listdir('results'):
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
 
-if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to be less than 50
-    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)
+if((maxStep-startStep)/sizeStep > args.numFrames):   #if more than numFrames, downscale to be less than numFrames
+    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/args.numFrames)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
