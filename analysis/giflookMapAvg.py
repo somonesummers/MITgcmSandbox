@@ -7,22 +7,20 @@ import cmocean
 import fileinput
 import argparse
 
-parser = argparse.ArgumentParser(description='Plot dynamics at zDepth')
-parser.add_argument('-z','--zDepth', nargs=1, type=float,default = None,
-                    help='optional depth location [m]')
+parser = argparse.ArgumentParser(description='Plot dynamics depth averaged')
+parser.add_argument('-z','--zDepth', nargs='?', type=float,default = None,
+                    help='optional depth limit [m]. Pos values average above, neg avg below')
 parser.add_argument('-q','--quick', action='count', default=0,
                     help='quick option for last frame only, double to show plot(s)')
 parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
-                    help='optional specification of views to plot [default = all]')
+                    help='optional specification of views to plot [default = all] [Temp, Sal, U, W, V, BRGmltRt,TracePlume,TraceBerg,SPD]')
 parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
                     help='optional specification of numFrames [default = 60]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
-yCrossSection = 1000
-xCrossSection = 5000
 zDepth = -50
-plotDPI = 100
+plotDPI = 125
 cleanPNGs = True
 usePcolor = True
 showQuiver = True
@@ -40,9 +38,11 @@ else:
     print('no defaults found')
 print('Plot DPI:',plotDPI,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
 
+fullDepth = True
 if(args.zDepth != None):
     print('** Manual zDepth detected **')
     zDepth = args.zDepth
+    fullDepth = False
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
@@ -82,7 +82,7 @@ else:
     isBerg = False
 
 #Clean up old gifs and pngs
-os.system('rm -f figs/map*.png')
+os.system('rm -f figs/mapAvg*.png')
 # os.system('rm -f figs/autoMap*.gif')
 
 y = mds.rdmds("results/YC")
@@ -114,14 +114,14 @@ if(isBerg):
                 if bergMask[j,i] == 0:
                     openFrac[:,j,i] = 1
 
-
-zSlice = np.argmin(np.abs(z[:,0,0]- zDepth))
-print('depth is z =', z[zSlice,0,0], 'index', zSlice)
-
-# iceEdge = np.interp(z[zSlice,0,0],ice[0,:],x[0,:])
-
-name = ["Temp", "Sal", "U", "W", "V"]
-cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
+zSlice = None
+if(fullDepth == False):
+    avgAbove = True
+    if(zDepth < 0):
+        avgAbove = False
+    zDepth = np.abs(zDepth)
+    zSlice = np.argmin(np.abs(z[:,0,0] + zDepth))
+    print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
 if(isBerg):
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag','dynDiag']
@@ -182,10 +182,15 @@ for k in kList:
             cm = 'cmo.speed'
 
         if(name[k] == "SPD"):
-            dataPlot = np.sqrt(data[2, zSlice, :, :]**2 + data[3, zSlice, :, :]**2 + data[4, zSlice, :, :]**2)
+            dataTmp = np.sqrt(data[2, :, :, :]**2 + data[3, :, :, :]**2 + data[4, :, :, :]**2)
         else:
-            dataPlot = data[kk, zSlice, :, :]
-
+            dataTmp = data[kk, :, :, :]
+        if(fullDepth):
+            dataPlot = np.nanmean(dataTmp,axis=0)
+        elif(avgAbove):
+            dataPlot = np.nanmean(dataTmp[:zSlice,:,:],axis=0)
+        else:
+            dataPlot = np.nanmean(dataTmp[zSlice:,:,:],axis=0)
         plt.figure(figsize=(10, 4))
         if(usePcolor):
             cp = plt.pcolormesh(
@@ -211,7 +216,12 @@ for k in kList:
         ax1.set_aspect('equal')
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(dataPlot),np.nanmax(dataPlot),np.max(np.isnan(dataPlot))))
         plt.ylabel('Across Fjord [m]')
-        plt.title("%s depth %.2f m at %.02f days" % (name[k], z[zSlice,0,0] ,i/86400.0*dt))
+        if(fullDepth):
+            plt.title("%s depth averaged at %.02f days" % (name[k] ,i/86400.0*dt))
+        elif(avgAbove):
+            plt.title("%s depth averaged above %.02f at %.02f days" % (name[k], z[zSlice,0,0],i/86400.0*dt))
+        else:
+            plt.title("%s depth averaged below %.02f at %.02f days" % (name[k], z[zSlice,0,0],i/86400.0*dt))
         plt.contour(x,
                     y,
                     topo,
@@ -220,8 +230,15 @@ for k in kList:
         if(showQuiver):
             downSampleX = 5
             downSampleY = 3
-            u = np.squeeze(dataQuiv[2, zSlice, :, :])[::downSampleY,::downSampleX]
-            v = np.squeeze(dataQuiv[4, zSlice, :, :])[::downSampleY,::downSampleX]
+            if(fullDepth):
+                u = np.nanmean((dataQuiv[2, :, :, :]),axis=0)[::downSampleY,::downSampleX]
+                v = np.nanmean((dataQuiv[4, :, :, :]),axis=0)[::downSampleY,::downSampleX]
+            elif(avgAbove):
+                u = np.nanmean((dataQuiv[2, :zSlice, :, :]),axis=0)[::downSampleY,::downSampleX]
+                v = np.nanmean((dataQuiv[4, :zSlice, :, :]),axis=0)[::downSampleY,::downSampleX]
+            else:
+                u = np.nanmean((dataQuiv[2, zSlice:, :, :]),axis=0)[::downSampleY,::downSampleX]
+                v = np.nanmean((dataQuiv[4, zSlice:, :, :]),axis=0)[::downSampleY,::downSampleX]
             plt.quiver(
                 np.squeeze(x)[::downSampleY,::downSampleX],
                 np.squeeze(y)[::downSampleY,::downSampleX],
@@ -254,7 +271,7 @@ for k in kList:
 
         # plt.xlim([-8000, 25000]) # if zooming into a specific region
         j = i/sizeStep + startStep
-        str = "figs/map%s%05i.png" % (name[k],j)
+        str = "figs/mapAvg%s%05i.png" % (name[k],j)
         # plt.xlim([0,1000])        
         plt.tight_layout()
         plt.savefig(str, format='png', dpi=plotDPI)
@@ -263,9 +280,9 @@ for k in kList:
         plt.close()
     if(args.quick == 0):
         if(args.zDepth != None):
-            os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], np.abs(args.zDepth[0]), name[k]))
+            os.system('magick -delay %f figs/mapAvg%s*.png -colors 256 -depth 256 figs/autoMapAvg%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], (args.zDepth), name[k]))
         else:
-            os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+            os.system('magick -delay %f figs/mapAvg%s*.png -colors 256 -depth 256 figs/autoMapAvg%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
     if(cleanPNGs):

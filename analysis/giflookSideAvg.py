@@ -10,9 +10,11 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Plot dynamics width averaged')
 parser.add_argument('-q','--quick', action='count', default=0,
-                    help='quick option for last from only')
+                    help='quick option for last from only, double to show plot(s)')
 parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
                     help='option specification of views to plot [default = all]')
+parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
+                    help='optional specification of numFrames [default = 60]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -71,8 +73,8 @@ for file in os.listdir('results'):
 # startStep = int(((maxStep - startStep)/startStep) * 1 / 2 )* startStep 
 # maxStep = maxStep - 10 * sizeStep
 
-if((maxStep-startStep)/sizeStep > 60):   #if more than # frames, downscale to be less than #
-    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)
+if((maxStep-startStep)/sizeStep > args.numFrames):   #if more than numFrames, downscale to be less than numFrames
+    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/args.numFrames)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
@@ -193,12 +195,12 @@ for k in kList:
             cm = meltCmap
             kk = k - 3
         elif k == 6:
-            lvl = np.linspace(0,0.05,127)
-            cm = "cmo.matter"
+            lvl = plumeTracerRange
+            cm = plumeTracerCmap
             kk = 0
         elif k == 7:
-            lvl = np.linspace(0,0.05,128)
-            cm = "cmo.matter"
+            lvl = bergTracerRange
+            cm = bergTracerCmap
             kk = 1
         plt.figure(figsize=(12, 5))
         if(usePcolor):
@@ -219,8 +221,8 @@ for k in kList:
                 extend="both",
                 cmap=cm,
             )
-        if(k == 5): #special bounds to highlight refreezing areas
-            cp.cmap.set_under('r')
+        # if(k == 5): #special bounds to highlight refreezing areas
+        #     cp.cmap.set_under('r')
         plt.plot(x[0,:],topo[int(np.shape(x)[0]/2),:],color='black')
         if(localBergs):
             pass

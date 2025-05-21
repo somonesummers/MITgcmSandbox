@@ -15,6 +15,8 @@ parser.add_argument('-q','--quick', action='count', default=0,
                     help='quick option for last from only, double to show plot(s)')
 parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
                     help='option specification of views to plot [default = all]')
+parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
+                    help='optional specification of numFrames [default = 60]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -71,9 +73,8 @@ for file in os.listdir('results'):
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
 
-
-if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to be less than 50
-    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)
+if((maxStep-startStep)/sizeStep > args.numFrames):   #if more than numFrames, downscale to be less than numFrames
+    dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/args.numFrames)
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
@@ -179,12 +180,12 @@ for k in kList:
             cm = meltCmap
             kk = k - 3
         elif k == 6:
-            lvl = np.linspace(0,0.05,101)
-            cm = "cmo.matter"
+            lvl = plumeTracerRange
+            cm = plumeTracerCmap
             kk = 0
         elif k == 7:
-            lvl = np.linspace(0,0.05,101)
-            cm = "cmo.matter"
+            lvl = bergTracerRange
+            cm = bergTracerCmap
             kk = 1
         if(usePcolor):
             cp = plt.pcolormesh(
