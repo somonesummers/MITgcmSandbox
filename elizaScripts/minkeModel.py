@@ -89,7 +89,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'EQ_w5_c1_sgd250'
+run_config['run_name'] = 'test'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -352,7 +352,7 @@ params03 = {}
 params03['dumpInitAndLast'] = False  #Reduce number of dumped files
 params03['nIter0'] = 0
 #params03['endTime'] = 864000.0
-deltaT = 25
+deltaT = 12
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -621,16 +621,38 @@ V_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 W_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 Ptr_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 
-# Sermilik Winter like 2 layer
-t_avg = 1
-t_del = 4
-s_avg = 34
-s_del = 1.5
-pyclineDepth = 175
-pyclineThickness = 30
-z_tmp =  np.arange(0,600,20); #must be increasing, so do depth as positive, see negs later for z[:]
-t_tmp =  t_del / np.pi * np.arctan(2 * (z_tmp - pyclineDepth)/pyclineThickness) + t_avg
-s_tmp =  s_del / np.pi * np.arctan(2 * (z_tmp - pyclineDepth)/pyclineThickness) + s_avg
+## Sermilik Summer Data
+## 10.1029/2018GL077000 is paper 
+## https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.nodc:0171277 has data
+
+data_tmp=np.load('shelfProfile.npz')
+
+# Can have bad values, toss them, set deepest measure equal to deeped valid measure for interpolator to work
+s_tmp = data_tmp['S']
+s_tmp[abs(s_tmp)>40] = np.nan
+t_tmp = data_tmp['T']
+t_tmp[abs(t_tmp)>10] = np.nan
+z_tmp = 1*data_tmp['z']
+
+# Smooth the data over a window of 5 meters
+window_size = 5
+weights = np.ones(window_size) / window_size
+s_smth = np.convolve(s_tmp, weights, mode='same')
+t_smth = np.convolve(t_tmp, weights, mode='same')
+
+#Fill the bottom of these profiles with a valid value for interpolator
+s_smth[-1] = s_tmp[~np.isnan(s_tmp)][-1]
+t_smth[-1] = t_tmp[~np.isnan(t_tmp)][-1]
+## Sermilik Winter like 2 layer
+# t_avg = 1
+# t_del = 4
+# s_avg = 34
+# s_del = 1.5
+# pyclineDepth = 175
+# pyclineThickness = 30
+# z_tmp =  np.arange(0,600,20); #must be increasing, so do depth as positive, see negs later for z[:]
+# t_tmp =  t_del / np.pi * np.arctan(2 * (z_tmp - pyclineDepth)/pyclineThickness) + t_avg
+# s_tmp =  s_del / np.pi * np.arctan(2 * (z_tmp - pyclineDepth)/pyclineThickness) + s_avg
 
 # # Sermilik Winter like 
 # z_tmp =  np.asarray([   0,  100,  200,  250,  300,  500,  600]); #must be increasing, so do depth as positive, see negs later for z[:]
@@ -641,8 +663,8 @@ s_tmp =  s_del / np.pi * np.arctan(2 * (z_tmp - pyclineDepth)/pyclineThickness) 
 # z_tmp =  np.asarray([  0,  10,   50,  100,  200,  300, 500]); #must be increasing, so do depth as positive, see negs later for z[:]
 # t_tmp =  np.asarray([  1,   1,  1.5,  1.8,  2.1,  2.3, 2.6]);
 # s_tmp =  np.asarray([ 33,33.2, 33.8, 34.0, 34.3, 34.4,34.6]);
-t_int = interpolate.PchipInterpolator(z_tmp, t_tmp)
-s_int = interpolate.PchipInterpolator(z_tmp, s_tmp)
+t_int = interpolate.PchipInterpolator(z_tmp[~np.isnan(s_smth)], t_smth[~np.isnan(s_smth)],extrapolate=False)
+s_int = interpolate.PchipInterpolator(z_tmp[~np.isnan(s_smth)], s_smth[~np.isnan(s_smth)],extrapolate=False)
 for j in np.arange(0,grid_params['Ny']):
     for i in np.arange(0, grid_params['Nx']):
         t2[:, j, i] = t_int(-1 * z[:])
@@ -662,8 +684,8 @@ Ptr_e = np.zeros([nt,grid_params['Nr'],grid_params['Ny']])
 
 ## N/S BCs
 #coastal flow location and width
-mean = 1 + fjordEnd
-std_dev = 1
+mean = 3 + fjordEnd
+std_dev = 3
 
 for i in np.arange(fjordEnd,grid_params['Nx']):
     for k in range(nt):
@@ -700,16 +722,19 @@ write_bin("NsBCptr.bin", Ptr_ns)
 write_bin("EBCptr.bin", Ptr_e)
 
 if OSX == 'Darwin':  #only work on Mac for now, can't get gsw installed on PACE
+    d_tmp = data_tmp['density']
     pressure = -1 * np.ones(np.shape(t2[:,0,0])) * 1020 * 9.81 * z /(1e4)
     CT = gsw.CT_from_t(s2[:,0,0], t2[:,0,0], 0)
     density = gsw.rho(s2[:,0,0], CT, 0) 
     density = density - np.mean(density) #in-stu density less mean
+    d_tmp = d_tmp - np.nanmean(d_tmp)
 plt.figure()
 plt.plot(s2[:,1,1] - 34, z, 'b', label="Sref - 34")
 plt.plot(t2[:,1,1], z, 'r', label="Tref")
 if OSX == 'Darwin':
     plt.plot(CT, z, 'r--',label="$\\theta$ref")
     plt.plot(density, z, label="∆ Density",color='xkcd:pumpkin')
+    plt.scatter(d_tmp, -z_tmp,color='xkcd:pumpkin')
 plt.scatter(s_tmp - 34,-z_tmp,color='b')
 plt.scatter(t_tmp,-z_tmp,color='r')
 plt.legend()
