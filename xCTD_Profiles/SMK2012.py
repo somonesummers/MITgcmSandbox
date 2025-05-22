@@ -164,7 +164,11 @@ ax2.set_xlabel('Along Profile [km]')
 ax2.set_ylabel('Depth')
 ax2.invert_yaxis()
 plt.tight_layout()
+
+strname = '2012AlongFjord.png'
+plt.savefig(strname, format='png', dpi=400)
 plt.show()
+plt.close()
 
 
 # %%

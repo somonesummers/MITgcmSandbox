@@ -6,7 +6,10 @@ import datetime
 import cmocean
 import gsw
 import utm
-#summary: 31 Temperature and salinity profiles from Sermilik Fjord in East Greenland.  
+## 10.1029/2018GL077000 is paper 
+## https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.nodc:0171277 has data
+#
+# summary: 31 Temperature and salinity profiles from Sermilik Fjord in East Greenland.  
 # Collected with a Seabird SBE25plus CTD (#0251108) during August 2015 from the R/V Adolf Jensen.  
 # The profiles are 1-m bin averages.
 #    acknowledgement: Funding from NSF OCE 1434041 and NSF OCE 1536856
@@ -269,6 +272,8 @@ ax2.set_ylabel('Depth')
 ax2.invert_yaxis()
 plt.tight_layout()
 
+strname = '2015AlongFjord.png'
+plt.savefig(strname, format='png', dpi=400)
 plt.show()
 plt.close()
 # %%
