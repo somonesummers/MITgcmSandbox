@@ -134,7 +134,7 @@ dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx','ptra
 name = ["Temperature", "Sal", "Along Fjord Velocity U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg']
 cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]"]
 
-fig, axes = plt.subplots(2, 2, figsize=(14, 6), layout="constrained",width_ratios=[3, 1])
+fig, axes = plt.subplots(2, 2, figsize=(10, 6), layout="constrained",width_ratios=[1.5, 1])
 ax1 = axes[0,0]
 ax2 = axes[1,0]
 ax3 = axes[0,1]

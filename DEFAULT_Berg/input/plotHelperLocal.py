@@ -15,8 +15,8 @@ uCmap = "cmo.balance"
 vCmap = "cmo.balance"
 wCmap = "cmo.curl"
 meltCmap = "cmo.rain"
-bergTracerCmap = "Blues"
-plumeTracerCmap = "YlOrBr"
+bergTracerCmap = "cmo.deep"
+plumeTracerCmap = "cmo.matter"
 
 # Color Ranges
 saltRange = np.linspace(31, 35, 31)

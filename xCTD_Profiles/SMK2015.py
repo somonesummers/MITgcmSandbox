@@ -6,6 +6,8 @@ import datetime
 import cmocean
 import gsw
 import utm
+
+import geopandas as gpd
 ## 10.1029/2018GL077000 is paper 
 ## https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.nodc:0171277 has data
 #
@@ -27,6 +29,12 @@ import utm
 #       float64 sal_qc(z, profile), 
 #       float64 temp(z, profile), 
 #       float64 temp_qc(z, profile)
+
+# Open the coast shapefile
+shapefile_path = "Greenland_coast/Greenland_coast.shp"
+
+gdf = gpd.read_file(shapefile_path)
+newProj = gdf.to_crs(epsg=32624) #UTM N 24
 
 
 file2read = 'SF2015CTD.nc'
@@ -66,7 +74,8 @@ Srange = np.linspace(27,35,31)
 
 ## show the entire domain
 #Aug 2014 is 450 - 625 or so
-plt.figure()
+newProj.plot()
+ax = plt.gca()
 f=plt.scatter(utm_x,utm_y,c=profile)
 picks = [8,9,10]
 plt.scatter(utm_x[picks],utm_y[picks],marker='*',color='black')
@@ -74,12 +83,14 @@ plt.colorbar(f)
 plt.title('All Beautiful 2015 CTD casts')
 plt.xlabel('Easting UTM [m]')
 plt.ylabel('Northing UTM [m]')
+ax.set_xlim([505000,585500])
+ax.set_ylim([7.26e6,7.37e6])
 xRange = plt.xlim()
 yRange = plt.ylim()
+strname = 'Map2015All.png'
+plt.savefig(strname, format='png', dpi=400)
 plt.show()
 plt.close()
-
-
 # %%
 nMix = 25 #number mixing lines
 mixingT = np.zeros([2,nMix])
@@ -210,7 +221,7 @@ for i in range(len(picks)):
 sTime = datetime.datetime.fromtimestamp(int(time[picks[0]]))
 eTime = datetime.datetime.fromtimestamp(int(time[picks[-1]]))
 print(distAlong)
-plt.figure(1)
+newProj.plot()
 f=plt.scatter(utm_x[picks],utm_y[picks],c=distAlong,cmap='jet')
 plt.plot(utm_x[picks],utm_y[picks])
 plt.xlabel('Easting UTM [m]')
@@ -219,7 +230,8 @@ plt.colorbar(f)
 plt.xlim(xRange)
 plt.ylim(yRange)
 plt.title('Our Most Exclusive xCTDs \n' + sTime.strftime('%Y-%m-%d %H:%M:%S') + ' to ' + eTime.strftime('%Y-%m-%d %H:%M:%S'))
-
+strname = 'Map2015AlongFjord.png'
+plt.savefig(strname, format='png', dpi=400)
 
 fig= plt.figure(2,figsize=(12, 8))
 ax1 = plt.subplot(211)

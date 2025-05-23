@@ -8,28 +8,27 @@ import cmocean
 import gsw
 
 import geopandas as gpd
- # Paul believes these are IN the melange
- # summary: Temperature and salinity profiles from 7 eXpendable Conductivity Temperature Depth (XCTD)-1 probes collected in Sermilik Fjord, East Greenland, on September 14 2011.
- #   title: XCTD profiles of temperature and salinity from Sermilik Fjord during September 2012
- #   dimensions(sizes): z(450), profile(7)
- #   dimensions(sizes): z(450), profile(7)
- #   variables(dimensions): 
- # float64 profile(profile), 
- # float64 time(profile), 
- # float64 lat(profile), 
- # float64 lon(profile), 
- # float64 depth(z), 
- # float64 pres(z), 
- # float64 sal(z, profile), 
+ 
+ #DATASET | Published 2024 | doi:10.18739/A2348GJ3X
+ # contributor_name: Fiamma Straneo, Jamie Holte, Margaret Lindeman, Aurora Roth, Fiamma Straneo
+ #    contributor_role: Principal Investigator, Data Processor, Data Processor, Data Processor, Data Collector
+ #    creator_name: Dr. Fiamma Straneo, Professor
+ #    creator_email: fstraneo@seas.harvard.edu
+ #    creator_institution: Harvard University
+ #    instrument: Sippican XCTD-1 probes
+ #    processing_level: Quality Controlled
+ #    summary: Temperature and salinity profiles from 4 eXpendable Conductivity Temperature Depth (XCTD)-1 probes collected in Sermilik Fjord, East Greenland, on August 26 2011.
+ #    title: XCTD profiles of temperature and salinity from Sermilik Fjord during August 2011
+ #    dimensions(sizes): z(450), profile(4)
+ #    variables(dimensions): 
+ # float64 profile(profile),
+ # float64 time(profile),
+ # float64 lat(profile),
+ # float64 lon(profile),
+ # float64 depth(z),
+ # float64 pres(z),
+ # float64 sal(z, profile),
  # float64 temp(z, profile)
-
-# file2read = 'SF2015CTD.nc'
-# zfile_id = Dataset(file2read)
-# zlat = np.asarray(zfile_id.variables['lat'])
-# zlon = np.asarray(zfile_id.variables['lon'])
-# zxy = utm.from_latlon(zlat,zlon)
-# zutm_x = zxy[0]
-# zutm_y = zxy[1]
 
 # Open the coast shapefile
 shapefile_path = "Greenland_coast/Greenland_coast.shp"
@@ -37,8 +36,8 @@ shapefile_path = "Greenland_coast/Greenland_coast.shp"
 gdf = gpd.read_file(shapefile_path)
 newProj = gdf.to_crs(epsg=32624) #UTM N 24
 
-
-file2read = 'Sermilik2012_XCTD.nc'
+year = '2011'
+file2read = 'Sermilik2011_XCTD.nc'
 file_id = Dataset(file2read)
 time = file_id.variables['time']
 lat = np.asarray(file_id.variables['lat'])
@@ -52,7 +51,7 @@ salt = np.asarray(file_id.variables['sal'])
 pressure = file_id.variables['pres']
 
 pressure = np.zeros_like(salt)
-for i in range(7):
+for i in range(len(lat)):
     pressure[:,i] = depth[:]  * 1020 * 9.81 /1e4
 # print(pressure[:,1])
 density = np.zeros_like(salt)
@@ -62,7 +61,7 @@ density = gsw.rho(salt,CT,0) - 1000
 densityLevels = np.linspace(22,28,31)
 
 
-Trange = np.linspace(-2,4,31)
+Trange = np.linspace(-2,5,31)
 Srange = np.linspace(27,35,31)
 
 # %%
@@ -93,7 +92,7 @@ freezeS100 = [0,50]
 freezeT100 = [-.011,-2.919]
 
 
-for i in range(7):
+for i in range(len(lat)):
     plt.figure()
     cp = plt.scatter(salt[:,i],temp[:,i],c=depth[:],linestyle='-',marker='o')
     plt.colorbar(cp) 
@@ -104,19 +103,19 @@ for i in range(7):
     plt.title(i)
     ax = plt.gca()
     ax.set_xlim([26,35.5])
-    ax.set_ylim([-2.5,3.75])
+    ax.set_ylim([-2.5,5])
     plt.show()
     plt.close()
 
 # %%
 #Sub 1, Along fjord
 start = 0
-stop = 6
+stop = len(lat)-1
 sTime = datetime.datetime.fromtimestamp(int(time[start]))
 eTime = datetime.datetime.fromtimestamp(int(time[stop]))
 
 
-picks = [0,1,2,3,4,5,6]
+picks = [0,1,2,3]
 distAlong = np.zeros(len(picks))
 for i in range(len(picks)):
     if(i == 0):
@@ -133,7 +132,7 @@ plt.title('Our Most Exclusive CTD casts\n' + sTime.strftime('%Y-%m-%d %H:%M:%S')
 ax = plt.gca()
 ax.set_xlim([505000,585500])
 ax.set_ylim([7.26e6,7.37e6])
-strname = 'Map2012.png'
+strname = f'Map{year}.png'
 plt.savefig(strname, format='png', dpi=400)
 
 fig= plt.figure(2,figsize=(12, 8))
@@ -187,7 +186,7 @@ ax2.set_ylabel('Depth')
 ax2.invert_yaxis()
 plt.tight_layout()
 
-strname = '2012AlongFjord.png'
+strname = f'{year}AlongFjord.png'
 plt.savefig(strname, format='png', dpi=400)
 plt.show()
 plt.close()

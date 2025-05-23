@@ -89,7 +89,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'test'
+run_config['run_name'] = 'testWinter'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -625,7 +625,11 @@ Ptr_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 ## 10.1029/2018GL077000 is paper 
 ## https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.nodc:0171277 has data
 
-data_tmp=np.load('shelfProfile.npz')
+# data_tmp=np.load('shelfProfile2015.npz')
+
+## Sermilik Winter
+## Access DOI: DATASET | Published 2021 | doi:10.18739/A2M03XZ2K
+data_tmp=np.load('shelfProfile2010.npz')
 
 # Can have bad values, toss them, set deepest measure equal to deeped valid measure for interpolator to work
 s_tmp = data_tmp['S']
