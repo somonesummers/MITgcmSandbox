@@ -89,7 +89,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'testWinter'
+run_config['run_name'] = 'EQ_SMK_1300'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -101,14 +101,14 @@ run_config['Ly_m'] = 4800 + (2 * wallWidthInd * run_config['horiz_res_m']) # dom
 
 grid_params['Nr'] = 32 # num of z-grid points
 
-run_config['make_icebergs'] = True # Do we make bergs? No if running from spin-up
+run_config['make_icebergs'] = False # Do we make bergs? No if running from spin-up
 
 setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s" %(run_config['run_name'],makeDirs,writeFiles))
 input("Confirm above is accurate before continuing...")
 
 # Variables to adjust ======================
 assign_deltaT = 0 # [C]
-assign_plumeSGD = 250 #[m^3/s]
+assign_plumeSGD = 1300 #[m^3/s]
 
 # Offshore current =========================
 oscStrength = 0.10 #[m/s] peak strength of offshore current
