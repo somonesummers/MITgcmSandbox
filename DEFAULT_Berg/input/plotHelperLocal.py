@@ -19,8 +19,8 @@ bergTracerCmap = "cmo.deep"
 plumeTracerCmap = "cmo.matter"
 
 # Color Ranges
-saltRange = np.linspace(31, 35, 31)
-tempRange = np.linspace(-2, 3.0, 31)
+saltRange = np.linspace(27, 35, 31)
+tempRange = np.linspace(-2, 4.0, 31)
 uRange = np.linspace(-.2, .2, 31)
 vRange = np.linspace(-.2, .2, 31)
 wRange = np.linspace(-.005, .005, 31)

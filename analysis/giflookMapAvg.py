@@ -145,7 +145,7 @@ for k in kList:
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
-            localBergs = True
+            localBergs = False
         else:
             localBergs = False
         data = mds.rdmds("results/%s"%(dynName[k]), i)

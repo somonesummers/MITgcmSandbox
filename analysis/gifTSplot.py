@@ -12,7 +12,7 @@ parser.add_argument('-x','--xCrossSection', nargs=1, type=float,default = None,
                     help='optional cross section location [m]')
 parser.add_argument('-q','--quick', action='count', default=0,
                     help='quick option for last frame only, double to show plot(s)')
-parser.add_argument('-n','--numFrames', nargs=1, type=int, default = [60],
+parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
                     help='optional specification of numFrames [default = 60]')
 args = parser.parse_args()
 
@@ -76,6 +76,12 @@ x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
 z = mds.rdmds("results/RC")
  
+if(os.path.isfile('input/bathymetry.bin')):
+    topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
+    topo = topo.reshape(np.shape(x))
+else:
+    topo = np.ones(np.shape(x))
+
 xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
 print('cross section is x =', x[0,xSlice],'index', xSlice)
 
@@ -106,37 +112,63 @@ if(args.quick > 0):
 
 for i in np.arange(startStep, maxStep + 1, sizeStep):
     data = mds.rdmds("results/dynDiag", i)
-    plt.figure()
-    # data_old = mds.rdmds("results/dynDiag", 20*86400/dt)  #breaks if not a 20 day run, fix later
-    # sc=plt.scatter(np.mean(data_old[1,:,1:-1,xSlice],1),np.mean(data_old[0,:,1:-1,xSlice],1),
-    #                alpha=.5,s=25,color='black',edgecolor='none')
-    for j in range(np.shape(y[1:-1,:])[0]):
-        plt.scatter(data[1,:,j+1,xSlice],data[0,:,j+1,xSlice],c=np.squeeze(z),
-                   alpha=.25,s=10,cmap='viridis')
-    sc=plt.scatter(np.mean(data[1,:,1:-1,xSlice],1),np.mean(data[0,:,1:-1,xSlice],1),c=np.squeeze(z),
+    plt.figure(figsize=(12, 6))
+
+    plt.subplot(131)
+    for j in range(np.shape(y)[0]):
+        if(topo[j,xSlice] == 0): #this is a wall
+            data[:,:,j,xSlice] = np.nan
+        # plt.scatter(data[1,:,j+1,xSlice],data[0,:,j+1,xSlice],c=np.squeeze(z),
+        #            alpha=.25,s=10,cmap='viridis')
+        plt.plot(data[1,:,j,xSlice],data[0,:,j,xSlice],alpha = .1, color='gray')
+    sc=plt.scatter(np.nanmean(data[1,:,:,xSlice],1),np.nanmean(data[0,:,:,xSlice],1),c=np.squeeze(z),
                    alpha=1.,s=25,cmap='viridis')
     plt.plot(mixingS,mixingT,linewidth=.5,color='gray',alpha=.5,linestyle='--')
     plt.plot(meltS,meltT,linewidth=.5,color='gray',alpha=.5,linestyle='--')
     plt.plot(freezeS,freezeT,linewidth=.5,color='red',alpha=.5,linestyle='--')
     plt.plot(freezeS100,freezeT100,linewidth=.5,color='red',alpha=.5,linestyle='--')
-    cbar = plt.colorbar(sc)
-    cbar.set_label('Depth [m]')
+    # cbar = plt.colorbar(sc)
+    # cbar.set_label('Depth [m]')
     ax = plt.gca()
     ax.set_xlim([np.min(saltRange), np.max(saltRange)])
     ax.set_ylim([np.min(tempRange), np.max(tempRange)])
     
     plt.xlabel('Salt [PSU]')
     plt.ylabel('Temperature [C]')
-    plt.title("TS x = %i at %.02f days" % (x[0,xSlice], i/86400.0*dt))
-    j = i/sizeStep + startStep
+    plt.title('Temp/Salt')
+    plt.suptitle("TS x = %i at %.02f days" % (x[0,xSlice], i/86400.0*dt))
+   
     
+    plt.subplot(132)
+    for j in range(np.shape(y)[0]):
+            plt.plot(data[1,:,j,xSlice],np.squeeze(z),alpha = .1, color='gray')
+    cp = plt.scatter(np.nanmean(data[1,:,:,xSlice],1),np.squeeze(z),c=np.squeeze(z),linestyle='-',marker='o')
+    ax = plt.gca()
+    plt.title('Salt')
+    ax.set_xlabel('Salinity')
+    ax.set_ylabel('Depth [m]')
+    plt.grid(alpha = .5)
 
+    plt.subplot(133)
+    for j in range(np.shape(y)[0]):
+            plt.plot(data[0,:,j,xSlice],np.squeeze(z),alpha = .1, color='gray')
+    cp = plt.scatter(np.nanmean(data[0,:,:,xSlice],1),np.squeeze(z),c=np.squeeze(z),linestyle='-',marker='o')
+    ax = plt.gca()
+    cbar = plt.colorbar(cp)
+    cbar.set_label('Depth [m]')
+    plt.title('Temperature')
+    ax.set_xlabel('Temperature [C]')
+    ax.set_ylabel('Depth [m]')
+    plt.grid(alpha = .5)
+
+    j = i/sizeStep + startStep
     str = "figs/tmpTSPlot%05i.png" % (j)
-    
+    plt.tight_layout()
     plt.savefig(str, format='png', dpi=plotDPI)
     if(args.quick > 1):
         plt.show()
     plt.close()
+
 if(args.quick == 0):
     if(args.xCrossSection != None):
         os.system('magick -delay %f figs/tmpTSPlot*.png -colors 256 -depth 256 figs/TSPlot%i.gif' %(500/((maxStep-startStep)/sizeStep),args.xCrossSection[0]))
