@@ -11,6 +11,8 @@ import argparse
 parser = argparse.ArgumentParser(description='Plot Plume variables')
 parser.add_argument('-q','--quick', action='count', default=0,
                     help='quick option for last frame only')
+parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
+                    help='option specification of views to plot [default = all]')
 args = parser.parse_args()
 
 # Plot settings from local helper
@@ -62,7 +64,7 @@ if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to b
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 os.system('rm -f figs/plumePlot*.png')
-os.system('rm -f figs/plumePlot*.gif')
+# os.system('rm -f figs/plumePlot*.gif')
 
 x = mds.rdmds("results/XC")
 dx = x[0,0]*2
@@ -97,19 +99,23 @@ if(args.quick > 0):
     startStep = maxStep
     cleanPNGs = False
 
-for k in range(len(name)):
+if(args.kValues == None):
+    kList = range(len(name))
+else:
+    kList = args.kValues
+for k in kList:
     print("\t %s" %name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         j = plumeLoc[0]
         data = mds.rdmds("results/%s"%(dynName), i)
         if k == 0:
-            lvl = [-.5,2] 
+            lvl = [-.5,3] 
             cm = "xkcd:raspberry"
             plotData = data[k,:,j,plumeLoc[1]]
             ambData = mds.rdmds("results/dynDiag", i)
             plotData2 = np.squeeze(ambData[3,:,j,plumeLoc[1]])
             plotData22 = np.squeeze(ambData[3,:,j,plumeLoc[1]+peakDownFjord])
-            plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5)*10)
+            plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5))
             plotData4 = np.squeeze(ambData[3,:,j,farFjord])
         elif k == 1:
             lvl = tempRange
@@ -118,7 +124,7 @@ for k in range(len(name)):
             ambData = mds.rdmds("results/dynDiag", i)
             plotData2 = np.squeeze(ambData[0,:,j,plumeLoc[1]])
             plotData22 = np.squeeze(ambData[0,:,j,plumeLoc[1]+peakDownFjord])
-            plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5)*10)
+            plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5))
             plotData4 = np.squeeze(ambData[0,:,j,farFjord])
         elif k == 2:
             lvl = saltRange
@@ -127,7 +133,7 @@ for k in range(len(name)):
             ambData = mds.rdmds("results/dynDiag", i)
             plotData2 = np.squeeze(ambData[1,:,j,plumeLoc[1]])
             plotData22 = np.squeeze(ambData[1,:,j,plumeLoc[1]+peakDownFjord])
-            plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5)*10)
+            plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5))
             plotData4 = np.squeeze(ambData[1,:,j,farFjord])
         elif k == 3:
             lvl = [-.1, 9]
@@ -160,7 +166,7 @@ for k in range(len(name)):
             ambCT = gsw.CT_from_t(salt, ambData[0,:,j,plumeLoc[1]+peakDownFjord], pressure)
             plotData22 = gsw.rho(ambS, ambCT, pressure) - rho0 #in-stu density less rho0
             
-            plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5)*10)
+            plotData3 = np.squeeze((ambData[2,:,j,plumeLoc[1]]**2 + ambData[3,:,j,plumeLoc[1]]**2 + ambData[4,:,j,plumeLoc[1]]**2)**(0.5))
 
             ambS = np.squeeze(ambData[1,:,j,farFjord])
             ambCT = gsw.CT_from_t(salt, ambData[0,:,j,farFjord], pressure)
@@ -168,25 +174,32 @@ for k in range(len(name)):
 
         plt.figure()
         plt.plot(plotData,np.squeeze(z),linewidth=1,color=cm)
-        if(k == 6 or k < 3):
-            plt.plot(plotData2,np.squeeze(z),linewidth=1,color=cm,linestyle='--',label="Ambient")
-            plt.plot(plotData22,np.squeeze(z),linewidth=1,color=cm,linestyle=':',label="Ambient %i cells Down Fjord" %peakDownFjord)
-            plt.plot(plotData3,np.squeeze(z),linewidth=1,color='xkcd:periwinkle',linestyle='--',label='Amb Speed [cm/s]')
-            plt.plot(plotData4,np.squeeze(z),linewidth=1,color='xkcd:gray',linestyle='--',label='fjord mouth',alpha=.5)
-            plt.legend(loc='lower left')
         ax = plt.gca()
-        plt.grid(alpha=.5)
+        ax.grid(alpha=.5)
         ax.set_xlim([np.min(lvl),np.max(lvl)])
-        plt.xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(plotData),np.nanmax(plotData),np.max(np.isnan(plotData))))
-        plt.ylabel('Depth [m]')
-        plt.title("%s x = %i at %.02f days" % (name[k], x[0,plumeLoc[1]], i/86400.0*dt))
+        ax.set_xlabel(name[k] + " " + units[k] + ' %.3f %.3f nan: %i' %(np.nanmin(plotData),np.nanmax(plotData),np.max(np.isnan(plotData))))
+        ax.set_ylabel('Depth [m]')
+        ax.set_title("%s x = %i at %.02f days" % (name[k], x[0,plumeLoc[1]], i/86400.0*dt))
+        if(k == 6 or k < 3):
+            ax.plot(plotData2,np.squeeze(z),linewidth=1,color=cm,linestyle='--',label="Ambient")
+            ax.plot(plotData22,np.squeeze(z),linewidth=1,color=cm,linestyle=':',label="Ambient %i cells Down Fjord" %peakDownFjord)
+            ax.plot([],[],linewidth=1,color='xkcd:periwinkle',linestyle='--',label='Amb Speed [m/s]') # add to legend on ax
+            ax.plot(plotData4,np.squeeze(z),linewidth=1,color='xkcd:gray',linestyle='--',label='fjord mouth',alpha=.5)
+            ax.legend(loc='lower left')
+            ax_2 = ax.twiny()
+            ax_2.plot(plotData3,np.squeeze(z),linewidth=1,color='xkcd:periwinkle',linestyle='--',label='Amb Speed [m/s]')
+            ax_2.set_xlabel('Amb Speed [m/s]',color='xkcd:periwinkle')
+            ax_2.tick_params(axis='x',labelcolor='xkcd:periwinkle')
+            ax_2.set_xlim([-0.02,0.42])
+
         j = i/sizeStep + startStep
         
         str = "figs/plumePlot%s%05i.png" % (name[k],j)
-        
+        plt.tight_layout()
         plt.savefig(str, format='png',dpi=plotDPI)
+        if(args.quick > 1):
+            plt.show()
         plt.close()
-        plt.show()
     if(args.quick == 0):
         os.system('magick -delay %f figs/plumePlot%s*.png -colors 256 -depth 256 figs/plumePlot%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
 

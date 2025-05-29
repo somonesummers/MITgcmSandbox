@@ -33,7 +33,7 @@ parser.add_argument('-f','--files', nargs=1, default=['couplingResults/MITgcm_']
 parser.add_argument('-u','--Uc', nargs=1, default=[0],type=int,
                     help='Plot Uc instead of side view [defaut = 0]')
 parser.add_argument('-n','--NumView', nargs=1, default=[100], type=int,
-                    help='How many iterations to look back for cascade plots [defaut = 100]')
+                    help='How many files to look back for cascade plots [defaut = 100]')
 args = parser.parse_args()
 
 # print(args)
@@ -64,6 +64,7 @@ H0Time = np.zeros(np.shape(toIterate))
 VTime = np.zeros(np.shape(toIterate))
 UcTime = np.zeros(np.shape(toIterate))
 lengthTime = np.zeros(np.shape(toIterate))
+timeTime = np.zeros(np.shape(toIterate))
 iterationNumber = np.zeros(np.shape(toIterate))
 for j in toIterate:
     file = files[j]
@@ -78,12 +79,16 @@ for j in toIterate:
     VTime[j] = simpson(H*W, x=X_)*1e-9
     lengthTime[j]=data.X[-1]
     UcTime[j] = data.Uc
+    timeTime[j] = data.t * 365
     iterationNumber[j]=int(it)
 
+if(timeTime[0] != 0):
+    print(f"time shifted by {timeTime[0]:.02f} days")
+    timeTime = timeTime - timeTime[0] #remove any shift so that time starts at 0
 
 if(args.Uc[0] == 1):
     ax2.plot(iterationNumber,UcTime,'-')
-    sca=ax2.scatter(iterationNumber,UcTime,s=None,c=iterationNumber,cmap='viridis')
+    sca=ax2.scatter(iterationNumber,UcTime,s=None,c=timeTime,cmap='viridis')
     # cbar=plt.colorbar(sca)
     # cbar.set_label('Iteration [Days]')
     ax2.set_ylabel('Calving Speed [m/yr]')
@@ -92,17 +97,17 @@ if(args.Uc[0] == 1):
 
 
 ax5.plot(iterationNumber,lengthTime,'-')
-sca=ax5.scatter(iterationNumber,lengthTime,s=None,c=iterationNumber,cmap='viridis')
+sca=ax5.scatter(iterationNumber,lengthTime,s=None,c=timeTime,cmap='viridis')
 cbar=plt.colorbar(sca)
-cbar.set_label('Iteration [Days]')
+cbar.set_label('Time [Days]')
 ax5.set_ylabel('Mélange length [m]')
-ax5.set_xlabel('Iteration [ ]')
+ax5.set_xlabel('Time [days]')
 ax5.grid(alpha=.5)
 
 ax6.plot(H0Time,lengthTime,'-')
-sca=ax6.scatter(H0Time,lengthTime,s=None,c=iterationNumber,cmap='viridis')
+sca=ax6.scatter(H0Time,lengthTime,s=None,c=timeTime,cmap='viridis')
 cbar=plt.colorbar(sca)
-cbar.set_label('Iteration [Days]')
+cbar.set_label('Time [Days]')
 ax6.set_ylabel('Mélange Length [m]')
 ax6.set_xlabel('Mélange H0 [m]')
 ax6.grid(alpha=.5)
