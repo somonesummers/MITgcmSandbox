@@ -32,6 +32,8 @@ parser.add_argument('-s','--silent', action='count', default=0,
                     help='Option to silence showing of plots')
 parser.add_argument('-ms','--muS', action='count', default=0,
                     help='Option to show muS on forcing plots')
+parser.add_argument('-xt','--xTerminus', action='count', default=0,
+                    help='Option to show terminus location on plots')
 args = parser.parse_args()
 
 # print(args)
@@ -42,7 +44,11 @@ ax2 = axes[1,0]
 ax3 = axes[0,1]
 ax4 = axes[1,1]
 
-lStyle = ['-','--',':','.-']
+lStyle = ['-','--',':','-.']
+meltColors = ['xkcd:tomato','xkcd:rose','xkcd:wine','xkcd:grape purple']
+
+if(args.silent > 0): #print status for script
+    print(f"rampPlot: {args}")
 
 for i in range(len(args.files)):
     fileStr = args.files[i]
@@ -51,6 +57,7 @@ for i in range(len(args.files)):
     H0Time = np.zeros(np.shape(toIterate))
     VTime = np.zeros(np.shape(toIterate))
     UcTime = np.zeros(np.shape(toIterate))
+    UtTime = np.zeros(np.shape(toIterate))
     lengthTime = np.zeros(np.shape(toIterate))
     iterationNumber = np.zeros(np.shape(toIterate))
     pressTime = np.zeros(np.shape(toIterate))
@@ -59,19 +66,24 @@ for i in range(len(args.files)):
     spdTime = np.zeros(np.shape(toIterate))
     timeTime = np.zeros(np.shape(toIterate))
     muSTime = np.zeros(np.shape(toIterate))
+    xTermTime = np.zeros(np.shape(toIterate))
     for j in toIterate:
         file = files[j]
         with open(files[j], 'rb') as fileName:
             data = pickle.load(fileName)
             fileName.close()
-        it = it = file.replace(fileStr,'').replace('./', '').replace('.pickle', '')
+        if(j == toIterate[-1]):
+            print(f"Final state: {data}")
+        it = file.replace(fileStr,'').replace('./', '').replace('.pickle', '')
         H0Time[j]=data.H0
+        xTermTime[j] = data.X[0]
         X_ = np.concatenate(([data.X[0]], data.X_, [data.X[-1]]))
         H = np.concatenate(([data.H0], data.H, [data.HL]))
         W = np.concatenate(([data.W0], data.W, [data.WL]))
         VTime[j] = simpson(H*W, x=X_)*1e-9
-        lengthTime[j]=data.X[-1]
+        lengthTime[j]=data.X[-1] - data.X[0]  #difference between these
         UcTime[j] = data.Uc
+        UtTime[j] = data.Ut
         BTime[j] = -1 * np.mean(data.B) /365.0 # we flip this for plotting purposes
         timeTime[j] = data.t*365.0 
         pressTime[j] = data.H0*data.pressure(data.H0)
@@ -95,8 +107,11 @@ for i in range(len(args.files)):
 
     plt.suptitle('Mélange with Time Varying %s' %forceString)
 
-    ax1.plot(timeTime,forceTime,color='xkcd:tomato',linestyle=lStyle[i])
+    ax1.plot(timeTime,forceTime,color=meltColors[i],linestyle=lStyle[i])
     ax1.scatter(timeTime[0],forceTime[0],s=50,marker='*',color='black')
+    if(args.xTerminus > 0):
+        ax1.plot(timeTime,UtTime,color='xkcd:gray',linestyle=lStyle[i])
+        ax1.scatter(timeTime[0],UtTime[0],s=50,marker='*',color='black')
     # sca=ax1.scatter(BTime,H0Time,s=None,c=timeTime,cmap='cividis')
     # cbar=plt.colorbar(sca)
     # cbar.set_label('Iteration')
@@ -153,6 +168,14 @@ for i in range(len(args.files)):
     ax3.set_xlabel(drivingLabel)
     ax3.grid(alpha=.5)
     ax3.set_title('Buttressing Strength')
+    if(args.xTerminus > 0):
+        if(i == 0):
+            ax3_2 = ax3.twinx()
+        ax3_2.plot(timeTime,xTermTime,color='xkcd:pumpkin',linestyle=lStyle[i])
+        ax3_2.scatter(timeTime[0],xTermTime[0],s=50,marker='*',color='black')
+        ax3_2.set_ylabel('Terminus position [m]',color='xkcd:pumpkin')
+        ax3_2.tick_params(axis='y',labelcolor='xkcd:pumpkin')
+        # ax1_2.grid(alpha=.25,color='xkcd:azure')
 
     ax4.plot(drivingVariable,spdTime/365.0,color='xkcd:apple',linestyle=lStyle[i])
     ax4.scatter(drivingVariable[0],spdTime[0]/365.0,s=50,marker='*',color='black')

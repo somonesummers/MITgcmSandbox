@@ -196,6 +196,7 @@ for k in kList:
             lvl = bergTracerRange
             cm = bergTracerCmap
             kk = 1
+        plt.figure(figsize=(12, 5))
         if(usePcolor):
             cp = plt.pcolormesh(
                 np.squeeze(x[ySlice,:]),
