@@ -33,7 +33,9 @@ parser.add_argument('-f','--files', nargs=1, default=['couplingResults/MITgcm_']
 parser.add_argument('-u','--Uc', nargs=1, default=[0],type=int,
                     help='Plot Uc instead of side view [defaut = 0]')
 parser.add_argument('-n','--NumView', nargs=1, default=[100], type=int,
-                    help='How many iterations to look back for cascade plots [defaut = 100]')
+                    help='How many files to look back for cascade plots [defaut = 100]')
+parser.add_argument('-s','--silent', action='count', default=0,
+                    help='Option to silence showing of plots')
 args = parser.parse_args()
 
 # print(args)
@@ -64,6 +66,7 @@ H0Time = np.zeros(np.shape(toIterate))
 VTime = np.zeros(np.shape(toIterate))
 UcTime = np.zeros(np.shape(toIterate))
 lengthTime = np.zeros(np.shape(toIterate))
+timeTime = np.zeros(np.shape(toIterate))
 iterationNumber = np.zeros(np.shape(toIterate))
 for j in toIterate:
     file = files[j]
@@ -78,12 +81,16 @@ for j in toIterate:
     VTime[j] = simpson(H*W, x=X_)*1e-9
     lengthTime[j]=data.X[-1]
     UcTime[j] = data.Uc
+    timeTime[j] = data.t * 365
     iterationNumber[j]=int(it)
 
+if(timeTime[0] != 0):
+    print(f"time shifted by {timeTime[0]:.02f} days")
+    timeTime = timeTime - timeTime[0] #remove any shift so that time starts at 0
 
 if(args.Uc[0] == 1):
     ax2.plot(iterationNumber,UcTime,'-')
-    sca=ax2.scatter(iterationNumber,UcTime,s=None,c=iterationNumber,cmap='viridis')
+    sca=ax2.scatter(iterationNumber,UcTime,s=None,c=timeTime,cmap='viridis')
     # cbar=plt.colorbar(sca)
     # cbar.set_label('Iteration [Days]')
     ax2.set_ylabel('Calving Speed [m/yr]')
@@ -92,17 +99,17 @@ if(args.Uc[0] == 1):
 
 
 ax5.plot(iterationNumber,lengthTime,'-')
-sca=ax5.scatter(iterationNumber,lengthTime,s=None,c=iterationNumber,cmap='viridis')
+sca=ax5.scatter(iterationNumber,lengthTime,s=None,c=timeTime,cmap='viridis')
 cbar=plt.colorbar(sca)
-cbar.set_label('Iteration [Days]')
+cbar.set_label('Time [Days]')
 ax5.set_ylabel('Mélange length [m]')
-ax5.set_xlabel('Iteration [ ]')
+ax5.set_xlabel('Time [days]')
 ax5.grid(alpha=.5)
 
 ax6.plot(H0Time,lengthTime,'-')
-sca=ax6.scatter(H0Time,lengthTime,s=None,c=iterationNumber,cmap='viridis')
+sca=ax6.scatter(H0Time,lengthTime,s=None,c=timeTime,cmap='viridis')
 cbar=plt.colorbar(sca)
-cbar.set_label('Iteration [Days]')
+cbar.set_label('Time [Days]')
 ax6.set_ylabel('Mélange Length [m]')
 ax6.set_xlabel('Mélange H0 [m]')
 ax6.grid(alpha=.5)
@@ -143,7 +150,7 @@ for j in toIterate[shiftIndex::subSample]:
     alphaList[-subSample] = 1
     ax1.plot(X*1e-3,(U+data.Ut-data.Uc)/constant.daysYear,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
     # ax1.plot(X*1e-3,(U+data.Ut-data.Uc)/constant.daysYear,marker='o',color=seedColor[j],linestyle=linestyle,label=names[j])
-    ax1.set_xlabel('Distance Along Fjord [km]')
+    ax1.set_xlabel('Distance Along Mélange [km]')
     ax1.set_ylabel('Speed [m/day]')
     ax1.grid(alpha=.5)
     # ax1.legend()
@@ -153,7 +160,7 @@ for j in toIterate[shiftIndex::subSample]:
         ax2.plot([-2,20],[0,0],color='xkcd:ocean blue',linestyle='--',linewidth=0.5)
         ax2.plot(np.append(X_,X_[::-1])*1e-3,np.append(-constant.rho/constant.rho_w*H,(1-constant.rho/constant.rho_w)*H[::-1]),
             marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
-        ax2.set_xlabel('Distance Along Fjord [km]')
+        ax2.set_xlabel('Distance Along Mélange [km]')
         ax2.set_ylabel('Elevation [m]')
         # ax2.legend()
         ax2.set_xlim(ax1.get_xlim())
@@ -161,7 +168,7 @@ for j in toIterate[shiftIndex::subSample]:
 
     colors = makeColors(seedColor[2],n)
     ax3.plot(X_*1e-3,gg,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
-    ax3.set_xlabel('Distance Along Fjord [km]')
+    ax3.set_xlabel('Distance Along Mélange [km]')
     ax3.set_ylabel('$g^{\\prime}$')
     ax3.grid(alpha=.5)
     # ax3.legend()
@@ -172,7 +179,7 @@ for j in toIterate[shiftIndex::subSample]:
 
     colors = makeColors(seedColor[3],n)   
     ax4.plot(X*1e-3,B/constant.daysYear,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
-    ax4.set_xlabel('Distance Along Fjord [km]')
+    ax4.set_xlabel('Distance Along Mélange [km]')
     ax4.set_ylabel('Meltrate B [m/day]')     
     # ax4.legend()
     ax4.grid(alpha=.5)
@@ -184,7 +191,8 @@ dirStr = ''
 if(os.path.isdir('figs')):
     dirStr = 'figs/'
 plt.savefig('%smelange%s.png' %(dirStr,strTemp),format='png',dpi=150)
-plt.show()
+if(args.silent == 0):
+    plt.show()
 plt.close()
 
 # print("Making melange gif")
