@@ -554,8 +554,12 @@ for i in range(nx): #loops over whole domain, this calculates new hfill factors
                 totalBergArea[k,j,i] = np.sum(SA1) + np.sum(SA2) + np.sum(SA3)
             bergMask[j,i] = 1
             meltMask[j,i] = 1
-            barrierMask[j,i] = 1
-            driftMask[j,i] = 0
+            if(i > melangeIndex): #free drifting bergs
+                barrierMask[j,i] = 0
+                driftMask[j,i] = 1
+            else: # in mélange
+                barrierMask[j,i] = 1
+                driftMask[j,i] = 0
             if(bergsPerCell[j,i] != numberOfBergs):
                 bergsPerCell[j,i] = numberOfBergs
                 print('**WARNING** count mis-match of icebergs. Likely you have mis-matched iceberg binary files')
