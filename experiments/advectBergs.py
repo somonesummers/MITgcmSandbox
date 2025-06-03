@@ -344,7 +344,7 @@ if(icebergFringe):
     bergType = 1 # 1 = block 2 = cone (not implemented)
     scaling = 1 # 1 = Sulak 2017 2 = Barker 2004
     fringeMaxBergDepth = 160 # (m) 
-    fringeLengthInd = int(10000/deltaX)
+    fringeLengthInd = int(20000/deltaX)
     print(f'\t\tIceberg Frindge is {fringeLengthInd} cells long')
     fringeBergConc = np.zeros(np.shape(bergDepths[0,:,:]))
     fringeBergMask = np.zeros_like(bergMask)
