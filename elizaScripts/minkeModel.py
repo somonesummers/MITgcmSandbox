@@ -68,16 +68,14 @@ briefSummaryOfExp = """Coupling MITgcm and Melange1D
 Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
 
-Running to equalibrium for thick wall case
-w# for ind of wall width
-c# how far(ind) from wall center current is 
-sgd# for plume rate
-
+Foxtrot is a wider,longer (5.6km,102km) fjord
+Using 0 diffusivities, 3 cm/s coast current
+_sgd# for plume discharge
+_s/w for summer/winter off shore forcing
 need to still: 
 Copy MITgcmPickup/iceberg/GLACIOME files from origin of choice
 move MITgcmRun_00000.pickle to proper place
 reset input/data
-rm pickup_tracers if reseting tracers
 input/data.ptracers ptracerInt0=1 for reseting tracers"""
 
 
@@ -88,15 +86,15 @@ setUpPrint('====== Welcome to the mélange building script =====')
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [10,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'EQ_SMK_1300'
+run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
+run_config['run_name'] = 'foxtrot_s_sgd1300_smallStart'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 wallWidthInd = 5 #width of walls in units of dy
 run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
-run_config['Lx_m'] = 80000 # domain size in x (m)
-run_config['Ly_m'] = 4800 + (2 * wallWidthInd * run_config['horiz_res_m']) # domain size in y (m) with walls (1 wall each side)
+run_config['Lx_m'] = 102000 # domain size in x (m)
+run_config['Ly_m'] = 5600 + (2 * wallWidthInd * run_config['horiz_res_m']) # domain size in y (m) with walls (1 wall each side)
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 grid_params['Nr'] = 32 # num of z-grid points
@@ -109,9 +107,10 @@ input("Confirm above is accurate before continuing...")
 # Variables to adjust ======================
 assign_deltaT = 0 # [C]
 assign_plumeSGD = 1300 #[m^3/s]
+season_sw = 's'
 
 # Offshore current =========================
-oscStrength = 0.10 #[m/s] peak strength of offshore current
+oscStrength = 0.03 #[m/s] peak strength of offshore current
 lengthOffShoreLength = 10e3 #width of offshore region [m]
 indexOSC = int(lengthOffShoreLength/run_config['horiz_res_m'])
 
@@ -299,10 +298,10 @@ params01['staggerTimeStep'] = True
 
 # diffusivity
 #params01['diffK4T'] = 0.0e4 # ?? temp diffusion
-params01['diffKhT'] = 1.0e-5 # Horizontal temp diffusion
-params01['diffKhS'] = 1.0e-5 # Horz salt diffusion
-params01['diffKzT'] = 1.0e-5 # Vertical temp diffusion
-params01['diffKzS'] = 1.0e-5 # Vert salt diffusion
+params01['diffKhT'] = 0.0 #1.0e-5 # Horizontal temp diffusion
+params01['diffKhS'] = 0.0 #1.0e-5 # Horz salt diffusion
+params01['diffKzT'] = 0.0 #1.0e-5 # Vertical temp diffusion
+params01['diffKzS'] = 0.0 #1.0e-5 # Vert salt diffusion
 #params01['diffK4S'] = 0.0e4 # ?? salt diffusion
 
 
@@ -350,9 +349,9 @@ params02['cg3dTargetResidual'] = 1e-8
 # time stepping parameters 
 params03 = {}
 params03['dumpInitAndLast'] = False  #Reduce number of dumped files
-params03['nIter0'] = 0
+params03['nIter0'] = 1
 #params03['endTime'] = 864000.0
-deltaT = 12
+deltaT = 10
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -382,7 +381,7 @@ else:
 
 simTimeAct = nTimeSteps*deltaT
 
-params03['endTime'] = int(params03['nIter0']*deltaT+simTimeAct)
+params03['endTime'] = int(simTimeAct) #int(params03['nIter0']*deltaT+simTimeAct)
 params03['deltaT'] = np.round(deltaT)
 grid_params['Nt'] = nTimeSteps
 
@@ -621,15 +620,15 @@ V_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 W_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 Ptr_ns = np.zeros([nt,grid_params['Nr'],(grid_params['Nx'])])
 
-## Sermilik Summer Data
-## 10.1029/2018GL077000 is paper 
-## https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.nodc:0171277 has data
-
-# data_tmp=np.load('shelfProfile2015.npz')
-
-## Sermilik Winter
-## Access DOI: DATASET | Published 2021 | doi:10.18739/A2M03XZ2K
-data_tmp=np.load('shelfProfile2010.npz')
+if(season_sw == 's'):
+    ## Sermilik Summer Data
+    ## 10.1029/2018GL077000 is paper 
+    ## https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.nodc:0171277 has data
+    data_tmp=np.load('shelfProfile2015.npz')
+elif(season_sw == 'w'):
+    ## Sermilik Winter
+    ## Access DOI: DATASET | Published 2021 | doi:10.18739/A2M03XZ2K
+    data_tmp=np.load('shelfProfile2010.npz')
 
 # Can have bad values, toss them, set deepest measure equal to deeped valid measure for interpolator to work
 s_tmp = data_tmp['S']

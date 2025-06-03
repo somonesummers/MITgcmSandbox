@@ -1,1 +1,0 @@
-../analysis/quicklookXSlice.py
