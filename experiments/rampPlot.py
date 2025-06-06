@@ -24,6 +24,8 @@ constant = constants()
 parser = argparse.ArgumentParser(description='Plot options for melange changed over time')
 parser.add_argument('-f','--files', nargs='*', default=['couplingResults/MITgcmRun_'],
                     help='file string used to name pickle files FILES00000.pickle [default = couplingResults/MITgcmRun_]')
+parser.add_argument('-l','--labels', nargs='*', default=None,
+                    help='file string label plots [default = None]')
 parser.add_argument('-x','--xVariable', nargs=1, type=int, default=[1],
                     help='what to plot against 0: xVar , 1: Time [default]')
 parser.add_argument('-r','--rampVariable', nargs=1, type=int, default=[0],
@@ -86,7 +88,7 @@ for i in range(len(args.files)):
         UtTime[j] = data.Ut
         BTime[j] = -1 * np.mean(data.B) /365.0 # we flip this for plotting purposes
         timeTime[j] = data.t*365.0 
-        pressTime[j] = data.H0*data.pressure(data.H0)
+        pressTime[j] = data.force()#data.H0*data.pressure(data.H0) #should I use force?
         spdTime[j]=np.mean(data.U)
         gTime[j]=np.mean(data.gg)
         muSTime[j] = data.param.muS
@@ -98,16 +100,24 @@ for i in range(len(args.files)):
         forceTime = BTime
         forceLabel = 'Melt Rate [m/day]'
         forceString = 'Melt'
+        notforceTime = UcTime
+        notforceLabel = 'Calving Rate [m/yr]'
+        notforceString = 'Calving'
     elif(args.rampVariable[0] == 1):
         forceTime = UcTime
         forceLabel = 'Calving Rate [m/yr]'
         forceString = 'Calving'
+        notforceTime = BTime
+        notforceLabel = 'Melt Rate [m/day]'
+        notforceString = 'Melt'
     else:
         raise Exception('Invalid forcing option %i' %args.deltaVariable[0])
 
     plt.suptitle('Mélange with Time Varying %s' %forceString)
-
-    ax1.plot(timeTime,forceTime,color=meltColors[i],linestyle=lStyle[i])
+    if(args.labels == None):
+        ax1.plot(timeTime,forceTime,color=meltColors[i],linestyle=lStyle[i])
+    else: #labels names have been supplied
+        ax1.plot(timeTime,forceTime,color=meltColors[i],linestyle=lStyle[i],label=args.labels[i])
     ax1.scatter(timeTime[0],forceTime[0],s=50,marker='*',color='black')
     if(args.xTerminus > 0):
         ax1.plot(timeTime,UtTime,color='xkcd:gray',linestyle=lStyle[i])
@@ -123,11 +133,21 @@ for i in range(len(args.files)):
         ax1_2.set_ylabel('$\\mu_S$ [ ]',color='xkcd:azure')
         ax1_2.tick_params(axis='y',labelcolor='xkcd:azure')
         # ax1_2.grid(alpha=.25,color='xkcd:azure')
+        
+    #If second axis is free and non-forced variable (B or Uc) changes, plot it
+    elif(np.std(notforceTime) > 0):
+        if(i == 0):
+            ax1_2 = ax1.twinx()
+        ax1_2.plot(timeTime,notforceTime,color='xkcd:azure',linestyle=lStyle[i])
+        ax1_2.scatter(timeTime[0],notforceTime[0],s=50,marker='*',color='black')
+        ax1_2.set_ylabel(notforceLabel,color='xkcd:azure')
+        ax1_2.tick_params(axis='y',labelcolor='xkcd:azure')
     ax1.set_ylabel(forceLabel)
     ax1.set_xlabel('Time [days]')
     ax1.grid(alpha=.5)
     ax1.set_title('%s Forcing' %forceString)
-
+    if(args.labels != None):
+        ax1.legend()
     xString =''
     if(args.xVariable[0] == 0):
         drivingVariable = forceTime

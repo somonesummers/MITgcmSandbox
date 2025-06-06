@@ -43,13 +43,19 @@ deltaX = x[0,0]*2
 deltaY = y[0,0]*2
 maxBergs = 500
 
-#icebergCoverLamba is enforced to remain constant left of here
-icebergCoverLambda = .80
-icebergRefreshingGate = 3
+if(os.path.isfile('input/bathymetry.bin')):
+    topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
+    topo = topo.reshape(np.shape(x))
+else:
+    topo = np.zeros(np.shape(x))
 
-#icebergs are destroyed when they move past here
-icebergRightHandGate = int(nx*.8)
-couplingTimeStep = 1*24*3600 #[s]
+# #icebergCoverLamba is enforced to remain constant left of here
+# icebergCoverLambda = .80
+# icebergRefreshingGate = 3
+
+# #icebergs are destroyed when they move past here
+# icebergRightHandGate = int(nx*.8)
+# couplingTimeStep = 1*24*3600 #[s]
 
 files = sorted(glob.glob('couplingResults/MITgcmRun_[0-9][0-9][0-9][0-9][0-9].pickle'))
 # print(files)
@@ -115,6 +121,7 @@ for i in range(nx):
 
 varphi = 1-openFrac
 varphi[varphi == 1] = np.nan
+varphi[:,topo == 0] = np.nan
 depthHelper = bergDepths.copy()
 depthHelper[depthHelper == 0] = np.nan
 effectiveDepth = np.nanmean(np.nansum((1-openFrac) * dz[:,None,None],axis=0),axis=0)
@@ -134,11 +141,14 @@ print(effectiveDepth[1:5])
 
 # print(bergDepths[:,6,1],bergWidths[:,6,1],bergLength[:,6,1])
 
-plt.figure(3)
+plt.figure(3,figsize=(12, 4))
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=RuntimeWarning)
-    pc = plt.pcolormesh(x[0,:],-z,np.nanmean(varphi[:,1:-1,:],axis=1),cmap='gray_r')
+    pc = plt.pcolormesh(x[0,:],-z,np.nanmean(varphi[:,:,:],axis=1),cmap='gray_r')
+    cc = plt.contour(x[0,:],-z,np.nanmean(varphi[:,:,:],axis=1),[.25,.5,.75],colors='yellow',alpha=.4)
+    plt.plot([],[],color='xkcd:yellow',label='0.25,0.5,0.75 $\\varphi$')
 cbar = plt.colorbar(pc)
+plt.clabel(cc, inline=3, fontsize=8)
 depthHelper = bergDepths.copy()
 depthHelper[depthHelper == 0] = np.nan
 with warnings.catch_warnings():
@@ -152,8 +162,8 @@ plt.ylabel('Depth [m]')
 plt.legend()
 plt.xlabel('Along fjord [m]')
 plt.ylim([-600, 0])
-cbar.set_label('ice fraction')
-
+cbar.set_label('width averaged ice fraction $\\varphi$')
+plt.savefig('figs/iceFraction.png',format='png',dpi=150)
 
 plt.figure(1)
 plt.subplot(221)
@@ -216,7 +226,7 @@ plt.hist(bergDepths.ravel(),bins=100)
 plt.xlabel('Depths [m]')
 
 plt.tight_layout() 
+plt.savefig('figs/BergSnapshot.png',format='png',dpi=150)
 plt.show()
-# plt.savefig('figs/advectBergs.png',format='png',dpi=150)
 plt.close()
 
