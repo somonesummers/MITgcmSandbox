@@ -27,7 +27,7 @@ advectBergs = True
 clipBergs = True
 shadedEdge = True
 fillIn = True
-icebergFringe = True
+icebergFringe = False
 trialAndPlot = False
 couplingTimeStep = 1*24*3600 #[s]
 

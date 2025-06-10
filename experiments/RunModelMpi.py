@@ -263,8 +263,10 @@ for ii in range(iterationsToRun):
     oldH = data.H0
 
     if(forceMelange):
-        data.Uc = 6000 - 2 * index
-        data.Ut = 6000 - 2 * index # Must change together unless terminus moving
+        alpha = 25e-5
+        U0 = 7500 # m/yri
+        F = data.force()
+        data.Uc = U0 - alpha * F
         sysPrint('\tNew Uc: %.3f m/year'%(data.Uc))
     sysPrint('\tPrevious Length: %.3f, H0: %.3f'%(oldL, oldH))
     # data.steadystate()

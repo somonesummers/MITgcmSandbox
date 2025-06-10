@@ -68,8 +68,7 @@ briefSummaryOfExp = """Coupling MITgcm and Melange1D
 Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
 
-Foxtrot is a wider,longer (5.6km,102km) fjord
-Using 0 diffusivities, 3 cm/s coast current
+Kilo is coupled with variable Uc and enhanced melt
 _sgd# for plume discharge
 _s/w for summer/winter off shore forcing
 need to still: 
@@ -87,7 +86,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'foxtrot_s_sgd1300_smallStart'
+run_config['run_name'] = 'kilo_s_sgd1300V_4x'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -351,7 +350,7 @@ params03 = {}
 params03['dumpInitAndLast'] = False  #Reduce number of dumped files
 params03['nIter0'] = 1
 #params03['endTime'] = 864000.0
-deltaT = 10
+deltaT = 15
 params03['abEps'] = 0.1
 
 #if run_config['testing']:
@@ -365,8 +364,8 @@ params03['monitorFreq'] = 21600.0 # 6 hours
 params03['monitorSelect'] = 1
 
 # Force with yearly cycle
-nt = 10
-daysOfCycle = 1000
+nt = 48
+daysOfCycle = 365
 # ForcingValue = np.sin(2*np.pi * np.arange(nt)/nt) # This sets temp variations at BCs
 ForcingValue = assign_deltaT * np.ones(nt) # This sets temp variations at BCs
 
@@ -756,14 +755,14 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 ## Total runoff (m^3/s)
 ## Seasonal Peak
-# runoff = -1800 * np.sin(np.pi * np.arange(nt)/12.5) - 900
-# runoff[runoff <  25 ] = 25
+runoff = -2600 * np.sin(2*np.pi * np.arange(nt)/nt) - 1300
+runoff[runoff <  10 ] = 10
 ## linear ramp
 # runoff = 250 + 1250 * np.arange(nt)/float(nt)
 # runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
 # runoff = runoff[::-1] #flipping around for building melange
 ## Constant
-runoff = assign_plumeSGD * np.ones(nt)
+# runoff = assign_plumeSGD * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
