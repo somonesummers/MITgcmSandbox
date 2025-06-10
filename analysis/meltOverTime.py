@@ -1,7 +1,6 @@
 from MITgcmutils import mds
 from matplotlib import pyplot as plt
 import numpy as np
-import os
 import sys
 import cmocean
 import fileinput
@@ -11,19 +10,37 @@ import xarray as xr
 plotDPI = 150
 manualMax = None
 
-# folders = ['.']
-# labels = ['glaciome']
+import os
+sys.path.append('/Users/psummers8/Documents/glaciome1D')
+from glaciome1D import constants, glaciome
+
+import glob
+import pickle
+
+constant = constants()
+
+# Take input options. Some defaults are set here, so be aware
+parser = argparse.ArgumentParser(description='Plot depth melt over time, speed profiles, fig 8 of first paper')
+parser.add_argument('-f','--folders', nargs='*', default=['.'],
+                    help='folders with data we want to plot [default = .]')
+parser.add_argument('-l','--labels', nargs='*', default=['glaciome'],
+                    help='file string label plots [default = glaciome]')
+parser.add_argument('-t','--time', nargs='?', default=None,
+                    help='set max time step [default = None]')
+args = parser.parse_args()
+
 folders = ['hotel_fringe_sgd1300','foxtrot_s_sgd1300']
 labels = ['fringe','none']
 # folders = ['hotel_Umin03_sgd1300','hotel_Umin05_sgd1300','foxtrot_s_sgd1300']
 # labels = ['0.03','0.04','0.05']
 # folders = ['hotel_zhaoMelt_sgd1300','hotel_4x_sgd1300','foxtrot_s_sgd1300']
 # labels = ['Zhao','4x','1x']
-colors = ['xkcd:red','xkcd:gray','xkcd:blue']
+colors = ['xkcd:blue','xkcd:red','xkcd:gray']
 resultFolder = '/results'
+glaciomeLocation = 'couplingResults/MITgcmRun_'
 fileEnding = ""
 
-manualMax = 5162400
+manualMax = args.time
 
 ## Umin melt thresholds 
 # thresholds = [0.03,0.05,0.04]
@@ -87,10 +104,12 @@ for j in range(len(folders)):
 
     timeSteps = np.arange(startStep, maxStep + 1, sizeStep)
     fwOverTime = np.zeros(np.shape(timeSteps))
+    
+    #Load all MITgcm data over time
     for i in range(len(timeSteps)):
         data = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), timeSteps[i])
         fwOverTime[i] = np.nansum(data[0,:,:,:])
-    ax1.plot(timeSteps*dt/86400,fwOverTime,label=labels[j],color=colors[j])
+
 # Wrap up after plotting everything
 ax1.grid(alpha=.5)
 ax1.legend()
