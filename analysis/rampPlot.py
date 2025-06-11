@@ -36,6 +36,10 @@ parser.add_argument('-ms','--muS', action='count', default=0,
                     help='Option to show muS on forcing plots')
 parser.add_argument('-xt','--xTerminus', action='count', default=0,
                     help='Option to show terminus location on plots')
+parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
+                    help='optional specification of start and endtime in DAYS [default = Full Range]')
+parser.add_argument('-w','--windowMean', nargs='*', type=int, default=10,
+                    help='window width for time averaging melt rates [default = 10]')
 args = parser.parse_args()
 
 # print(args)
@@ -55,7 +59,12 @@ if(args.silent > 0): #print status for script
 for i in range(len(args.files)):
     fileStr = args.files[i]
     files = sorted(glob.glob('%s*.pickle'%fileStr))
-    toIterate = np.arange(len(files))
+    jShift = 0
+    if(args.timeRange == None):
+        toIterate = np.arange(len(files))
+    else:
+        toIterate = np.arange(len(files[args.timeRange[0]:args.timeRange[1]]))
+        jShift = args.timeRange[0]
     H0Time = np.zeros(np.shape(toIterate))
     VTime = np.zeros(np.shape(toIterate))
     UcTime = np.zeros(np.shape(toIterate))
@@ -70,8 +79,8 @@ for i in range(len(args.files)):
     muSTime = np.zeros(np.shape(toIterate))
     xTermTime = np.zeros(np.shape(toIterate))
     for j in toIterate:
-        file = files[j]
-        with open(files[j], 'rb') as fileName:
+        file = files[j + jShift]
+        with open(files[j + jShift], 'rb') as fileName:
             data = pickle.load(fileName)
             fileName.close()
         if(j == toIterate[-1]):
@@ -93,11 +102,14 @@ for i in range(len(args.files)):
         gTime[j]=np.mean(data.gg)
         muSTime[j] = data.param.muS
         iterationNumber[j]=int(it)
-    timeTime = timeTime - timeTime[0] # shift to start at t=0
+    timeTime = timeTime - timeTime[0] + jShift# shift to start at t=0
+
+    N = args.windowMean #window over to smooth in time points (days)
+    BTimeSmooth = np.convolve(BTime, np.ones(N)/N, mode='same')
 
     # timeTime = (timeTime - timeTime[0])/5 #if pre-code fix for total time
     if(args.rampVariable[0] == 0):
-        forceTime = BTime
+        forceTime = BTimeSmooth
         forceLabel = 'Melt Rate [m/day]'
         forceString = 'Melt'
         notforceTime = UcTime
@@ -107,7 +119,7 @@ for i in range(len(args.files)):
         forceTime = UcTime
         forceLabel = 'Calving Rate [m/yr]'
         forceString = 'Calving'
-        notforceTime = BTime
+        notforceTime = BTimeSmooth
         notforceLabel = 'Melt Rate [m/day]'
         notforceString = 'Melt'
     else:
@@ -135,7 +147,7 @@ for i in range(len(args.files)):
         # ax1_2.grid(alpha=.25,color='xkcd:azure')
         
     #If second axis is free and non-forced variable (B or Uc) changes, plot it
-    elif(np.std(notforceTime) > 0):
+    elif(True):
         if(i == 0):
             ax1_2 = ax1.twinx()
         ax1_2.plot(timeTime,notforceTime,color='xkcd:azure',linestyle=lStyle[i])
@@ -221,7 +233,7 @@ if(os.path.isdir('figs')):
 multiStr = ''
 if(i > 0):
     multiStr = f'Multi{i+1}'
-plt.savefig('%sautoRamp%sResults%s%s.png' %(dirStr,forceString,xString,multiStr),format='png',dpi=150)
+plt.savefig('%sautoRamp%sResults%s%s.png' %(dirStr,forceString,xString,multiStr),format='png',dpi=200)
 if(args.silent == 0):
     plt.show()
 plt.close()

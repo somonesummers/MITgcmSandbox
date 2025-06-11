@@ -16,6 +16,8 @@ parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
                     help='optional specification of views to plot [default = all] [Temp, Sal, U, W, V, BRGmltRt,TracePlume,TraceBerg,SPD]')
 parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
                     help='optional specification of numFrames [default = 60]')
+parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
+                    help='optional specification of start and endtime in DAYS [default = Full Range]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default

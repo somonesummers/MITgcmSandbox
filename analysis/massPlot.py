@@ -28,6 +28,10 @@ parser.add_argument('-l','--labels', nargs='*', default=None,
                     help='file string label plots [default = None]')
 parser.add_argument('-s','--silent', action='count', default=0,
                     help='Option to silence showing of plots')
+parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
+                    help='optional specification of start and endtime in DAYS [default = Full Range]')
+parser.add_argument('-w','--windowMean', nargs='*', type=int, default=10,
+                    help='window width for time averaging melt rates [default = 10]')
 args = parser.parse_args()
 
 # print(args)
@@ -47,7 +51,12 @@ showVolume = True
 for i in range(len(args.files)):
     fileStr = args.files[i]
     files = sorted(glob.glob('%s*.pickle'%fileStr))
-    toIterate = np.arange(len(files))
+    jShift = 0
+    if(args.timeRange == None):
+        toIterate = np.arange(len(files))
+    else:
+        toIterate = np.arange(len(files[args.timeRange[0]:args.timeRange[1]]))
+        jShift = args.timeRange[0]
     VTime = np.zeros(np.shape(toIterate))
     iterationNumber = np.zeros(np.shape(toIterate))
     bFluxTime = np.zeros(np.shape(toIterate))
@@ -60,8 +69,8 @@ for i in range(len(args.files)):
     BTime = np.zeros(np.shape(toIterate))
     pressTime = np.zeros(np.shape(toIterate))
     for j in toIterate:
-        file = files[j]
-        with open(files[j], 'rb') as fileName:
+        file = files[j + jShift]
+        with open(files[j + jShift], 'rb') as fileName:
             data = pickle.load(fileName)
             fileName.close()
         if(j == toIterate[-1]):
@@ -81,16 +90,20 @@ for i in range(len(args.files)):
         pressTime[j] = data.force()#data.H0*data.pressure(data.H0) #should I use force?
 
         iterationNumber[j]=int(it)
-    timeTime = timeTime - timeTime[0] # shift to start at t=0
+    timeTime = timeTime - timeTime[0] + jShift# shift to start at t=0# shift to start at t=0
 
+    N = args.windowMean #window over to smooth in time points (days)
+    BTimeSmooth = np.convolve(BTime, np.ones(N)/N, mode='same')
+    bFluxTime = np.convolve(bFluxTime, np.ones(N)/N, mode='same')
     plt.suptitle('Mélange Volume Over Time')
 
     if(args.labels != None):
         lbTemp = args.labels[i]
     else:
         lbTemp = ''
-    ax1.plot(timeTime,BTime,color='xkcd:red',linestyle=lStyle[i],label=lbTemp)
-    ax1.scatter(timeTime[0],BTime[0],s=50,marker='*',color='black')
+    ax1.plot(timeTime,BTime,color='xkcd:red',linestyle='-',alpha = .25)
+    ax1.plot(timeTime,BTimeSmooth,color='xkcd:red',linestyle=lStyle[i],label=lbTemp)
+    # ax1.scatter(timeTime[0],BTime[0],s=50,marker='*',color='black')
     
     if(i == 0):
         ax1_2 = ax1.twinx()
@@ -111,14 +124,14 @@ for i in range(len(args.files)):
     ax2.set_ylabel('Mélange Force/Width [$Nm^{-1}$]',color='xkcd:black')
     ax2.tick_params(axis='y',labelcolor='xkcd:black')
     ax2.grid(alpha=.25)
-    ax2.set_yscale('log')
+    # ax2.set_yscale('log')
     if(i == 0):
         ax2_2 = ax2.twinx()
     ax2_2.plot(timeTime,VTime,color='xkcd:indigo',linestyle=lStyle[i],label='volume')
     ax2_2.set_ylabel('Mélange H0 [m]',color='xkcd:indigo')
     ax2_2.tick_params(axis='y',labelcolor='xkcd:indigo')
     ax2_2.set_ylabel('Volume [m^3]')
-    ax2_2.set_yscale('log')
+    # ax2_2.set_yscale('log')
     # ax2_2.grid(alpha=.25,color='xkcd:mulberry')
     ax2.set_xlabel('Time [days]')
     ax2.set_title('')

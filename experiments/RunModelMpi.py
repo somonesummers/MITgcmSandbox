@@ -241,7 +241,7 @@ for ii in range(iterationsToRun):
         mitgcmWarningFlag = 0 if mitgcmWarningFlag == 0 else mitgcmWarningFlag - 1
 
     # Now error are dealt with, We fill in the tail of 0s with the value of the melange toe 
-    if(False):
+    if(False): #option to bias mélange to grow by having no melt beyond toe of mélange
         sysPrint('\t == forcing growth == ')
         b_mitgcm[b_mitgcm != 0] = 0
     else:
@@ -274,10 +274,12 @@ for ii in range(iterationsToRun):
     signal.signal(signal.SIGALRM,handler) #setting a timer for glaciome1d
     signal.alarm(600) # if its not done in 10 minutes, its probably at minimum size. 
                     # if this is happening for non-trivially small melange, something is off.
+                    # Can happen when mélange thickness increases down fjord, need to look into more 
     try:
         data.prognostic(method='lm')
     except (Exception):
         data = dataCopy
+        data.t = data.t + data.dt #step forward one day to keep up with MITgcm
         glmeWarningFlag = True
     signal.alarm(0) #turn the alarm off, because we made it
     sysPrint('\tNew      Length: %.3f, H0: %.3f, ∆L: %.3f, ∆H0: %.3f'%(data.L,data.H0,data.L-oldL,data.H0-oldH,))
@@ -287,6 +289,7 @@ for ii in range(iterationsToRun):
         # This is really a secondary limit for the same reason as the time limit above
         # likely, we should only have the time limit and not this one.
         data = dataCopy
+        data.t = data.t + data.dt #step forward one day to keep up with MITgcm
         glmeWarningFlag = True
         sysPrint('\t\t WARNING melange below minimum size, revert to old size')
     

@@ -16,6 +16,8 @@ parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
                     help='optional specification of views to plot [default = all]')
 parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
                     help='optional specification of numFrames [default = 60]')
+parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
+                    help='optional specification of start and endtime in DAYS [default = Full Range]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -66,6 +68,9 @@ for file in os.listdir('results'):
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
 
+if(args.timeRange != None):
+    startStep = args.timeRange[0] * 86400 / dt
+    maxStep = args.timeRange[1] * 86400 / dt
 
 if((maxStep-startStep)/sizeStep > args.numFrames):   #if more than numFrames, downscale to be less than numFrames
     dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/args.numFrames)
@@ -262,10 +267,13 @@ for k in kList:
             plt.show()
         plt.close()
     if(args.quick == 0):
+        depthStr = ''
+        timeStr = ''
         if(args.zDepth != None):
-            os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], np.abs(args.zDepth[0]), name[k]))
-        else:
-            os.system('magick -delay %f figs/map%s*.png -colors 256 -depth 256 figs/autoMap%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+            depthStr = f'{int(np.abs(args.zDepth[0]))}'
+        if(args.timeRange != None):
+            timeStr = f'_T_{args.timeRange[0]}_{args.timeRange[1]}'
+        os.system(f'magick -delay {500/((maxStep-startStep)/sizeStep)} figs/map{name[k]}*.png -colors 256 -depth 256 figs/autoMap{depthStr}{name[k]}{timeStr}.gif')
 
 #Clean up intermediate pngs
     if(cleanPNGs):

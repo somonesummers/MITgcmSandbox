@@ -284,7 +284,7 @@ ax2.set_ylabel('Depth')
 ax2.invert_yaxis()
 plt.tight_layout()
 
-strname = '2015AlongFjord.png'
+strname = '2015AlongFjordCustom.png'
 plt.savefig(strname, format='png', dpi=400)
 plt.show()
 plt.close()

@@ -5,6 +5,7 @@ import sys
 import cmocean
 import fileinput
 import xarray as xr
+import argparse
 
 # Pick cross section to view from file or default
 plotDPI = 150
@@ -29,12 +30,15 @@ parser.add_argument('-t','--time', nargs='?', default=None,
                     help='set max time step [default = None]')
 args = parser.parse_args()
 
-folders = ['hotel_fringe_sgd1300','foxtrot_s_sgd1300']
-labels = ['fringe','none']
+
+# folders = ['hotel_fringe_sgd1300','foxtrot_s_sgd1300']
+# labels = ['fringe','none']
 # folders = ['hotel_Umin03_sgd1300','hotel_Umin05_sgd1300','foxtrot_s_sgd1300']
 # labels = ['0.03','0.04','0.05']
 # folders = ['hotel_zhaoMelt_sgd1300','hotel_4x_sgd1300','foxtrot_s_sgd1300']
 # labels = ['Zhao','4x','1x']
+folders = args.folders
+labels = args.labels
 colors = ['xkcd:blue','xkcd:red','xkcd:gray']
 resultFolder = '/results'
 glaciomeLocation = 'couplingResults/MITgcmRun_'
@@ -109,7 +113,7 @@ for j in range(len(folders)):
     for i in range(len(timeSteps)):
         data = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), timeSteps[i])
         fwOverTime[i] = np.nansum(data[0,:,:,:])
-
+    ax1.plot(timeSteps*dt/86400,fwOverTime,label=labels[j],color=colors[j])
 # Wrap up after plotting everything
 ax1.grid(alpha=.5)
 ax1.legend()

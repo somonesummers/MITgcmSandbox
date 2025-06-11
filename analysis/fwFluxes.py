@@ -53,8 +53,9 @@ for j in range(len(folders)):
     dz = np.load('input/dz.npy')
     x = mds.rdmds("results/XC")
     y = mds.rdmds("results/YC")
-    dy = y[0,0]/2
-    dx = x[0,0]/2
+    dy = y[0,0]*2
+    print(dy)
+    dx = x[0,0]*2
     z = np.squeeze(mds.rdmds("results/RC"))
     hFacC = mds.rdmds("results/hFacC")
 
@@ -93,6 +94,7 @@ for j in range(len(folders)):
     timeSteps = np.arange(startStep, maxStep + 1, sizeStep)
     fwOverTime = np.zeros(np.shape(timeSteps))
     plumeOverTime = np.zeros(np.shape(timeSteps))
+    plumeOverTime2 = np.zeros(np.shape(timeSteps))
     tempOverTime = np.zeros(np.shape(timeSteps))
     tempOverTime2 = np.zeros(np.shape(timeSteps))
     for i in range(len(timeSteps)):
@@ -112,10 +114,12 @@ for j in range(len(folders)):
         tempOverTime2[i] = np.nanmean(dataOceanBelow[0,:,:,:])
         fwOverTime[i] = np.nansum(data[0,:,:,:])
         plumeOverTime[i] = np.nanmax(dataPlume[0,-1,:,:] * dataPlume[4,-1,:,:] * dy) #assume sheet here 
+        # plumeOverTime2[i] = np.nanmax(dataPlume[5,-1,:,:]) #assume sheet here 
         # this is a little high as some water has entrained
 
     plt.plot(timeSteps*dt/86400,fwOverTime,label='Iceberg Meltwater',color='xkcd:blue')
     plt.plot(timeSteps*dt/86400,plumeOverTime,label='Plume Water',color='xkcd:red')
+    # plt.plot(timeSteps*dt/86400,plumeOverTime,linestyle='--',color='xkcd:red')
     plt.grid(alpha=.5)
     ax1 = plt.gca()
     ax2=ax1.twinx()
