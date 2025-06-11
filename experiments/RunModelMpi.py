@@ -263,8 +263,8 @@ for ii in range(iterationsToRun):
     oldH = data.H0
 
     if(forceMelange):
-        alpha = 25e-5
-        U0 = 7500 # m/yri
+        alpha = couplingAlpha
+        U0 = couplingUc0
         F = data.force()
         data.Uc = U0 - alpha * F
         sysPrint('\tNew Uc: %.3f m/year'%(data.Uc))
