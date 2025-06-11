@@ -18,6 +18,8 @@ parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
                     help='optional specification of numFrames [default = 60]')
 parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
+parser.add_argument('--quiver', nargs="?", type=int, default = 1,
+                    help='specify if quiver arrows are shown [Default = True]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -25,7 +27,7 @@ zDepth = -50
 plotDPI = 125
 cleanPNGs = True
 usePcolor = True
-showQuiver = True
+showQuiver = args.quiver
 showZeros = True
 
 if(os.path.isfile('input/plotHelperLocal.py')):
