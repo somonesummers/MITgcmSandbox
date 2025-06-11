@@ -10,8 +10,10 @@ import gsw
 import argparse
 
 parser = argparse.ArgumentParser(description='Plot mooring view at xCrossSection')
-parser.add_argument('xCrossSection', nargs='?', const=0.0, type=float,
+parser.add_argument('-x','--xCrossSection', nargs='?', type=float,default = None,
                     help='optional x location [m]')
+parser.add_argument('-y','--yCrossSection', nargs='?', type=float,default = None,
+                    help='optional y slice location [m]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -39,6 +41,9 @@ print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 if(args.xCrossSection != None):
     print('** Manual xCrossSection detected **')
     xCrossSection = args.xCrossSection
+if(args.yCrossSection != None):
+    print('** Manual ySlice detected **')
+    yCrossSection = args.yCrossSection
 
 dt = 0.0   
 for line in fileinput.input('%s/input/data' %folder):
@@ -57,6 +62,9 @@ hFacC = mds.rdmds("results/hFacC")
 
 xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
 print('cross section is x =', x[0,xSlice],'index', xSlice)
+
+ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
+print('slice is y =', y[ySlice,0],'index', ySlice)
 
 #Find time steps to take
 maxStep = 0
@@ -89,7 +97,7 @@ dynTime = np.zeros([5,nz,len(timeSteps)])
 for i in range(len(timeSteps)):
     # ["Temp", "Sal", "U", "W", "V"]
     dataOcean = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'dynDiag'), timeSteps[i])
-    dynTime[:,:,i] = np.nanmean(dataOcean[:,:,1:-1,xSlice],axis=2)
+    dynTime[:,:,i] = dataOcean[:,:,ySlice,xSlice]
 
 name = ["Temp", "Sal", "U"]
 cbarLabel = ["[C]", "[PSU]", "[m/s]"]  

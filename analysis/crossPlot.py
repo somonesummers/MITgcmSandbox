@@ -7,10 +7,28 @@ import os
 import sys
 import cmocean
 import fileinput
+import argparse
+
+parser = argparse.ArgumentParser(description='Plot dynamics in 3d view')
+parser.add_argument('-q','--quick', action='count', default=0,
+                    help='quick option for last from only, double to show plot(s)')
+parser.add_argument('-x','--xCrossSection', nargs=1, type=float,default = None,
+                    help='optional slice location [m]')
+parser.add_argument('-y','--yCrossSection', nargs=1, type=float,default = None,
+                    help='optional slice location [m]')
+parser.add_argument('-z','--zDepth', nargs=1, type=float,default = None,
+                    help='optional slice location [m]')
+parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
+                    help='option specification of views to plot [default = all]')
+parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
+                    help='optional specification of numFrames [default = 60]')
+parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
+                    help='optional specification of start and endtime in DAYS [default = Full Range]')
+args = parser.parse_args()
 
 # Pick cross section to view from file or default
-yCrossSection = 1000
-xCrossSection = 5000
+yCrossSection = 5000
+xCrossSection = 55000
 zDepth = -50
 plotDPI = 100
 cleanPNGs = True
@@ -35,6 +53,16 @@ else:
     print('no defaults found')
 print('Plot DPI:',plotDPI,'; clean PNGs?',cleanPNGs)
 
+if(args.xCrossSection != None):
+    print('** Manual xSlice detected **')
+    xCrossSection = args.xCrossSection
+if(args.yCrossSection != None):
+    print('** Manual ySlice detected **')
+    yCrossSection = args.yCrossSection
+if(args.zDepth != None):
+    print('** Manual zDepth detected **')
+    zDepth = args.zDepth
+
 dt = 0.0   
 for line in fileinput.input('input/data'):
         if "deltaT=" in line:
@@ -57,6 +85,11 @@ for file in os.listdir('results'):
             startStep = int(words[1])
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
+
+if(args.timeRange != None):
+    startStep = args.timeRange[0] * 86400 / dt
+    maxStep = args.timeRange[1] * 86400 / dt
+
 if((maxStep-startStep)/sizeStep > 60):   #if more than 60 frames, downscale to be less than 60
     dwnScale = int(np.ceil(((maxStep-startStep)/sizeStep)/60))
     print('Reducing time resolution by', dwnScale)
@@ -65,7 +98,7 @@ print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 #Decide if iceBerg data files exist
 if(os.path.isfile('input/bergMask.bin')):
-    isBerg = True
+    isBerg = False
     print('Found icebergs for this run')
 else:
     isBerg = False
@@ -100,7 +133,6 @@ if(isBerg):
                     openFrac[:,j,i] = 1
 
 
-
 # Print actual cross section values
 xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
 ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
@@ -109,14 +141,9 @@ print('cross section is x =', x[0,xSlice], 'index', xSlice)
 print('cross section is y =', y[ySlice,0], 'index', ySlice)
 print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
-# if(isBerg):
-#     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx']
-#     name = ["Temp", "Sal", "U", "W", "V","BRGmltRt"]
-#     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]"]
-# else:
-dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
-name = ["Temp", "Sal", "U", "W", "V"]
-cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
+dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag']
+name = ["Temp", "Sal", "U", "W", "V", "Fresh Water Flyx",'TracePlume','TraceBerg']
+cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m^3/s]","[Vol Frac]","[Vol Frac]"]
 
 #In KM for x,y for better axis labeling
 x = x/1000
@@ -125,11 +152,20 @@ y = y/1000
 if(usePcolor):
     print('pcolor not supported for this function yet, using contourf')
 
+ghostAlpha = .2
+
 #NOTE matplotlib x and y and MITgcm x,y are FLIPPED below. Be careful.
-for k in range(len(name)):
+if(args.quick > 0):
+    startStep = maxStep
+    cleanPNGs = False
+if(args.kValues == None):
+    kList = range(len(name))
+else:
+    kList = args.kValues
+for k in kList:
     print('\t',name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
-        fig = plt.figure()
+        fig = plt.figure(figsize=(10, 5))
         ax = fig.add_subplot(111, projection='3d',computed_zorder=False)
         if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
             localBergs = True
@@ -140,6 +176,7 @@ for k in range(len(name)):
             data = np.zeros(np.shape(mds.rdmds("results/%s"%(dynName[k-1]), i)))
         else:
             data = mds.rdmds("results/%s"%(dynName[k]), i)
+        kk = k
         if k == 0:
             lvl = tempRange
             cm = tempCmap
@@ -158,10 +195,15 @@ for k in range(len(name)):
         elif k == 5:
             lvl = meltRange
             cm = meltCmap
-        if(k == 5):
             kk = 2
-        else:
-            kk = k
+        elif k == 6:
+            lvl = plumeTracerRange
+            cm = plumeTracerCmap
+            kk = 0
+        elif k == 7:
+            lvl = bergTracerRange
+            cm = bergTracerCmap
+            kk = 1
 
         #Long profile
         XX,ZZ = np.meshgrid(np.squeeze(x[ySlice,:]),np.squeeze(z))
@@ -240,7 +282,7 @@ for k in range(len(name)):
             np.squeeze(x[0:ySlice+1,0:xSlice+1]),
             np.ones(np.shape(x[0:ySlice+1,0:xSlice+1])),
             levels=[0, 1, 2],
-            alpha=.05,
+            alpha=ghostAlpha,
             cmap='cmo.gray',
             zdir='z',offset=z[zSlice,0,0],zorder=4
         )
@@ -250,7 +292,7 @@ for k in range(len(name)):
             np.squeeze(x[ySlice:,xSlice:]),
             np.ones(np.shape(x[ySlice:,xSlice:])),
             levels=[0, 1, 2],
-            alpha=.05,
+            alpha=ghostAlpha,
             cmap='cmo.gray',
             zdir='z',offset=z[zSlice,0,0],zorder=-1
         )
@@ -261,7 +303,7 @@ for k in range(len(name)):
                 np.squeeze(x[ySlice:,0:xSlice]),
                 np.ones(np.shape(x[ySlice:,0:xSlice])),
                 levels=[0, 1, 2],
-                alpha=.05,
+                alpha=ghostAlpha,
                 cmap='cmo.gray',
                 zdir='z',offset=z[zSlice,0,0],zorder=1
             )
@@ -271,7 +313,7 @@ for k in range(len(name)):
             np.squeeze(x[0:ySlice+1,xSlice:]),
             np.ones(np.shape(x[0:ySlice+1:,xSlice:])),
             levels=[0, 1, 2],
-            alpha=.05,
+            alpha=ghostAlpha,
             cmap='cmo.gray',
             zdir='z',offset=z[zSlice,0,0],zorder=2
         )
@@ -297,7 +339,7 @@ for k in range(len(name)):
                 cmap='cmo.gray',
                 zdir='z',offset=z.min(),zorder=-1)
 
-        cbar = fig.colorbar(cp)
+        cbar = fig.colorbar(cp,pad=0.2,fraction=.04)
         cbar.set_label(cbarLabel[k])
         
         #Topography along fjord
@@ -310,24 +352,26 @@ for k in range(len(name)):
         ax.invert_xaxis()
         plt.title("%s at x,y,z (%i,%i,%i) at %.02f days" % (name[k], x[0,xSlice]*1000,y[ySlice,0]*1000,z[zSlice,0,0], i/86400.0*dt))
         ax.set_xlabel('Width [km]')
-        ax.set_ylabel('Along [km] %.3f %.3f nan: %i' %(np.nanmin(data[kk,:,:,:]),np.nanmax(data[kk,:,:,:]),np.max(np.isnan(data[kk, :, :, :]))))
+        ax.set_ylabel('Along [km]')
         ax.set_zlabel('Depth [m]')
         
         ax.axes.set_xlim3d(left=y.max(), right=y.min())
         ax.axes.set_ylim3d(bottom=x.min(), top=x.max()) 
         ax.axes.set_zlim3d(bottom=z.min(), top=z.max()) 
-        ax.set_box_aspect([2,4,1])
+        ax.set_box_aspect([2,6,1]) # y,x,z
         ax.view_init(elev=25., azim=-40)
         j = i/sizeStep
 
         str = "figs/cross_%s%05i.png" % (name[k],j)
+        plt.tight_layout()
         plt.savefig(str, format='png', dpi=plotDPI)
-        # plt.show()
+        if(args.quick > 1):
+            plt.show()
         plt.close()
-        
-    os.system('magick -delay %f figs/cross_%s*.png -colors 256 -depth 256 figs/autoCross_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
-    if(makeMovie):
-        os.system('ffmpeg -r %f -i figs/cross_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/autoCross_%s.mp4' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
+    if(args.quick == 0):
+        os.system('magick -delay %f figs/cross_%s*.png -colors 256 -depth 256 figs/autoCross_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+        if(makeMovie):
+            os.system('ffmpeg -r %f -i figs/cross_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/autoCross_%s.mp4' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
 #Clean up intermediate pngs
     if(cleanPNGs):

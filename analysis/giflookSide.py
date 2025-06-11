@@ -17,6 +17,8 @@ parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
                     help='option specification of views to plot [default = all]')
 parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
                     help='optional specification of numFrames [default = 60]')
+parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
+                    help='optional specification of start and endtime in DAYS [default = Full Range]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -71,6 +73,9 @@ for file in os.listdir('results'):
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
 
+if(args.timeRange != None):
+    startStep = args.timeRange[0] * 86400 / dt
+    maxStep = args.timeRange[1] * 86400 / dt
 
 if((maxStep-startStep)/sizeStep > args.numFrames):   #if more than numFrames, downscale to be less than numFrames
     dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/args.numFrames)
@@ -196,7 +201,7 @@ for k in kList:
             lvl = bergTracerRange
             cm = bergTracerCmap
             kk = 1
-        plt.figure(figsize=(12, 5))
+        plt.figure(figsize=(10, 4))
         if(usePcolor):
             cp = plt.pcolormesh(
                 np.squeeze(x[ySlice,:]),
@@ -228,7 +233,7 @@ for k in kList:
                 cmap='cmo.gray')
             #cbar2 = plt.colorbar(cp2)
             #cbar2.set_label('Ocean Fraction')
-        cbar = plt.colorbar(cp)
+        cbar = plt.colorbar(cp,orientation="horizontal",fraction=0.06,format='%.2f')
         cbar.set_label(cbarLabel[k])
         if(showDensity and (dynName[k] == 'dynDiag')):
             salt = np.squeeze(data[1,:,ySlice,:])
@@ -282,11 +287,17 @@ for k in kList:
         if(args.quick > 1):
             plt.show()
         plt.close()
-    if(args.quick == 0):    
+    if(args.quick == 0):
+        locStr = ''
+        timeStr = ''
         if(args.yCrossSection != None):
-             os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], args.yCrossSection[0], name[k]))
-        else:    
-            os.system('magick -delay %f figs/side_%s*.png -colors 256 -depth 256 figs/autoside_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+            locStr = f'{int(np.abs(args.yCrossSection[0]))}'
+        if(args.timeRange != None):
+            timeStr = f'_T_{args.timeRange[0]}_{args.timeRange[1]}'
+        
+        newFileName = f"figs/autoside_{locStr}{name[k]}{timeStr}.gif"
+        os.system(f'magick -delay {500/((maxStep-startStep)/sizeStep)} figs/side_{name[k]}*.png -colors 256 -depth 256 {newFileName}')
+
         if(makeMovie):
             os.system('ffmpeg -r %f -i figs/side_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/autoside_%s.mov' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
