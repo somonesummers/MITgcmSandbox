@@ -75,6 +75,10 @@ for file in os.listdir('results'):
 # startStep = int(((maxStep - startStep)/startStep) * 1 / 2 )* startStep 
 # maxStep = maxStep - 10 * sizeStep
 
+if(args.timeRange != None):
+    startStep = args.timeRange[0] * 86400 / dt
+    maxStep = args.timeRange[1] * 86400 / dt
+
 if((maxStep-startStep)/sizeStep > args.numFrames):   #if more than numFrames, downscale to be less than numFrames
     dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/args.numFrames)
     print('Reducing time resolution by', dwnScale)

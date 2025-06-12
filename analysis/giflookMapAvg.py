@@ -70,6 +70,9 @@ for file in os.listdir('results'):
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
 
+if(args.timeRange != None):
+    startStep = args.timeRange[0] * 86400 / dt
+    maxStep = args.timeRange[1] * 86400 / dt
 
 if((maxStep-startStep)/sizeStep > args.numFrames):   #if more than numFrames, downscale to be less than numFrames
     dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/args.numFrames)
@@ -283,10 +286,13 @@ for k in kList:
             plt.show()
         plt.close()
     if(args.quick == 0):
+        depthStr = ''
+        timeStr = ''
         if(args.zDepth != None):
-            os.system('magick -delay %f figs/mapAvg%s*.png -colors 256 -depth 256 figs/autoMapAvg%i%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], (args.zDepth), name[k]))
-        else:
-            os.system('magick -delay %f figs/mapAvg%s*.png -colors 256 -depth 256 figs/autoMapAvg%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+            depthStr = f'{int(np.abs(args.zDepth))}'
+        if(args.timeRange != None):
+            timeStr = f'_T_{args.timeRange[0]}_{args.timeRange[1]}'
+        os.system(f'magick -delay {500/((maxStep-startStep)/sizeStep)} figs/mapAvg{name[k]}*.png -colors 256 -depth 256 figs/autoMapAvg{depthStr}{name[k]}{timeStr}.gif')
 
 #Clean up intermediate pngs
     if(cleanPNGs):

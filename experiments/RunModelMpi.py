@@ -325,7 +325,7 @@ for ii in range(iterationsToRun):
     sysPrint('\tadjust end time %i to %i' %(int(newStartTime),int(newStartTime+24*3600)))
     replaceAll('input/data','endTime=%i' %(int(newStartTime)), 'endTime=%i' %(int(newStartTime+24*3600)))
 
-    if(index > 1 and index % 100 == 0):
+    if(False and index > 1 and index % 100 == 0): #block this for now
         # Reset prtracers every 100 steps, avoid saturation.
         # We read old value, then replace it with new in ptracer file.
         # We also must delete the ptracer pickup files to start at tracers=0.
