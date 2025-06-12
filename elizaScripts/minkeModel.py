@@ -86,7 +86,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'kilo_s_sgd1300V_4x'
+run_config['run_name'] = 'kilo_s_sgd1300_4x_UcRamp'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -755,14 +755,14 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 ## Total runoff (m^3/s)
 ## Seasonal Peak
-runoff = -2600 * np.sin(2*np.pi * np.arange(nt)/nt) - 1300
-runoff[runoff <  10 ] = 10
+# runoff = -2600 * np.sin(2*np.pi * np.arange(nt)/nt) - 1300
+# runoff[runoff <  10 ] = 10
 ## linear ramp
 # runoff = 250 + 1250 * np.arange(nt)/float(nt)
 # runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
 # runoff = runoff[::-1] #flipping around for building melange
 ## Constant
-# runoff = assign_plumeSGD * np.ones(nt)
+runoff = assign_plumeSGD * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
