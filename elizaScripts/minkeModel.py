@@ -755,14 +755,14 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 ## Total runoff (m^3/s)
 ## Seasonal Peak
-# runoff = -2600 * np.sin(2*np.pi * np.arange(nt)/nt) - 1300
-# runoff[runoff <  10 ] = 10
+runoff = -2*assign_plumeSGD * np.sin(2*np.pi * np.arange(nt)/nt) - assign_plumeSGD
+runoff[runoff <  10 ] = 10
 ## linear ramp
 # runoff = 250 + 1250 * np.arange(nt)/float(nt)
 # runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
 # runoff = runoff[::-1] #flipping around for building melange
 ## Constant
-runoff = assign_plumeSGD * np.ones(nt)
+# runoff = assign_plumeSGD * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
@@ -827,14 +827,14 @@ if(plumeMask[plume_loc,icefront] == 3):
 elif(plumeMask[plume_loc,icefront] == 2):
     plt.plot(time,runoffRad[:,plume_loc,icefront] * run_config['horiz_res_m'] * wsg,label='SGD',linewidth=3, linestyle='--')
 ax1=plt.gca()
-ax2=ax1.twinx()
-ax2.plot(time,sampleTForcing,label='T mid-depth',color='r')
+# ax2=ax1.twinx()
+# ax2.plot(time,sampleTForcing,label='T mid-depth',color='r')
 sampleTForcing
 ax1.set_xlabel('Time [days]')
 ax1.set_ylabel('SGD [$m^3/s$]')
-ax2.set_ylabel('Temp [C]')
+# ax2.set_ylabel('Temp [C]')
 ax1.legend()
-ax2.legend()
+# ax2.legend()
 if(writeFiles):
     plt.savefig("%splumeForcing" % (run_config['run_dir']+'/input/'))
 plt.show()

@@ -30,7 +30,7 @@ parser.add_argument('-s','--silent', action='count', default=0,
                     help='Option to silence showing of plots')
 parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
-parser.add_argument('-w','--windowMean', nargs='*', type=int, default=10,
+parser.add_argument('-w','--windowMean', nargs='?', type=int, default=10,
                     help='window width for time averaging melt rates [default = 10]')
 args = parser.parse_args()
 
@@ -93,8 +93,10 @@ for i in range(len(args.files)):
     timeTime = timeTime - timeTime[0] + jShift# shift to start at t=0# shift to start at t=0
 
     N = args.windowMean #window over to smooth in time points (days)
-    BTimeSmooth = np.convolve(BTime, np.ones(N)/N, mode='same')
-    bFluxTime = np.convolve(bFluxTime, np.ones(N)/N, mode='same')
+    padL = int(N/2)
+    padR = int((N-1)/2)  #This ensures odds work OK
+    BTimeSmooth = np.convolve(np.concatenate((BTime[0]*np.ones(padL),BTime,BTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
+    bFluxTime = np.convolve(np.concatenate((bFluxTime[0]*np.ones(padL),bFluxTime,bFluxTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
     plt.suptitle('Mélange Volume Over Time')
 
     if(args.labels != None):

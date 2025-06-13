@@ -139,7 +139,7 @@ for j in toIterate[shiftIndex::subSample]:
     X_ = np.concatenate(([data.X[0]],data.X_,[data.X[-1]]))
     U = data.U
     H = np.concatenate(([data.H0],data.H,[1.5*data.H[-1]-0.5*data.H[-2]]))
-    B = np.concatenate((data.B,[1.5*data.B[-1]-0.5*data.B[-2]]))
+    B = np.concatenate((data.B,[1.5*data.B[-1]-0.5*data.B[-2]])) * -1 #flip for plotting
     gg = np.concatenate(([1.5*data.gg[0]-0.5*data.gg[1]],data.gg,[1.5*data.gg[-1]-0.5*data.gg[-2]]))
     muW = data.muW# np.concatenate(([3*data.muW[0]-3*data.muW[1]+data.muW[2]],data.muW,[3*data.muW[-1]-3*data.muW[-2]+data.muW[-3]]))
     X = X-X[0]

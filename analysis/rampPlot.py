@@ -38,7 +38,7 @@ parser.add_argument('-xt','--xTerminus', action='count', default=0,
                     help='Option to show terminus location on plots')
 parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
-parser.add_argument('-w','--windowMean', nargs='*', type=int, default=10,
+parser.add_argument('-w','--windowMean', nargs='?', type=int, default=10,
                     help='window width for time averaging melt rates [default = 10]')
 args = parser.parse_args()
 
@@ -105,10 +105,13 @@ for i in range(len(args.files)):
     timeTime = timeTime - timeTime[0] + jShift# shift to start at t=0
 
     N = args.windowMean #window over to smooth in time points (days)
-    BTimeSmooth = np.convolve(BTime, np.ones(N)/N, mode='same')
-
+    #Pad edges of BTime to have smooth edges and work for short time series
+    padL = int(N/2)
+    padR = int((N-1)/2)  #This ensures odds work OK
+    BTimeSmooth = np.convolve(np.concatenate((BTime[0]*np.ones(padL),BTime,BTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
     # timeTime = (timeTime - timeTime[0])/5 #if pre-code fix for total time
     if(args.rampVariable[0] == 0):
+        forceTimeRough = BTime
         forceTime = BTimeSmooth
         forceLabel = 'Melt Rate [m/day]'
         forceString = 'Melt'
@@ -130,6 +133,8 @@ for i in range(len(args.files)):
         ax1.plot(timeTime,forceTime,color=meltColors[i],linestyle=lStyle[i])
     else: #labels names have been supplied
         ax1.plot(timeTime,forceTime,color=meltColors[i],linestyle=lStyle[i],label=args.labels[i])
+    if(args.rampVariable[0] == 0):
+        ax1.plot(timeTime,forceTimeRough,color=meltColors[i],linestyle='-',alpha=.25)
     ax1.scatter(timeTime[0],forceTime[0],s=50,marker='*',color='black')
     if(args.xTerminus > 0):
         ax1.plot(timeTime,UtTime,color='xkcd:gray',linestyle=lStyle[i])

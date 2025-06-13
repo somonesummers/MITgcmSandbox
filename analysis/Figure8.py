@@ -13,21 +13,21 @@ manualMax = None
 
 # folders = ['.']
 # labels = ['glaciome']
-folders = ['hotel_fringe_sgd1300','foxtrot_s_sgd1300']
-labels = ['fringe','none']
-# folders = ['hotel_Umin03_sgd1300','hotel_Umin05_sgd1300','foxtrot_s_sgd1300']
-# labels = ['0.03','0.04','0.05']
+# folders = ['hotel_fringe_sgd1300','foxtrot_s_sgd1300']
+# labels = ['fringe','none']
+folders = ['hotel_Umin03_sgd1300','foxtrot_s_sgd1300','hotel_Umin05_sgd1300']
+labels = ['0.03','0.04','0.05']
 # folders = ['hotel_zhaoMelt_sgd1300','hotel_4x_sgd1300','foxtrot_s_sgd1300']
 # labels = ['Zhao','4x','1x']
 colors = ['xkcd:red','xkcd:gray','xkcd:blue']
 resultFolder = '/results'
 fileEnding = ""
 
-manualMax = 5162400
+manualMax = 4957200
 
 ## Umin melt thresholds 
-# thresholds = [0.03,0.05,0.04]
-thresholds = [0.04,.04,.04]
+thresholds = [0.03,0.05,0.04]
+# thresholds = [0.04,.04,.04]
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
