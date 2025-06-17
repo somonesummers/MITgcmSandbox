@@ -41,6 +41,8 @@ sys.path.append('.')
 forceMelange = False
 from melangeModel import *
 
+couplingTime = 12 * 3600
+
 # Method to return to main output as well as status text file
 def sysPrint(stringIn): 
         print(stringIn)
@@ -53,14 +55,7 @@ def replaceAll(file,searchExp,replaceExp):
             line = line.replace(searchExp,replaceExp)
         sys.stdout.write(line)
 
-# Handler for time limit on glaciome1d step
-def handler(signum, frame):
-    sysPrint("WARNING glaciome1d seems frozen, sad. Revert to old state")
-    raise Exception("Timeout")
-
 # Track exceptions
-glmeWarningFlag = False
-glmeWarningCount = 0
 mitgcmWarningFlag = 1 #if it fails first run, should error
 mitgcmWarningCount = 0
 
@@ -90,8 +85,8 @@ if(resetStart):
     replaceAll('input/data','nIter0=%i' %(int(startIter)), 'nIter0=%i' % int(0))
     # So ptracers Iter0 should actually be 0, it is when the tracer exp starts, not what to load
     # replaceAll('input/data.ptracers','Iter0=%i' %(int(startIter)), 'Iter0=%i' % int(0))
-    sysPrint('\tadjust end time %i to %i' %(int(endTime),int(86400)))
-    replaceAll('input/data','endTime=%i' %(int(endTime)), 'endTime=%i' %(int(86400)))
+    sysPrint('\tadjust end time %i to %i' %(int(endTime),int(couplingTime)))
+    replaceAll('input/data','endTime=%i' %(int(endTime)), 'endTime=%i' %(int(couplingTime)))
 
     #Set melange to length consistent with initial glaciome1d size
     os.system("~/.conda/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
@@ -123,7 +118,7 @@ elif(freshStart): #This distinguises between a new coupled run, or continuing a 
                 oldStartIter = int(line[8:-2])
 
     prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
-    endIter = int((24*3600)/dt)
+    endIter = int((couplingTime)/dt)
     sysPrint('\tcondensing diagnostic tile files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t == %s ==' %prefixes[k])
@@ -180,150 +175,19 @@ for ii in range(iterationsToRun):
     openFrac = np.fromfile('input/openFrac.bin', dtype='>f8')
     openFrac = openFrac.reshape((nz,ny,nx))
 
-    # Load mélange geometry
+    index = int(maxStep)*dt/(couplingTime)
 
-    files = sorted(glob.glob('couplingResults/MITgcmRun_[0-9][0-9][0-9][0-9][0-9].pickle'))
-    # print(files)
-    with open(files[-1], 'rb') as file:
-        data = pickle.load(file)
-        file.close()
-        index = int(str(file).split(".")[1].split("_")[1])
-        
-    # make sure nothing funny is going on. Depending on when last cycle failed you may have to delete the highest numbered .pickle file
-    if(int(maxStep)*dt/(24*3600) - index != 1):
-        if(int(maxStep)*dt/(24*3600) - index == 0):
-            #sometimes on restart MITgcm is forward, so autodelete and retake glaciome1d step if so
-            sysPrint('glaciome1d 1 step ahead, deleting couplingResults/MITgcmRun_%05i.pickle' %index)
-            os.system('rm couplingResults/MITgcmRun_%05i.pickle' %index)
-            files = sorted(glob.glob('couplingResults/MITgcmRun_[0-9][0-9][0-9][0-9][0-9].pickle'))
-            # print(files)
-            with open(files[-1], 'rb') as file:
-                data = pickle.load(file)
-                file.close()
-                index = int(str(file).split(".")[1].split("_")[1])
-        else:
-            sysPrint('ERROR load MITgcm data from end of day %.2f, using melange index %05i' %(int(maxStep)*dt/(24*3600),index))
-            raise Exception('MITgcm (BRGFlx_) and GLACIOME (MITgcmRun_)are out of sync, GLACIOME index should be 1 behind MITgcm day')
-    
-    dataCopy = copy.deepcopy(data) #grab copy just in case we revert
-    sysPrint('=== GLACIOME Running, load MITgcm data from end of day %.2f, using melange index %05i === ' %(int(maxStep)*dt/(24*3600),index))
-    # Calculate melt rate. This is the net Freshwaterflux (sum verically, avg across)/ surface area of melange
-    # It is very imporant to extend meltrate beyond mélange with value of last cell. Otherwise mélange will grow
-    # continuiously. 
-
-    lambdaHelper = 1-openFrac[0,1:-1,1:]
-    lambdaHelper[lambdaHelper == 0] = 0.01
-    # data is of list ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY']
-    # Vertically sum all of the fresh water fluxes [m^3/s] cells/ divide by surface area 
-    # (lamdba helper and dx*dy) of bergs in that cell [m/s]. dx*dy is outside the sum 
-    # because it is constant, but still in the demnominator. Now a 'effective vertical melt rate' over surface
-    # area at surface. Then average this value across the fjord, and multiply by seconds in a day to get 
-    # vertical melt per day, the value glaciome wants. 
-    b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[0,:,1:-1,1:],axis=0)/lambdaHelper,axis=0)/(dx*dy)*(24*3600)
-
-    if(np.mean(b_mitgcm)==0):
-        # This means MITgcm has had an overflow. We can try once to re-advect bergs and try again. To do this, we delete the 
-        # last BRGFlx file and skipping the rest of this loop with a CONTINUE statement. This consumes one iteration of the 
-        # main loop that we will not get back. Also increment counter of how many of these weve had to ensure we dont get more
-        # than 1 in a row
-        mitgcmWarningFlag = mitgcmWarningFlag + 2 #increment by 2, this is the error window
-        if(mitgcmWarningFlag > 2): #throw error if already in erroring state
-            sysPrint('ERROR MITgcm failed 2x in a row')
-            raise Exception('ERROR MITgcm failed 2x in a row')
-        mitgcmWarningCount = mitgcmWarningCount + 1
-        sysPrint('\t\t WARNING MITgcm NANs, shuffling bergs and trying again. Failure %i' %mitgcmWarningCount)
-        os.system('rm results/BRGFlx.%010i.*' %maxStep) #Delete last BRGFlx
-        continue # This skips rest of loop. Next loop will delete last GLACIOME automatically, 
-                 # run GLACIOME again, advect bergs, run MITgcm and hopefully resolve error. This technically does
-                 # iterate the Melange for 2 days in 1 day of Ocean. Use carefully. Shorter MITgcm timesteps (dt) should reduce
-                 # this error from occuring.
-    else:
-        mitgcmWarningFlag = 0 if mitgcmWarningFlag == 0 else mitgcmWarningFlag - 1
-
-    # Now error are dealt with, We fill in the tail of 0s with the value of the melange toe 
-    if(False): #option to bias mélange to grow by having no melt beyond toe of mélange
-        sysPrint('\t == forcing growth == ')
-        b_mitgcm[b_mitgcm != 0] = 0
-    else:
-        b_mitgcm[b_mitgcm == 0] = b_mitgcm[b_mitgcm != 0][-1]# if MITgcm has overflow error, this line fails
-    x_mitgcm = x[1:]-x[1] #ensure starts at 0, MITgcm has a glacier for first cell
-    
-    sysPrint('\tMelt Rates min/mean/max: %.2f, %.2f, %.2f [m/day]:' %(np.min(b_mitgcm),np.mean(b_mitgcm),np.max(b_mitgcm)))
-    # plt.figure()
-    # plt.plot(x_mitgcm,b_mitgcm)
-    # plt.show()
-    # plt.close()
-    data.dt = 1.0/365 # 1 day step for glaciome1d, as we will take 1 step
-    data.X_externalGrid = x_mitgcm
-    data.B_externalGrid = b_mitgcm*365 #days to years
-
-    # Ready to now run GLACIOME1D. We run 1 timestep with dt set to the coupling timestep. If this creates CLF issues
-    # we can run more steps with a reduced dt, or couple with MITgcm more frequently, but this isn't likely to be needed. 
-    oldL = data.L
-    oldH = data.H0
-
-    if(forceMelange):
-        alpha = couplingAlpha
-        U0 = couplingUc0
-        F = data.force()
-        data.Uc = U0 - alpha * F
-        sysPrint('\tNew Uc: %.3f m/year'%(data.Uc))
-    sysPrint('\tPrevious Length: %.3f, H0: %.3f'%(oldL, oldH))
-    # data.steadystate()
-
-    signal.signal(signal.SIGALRM,handler) #setting a timer for glaciome1d
-    signal.alarm(600) # if its not done in 10 minutes, its probably at minimum size. 
-                    # if this is happening for non-trivially small melange, something is off.
-                    # Can happen when mélange thickness increases down fjord, need to look into more 
-    try:
-        data.prognostic(method='lm')
-    except (Exception):
-        data = dataCopy
-        data.t = data.t + data.dt #step forward one day to keep up with MITgcm
-        glmeWarningFlag = True
-    signal.alarm(0) #turn the alarm off, because we made it
-    sysPrint('\tNew      Length: %.3f, H0: %.3f, ∆L: %.3f, ∆H0: %.3f'%(data.L,data.H0,data.L-oldL,data.H0-oldH,))
-    sysPrint('\t\tSeconds to run GLACIOME step: %.4f' % (time.time() - start_time))
-    
-    if(data.H0 < 25.0 or data.L < 300): #limit small size of melang, glaciome1d gets slow 
-        # This is really a secondary limit for the same reason as the time limit above
-        # likely, we should only have the time limit and not this one.
-        data = dataCopy
-        data.t = data.t + data.dt #step forward one day to keep up with MITgcm
-        glmeWarningFlag = True
-        sysPrint('\t\t WARNING melange below minimum size, revert to old size')
-    
-    # If we had a failure, increment counter. If succeeded, reset counter
-    if(glmeWarningFlag):
-        glmeWarningCount = glmeWarningCount + 1
-        sysPrint('\t\t\t Successive GLACIOME failures: %i ' %glmeWarningCount)
-        glmeWarningFlag = False
-    else:
-        glmeWarningCount = 0
-
-    if(glmeWarningCount > 10 and data.L > 1000):
-        sysPrint('ERROR GLACIOME failed to run 10 time in a row for nontrivial melange size')
-        raise Exception('ERROR GLACIOME failed to run 10 time in a row for nontrivial melange size')
-
-
-    # save itermediate steps for plotting
-    data.save('couplingResults/MITgcmRun_%05i.pickle' %(index+1))
-    sysPrint('\tSaved as MITgcmRun_%05i.pickle' %(index+1))
-
-    # Preparing MITgcm for next run. 
-    # We adust the data file, start and end fields. 
-
-    sysPrint('\tPrepping MITgcm for day %.2f' %(index+2))
-    newStartTime = (index+1)*24*3600
+    sysPrint('\tPrepping MITgcm for step %.2f' %(index+1))
+    newStartTime = (index)*couplingTime
     oldStartTime = (oldStartIter)*dt #read directly from input/data now
     # we delete the old pickups to reduce file size and file count. We could strategically leave them every
     # 100 iterations or so, but currently we do not. 
-    os.system('rm results/pick*.%010i.*' %int((oldStartTime-24*3600)/dt)) #save last one, but delete 2 ago
+    os.system('rm results/pick*.%010i.*' %int((oldStartTime-couplingTime)/dt)) #save last one, but delete 2 ago
 
     sysPrint('\tadjust start iteration %i to %i' %(oldStartIter,int(newStartTime/dt)))
     replaceAll('input/data','nIter0=%i' %(int(oldStartIter)), 'nIter0=%i' % int(newStartTime/dt))
-    sysPrint('\tadjust end time %i to %i' %(int(newStartTime),int(newStartTime+24*3600)))
-    replaceAll('input/data','endTime=%i' %(int(newStartTime)), 'endTime=%i' %(int(newStartTime+24*3600)))
+    sysPrint('\tadjust end time %i to %i' %(int(newStartTime),int(newStartTime+couplingTime)))
+    replaceAll('input/data','endTime=%i' %(int(newStartTime)), 'endTime=%i' %(int(newStartTime+couplingTime)))
 
     if(False and index > 1 and index % 100 == 0): #block this for now
         # Reset prtracers every 100 steps, avoid saturation.
@@ -350,7 +214,7 @@ for ii in range(iterationsToRun):
     # This VASTLY improves data transfer and compression speeds. 
     prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
 
-    endIter = int((newStartTime + 24*3600)/dt)
+    endIter = int((newStartTime + couplingTime)/dt)
     sysPrint('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t == %s ==' %prefixes[k])
