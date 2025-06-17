@@ -21,7 +21,7 @@ def write_bin(fname, data):
     # print(fname + " " + str(np.shape(data)))
     data.astype(">f8").tofile('input/'+fname)
 
-# Controllers for which steps of advection process we do
+## Controllers for which steps of advection process we do
 
 advectBergs = True
 clipBergs = True
@@ -34,17 +34,17 @@ couplingTimeStep = 1*24*3600 #[s]
 iceDensity = 917 # [kg/m^3]
 oceanDensity = 1030 # [kg/m^3]
 
-# Some rules on advecting/melting/sizing
+## Some rules on advecting/melting/sizing
 minBergDepth = 5 # bergs not allowed to shrink/melt smaller than this [m]
 maxBergDepth = 450 # bergs not allowed to shrink/melt smaller than this [m]
 maxLambda = .90 # Cells are full at this lambda [hard limit]
 scaleMin = 0.2 # percent error allowed between MITgcm effective depth and GLACIOME depth
-# Bergs added to top off to icebergCoverLamba left of refreshGate
+## Bergs added to top off to icebergCoverLamba left of refreshGate
 icebergRefreshingGate = 3
 maxBergs = 500
 
 
-# Load model wide parameters
+## Load model wide parameters
 
 sys.path.append('.')
 from melangeModel import *
@@ -53,7 +53,7 @@ icebergPhi = np.min([.8,icebergCoverLambda]) # Scaling from GLACIOME1D
 icebergCoverLambda = np.min([.9,icebergCoverLambda * 2]) # How full filled cells are
 
 print('\t\tLambda/Phi %.3f/%.3f' %(icebergCoverLambda,icebergPhi))
-# Get most recent data from MITgcm
+## Get most recent data from MITgcm
 
 maxStep = 0
 for file in os.listdir('results'):
@@ -64,10 +64,10 @@ for file in os.listdir('results'):
         if int(words[1]) > maxStep:
             maxStep = int(words[1])
 
-# Iceberg melt data
+## Iceberg melt data
 dataMITgcm = mds.rdmds("results/BRGFlx", maxStep)
 
-# Geometry of MITgcm domain
+## Geometry of MITgcm domain
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
 z = -1*np.squeeze(mds.rdmds("results/RC"))
@@ -81,12 +81,12 @@ deltaY = y[0,0]*2
 
 sum_z = np.cumsum(dz)
 
-#This needs to know about z. Bergs cant be deeper than this
+## This needs to know about z. Bergs cant be deeper than this
 hardMaxDepth = np.max(np.abs(z)) - 5
-#icebergs are destroyed when they move past here. Issues when GLACIOME grows past here
+## icebergs are destroyed when they move past here. Issues when GLACIOME grows past here
 icebergRightHandGate = int(nx*0.9)
 
-# get most recent Glaciome1D data. This drives advection speeds and geometry updates
+## get most recent Glaciome1D data. This drives advection speeds and geometry updates
 files = sorted(glob.glob('couplingResults/MITgcmRun_[0-9][0-9][0-9][0-9][0-9].pickle'))
 # print(files)
 with open(files[-1], 'rb') as file:
@@ -94,7 +94,7 @@ with open(files[-1], 'rb') as file:
     file.close()
     index = int(str(file).split(".")[1].split("_")[1])
 
-# We load interpolators to apply to MITgcm grid
+## We load interpolators to apply to MITgcm grid
 U_glaciome1d = (data.U+data.Ut-data.Uc)/(24*3600*365) #raw is m/yr, convert to m/s
 H = np.concatenate(([data.H0], data.H, [data.HL]))
 X_glaciome1d = data.X + deltaX #meters, shift to align with front of MITgcm melange
@@ -106,9 +106,9 @@ thicknessLookup = interp1d(X_,H,bounds_error=False,fill_value=[0])
 # plt.plot(X_glaciome1d,U_glaciome1d)
 # plt.show()
 
-# Now we load the iceberg geometry and mask files
+## Now we load the iceberg geometry and mask files
 
-#2D Fields 
+## 2D Fields 
 bathymetry  = np.fromfile('input/bathymetry.bin', dtype='>f8')
 bathymetry  = bathymetry.reshape((ny,nx))
 plumeMask  = np.fromfile('input/plumeMask.bin', dtype='>f8')
@@ -131,7 +131,7 @@ barrierMask = np.fromfile('input/barrierMask.bin', dtype='>f8')
 barrierMask = barrierMask.reshape((ny,nx))
 meltMask = np.fromfile('input/meltMask.bin', dtype='>f8')
 meltMask = meltMask.reshape((ny,nx))
-#3D Fields
+## 3D Fields
 totalBergArea = np.fromfile('input/totalBergArea.bin', dtype='>f8')
 totalBergArea = totalBergArea.reshape((nz,ny,nx))
 openFrac = np.fromfile('input/openFrac.bin', dtype='>f8')
@@ -141,7 +141,7 @@ openFrac = openFrac.reshape((nz,ny,nx))
 # lam2 = np.mean(np.nansum(bergDepths[:,1:-1,:]*bergWidths[:,1:-1,:]*bergLength[:,1:-1,:],axis=0)/(deltaX*deltaY),axis=0)
 # print('lambda',lam,lam2)
 
-# Create fresh of geometry arrays, this lets us move bergs without double counting
+## Create fresh of geometry arrays, this lets us move bergs without double counting
 
 bergWidthsNew   = np.zeros_like(bergWidths)
 bergLengthNew   = np.zeros_like(bergWidths)
@@ -150,7 +150,7 @@ bergsPerCellNew = np.zeros_like(bergsPerCell).astype(np.int64)
 
 print('\t\tTotal bergs at start move: %i' %np.sum(bergsPerCell))
 
-#Track where the edge of the melange is according to GLACIOME
+## Track where the edge of the melange is according to GLACIOME
 melangeIndex = int(np.ceil(glaciome_L/deltaX))
 print(f'\t\tMélange edge is index: {melangeIndex}')
 if(icebergFringe): 
@@ -164,7 +164,7 @@ if(icebergFringe):
 print('\t\tTotal bergs after first clipping, before move: %i' %np.sum(bergsPerCell))
 
 ## Advect bergs. We go backwards (front to back) to ensure overfull icebergs can get priority to stay where they are
-# If you want it to not really be random
+## If you want it to not really be random
 # np.random.seed(3)
 maxMove = int(0) #track this to know how far the farthest berg moved. We only 'top off' this far.
 if(advectBergs):
@@ -172,8 +172,8 @@ if(advectBergs):
         for i in range(nx-1,0,-1): #i goes from nx-1 to 1 in reverse order
                 if(bathymetry[j,i] == 0):
                     continue #This is a wall, no bergs here
-                # Total freshwater flux / area of bergs in cell 
-                # perhaps this below line could use the actual lambda for the location, but be careful about plume cells
+                ## Total freshwater flux / area of bergs in cell 
+                ## perhaps this below line could use the actual lambda for the location, but be careful about plume cells
                 effectiveMelt = np.nanmean(np.nansum(dataMITgcm[0,:,:,1:],axis=0),axis=0)/(deltaX*deltaY*icebergPhi)*(24*3600)*1000/917 #[m]
                 for k in range(bergsPerCell[j,i]):
                     if(min(bergWidths[k,j,i],bergLength[k,j,i],bergDepths[k,j,i]) > 2):
@@ -218,12 +218,12 @@ if(advectBergs):
                             # print('Iceberg has left the zone and is lost. Index: %i' %(i + advect))
                             pass
                     else: 
-                        # I try to set the minimum berg size such that this doesnt happen in the melange
-                        # You may want to rely on this option like this for freely drifting bergs, but for now its a warning as it should happen
+                        ## I try to set the minimum berg size such that this doesnt happen in the melange
+                        ## You may want to rely on this option like this for freely drifting bergs, but for now its a warning as it should happen
                         print('\t\t** WARNING small iceberg discarded second filter [W,L,D]: [%.3f,%.3f,%.3f] WARNING **' %(bergWidths[k,j,i],bergLength[k,j,i],bergDepths[k,j,i]))
     del i,j,k
 
-    # Now sorted, we can put the new arrays into the old arrays
+    ## Now sorted, we can put the new arrays into the old arrays
     bergWidths = bergWidthsNew.copy()
     bergLength = bergLengthNew.copy()
     bergDepths = bergDepthsNew.copy()
@@ -233,7 +233,7 @@ print('\t\tMax move is',maxMove)
 print('\t\tTotal bergs after move: %i' %np.sum(bergsPerCell))
 
 if(clipBergs):
-    # Remove Bergs too far along fjord
+    ## Remove Bergs too far along fjord, beyond melange
     bergWidths[:,:,melangeIndex:] = 0
     bergLength[:,:,melangeIndex:] = 0
     bergDepths[:,:,melangeIndex:] = 0
@@ -241,8 +241,8 @@ if(clipBergs):
 print('\t\tTotal bergs after clipping: %i' %np.sum(bergsPerCell))
 
 if(shadedEdge):
-    # Trim final cell, this is the last cell melange extends into
-    # Should trim proportional to how far into this cell the melange extends. Clipping by number of bergs remains somewhat random
+    ## Trim final cell, this is the last cell melange extends into
+    ## Should trim proportional to how far into this cell the melange extends. Clipping by number of bergs remains somewhat random
     trimFac = (glaciome_L - (melangeIndex-1)*deltaX)/deltaX
     bergsPerCell[:,melangeIndex-1] = (bergsPerCell[:,melangeIndex-1]*trimFac).astype(np.int64)
     for j in range(ny):
@@ -253,8 +253,8 @@ if(shadedEdge):
 print('\t\tTotal bergs after shadedEdge: %i' %np.sum(bergsPerCell))
 
 if(fillIn):
-    # We fill in the backside of the mélange with new icebergs breaking off the glacier.
-    # print(np.sum(bergsPerCellNew,axis=0))
+    ## We fill in the backside of the mélange with new icebergs breaking off the glacier.
+    ## print(np.sum(bergsPerCellNew,axis=0))
     maxNewBergDepth = np.min([data.H0*2.5, z[-1]*.8])
     maxBergWidth = 0.0642449*maxNewBergDepth**(5/3)
     minBergWidth = 40
@@ -263,17 +263,17 @@ if(fillIn):
     aspectRatio = 1.5
 
     ## Making new bergs to fill in the gaps/ ensure left bound stays packing to desired fraction
-    # importantly we must use length*widths for area as we haven't recalculated OpenFrac
+    ## importantly we must use length*widths for area as we haven't recalculated OpenFrac
     generatedDepths = []
     generatedWidths = []
     for j in range(ny):
         for i in range(np.max([maxMove,icebergRefreshingGate])):
-            i += 1 # we skip the first cell in MITgcm which is the glacier
+            i += 1 ## we skip the first cell in MITgcm which is the glacier
             if(bathymetry[j,i] == 0):
-                continue #This is a wall, no bergs here
+                continue ## This is a wall, no bergs here
             tmpBergFac = np.sum(bergWidths[:,j,i] * bergLength[:,j,i])/(deltaX*deltaY)
             while(tmpBergFac < icebergCoverLambda):
-                # We keep trying to add while cell is underfull
+                ## We keep trying to add while cell is underfull
                 randScale = np.random.normal(6,1.22,1)
                 randPower = np.random.normal(0.3,0.016,1)
                 a = (minBergWidth**(alpha+1) + (maxBergWidth**(alpha+1) - minBergWidth**(alpha+1))*random.random())**(1/(alpha+1))
@@ -311,14 +311,14 @@ if(fillIn):
 # print(np.sum(bergsPerCell,axis=0))
 
 ## So now we have all our old icebergs added, edge shaded, new bergs added.
-# We now create the new geometry and mask files for MITgcm
+## We now create the new geometry and mask files for MITgcm
 
-#nuke these arrays for new version
+## clear these arrays for new version
 openFrac[:,:,:] = 1
 totalBergArea[:,:,:] = np.nan
 
-# We need to rescale our bergs according to the GLACIOME1D geometry
-# We get effective depth from the geometry files (how deep would all this ice be if packed 100%)
+## We need to rescale our bergs according to the GLACIOME1D geometry
+## We get effective depth from the geometry files (how deep would all this ice be if packed 100%)
 effectiveDepth = np.nanmean(np.nansum(bergDepths[:,:,:]*bergWidths[:,:,:]*bergLength[:,:,:],axis=0)/(deltaX*deltaY),axis=0)
 
 if(icebergFringe):
@@ -340,7 +340,7 @@ if(icebergFringe):
     ## Making new bergs to fill ocean infront of mélange to desired fill (20 - 1 percent over 10km)
     ## We generate these in bulk then assign them to positions
     
-    #Geometry of the fringe
+    ## Geometry of the fringe
     bergType = 1 # 1 = block 2 = cone (not implemented)
     scaling = 1 # 1 = Sulak 2017 2 = Barker 2004
     fringeMaxBergDepth = 160 # (m) 
@@ -351,7 +351,7 @@ if(icebergFringe):
     if(melangeIndex + fringeLengthInd > nx):
         print('Iceberg Fringe extends beyond domain, errors to follow')
     
-    #set concentration (lambda) of fringe
+    ## set concentration (lambda) of fringe
     fringeBergConc[:,melangeIndex:(melangeIndex+fringeLengthInd)] = np.linspace(20,5,num=fringeLengthInd)
     fringeBergConc[bathymetry == 0] = 0 #walls get no icebergs
     fringeBergMask[fringeBergConc > 0] = 1
@@ -382,8 +382,8 @@ if(icebergFringe):
     numberOfBergs = 25 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
     bergTopArea = 0
     areaResidual = 1
-    # Generate the Inverse Power Law cumulative distribution function
-    # over the range minBergWidth-maxBergWidth with a slope of alpha.
+    ## Generate the Inverse Power Law cumulative distribution function
+    ## over the range minBergWidth-maxBergWidth with a slope of alpha.
     print('Making bergs, this can take a few loops...')
     loop_count = 1
 
@@ -395,12 +395,12 @@ if(icebergFringe):
         print('\tnumberOfBergs: ' + str(numberOfBergs))
         x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
         inversePowerLawPDF_width = ((-alpha-1) / minBergWidth) * (x_width/minBergWidth) ** (alpha)
-            # Get the CDF numerically
+        ## Get the CDF numerically
         inversePowerLawCDF_width = np.cumsum(inversePowerLawPDF_width)
-            # Normalize
+        ## Normalize
         inversePowerLawCDF_width = inversePowerLawCDF_width / inversePowerLawCDF_width[-1]
             
-            # Generate number_of_bergs uniformly distributed random numbers.
+        ## Generate number_of_bergs uniformly distributed random numbers.
         uniformlyDistributedRandomNumbers = np.random.uniform(0,1,numberOfBergs)
         
         inversePowerLawDistNumbers_width = np.zeros(uniformlyDistributedRandomNumbers.size);
@@ -436,7 +436,7 @@ if(icebergFringe):
     print('Total Berg Area %f' % bergTopArea)
     print('Total Berg fract: %.2f %%' % (bergTopArea/bergMaskArea*100))
 
-    # Now we sort these berg into cell, randomly 
+    ## Now we sort these berg into cell, randomly 
     bergMaski = 0  #Bad name, but this is the count of cells that will recieve bergs
     bergDict = {}
 
@@ -456,7 +456,7 @@ if(icebergFringe):
     sorted_length = inversePowerLawDistNumbers_length[sorted_indices]
     assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) # In this script, every berg has a home
 
-    # Array for bergs
+    ## Array for bergs
     bergsPerCellLimit = 500
     icebergs_depths = np.zeros([bergMaski,bergsPerCellLimit])
     icebergs_widths = np.zeros([bergMaski,bergsPerCellLimit])
@@ -508,7 +508,7 @@ if(icebergFringe):
     #print(np.round(icebergs_area_per_cell/(deltaX*deltaY),2))
     print('Max fill for fringe is: %.2f%%' % (np.nanmax(icebergs_area_per_cell/(deltaX*deltaY))*100))
 
-    #above makes 1D list of all bergs using a dictionary, here we drop them into the proper cells of the 2D arrays
+    ## above makes 1D list of all bergs using a dictionary, here we drop them into the proper cells of the 2D arrays
     for k in range(bergMaski):
         j = bergDict[k+1][0]
         i = bergDict[k+1][1]
@@ -573,10 +573,10 @@ for i in range(nx): #loops over whole domain, this calculates new hfill factors
 del i,j
 
 
-#remove blocking from plume locations
+## Remove blocking from plume locations
 barrierMask[plumeMask[:,1] > 1,1] = 0
 
-# Visual outputs, can toggle on/off or save
+## Visual outputs, can toggle on/off or save
 
 plt.figure(1)
 plt.subplot(221)
@@ -636,9 +636,10 @@ del depthHelper
 print('\t\tMax lambda/Depth/Width is: %.3f/%.3f/%.3f' %(np.max(varphi[0,:,:]),np.max(bergDepths),np.max(bergWidths)))
 
 plt.tight_layout() 
+## you can save this figure if you'd like, it is a fun movie if you combine them all
 # plt.savefig('figs/advectBergs%08d.png' %maxStep,format='png',dpi=150)
 
-# I toggle this for troubleshooting purposes
+## I toggle this for troubleshooting purposes
 if(not trialAndPlot):
 	# Write files that need updating
 	write_bin('bergMask.bin',bergMask)
