@@ -135,7 +135,6 @@ if(advectBergs):
                 continue #This is a wall, no bergs here, skip to next iteration
             ## Total freshwater flux / area of bergs in cell 
             ## perhaps this below line could use the actual lambda for the location, but be careful about plume cells
-            effectiveMelt = np.nanmean(np.nansum(dataMITgcm[0,:,:,1:],axis=0),axis=0) * 0 # no melt for now
             spd_x = dataMITgcm[2,:,j,i] #[m/s]
             spd_y = dataMITgcm[4,:,j,i] #[m/s]
             for k in range(bergsPerCell[j,i]):
@@ -143,6 +142,7 @@ if(advectBergs):
                     ## assign berg location, advect, re-bin
                     depthIndex = np.max([np.argmin(np.abs(z[:] - bergDepths[k,j,i])),1]) # shallow bergs are entirely in top layer
                     # print(f"depth, ind of berg: {bergDepths[k,j,i]}, {depthIndex}")
+                    avgMelt = np.nanmean(dataMITgcm[2,:depthIndex,j,i,],axis=0) #m/day
                     init_x = random.random()*deltaX
                     init_y = random.random()*deltaY
                     ## movement = speed * couplingTimeStep
@@ -180,12 +180,12 @@ if(advectBergs):
                             else:
                                 new_j = new_j - 1
                         existingArea = np.sum(bergWidthsNew[:,new_j,new_i] * bergLengthNew[:,new_j,new_i])
-                        if((bergArea + existingArea)/(deltaX*deltaY) < maxLambda):
+                        if((bergArea + existingArea)/(deltaX*deltaY) < maxLambda and bergsPerCellNew[j,i] < maxBergs - 2):
                             # print('Moved,',(bergArea + existingArea)/(deltaX*deltaY))
-                            bergWidthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergWidths[k,j,i] #- avgMelt[depthIndex]
-                            bergLengthNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergLength[k,j,i] #- avgMelt[depthIndex]
-                            if((bergDepths[k,j,i] - effectiveMelt[i]) > minBergDepth):
-                                bergDepthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergDepths[k,j,i] - effectiveMelt[i] # melt big bergs
+                            bergWidthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergWidths[k,j,i] - avgMelt * couplingTimeStep/86400
+                            bergLengthNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergLength[k,j,i] - avgMelt * couplingTimeStep/86400
+                            if((bergDepths[k,j,i] - avgMelt * couplingTimeStep/86400) > minBergDepth):
+                                bergDepthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergDepths[k,j,i] - avgMelt * couplingTimeStep/86400
                             else:
                                 bergDepthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergDepths[k,j,i] # too little to melt
                             # if(avgMelt[depthIndex] > 0):
@@ -195,11 +195,11 @@ if(advectBergs):
                                 #     bergDepths[k,j,i]-avgMelt[depthIndex]))
                             bergsPerCellNew[new_j,new_i] += 1
                         else:
-                            # print('Cell too full, iceberg melts, but does not move')
-                            bergWidthsNew[bergsPerCellNew[j,i],j,i] = bergWidths[k,j,i]# - avgMelt[depthIndex]
-                            bergLengthNew[bergsPerCellNew[j,i],j,i] = bergLength[k,j,i]# - avgMelt[depthIndex]
-                            if((bergDepths[k,j,i] - effectiveMelt[i]) > minBergDepth):
-                                bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] - effectiveMelt[i] # melt big bergs
+                            # print('Cell too full (volume or count), iceberg melts, but does not move')
+                            bergWidthsNew[bergsPerCellNew[j,i],j,i] = bergWidths[k,j,i] - avgMelt * couplingTimeStep/86400
+                            bergLengthNew[bergsPerCellNew[j,i],j,i] = bergLength[k,j,i] - avgMelt * couplingTimeStep/86400
+                            if((bergDepths[k,j,i] - avgMelt * couplingTimeStep/86400) > minBergDepth):
+                                bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] - avgMelt * couplingTimeStep/86400
                             else:
                                 bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] # youre too little!
                             bergsPerCellNew[j,i] += 1
