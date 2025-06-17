@@ -89,7 +89,7 @@ if(resetStart):
     replaceAll('input/data','endTime=%i' %(int(endTime)), 'endTime=%i' %(int(couplingTime)))
 
     #Set melange to length consistent with initial glaciome1d size
-    os.system("~/.conda/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
+    os.system("~/.conda/envs/MITgcm/bin/python advectBergsOcean.py >> couplingResults/out.txt")
 
     #Run intial MITgcm, this resets the results folder
     os.system('bash ../makeRun.sh')
@@ -201,7 +201,7 @@ for ii in range(iterationsToRun):
         os.system('rm results/pickup_ptracers.%010i.*' %int((newStartTime)/dt))
 
     # We adjust the icebergs to the new mélange geometry. This could be within this script.
-    os.system("~/.conda/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
+    os.system("~/.conda/envs/MITgcm/bin/python advectBergsOcean.py >> couplingResults/out.txt")
 
     os.chdir("results")
     os.system('srun ./mitgcmuv') # srun has no outputs, all in STDOUT/STDERR.*.*
