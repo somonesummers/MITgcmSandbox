@@ -86,7 +86,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'kilo_s_sgd1300_4x_UcRamp'
+run_config['run_name'] = 'lima_backup'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -98,7 +98,7 @@ run_config['Ly_m'] = 5600 + (2 * wallWidthInd * run_config['horiz_res_m']) # dom
 
 grid_params['Nr'] = 32 # num of z-grid points
 
-run_config['make_icebergs'] = False # Do we make bergs? No if running from spin-up
+run_config['make_icebergs'] = True # Do we make bergs? No if running from spin-up
 
 setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s" %(run_config['run_name'],makeDirs,writeFiles))
 input("Confirm above is accurate before continuing...")
@@ -755,14 +755,14 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 ## Total runoff (m^3/s)
 ## Seasonal Peak
-runoff = -2*assign_plumeSGD * np.sin(2*np.pi * np.arange(nt)/nt) - assign_plumeSGD
-runoff[runoff <  10 ] = 10
+# runoff = -2*assign_plumeSGD * np.sin(2*np.pi * np.arange(nt)/nt) - assign_plumeSGD
+# runoff[runoff <  10 ] = 10
 ## linear ramp
 # runoff = 250 + 1250 * np.arange(nt)/float(nt)
 # runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
 # runoff = runoff[::-1] #flipping around for building melange
 ## Constant
-# runoff = assign_plumeSGD * np.ones(nt)
+runoff = assign_plumeSGD * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)

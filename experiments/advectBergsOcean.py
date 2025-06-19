@@ -198,7 +198,7 @@ if(advectBergs):
                             else:
                                 new_j = new_j - 1
                         existingArea = np.sum(bergWidthsNew[:,new_j,new_i] * bergLengthNew[:,new_j,new_i])
-                        if((bergArea + existingArea)/(deltaX*deltaY) < maxLambda and bergsPerCellNew[j,i] < maxBergs - 2):
+                        if((bergArea + existingArea)/(deltaX*deltaY) < maxLambda and bergsPerCellNew[new_j,new_i] < maxBergs - 2):
                             # print('Moved,',(bergArea + existingArea)/(deltaX*deltaY))
                             bergWidthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergWidths[k,j,i] - avgMelt * couplingTimeStep/86400
                             bergLengthNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergLength[k,j,i] - avgMelt * couplingTimeStep/86400
@@ -212,6 +212,8 @@ if(advectBergs):
                                 #     bergLength[k,j,i]-avgMelt[depthIndex],
                                 #     bergDepths[k,j,i]-avgMelt[depthIndex]))
                             bergsPerCellNew[new_j,new_i] += 1
+                        elif(bergsPerCellNew[j,i] > maxBergs - 2):
+                            print(f'**WARNING**  Cell j,i ({j},{i}) is overfull, deleting bergs. This is bad.')
                         else:
                             # print('Cell too full (volume or count), iceberg melts, but does not move')
                             bergWidthsNew[bergsPerCellNew[j,i],j,i] = bergWidths[k,j,i] - avgMelt * couplingTimeStep/86400

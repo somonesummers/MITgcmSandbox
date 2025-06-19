@@ -41,7 +41,7 @@ sys.path.append('.')
 forceMelange = False
 from melangeModel import *
 
-couplingTime = 12 * 3600
+couplingTime = 6 * 3600
 
 # Method to return to main output as well as status text file
 def sysPrint(stringIn): 
