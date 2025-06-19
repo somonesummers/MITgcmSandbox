@@ -141,6 +141,25 @@ print(effectiveDepth[1:5])
 
 # print(bergDepths[:,6,1],bergWidths[:,6,1],bergLength[:,6,1])
 
+plt.figure(4,figsize=(12, 4))
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=RuntimeWarning)
+    pc = plt.pcolormesh(x[0,:],y[:,0],varphi[0,:,:],cmap='gray_r',vmin=0,vmax=1)
+    cc = plt.contour(x[0,:],y[:,0],varphi[0,:,:],[.25,.5,.75],colors='yellow',alpha=.4)
+    ccc = plt.contour(x[0,:],y[:,0],varphi[0,:,:],[.89],colors='red',alpha=.5)
+    plt.plot([],[],color='xkcd:yellow',label='0.25,0.5,0.75 $\\lambda$')
+    plt.plot([],[],color='xkcd:red',label='0.90 $\\lambda$')
+cbar = plt.colorbar(pc)
+plt.clim([0, 1])
+plt.suptitle(f'$\\lambda$ min/max: {np.nanmin(varphi[0,:,:])}/{np.nanmax(varphi[0,:,:])}')
+plt.ylabel('Across fjord [m]')
+plt.legend()
+plt.xlabel('Along fjord [m]')
+cbar.set_label('surface ice fraction $\\lambda$')
+plt.savefig('figs/iceMap.png',format='png',dpi=250)
+
+
+plt.clabel(cc, inline=3, fontsize=8)
 plt.figure(3,figsize=(12, 4))
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=RuntimeWarning)

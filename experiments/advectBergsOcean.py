@@ -20,7 +20,7 @@ def write_bin(fname, data):
 
 advectBergs = True
 clipBergs = True
-trialOnly = False
+trialOnly = True
 showPlots = False
 addBergs = True
 couplingTimeStep = 1*3600 #[s]
@@ -59,6 +59,7 @@ for file in os.listdir('results'):
 
 ## Iceberg melt data
 dataMITgcm = mds.rdmds("results/BRGFlx", maxStep)
+dataMITgcmOcean = mds.rdmds("results/dynDiag", maxStep)
 
 ## Geometry of MITgcm domain
 x = mds.rdmds("results/XC")
@@ -126,8 +127,10 @@ print('\t\tTotal bergs at start move: %i' %np.sum(bergsPerCell))
 ## Advect bergs. We go backwards (front to back) to ensure overfull icebergs can get priority to stay where they are
 ## If you want it to not really be random
 # np.random.seed(3)
-maxMoveX = int(0) #track this to know how far the farthest berg moved. We only 'top off' this far.
-maxMoveY = int(0) #track this to know how far the farthest berg moved. We only 'top off' this far.
+maxMoveX = int(0) 
+maxMoveY = int(0) 
+minMoveX = int(0) 
+minMoveY = int(0) 
 stuckBergCount = 0
 if(advectBergs):
     for i in range(nx-1,0,-1): #i goes from nx-1 to 1 in reverse order
@@ -136,8 +139,8 @@ if(advectBergs):
                 continue #This is a wall, no bergs here, skip to next iteration
             ## Total freshwater flux / area of bergs in cell 
             ## perhaps this below line could use the actual lambda for the location, but be careful about plume cells
-            spd_x = dataMITgcm[2,:,j,i] #[m/s]
-            spd_y = dataMITgcm[4,:,j,i] #[m/s]
+            spd_x = dataMITgcmOcean[2,:,j,i] #[m/s]
+            spd_y = dataMITgcmOcean[4,:,j,i] #[m/s]
             for k in range(bergsPerCell[j,i]):
                 if(min(bergWidths[k,j,i],bergLength[k,j,i],bergDepths[k,j,i]) > 2):
                     ## Depth check
@@ -150,17 +153,24 @@ if(advectBergs):
                     avgMelt = np.nanmean(dataMITgcm[2,:depthIndex,j,i,],axis=0) #m/day
                     init_x = random.random()*deltaX
                     init_y = random.random()*deltaY
+                    # print(f"i,j init x,y {i},{j} {init_x},{init_y}")
                     ## movement = speed * couplingTimeStep
-                    move_x = init_x + np.mean(spd_x[:depthIndex]) * couplingTimeStep #only avg to depth of berg
-                    move_y = init_y + np.mean(spd_y[:depthIndex]) * couplingTimeStep #only avg to depth of berg
+                    move_x = np.mean(spd_x[:depthIndex]) * couplingTimeStep #only avg to depth of berg
+                    move_y = np.mean(spd_y[:depthIndex]) * couplingTimeStep #only avg to depth of berg
                     # print(f"spdx,y {spd_x[:depthIndex]}, {spd_y[:depthIndex]}")
-                    # print(f"init_x, move_x, deltaX: {init_x}, {move_x}, {deltaX}")
                     advect_x = int(round((init_x + move_x)/deltaX))
                     advect_y = int(round((init_y + move_y)/deltaY))
-                    if(i == 1 and advect_x > maxMoveX):
+                    # if(move_x < 0 or move_y  < 0):
+                    #     print(f"i,j move x,y {i},{j} {move_x:0.2f},{move_y:0.2f}")
+                    #     print(f"i,j advect x,y {i},{j} {advect_x},{advect_y}")
+                    if(advect_x > maxMoveX):
                             maxMoveX = advect_x
-                    if(i == 1 and advect_y > maxMoveY):
+                    if(advect_y > maxMoveY):
                             maxMoveY = advect_y
+                    if(advect_x < minMoveX):
+                            minMoveX = advect_x
+                    if(advect_y < minMoveY):
+                            minMoveY = advect_y
                     # print(f" j,i {j:2d},{i:2d} advect y, x: {advect_y},{advect_x}")
                     ## move into new cell, increment number of berg in new cell
                     if(i + advect_x < icebergRightHandGate):
@@ -224,7 +234,7 @@ if(advectBergs):
     bergDepths = bergDepthsNew.copy()
     bergsPerCell = bergsPerCellNew.copy()
 
-print(f'\t\tMax move is (y,x): ({maxMoveY}, {maxMoveX})')
+print(f'\t\tMax/Min move is (y,x): ({maxMoveY}, {maxMoveX})/({minMoveY}, {minMoveX})')
 print('\t\tTotal bergs after move: %i' %np.sum(bergsPerCell))
 print(f'\t\tStuck bergs: {stuckBergCount} ({stuckBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
 if(clipBergs):
