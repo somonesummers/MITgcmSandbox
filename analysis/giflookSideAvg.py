@@ -147,7 +147,8 @@ if(isBerg):
                 if topo[j,i] == 0 and i > 1:
                     openFrac[:,j,i] = 0 #zero weight non-ocean cell
                     
-
+if(np.min(openFrac) < 0 or np.max(openFrac) > 1):
+    print(f'Error in openFrac min/max: {np.min(openFrac):0.2f}/{np.max(openFrac):0.2f}')
 print('averaging over all cross sections')
 
 if(isBerg):
