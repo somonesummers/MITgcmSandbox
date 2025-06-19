@@ -133,6 +133,7 @@ minMoveX = int(0)
 minMoveY = int(0) 
 moveBergCount = 0
 stuckBergCount = 0
+bumpedBergCount = 0
 if(advectBergs):
     for i in range(nx-1,0,-1): #i goes from nx-1 to 1 in reverse order
         for j in range(ny-1,0,-1):#j goes backwards as well, as bergs tend to move north
@@ -202,7 +203,8 @@ if(advectBergs):
                             ## This means your home cell is full before we even start, and you weren't planning to move
                             ## We are going to say you are now "shoved" by the incoming bergs. You get pushed 1 cell down fjord no matter what. 
                             new_i = i + 1 #bumping you down fjord
-                            print(f"\t\tBumping berg j,i {j},{i} depth {bergDepths[k,j,i]:0.2f}")
+                            bumpedBergCount += 1 
+                            # print(f"\t\tBumping berg j,i {j},{i} depth {bergDepths[k,j,i]:0.2f}")
                         existingArea = np.sum(bergWidthsNew[:,new_j,new_i] * bergLengthNew[:,new_j,new_i]) #area of bergs in new timestep where you want to go
                         if((bergArea + existingArea)/(deltaX*deltaY) < maxLambda and bergsPerCellNew[new_j,new_i] < maxBergs - 2):
                             bergWidthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergWidths[k,j,i] - avgMelt * couplingTimeStep/86400
@@ -245,6 +247,7 @@ print(f'\t\tMax/Min move is (y,x): ({maxMoveY}, {maxMoveX})/({minMoveY}, {minMov
 print('\t\tTotal bergs after move: %i' %np.sum(bergsPerCell))
 print(f'\t\tMoving Attempt bergs: {moveBergCount} ({moveBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
 print(f'\t\tStuck bergs: {stuckBergCount} ({stuckBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
+print(f'\t\nBumped bergs: {bumpedBergCount} ({bumpedBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
 if(clipBergs):
     ## Remove Bergs too far along fjord, beyond right hand gate
     bergWidths[:,:,icebergRightHandGate:] = 0
