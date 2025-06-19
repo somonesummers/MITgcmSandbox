@@ -247,7 +247,7 @@ print(f'\t\tMax/Min move is (y,x): ({maxMoveY}, {maxMoveX})/({minMoveY}, {minMov
 print('\t\tTotal bergs after move: %i' %np.sum(bergsPerCell))
 print(f'\t\tMoving Attempt bergs: {moveBergCount} ({moveBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
 print(f'\t\tStuck bergs: {stuckBergCount} ({stuckBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
-print(f'\t\nBumped bergs: {bumpedBergCount} ({bumpedBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
+print(f'\t\tBumped bergs: {bumpedBergCount} ({bumpedBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
 if(clipBergs):
     ## Remove Bergs too far along fjord, beyond right hand gate
     bergWidths[:,:,icebergRightHandGate:] = 0
