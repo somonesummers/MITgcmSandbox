@@ -22,8 +22,8 @@ advectBergs = True
 clipBergs = True
 trialOnly = False
 showPlots = False
-addBergs = False
-couplingTimeStep = 12*3600 #[s]
+addBergs = True
+couplingTimeStep = 1*3600 #[s]
 
 iceDensity = 917 # [kg/m^3]
 oceanDensity = 1030 # [kg/m^3]
@@ -34,7 +34,7 @@ maxBergDepth = 450 # bergs not allowed to shrink/melt smaller than this [m]
 maxLambda = .90 # Cells are full at this lambda [hard limit]
 scaleMin = 0.2 # percent error allowed between MITgcm effective depth and GLACIOME depth
 ## Bergs added to top off to icebergCoverLamba left of refreshGate
-icebergRefreshingGate = 2
+icebergRefreshingGate = 1
 maxBergs = 500
 
 ## Load model wide parameters
@@ -128,9 +128,10 @@ print('\t\tTotal bergs at start move: %i' %np.sum(bergsPerCell))
 # np.random.seed(3)
 maxMoveX = int(0) #track this to know how far the farthest berg moved. We only 'top off' this far.
 maxMoveY = int(0) #track this to know how far the farthest berg moved. We only 'top off' this far.
+stuckBergCount = 0
 if(advectBergs):
     for i in range(nx-1,0,-1): #i goes from nx-1 to 1 in reverse order
-        for j in range(ny):
+        for j in range(ny-1,0,-1):#j goes backwards as well, as bergs tend to move north
             if(bathymetry[j,i] == 0):
                 continue #This is a wall, no bergs here, skip to next iteration
             ## Total freshwater flux / area of bergs in cell 
@@ -139,6 +140,10 @@ if(advectBergs):
             spd_y = dataMITgcm[4,:,j,i] #[m/s]
             for k in range(bergsPerCell[j,i]):
                 if(min(bergWidths[k,j,i],bergLength[k,j,i],bergDepths[k,j,i]) > 2):
+                    ## Depth check
+                    if(bergDepths[k,j,i] > hardMaxDepth):
+                        bergDepths[k,j,i] = hardMaxDepth
+                        print(f"WARNING deep iceberg adjusted to fit in domain k/j/i: {k}/{j}/{i}")
                     ## assign berg location, advect, re-bin
                     depthIndex = np.max([np.argmin(np.abs(z[:] - bergDepths[k,j,i])),1]) # shallow bergs are entirely in top layer
                     # print(f"depth, ind of berg: {bergDepths[k,j,i]}, {depthIndex}")
@@ -203,6 +208,7 @@ if(advectBergs):
                             else:
                                 bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] # youre too little!
                             bergsPerCellNew[j,i] += 1
+                            stuckBergCount += 1
                     else:
                         # print('Iceberg has left the zone and is lost. Index: %i' %(i + advect))
                         pass
@@ -220,7 +226,7 @@ if(advectBergs):
 
 print(f'\t\tMax move is (y,x): ({maxMoveY}, {maxMoveX})')
 print('\t\tTotal bergs after move: %i' %np.sum(bergsPerCell))
-
+print(f'\t\tStuck bergs: {stuckBergCount} ({stuckBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
 if(clipBergs):
     ## Remove Bergs too far along fjord, beyond right hand gate
     bergWidths[:,:,icebergRightHandGate:] = 0
@@ -230,7 +236,7 @@ if(clipBergs):
 print('\t\tTotal bergs after clipping: %i' %np.sum(bergsPerCell))
 
 
-maxNewBergDepth = 250
+maxNewBergDepth = 200
 maxBergWidth = 0.0642449*maxNewBergDepth**(5/3)
 minBergWidth = 40
 # We use 2*alpha b/c P(A) ~ A^(-1.9), but A ~ W^2, so P(A) ~ W^(-1.9*2)
@@ -243,7 +249,7 @@ generatedDepths = []
 generatedWidths = []
 if(addBergs):
     for j in range(ny):
-        for i in range(np.max([maxMove,icebergRefreshingGate])):
+        for i in range(icebergRefreshingGate):
             i += 1 ## we skip the first cell in MITgcm which is the glacier
             if(bathymetry[j,i] == 0):
                 continue ## This is a wall, no bergs here
