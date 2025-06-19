@@ -20,7 +20,7 @@ def write_bin(fname, data):
 
 advectBergs = True
 clipBergs = True
-trialOnly = True
+trialOnly = False   
 showPlots = False
 addBergs = True
 couplingTimeStep = 1*3600 #[s]
@@ -153,14 +153,14 @@ if(advectBergs):
                     avgMelt = np.nanmean(dataMITgcm[2,:depthIndex,j,i,],axis=0) #m/day
                     init_x = random.random()*deltaX
                     init_y = random.random()*deltaY
-                    # print(f"i,j init x,y {i},{j} {init_x},{init_y}")
                     ## movement = speed * couplingTimeStep
                     move_x = np.mean(spd_x[:depthIndex]) * couplingTimeStep #only avg to depth of berg
                     move_y = np.mean(spd_y[:depthIndex]) * couplingTimeStep #only avg to depth of berg
                     # print(f"spdx,y {spd_x[:depthIndex]}, {spd_y[:depthIndex]}")
-                    advect_x = int(round((init_x + move_x)/deltaX))
-                    advect_y = int(round((init_y + move_y)/deltaY))
-                    # if(move_x < 0 or move_y  < 0):
+                    advect_x = int(np.floor((init_x + move_x)/deltaX))
+                    advect_y = int(np.floor((init_y + move_y)/deltaY))
+                    # if(advect_y  < 0):
+                    #     print(f"i,j init x,y {i},{j} {init_x:0.2f},{init_y:0.2f}")
                     #     print(f"i,j move x,y {i},{j} {move_x:0.2f},{move_y:0.2f}")
                     #     print(f"i,j advect x,y {i},{j} {advect_x},{advect_y}")
                     if(advect_x > maxMoveX):
