@@ -23,7 +23,7 @@ clipBergs = True
 trialOnly = False   
 showPlots = False
 addBergs = True
-couplingTimeStep = 1*3600 #[s]
+couplingTimeStep = 6*3600 #[s]
 
 iceDensity = 917 # [kg/m^3]
 oceanDensity = 1030 # [kg/m^3]
@@ -131,6 +131,7 @@ maxMoveX = int(0)
 maxMoveY = int(0) 
 minMoveX = int(0) 
 minMoveY = int(0) 
+moveBergCount = 0
 stuckBergCount = 0
 if(advectBergs):
     for i in range(nx-1,0,-1): #i goes from nx-1 to 1 in reverse order
@@ -171,6 +172,8 @@ if(advectBergs):
                             minMoveX = advect_x
                     if(advect_y < minMoveY):
                             minMoveY = advect_y
+                    if(advect_y != 0 or advect_x != 0):
+                        moveBergCount += 1
                     # print(f" j,i {j:2d},{i:2d} advect y, x: {advect_y},{advect_x}")
                     ## move into new cell, increment number of berg in new cell
                     if(i + advect_x < icebergRightHandGate):
@@ -236,6 +239,7 @@ if(advectBergs):
 
 print(f'\t\tMax/Min move is (y,x): ({maxMoveY}, {maxMoveX})/({minMoveY}, {minMoveX})')
 print('\t\tTotal bergs after move: %i' %np.sum(bergsPerCell))
+print(f'\t\tMoving Attempt bergs: {moveBergCount} ({moveBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
 print(f'\t\tStuck bergs: {stuckBergCount} ({stuckBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
 if(clipBergs):
     ## Remove Bergs too far along fjord, beyond right hand gate
