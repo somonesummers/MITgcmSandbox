@@ -208,9 +208,9 @@ if(advectBergs):
                                 bergDepthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergDepths[k,j,i] # too little to melt
                             bergsPerCellNew[new_j,new_i] += 1
                         elif(bergsPerCellNew[j,i] > maxBergs - 2):
-                            print(f'**WARNING**  Cell j,i ({j},{i}) is overfull on COUNT, deleting bergs. This is bad.')
+                            print(f'**WARNING**  Cell j,i ({j},{i}) is overfull on COUNT, deleting berg depth {bergDepths[k,j,i]:0.2f} m. This is bad.')
                         elif((bergArea + existingAreaHome)/(deltaX*deltaY) > maxLambda):
-                            print(f'**WARNING**  Cell j,i ({j},{i}) is overfull on LAMBDA, deleting bergs. This is bad.')
+                            print(f'**WARNING**  Cell j,i ({j},{i}) is overfull on LAMBDA, deleting berg depth {bergDepths[k,j,i]:0.2f} m. This is bad.')
                         else:
                             # print('Cell too full (volume or count), iceberg melts, but does not move')
                             bergWidthsNew[bergsPerCellNew[j,i],j,i] = bergWidths[k,j,i] - avgMelt * couplingTimeStep/86400
