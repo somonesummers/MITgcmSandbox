@@ -197,23 +197,20 @@ if(advectBergs):
                                 new_j = new_j + 1
                             else:
                                 new_j = new_j - 1
-                        existingArea = np.sum(bergWidthsNew[:,new_j,new_i] * bergLengthNew[:,new_j,new_i])
+                        existingArea = np.sum(bergWidthsNew[:,new_j,new_i] * bergLengthNew[:,new_j,new_i]) #area of bergs in new timestep where you want to go
+                        existingAreaHome = np.sum(bergWidthsNew[:,j,i] * bergLengthNew[:,j,i])  #area of bergs in new timestep where you are coming from
                         if((bergArea + existingArea)/(deltaX*deltaY) < maxLambda and bergsPerCellNew[new_j,new_i] < maxBergs - 2):
-                            # print('Moved,',(bergArea + existingArea)/(deltaX*deltaY))
                             bergWidthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergWidths[k,j,i] - avgMelt * couplingTimeStep/86400
                             bergLengthNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergLength[k,j,i] - avgMelt * couplingTimeStep/86400
                             if((bergDepths[k,j,i] - avgMelt * couplingTimeStep/86400) > minBergDepth):
                                 bergDepthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergDepths[k,j,i] - avgMelt * couplingTimeStep/86400
                             else:
                                 bergDepthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergDepths[k,j,i] # too little to melt
-                            # if(avgMelt[depthIndex] > 0):
-                                # print('%f %f %f to %f %f %f' %(bergWidths[k,j,i],bergLength[k,j,i],bergDepths[k,j,i],
-                                #     bergWidths[k,j,i]-avgMelt[depthIndex],
-                                #     bergLength[k,j,i]-avgMelt[depthIndex],
-                                #     bergDepths[k,j,i]-avgMelt[depthIndex]))
                             bergsPerCellNew[new_j,new_i] += 1
                         elif(bergsPerCellNew[j,i] > maxBergs - 2):
-                            print(f'**WARNING**  Cell j,i ({j},{i}) is overfull, deleting bergs. This is bad.')
+                            print(f'**WARNING**  Cell j,i ({j},{i}) is overfull on COUNT, deleting bergs. This is bad.')
+                        elif((bergArea + existingAreaHome)/(deltaX*deltaY) > maxLambda):
+                            print(f'**WARNING**  Cell j,i ({j},{i}) is overfull on LAMBDA, deleting bergs. This is bad.')
                         else:
                             # print('Cell too full (volume or count), iceberg melts, but does not move')
                             bergWidthsNew[bergsPerCellNew[j,i],j,i] = bergWidths[k,j,i] - avgMelt * couplingTimeStep/86400
