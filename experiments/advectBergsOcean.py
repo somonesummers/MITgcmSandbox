@@ -197,8 +197,13 @@ if(advectBergs):
                                 new_j = new_j + 1
                             else:
                                 new_j = new_j - 1
-                        existingArea = np.sum(bergWidthsNew[:,new_j,new_i] * bergLengthNew[:,new_j,new_i]) #area of bergs in new timestep where you want to go
                         existingAreaHome = np.sum(bergWidthsNew[:,j,i] * bergLengthNew[:,j,i])  #area of bergs in new timestep where you are coming from
+                        if((bergArea + existingAreaHome)/(deltaX*deltaY) > maxLambda and new_j == j and new_i == i):
+                            ## This means your home cell is full before we even start, and you weren't planning to move
+                            ## We are going to say you are now "shoved" by the incoming bergs. You get pushed 1 cell down fjord no matter what. 
+                            new_i = i + 1 #bumping you down fjord
+                            print(f"\t\tBumping berg j,i {j},{i} depth {bergDepths[k,j,i]:0.2f}")
+                        existingArea = np.sum(bergWidthsNew[:,new_j,new_i] * bergLengthNew[:,new_j,new_i]) #area of bergs in new timestep where you want to go
                         if((bergArea + existingArea)/(deltaX*deltaY) < maxLambda and bergsPerCellNew[new_j,new_i] < maxBergs - 2):
                             bergWidthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergWidths[k,j,i] - avgMelt * couplingTimeStep/86400
                             bergLengthNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergLength[k,j,i] - avgMelt * couplingTimeStep/86400
