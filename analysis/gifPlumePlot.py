@@ -13,6 +13,8 @@ parser.add_argument('-q','--quick', action='count', default=0,
                     help='quick option for last frame only')
 parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
                     help='option specification of views to plot [default = all]')
+parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
+                    help='optional specification of start and endtime in DAYS [default = Full Range]')
 args = parser.parse_args()
 
 # Plot settings from local helper
@@ -55,6 +57,9 @@ for file in os.listdir('results'):
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
 
+if(args.timeRange != None):
+    startStep = args.timeRange[0] * 86400 / dt
+    maxStep = args.timeRange[1] * 86400 / dt
 
 if((maxStep-startStep)/sizeStep > 60):   #if more than 50 frames, downscale to be less than 50
     dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/60)

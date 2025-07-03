@@ -12,6 +12,8 @@ import geopandas as gpd
 parser = argparse.ArgumentParser(description='Plot xCTDs from Sermilik')
 parser.add_argument('-y','--year', nargs='?', type=str ,default = None,
                     help='Specify year to plot [default = 2010]')
+parser.add_argument('-p','--profile', action='count', default=0,
+                    help='option to show all profiles')
 args = parser.parse_args()
 
  
@@ -96,7 +98,7 @@ freezeT = [0,-2.809]
 freezeS100 = [0,50]
 freezeT100 = [-.011,-2.919]
 
-if(False):
+if(args.profile > 0):
     for i in range(len(lat)):
         plt.figure()
         cp = plt.scatter(salt[:,i],temp[:,i],c=depth[:],linestyle='-',marker='o')
@@ -126,6 +128,7 @@ if(year == '2010mar'):
 elif(year == '2015SF'):
     picks = [10,9,8,12,14,15,16,19,21,22,29]
 elif(year == '2016'):
+    # picks = [3,1,4]
     picks = [3,1,4,5,6,7,8,9,10,11]
 elif(year == '2019'):
     picks = [1,2,3,4,0] #6,5 is the plume I think, so thats cool

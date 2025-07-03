@@ -56,7 +56,7 @@ for i in range(31):
     pressure[:,i] = depth[:]  * 1020 * 9.81 /1e4
 # print(pressure[:,1])
 density = np.zeros_like(salt)
-CT = gsw.CT_from_t(salt,temp,pressure)  
+CT = gsw.CT_from_t(salt,temp,0)  
 # print(CT)
 density = gsw.rho(salt,CT,0) - 1000
 densityLevels = np.linspace(25,28,16)
@@ -111,8 +111,8 @@ freezeS100 = [0,50]
 freezeT100 = [-.011,-2.919]
 
 ## Pick a few fun TS and density profiles
-for i in [29]:
-    plt.figure(i)
+for i in [8,9,10,29]:
+    plt.figure(i,figsize=(10, 5))
     ax1 = plt.subplot(121)
     cp = ax1.scatter(salt[:,i],temp[:,i],c=depth[:],linestyle='-',marker='o')
     cbar = plt.colorbar(cp) 
@@ -135,6 +135,7 @@ for i in [29]:
     ax2.set_xlim([25,28])
     ax2.invert_yaxis()
     plt.tight_layout()
+    ax2.grid(alpha=.5)
     plt.show()
     plt.close()
     np.savez('shelfProfile2015',T=temp[:,i],S=salt[:,i],z=depth[:],density=density[:,i])

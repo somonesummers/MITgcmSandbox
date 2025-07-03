@@ -26,7 +26,7 @@ fileEnding = ""
 manualMax = 4957200
 
 ## Umin melt thresholds 
-thresholds = [0.03,0.05,0.04]
+thresholds = [0.03,0.04,0.05]
 # thresholds = [0.04,.04,.04]
 
 if(os.path.isfile('input/plotHelperLocal.py')):
