@@ -56,10 +56,10 @@ C     Only implimented so far with explicit drag
 C     So far, ICEBERG is not compatible with nonlinear surface, 
 C     specifically the blocking effect is incompatible
 #ifdef NONLIN_FRSURF    
-      WRITE(msgBuf,'(A)')
-     &  'ICEBERG works only with #undef NONLIN_FRSURF in CPP_OPTIONS'
-         CALL PRINT_ERROR( msgBuf, myThid )
-         STOP 'ABNORMAL END: S/R ICEBERG_CHECK'
+C      WRITE(msgBuf,'(A)')
+C     &  'ICEBERG works only with #undef NONLIN_FRSURF in CPP_OPTIONS'
+C         CALL PRINT_ERROR( msgBuf, myThid )
+C         STOP 'ABNORMAL END: S/R ICEBERG_CHECK'
 #endif 
      
 

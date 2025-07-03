@@ -22,6 +22,9 @@ C     === Global variables ===
 #endif /* ALLOW_PTRACERS */
 #include "ICEBERG_SIZE.h"
 #include "ICEBERG.h"
+#ifdef NONLIN_FRSURF
+#include "SURFACE.h"
+#endif /* NONLIN_FRSURF */
 
 C     === Routine arguments ===
 C     myThid -  Number of this instance of ICEBERG_INIT_FIXED
@@ -188,6 +191,25 @@ C      &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(I,Jm1,K,bi,bj))
         ENDDO !K
        ENDDO !bi
       ENDDO !bj        
+
+#ifdef NONLIN_FRSURF
+C--   Save initial geometrical hFac factor into h0Fac (fixed in time):
+C     cribbed from ini_masks_etc.F
+      DO bj=myByLo(myThid), myByHi(myThid)
+       DO bi=myBxLo(myThid), myBxHi(myThid)
+        DO K=1, Nr
+         DO J=1-OLy,sNy+OLy
+          DO I=1-OLx,sNx+OLx
+            h0FacC(I,J,K,bi,bj) = _hFacC(I,J,K,bi,bj)
+            h0FacW(I,J,K,bi,bj) = _hFacW(I,J,K,bi,bj)
+            h0FacS(I,J,K,bi,bj) = _hFacS(I,J,K,bi,bj)
+           ENDDO !I 
+         ENDDO !J
+        ENDDO !K
+       ENDDO !bi
+      ENDDO !bj        
+#endif /* NONLIN_FRSURF */
+
 
 #ifdef ALLOW_PTRACERS
 C     Initialize tracer mask
