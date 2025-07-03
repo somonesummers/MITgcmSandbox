@@ -19,6 +19,8 @@ parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
                     help='optional specification of numFrames [default = 60]')
 parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
+parser.add_argument('-s','--shadow', action='count', default=0,
+                    help='option of shadow for mélange [default (off)]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -168,8 +170,12 @@ for k in kList:
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
-        if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
+        if(args.shadow > 0): #enable berg shadows here
             localBergs = True
+            dataBergs = mds.rdmds("results/BRGFlx",i)
+            dataBergPlot = dataBergs[0,:,:,:]
+            dataBergPlot[dataBergPlot != 0] = 1
+            dataBergPlot[dataBergPlot == 0] = np.nan
         else:
             localBergs = False
         data = mds.rdmds("results/%s"%(dynName[k]), i)
@@ -220,19 +226,28 @@ for k in kList:
                 extend="both",
                 cmap=cm,
             )
-        plt.plot(x[ySlice,:],topo[ySlice,:],color='black')
         if(localBergs):
-            # plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
-            cp2 = plt.contourf(
-                x[ySlice,:],
+            cberg = plt.contourf(
+                np.squeeze(x[ySlice,:]),
                 np.squeeze(z),
-                np.squeeze(openFrac[:, ySlice, :]),
-                [.4,.6,.8,.9,.95],
-                extend="min",
-                alpha=.1,
-                cmap='cmo.gray')
-            #cbar2 = plt.colorbar(cp2)
-            #cbar2.set_label('Ocean Fraction')
+                np.squeeze(dataBergPlot[:, ySlice, :]),
+                [0,1,2],
+                extend="both",
+                cmap='gray',
+                alpha = .2)
+        plt.plot(x[ySlice,:],topo[ySlice,:],color='black')
+        # if(localBergs):
+        #     # plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
+        #     cp2 = plt.contourf(
+        #         x[ySlice,:],
+        #         np.squeeze(z),
+        #         np.squeeze(openFrac[:, ySlice, :]),
+        #         [.4,.6,.8,.9,.95],
+        #         extend="min",
+        #         alpha=.1,
+        #         cmap='cmo.gray')
+        #     #cbar2 = plt.colorbar(cp2)
+        #     #cbar2.set_label('Ocean Fraction')
         cbar = plt.colorbar(cp,orientation="horizontal",fraction=0.06,format='%.2f')
         cbar.set_label(cbarLabel[k])
         if(showDensity and (dynName[k] == 'dynDiag')):

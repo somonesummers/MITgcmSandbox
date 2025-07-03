@@ -34,7 +34,7 @@ maxBergDepth = 450 # bergs not allowed to shrink/melt smaller than this [m]
 maxLambda = .90 # Cells are full at this lambda [hard limit]
 scaleMin = 0.2 # percent error allowed between MITgcm effective depth and GLACIOME depth
 ## Bergs added to top off to icebergCoverLamba left of refreshGate
-icebergRefreshingGate = 1
+icebergRefreshingGate = 2
 maxBergs = 500
 
 ## Load model wide parameters

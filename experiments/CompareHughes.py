@@ -31,6 +31,12 @@ resultFolder = '/results'
 hFacWeighted = True
 compareHughes = True
 
+# dirNames = ['Example_L20_U12','Example_L20_U12_NLFS']
+# legendNames = ['Linear FS','Non-Linear FS']
+# fileName = 'NLFS'
+# titleText = 'Non-linear Free Surface'
+# mainColor = 'red'
+# spds = [.12]*len(dirNames)
 
 # dirNames = ['rbcs_12_20','rbcs_12_20_b1_d0','rbcs_12_20_b0_d0']
 # legendNames = ['block + drag','block + no drag','no block + no drag']

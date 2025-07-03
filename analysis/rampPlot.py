@@ -159,6 +159,7 @@ for i in range(len(args.files)):
         ax1_2.scatter(timeTime[0],notforceTime[0],s=50,marker='*',color='black')
         ax1_2.set_ylabel(notforceLabel,color='xkcd:azure')
         ax1_2.tick_params(axis='y',labelcolor='xkcd:azure')
+        # ax1_2.set_ylim([5900, 8800])
     ax1.set_ylabel(forceLabel)
     ax1.set_xlabel('Time [days]')
     ax1.grid(alpha=.5)
@@ -236,8 +237,12 @@ dirStr = ''
 if(os.path.isdir('figs')):
     dirStr = 'figs/'
 multiStr = ''
+timeString = ''
 if(i > 0):
     multiStr = f'Multi{i+1}'
+if(args.timeRange != None):
+    multiStr = f'{multiStr}_T_{args.timeRange[0]}_{args.timeRange[1]}'
+
 plt.savefig('%sautoRamp%sResults%s%s.png' %(dirStr,forceString,xString,multiStr),format='png',dpi=200)
 if(args.silent == 0):
     plt.show()
