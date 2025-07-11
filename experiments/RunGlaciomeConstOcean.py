@@ -23,9 +23,9 @@ parser.add_argument('-t','--timeRange', nargs='?', type=int, default = 1000,
                     help='Specification of days to run for [default = 1000]')
 args = parser.parse_args()
 
-def sysPrint(stringIn): 
+def sysPrint(stringIn,tag): 
         print(stringIn)
-        os.system('printf ""' + stringIn + '"" >> SOS_out.txt')
+        os.system('echo ""' + stringIn + '"" >> SOS_out' + tag + '.txt')
 
 
 # # Load directly
@@ -35,12 +35,14 @@ files = sorted(glob.glob(args.file))
 with open(files[-1], 'rb') as file:
     data = pickle.load(file)
     file.close()
-sysPrint(f'loaded {file}')
+strTemp = f'loaded {file.name}'
+sysPrint(strTemp,args.file.split('.')[0])
 
 for i in range(args.timeRange):
 	# first run to steady state
 	data.prognostic()
-	sysPrint(f'iter {i}, H0: {data.H0} m, L: {data.L/1000} km')
+	strTemp = f'iter {i}, H0: {data.H0} m, L: {data.L/1000} km'
+	sysPrint(strTemp,args.file.split('.')[0])
 	data.save(f'SOS_{args.file.split('.')[0]}_{i:05d}.pickle')
 
-sysPrint('done!')
+sysPrint('done!',args.file.split('.')[0])
