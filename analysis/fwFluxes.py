@@ -16,6 +16,8 @@ parser.add_argument('-s','--silent', action='count', default=0,
                     help='Option to silence showing of plots')
 parser.add_argument('-n','--numFrames', nargs=1, default=[150],type=int,
                     help='Max number of samples from time series [defaut = 150]')
+parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
+                    help='optional specification of start and endtime in DAYS [default = Full Range]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -76,6 +78,11 @@ for j in range(len(folders)):
             if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
                 sizeStep = abs(int(words[1]) - startStep)
     
+    if(args.timeRange != None):
+        startStep = args.timeRange[0] * 86400 / dt
+        if(args.timeRange[1] != 0):
+            maxStep = args.timeRange[1] * 86400 / dt
+
     maxFrames = args.numFrames[0]
     if((maxStep-startStep)/sizeStep > maxFrames):   #if more than # frames, downscale to be less than #
         dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/maxFrames)

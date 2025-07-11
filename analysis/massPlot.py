@@ -42,7 +42,8 @@ ax2 = axes[1,0]
 ax3 = axes[0,1]
 ax4 = axes[1,1]
 
-lStyle = ['-','--',':','-.']
+lStyle = ['-','--',':','-.',(0, (3, 4, 1, 2, 1, 2))] #final one is dash dot dott
+meltColors = ['xkcd:tomato','xkcd:rose','xkcd:wine','xkcd:grape purple','xkcd:grape']
 
 if(args.silent > 0): #print status for script
     print(f"rampPlot: {args}")

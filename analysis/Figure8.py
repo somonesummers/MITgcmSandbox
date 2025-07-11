@@ -6,28 +6,40 @@ import sys
 import cmocean
 import fileinput
 import xarray as xr
+import argparse
+
+# Take input options. Some defaults are set here, so be aware
+parser = argparse.ArgumentParser(description='Plot options for fresh water flux over time')
+parser.add_argument('-s','--silent', action='count', default=0,
+                    help='Option to silence showing of plots')
+parser.add_argument('-n','--numFrames', nargs=1, default=[250],type=int,
+                    help='Max number of samples from time series [defaut = 150]')
+parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
+                    help='optional specification of start and endtime in DAYS [default = Full Range]')
+args = parser.parse_args()
+
 
 # Pick cross section to view from file or default
 plotDPI = 150
 manualMax = None
 
-# folders = ['.']
-# labels = ['glaciome']
+folders = ['.']
+labels = ['glaciome']
 # folders = ['hotel_fringe_sgd1300','foxtrot_s_sgd1300']
 # labels = ['fringe','none']
-folders = ['hotel_Umin03_sgd1300','foxtrot_s_sgd1300','hotel_Umin05_sgd1300']
-labels = ['0.03','0.04','0.05']
+# folders = ['hotel_Umin03_sgd1300','foxtrot_s_sgd1300','hotel_Umin05_sgd1300']
+# labels = ['0.03','0.04','0.05']
 # folders = ['hotel_zhaoMelt_sgd1300','hotel_4x_sgd1300','foxtrot_s_sgd1300']
 # labels = ['Zhao','4x','1x']
-colors = ['xkcd:red','xkcd:gray','xkcd:blue']
+colors = ['xkcd:blue','xkcd:gray','xkcd:red']
 resultFolder = '/results'
 fileEnding = ""
 
-manualMax = 4957200
+# manualMax = 4957200
 
 ## Umin melt thresholds 
-thresholds = [0.03,0.04,0.05]
-# thresholds = [0.04,.04,.04]
+# thresholds = [0.03,0.04,0.05]
+thresholds = [0.04,.04,.04]
 
 if(os.path.isfile('input/plotHelperLocal.py')):
     sys.path.append('input')
@@ -67,7 +79,7 @@ for j in range(len(folders)):
 
     for file in os.listdir('%s%s' %(folder,resultFolder)):
         # print(file)
-        if "dynDiag.0" in file:
+        if "BRGFlx.0" in file:
             words = file.split(".")
             # print(words[1])  
             if int(words[1]) > maxStep:
@@ -77,9 +89,18 @@ for j in range(len(folders)):
             if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
                 sizeStep = abs(int(words[1]) - startStep)
 
+    if(args.timeRange != None):
+        startStep = args.timeRange[0] * 86400 / dt
+        if(args.timeRange[1] != 0):
+            maxStep = args.timeRange[1] * 86400 / dt
+
+    maxFrames = args.numFrames[0]
+    if((maxStep-startStep)/sizeStep > maxFrames):   #if more than # frames, downscale to be less than #
+        dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/maxFrames)
+        print('Reducing time resolution by', dwnScale)
+        sizeStep = sizeStep * dwnScale
+
     print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
-    if(manualMax != None):
-        maxStep = manualMax #if manual adjusting needed
 
     dynName = ['BRGFlx']
     name = ['BRGfwFlx']
@@ -87,12 +108,24 @@ for j in range(len(folders)):
 
     timeSteps = np.arange(startStep, maxStep + 1, sizeStep)
     fwOverTime = np.zeros(np.shape(timeSteps))
+    MROverTime = np.zeros(np.shape(timeSteps))
+    Mr68OverTime = np.zeros(np.shape(timeSteps))
+    Mr32OverTime = np.zeros(np.shape(timeSteps))
     for i in range(len(timeSteps)):
         data = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), timeSteps[i])
         fwOverTime[i] = np.nansum(data[0,:,:,:])
+        data[2, data[0,:,:,:] == 0] = np.nan #nan all zero melt cells
+        MROverTime[i] = np.nanmean(data[2,:,:,:]) #melt ratem m/day
+        Mr68OverTime[i] = np.nanpercentile(data[2,:,:,:],68)
+        Mr32OverTime[i] = np.nanpercentile(data[2,:,:,:],32)
     ax1.plot(timeSteps*dt/86400,fwOverTime,label=labels[j],color=colors[j])
 # Wrap up after plotting everything
 ax1.grid(alpha=.5)
+# ax1_1=ax1.twinx()
+# ax1_1.plot(timeSteps*dt/86400,MROverTime,label=labels[j],color='xkcd:rose',linestyle='-')
+# ax1_1.plot(timeSteps*dt/86400,Mr68OverTime,label=labels[j],color='xkcd:light rose',linestyle='-')
+# ax1_1.plot(timeSteps*dt/86400,Mr32OverTime,label=labels[j],color='xkcd:light rose',linestyle='-')
+ax1_1.set_ylabel('Avg Melt Rate flux [m/d]')
 ax1.legend()
 ax1.set_title('FW Flux From Bergs Over Time')
 ax1.set_ylabel('FW flux [m^3/s]')
@@ -119,7 +152,7 @@ for i in range(len(folders)):
 
     for file in os.listdir('%s%s' %(folder,resultFolder)):
         # print(file)
-        if "dynDiag.0" in file:
+        if "BRGFlx.0" in file:
             words = file.split(".")
             # print(words[1])  
             if int(words[1]) > maxStep:
@@ -128,8 +161,19 @@ for i in range(len(folders)):
                 startStep = int(words[1])
             if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
                 sizeStep = abs(int(words[1]) - startStep)
+    if(args.timeRange != None):
+        startStep = args.timeRange[0] * 86400 / dt
+        if(args.timeRange[1] != 0):
+            maxStep = args.timeRange[1] * 86400 / dt
+
+    maxFrames = args.numFrames[0]
+    if((maxStep-startStep)/sizeStep > maxFrames):   #if more than # frames, downscale to be less than #
+        dwnScale = np.ceil(((maxStep-startStep)/sizeStep)/maxFrames)
+        print('Reducing time resolution by', dwnScale)
+        sizeStep = sizeStep * dwnScale
 
     print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
+    
     if(manualMax != None):
         maxStep = manualMax #if manual adjusting needed
     z = np.squeeze(mds.rdmds("%s%s/RC" %(folder,resultFolder))) #midpoints of cells
@@ -140,7 +184,7 @@ for i in range(len(folders)):
     units = ["[m^3/s]"]
 
     dataStart = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), startStep)
-    dataEnd = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), maxStep-sizeStep)
+    dataEnd = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), maxStep)
     dataMeltOnly = dataEnd[0,:,:,:] # Only compute spd for melting grids
     data = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'dynDiag'), maxStep)
     spd = (data[2,:,:,:]**2 + data[3,:,:,:]**2 + data[4,:,:,:]**2)**(0.5)
@@ -245,6 +289,7 @@ for label,ax in zip(figLabels,axes.flatten()):
         fontsize='x-large', va='bottom',ha='center', fontfamily='sans serif')
 
 plt.savefig('figs/Figure8%s.png' %fileEnding, format='png',dpi=plotDPI)
-plt.show()
+if(args.silent == 0):
+    plt.show()
 plt.close()
    

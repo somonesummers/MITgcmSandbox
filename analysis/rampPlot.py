@@ -50,8 +50,8 @@ ax2 = axes[1,0]
 ax3 = axes[0,1]
 ax4 = axes[1,1]
 
-lStyle = ['-','--',':','-.']
-meltColors = ['xkcd:tomato','xkcd:rose','xkcd:wine','xkcd:grape purple']
+lStyle = ['-','--',':','-.',(0, (3, 4, 1, 2, 1, 2))]
+meltColors = ['xkcd:tomato','xkcd:rose','xkcd:wine','xkcd:grape purple','xkcd:grape']
 
 if(args.silent > 0): #print status for script
     print(f"rampPlot: {args}")
@@ -202,7 +202,7 @@ for i in range(len(args.files)):
     # cbar=plt.colorbar(sca)
     # cbar.set_label('Time [days]')
     ax3.set_ylabel('Mélange F/W [$Nm^{-1}$]')
-    ax3.set_yscale('log')
+    # ax3.set_yscale('log')
     ax3.set_xlabel(drivingLabel)
     ax3.grid(alpha=.5)
     ax3.set_title('Buttressing Strength')

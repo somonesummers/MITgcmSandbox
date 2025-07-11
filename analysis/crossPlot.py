@@ -88,7 +88,8 @@ for file in os.listdir('results'):
 
 if(args.timeRange != None):
     startStep = args.timeRange[0] * 86400 / dt
-    maxStep = args.timeRange[1] * 86400 / dt
+    if(args.timeRange[1] != 0):
+        maxStep = args.timeRange[1] * 86400 / dt
 
 if((maxStep-startStep)/sizeStep > 60):   #if more than 60 frames, downscale to be less than 60
     dwnScale = int(np.ceil(((maxStep-startStep)/sizeStep)/60))
@@ -142,7 +143,7 @@ print('cross section is y =', y[ySlice,0], 'index', ySlice)
 print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
 dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag']
-name = ["Temp", "Sal", "U", "W", "V", "Fresh Water Flyx",'TracePlume','TraceBerg']
+name = ["Temp", "Sal", "U", "W", "V", "fwFlx",'TracePlume','TraceBerg']
 cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m^3/s]","[Vol Frac]","[Vol Frac]"]
 
 #In KM for x,y for better axis labeling

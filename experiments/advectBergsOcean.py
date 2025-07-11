@@ -313,7 +313,7 @@ if(addBergs):
 print('\t\tTotal bergs after topping off: %i' %np.sum(bergsPerCell))
 # print(np.sum(bergsPerCell,axis=0))
 
-## So now we have all our old icebergs added, edge shaded, new bergs added.
+
 ## We now create the new geometry and mask files for MITgcm
 
 ## clear these arrays for new version
