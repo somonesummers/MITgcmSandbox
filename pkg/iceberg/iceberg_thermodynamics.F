@@ -433,10 +433,10 @@ C    Melt rate
         mdot_base = 0. _d 0
       ENDIF
       
-C    Convert to m d^-1
-      mdot_long_axis = 86400.*mdot_long_axis
-      mdot_short_axis = 86400.*mdot_short_axis
-      mdot_base = 86400.*mdot_base
+C    Convert to m d^-1, protect against freezing rates
+      mdot_long_axis = MAX(86400.*mdot_long_axis,0.0D0)
+      mdot_short_axis = MAX(86400.*mdot_short_axis,0.0D0)
+      mdot_base = MAX(86400.*mdot_base,0.0D0)
 
 C     Convert to freshwater flux (m^3 s^-1)
       fw_long_axis = ((mdot_long_axis/86400.)*(rho_0/1000.))
