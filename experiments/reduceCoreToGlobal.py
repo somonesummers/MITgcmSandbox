@@ -27,11 +27,12 @@ maxStep = 0
 sizeStep = 1e10
 startStep = 1e10
 
-prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
+#prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
+prefixes = ['dynDiag','ptraceDiag','plumeDiag']
 
 for file in os.listdir('results'):
     # print(file)
-    if "dynDiag.0" in file:
+    if "dynDiag.0" in file and "001.001" in file:
         words = file.split(".")
         # print(words[1])  
         if int(words[1]) > maxStep:
@@ -41,11 +42,12 @@ for file in os.listdir('results'):
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
 
-print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
+sysPrint(f'startStep,sizeStep,maxStep:{startStep},{sizeStep},{maxStep}')
 
 for endIter in np.arange(startStep, maxStep + 1, sizeStep):
     for k in range(len(prefixes)):
-        sysPrint('\t\t == %s ==' %prefixes[k])
+        
+        sysPrint(f'\titer {endIter}\t == {prefixes[k]} ==')
         dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter)
         mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
         os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],endIter))

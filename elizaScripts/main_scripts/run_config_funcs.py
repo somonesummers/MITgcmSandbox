@@ -305,7 +305,7 @@ def createSIZEh(run_config, grid_params):
     
 def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email, 
                               min_walltime_hrs=10/60, max_walltime_hrs=48, mem_GB=1, 
-                              queue='inferno',account='gts-arobel3'):
+                              queue='inferno',account='gts-arobel3-atlas'):
 
     """
     function to generate sbatch code for slurm submission

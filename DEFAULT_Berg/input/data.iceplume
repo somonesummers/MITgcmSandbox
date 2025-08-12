@@ -14,6 +14,8 @@
  iceTemp=-10.,
  backgroundVel=0.04,
  E_0=0.10,
+ GamT=0.088,
+ GamS=0.00248,
  &
 
  &ICEPLUME_PARM02
