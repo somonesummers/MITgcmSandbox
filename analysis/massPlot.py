@@ -56,7 +56,10 @@ for i in range(len(args.files)):
     if(args.timeRange == None):
         toIterate = np.arange(len(files))
     else:
-        toIterate = np.arange(len(files[args.timeRange[0]:args.timeRange[1]]))
+        if(args.timeRange[1] == 0):
+            toIterate = np.arange(len(files[args.timeRange[0]:]))
+        else:
+            toIterate = np.arange(len(files[args.timeRange[0]:args.timeRange[1]]))
         jShift = args.timeRange[0]
     VTime = np.zeros(np.shape(toIterate))
     iterationNumber = np.zeros(np.shape(toIterate))
@@ -81,11 +84,13 @@ for i in range(len(args.files)):
         W = np.concatenate(([data.W0], data.W, [data.WL]))
         VTime[j] = simpson(data.H*data.W, x=data.X_) #m^3
         endFluxTime[j] = data.HL*data.WL*data.U[-1] / 3.154e7 #m^3/s
+        lengthTime[j]=data.X[-1] - data.X[0]  #difference between these
+        if(j != toIterate[0]): #include mass loss to length loss
+            endFluxTime[j] += data.HL*data.WL * (lengthTime[j-1] - lengthTime[j]) / 86400 #m^3/s
         inFluxTime[j] = data.Ht*data.Uc*data.WL / 3.154e7 #m^3/s
         bFluxTime[j] = -1*simpson(data.B*data.W, x=data.X_)/ 3.154e7  #m^3/s
         BTime[j] = -1 * np.mean(data.B) /365.0 # we flip this for plotting purposes
         H0Time[j]=data.H0
-        lengthTime[j]=data.X[-1] - data.X[0]  #difference between these
         UcTime[j] = data.Uc
         timeTime[j] = data.t*365.0 
         pressTime[j] = data.force()#data.H0*data.pressure(data.H0) #should I use force?
@@ -97,7 +102,8 @@ for i in range(len(args.files)):
     padL = int(N/2)
     padR = int((N-1)/2)  #This ensures odds work OK
     BTimeSmooth = np.convolve(np.concatenate((BTime[0]*np.ones(padL),BTime,BTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
-    bFluxTime = np.convolve(np.concatenate((bFluxTime[0]*np.ones(padL),bFluxTime,bFluxTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
+    bFluxSmooth = np.convolve(np.concatenate((bFluxTime[0]*np.ones(padL),bFluxTime,bFluxTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
+    endFluxSmooth = np.convolve(np.concatenate((endFluxTime[0]*np.ones(padL),endFluxTime,endFluxTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
     plt.suptitle('Mélange Volume Over Time')
 
     if(args.labels != None):
@@ -146,9 +152,12 @@ for i in range(len(args.files)):
         ax3.plot([],[],color='xkcd:sky blue',linestyle='-',label='Net',alpha=.5)
         # ax3.plot([],[],color='xkcd:indigo',linestyle='-',label='Volume')
     ax3.plot(timeTime,inFluxTime,color='xkcd:sand',linestyle=lStyle[i])   
-    ax3.plot(timeTime,endFluxTime,color='xkcd:apple',linestyle=lStyle[i])  
-    ax3.plot(timeTime,bFluxTime,color='xkcd:red',linestyle=lStyle[i])
-    ax3.plot(timeTime,inFluxTime-endFluxTime-bFluxTime,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.5)
+    ax3.plot(timeTime,endFluxTime,color='xkcd:apple',linestyle=lStyle[i],alpha = .25)  
+    ax3.plot(timeTime,bFluxTime,color='xkcd:red',linestyle=lStyle[i],alpha = .25)   
+    ax3.plot(timeTime,endFluxSmooth,color='xkcd:apple',linestyle=lStyle[i])  
+    ax3.plot(timeTime,bFluxSmooth,color='xkcd:red',linestyle=lStyle[i])
+    ax3.plot(timeTime,inFluxTime-endFluxSmooth-bFluxSmooth,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.75)
+    ax3.plot(timeTime,inFluxTime-endFluxTime-bFluxTime,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.25)
     ax3.plot([timeTime[0],timeTime[-1]],[0,0],color = 'gray',alpha=.5,linestyle='--')    
     ax3.set_ylabel('Volume Flux [m^3/s]')
     ax3.set_xlabel('Time [days]')
@@ -160,9 +169,12 @@ for i in range(len(args.files)):
         ax4.plot([],[],color='xkcd:apple',linestyle=lStyle[i],label='Out Flux Fraction')
         ax4.plot([],[],color='xkcd:red',linestyle=lStyle[i],label='Melt Flux Fraction')
         ax4.plot([],[],color='xkcd:sky blue',linestyle=lStyle[i],label='Balance Fraction',alpha=.5)
-    ax4.plot(timeTime,endFluxTime/inFluxTime,color='xkcd:apple',linestyle=lStyle[i])
-    ax4.plot(timeTime,bFluxTime/inFluxTime,color='xkcd:red',linestyle=lStyle[i])
-    ax4.plot(timeTime,(bFluxTime + endFluxTime)/inFluxTime,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.5)
+    ax4.plot(timeTime,endFluxTime/inFluxTime,color='xkcd:apple',linestyle=lStyle[i],alpha = .25)
+    ax4.plot(timeTime,bFluxTime/inFluxTime,color='xkcd:red',linestyle=lStyle[i],alpha = .25)
+    ax4.plot(timeTime,endFluxSmooth/inFluxTime,color='xkcd:apple',linestyle=lStyle[i])
+    ax4.plot(timeTime,bFluxSmooth/inFluxTime,color='xkcd:red',linestyle=lStyle[i])
+    ax4.plot(timeTime,(bFluxSmooth + endFluxSmooth)/inFluxTime,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.75)
+    ax4.plot(timeTime,(bFluxTime + endFluxTime)/inFluxTime,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.25)
 
     ax4.plot([timeTime[0],timeTime[-1]],[0,0],color = 'black',alpha=0)
     ax4.plot([timeTime[0],timeTime[-1]],[1,1],color = 'gray',alpha=.5,linestyle='--')

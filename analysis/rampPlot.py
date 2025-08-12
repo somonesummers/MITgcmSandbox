@@ -28,6 +28,8 @@ parser.add_argument('-l','--labels', nargs='*', default=None,
                     help='file string label plots [default = None]')
 parser.add_argument('-x','--xVariable', nargs=1, type=int, default=[1],
                     help='what to plot against 0: xVar , 1: Time [default]')
+parser.add_argument('-sgd','--sgd', nargs=1, type=float, default = None,
+                    help='SGD increase per day, plots this instead of time')
 parser.add_argument('-r','--rampVariable', nargs=1, type=int, default=[0],
                     help='what is ramping 0: MeltRate [default], 1: Uc')
 parser.add_argument('-s','--silent', action='count', default=0,
@@ -63,7 +65,10 @@ for i in range(len(args.files)):
     if(args.timeRange == None):
         toIterate = np.arange(len(files))
     else:
-        toIterate = np.arange(len(files[args.timeRange[0]:args.timeRange[1]]))
+        if(args.timeRange[1] == 0):
+            toIterate = np.arange(len(files[args.timeRange[0]:]))
+        else:
+            toIterate = np.arange(len(files[args.timeRange[0]:args.timeRange[1]]))
         jShift = args.timeRange[0]
     H0Time = np.zeros(np.shape(toIterate))
     VTime = np.zeros(np.shape(toIterate))
@@ -103,6 +108,11 @@ for i in range(len(args.files)):
         muSTime[j] = data.param.muS
         iterationNumber[j]=int(it)
     timeTime = timeTime - timeTime[0] + jShift# shift to start at t=0
+
+    timeLabel = 'Time [days]'
+    if(args.sgd != None):
+        timeTime = timeTime * args.sgd
+        timeLabel = 'SGD [$m^3/s$]'
 
     N = args.windowMean #window over to smooth in time points (days)
     #Pad edges of BTime to have smooth edges and work for short time series
@@ -161,7 +171,7 @@ for i in range(len(args.files)):
         ax1_2.tick_params(axis='y',labelcolor='xkcd:azure')
         # ax1_2.set_ylim([5900, 8800])
     ax1.set_ylabel(forceLabel)
-    ax1.set_xlabel('Time [days]')
+    ax1.set_xlabel(timeLabel)
     ax1.grid(alpha=.5)
     ax1.set_title('%s Forcing' %forceString)
     if(args.labels != None):
@@ -173,8 +183,10 @@ for i in range(len(args.files)):
         xString = forceString
     elif(args.xVariable[0] == 1):
         drivingVariable = timeTime
-        drivingLabel = 'Time [days]'
+        drivingLabel = timeLabel
         xString = 'Time'
+        if(args.sgd != None):
+            xString = 'SGD'
     else:
         raise Exception('Invalid X-axis option: %s' %args.xVariable[0])
 
