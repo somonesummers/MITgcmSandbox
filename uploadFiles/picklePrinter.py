@@ -1,5 +1,6 @@
 import sys
 sys.path.append('/storage/home/hcoda1/2/psummers8/glaciome1d')
+sys.path.append('/Users/psummers8/Documents/glaciome1D')
 from glaciome1D import constants, glaciome
 import glob
 import pickle
