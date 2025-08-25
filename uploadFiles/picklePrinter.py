@@ -9,9 +9,14 @@ import argparse
 parser = argparse.ArgumentParser(description='Print the pickel file specified')
 parser.add_argument('-f','--file', nargs=1, type=str ,default = None,
                     help='file name to print')
+parser.add_argument('filename',default = None, type = str)
 args = parser.parse_args()
 
-files = sorted(glob.glob(args.file[0]))
+if(args.filename != None):
+    fileName = args.filename
+else:
+    fileName = args.file[0]
+files = sorted(glob.glob(fileName))
 
 with open(files[-1], 'rb') as file:
     data = pickle.load(file)
