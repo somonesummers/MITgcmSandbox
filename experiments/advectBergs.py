@@ -94,6 +94,8 @@ with open(files[-1], 'rb') as file:
     file.close()
     index = int(str(file).split(".")[1].split("_")[1])
 
+if(trialAndPlot):
+    print(f'\t\titeration/day {maxStep}/{maxStep*15/86400}, GLACIOME {index}')
 ## We load interpolators to apply to MITgcm grid
 U_glaciome1d = (data.U+data.Ut-data.Uc)/(24*3600*365) #raw is m/yr, convert to m/s
 H = np.concatenate(([data.H0], data.H, [data.HL]))
@@ -136,6 +138,22 @@ totalBergArea = np.fromfile('input/totalBergArea.bin', dtype='>f8')
 totalBergArea = totalBergArea.reshape((nz,ny,nx))
 openFrac = np.fromfile('input/openFrac.bin', dtype='>f8')
 openFrac = openFrac.reshape((nz,ny,nx))
+
+
+## Create backupfiles of all geometries. These will be overwritten continually. 
+if(not trialAndPlot):
+    # Write files that need updating
+    write_bin('temp_bergMask.bin',bergMask)
+    # write_bin('bergMaskNums.bin',bergMaskNums)
+    write_bin('temp_numBergsPerCell.bin',bergsPerCell)
+    write_bin('temp_openFrac.bin',openFrac)
+    write_bin('temp_totalBergArea.bin',totalBergArea)
+    write_bin('temp_meltMask.bin',meltMask)
+    write_bin('temp_driftMask.bin',driftMask)
+    write_bin('temp_barrierMask.bin',barrierMask)
+    write_bin('temp_icebergs_depths.bin',bergDepths)
+    write_bin('temp_icebergs_widths.bin',bergWidths)
+    write_bin('temp_icebergs_length.bin',bergLength)
 
 # lam = np.nanmean((1-openFrac[0,1:-1,:]),axis=0)
 # lam2 = np.mean(np.nansum(bergDepths[:,1:-1,:]*bergWidths[:,1:-1,:]*bergLength[:,1:-1,:],axis=0)/(deltaX*deltaY),axis=0)
