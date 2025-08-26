@@ -99,8 +99,10 @@ if(trialAndPlot):
 ## We load interpolators to apply to MITgcm grid
 U_glaciome1d = (data.U+data.Ut-data.Uc)/(24*3600*365) #raw is m/yr, convert to m/s
 H = np.concatenate(([data.H0], data.H, [data.HL]))
-X_glaciome1d = data.X + deltaX #meters, shift to align with front of MITgcm melange
-X_ = np.concatenate(([data.X[0]],data.X_,[data.X[-1]])) + deltaX
+# If data.X[0] not zero, we must shift it to 0 as MITgcm starts at 0
+# data.L already accounts for any shift as its a relative measure
+X_glaciome1d = data.X + deltaX - data.X[0] #meters, shift to align with front of MITgcm melange
+X_ = np.concatenate(([data.X[0]],data.X_,[data.X[-1]])) + deltaX - data.X[0]
 glaciome_L = data.L + deltaX
 speedLookup = interp1d(X_glaciome1d,U_glaciome1d,bounds_error=False,fill_value=[0])
 thicknessLookup = interp1d(X_,H,bounds_error=False,fill_value=[0])
