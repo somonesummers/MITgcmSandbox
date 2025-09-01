@@ -246,7 +246,7 @@ for ii in range(iterationsToRun):
         b_mitgcm[b_mitgcm != 0] = 0
     else:
         b_mitgcm[b_mitgcm == 0] = b_mitgcm[b_mitgcm != 0][-1]# if MITgcm has overflow error, this line fails
-    x_mitgcm = x[1:]-x[1] #ensure starts at 0, MITgcm has a glacier for first cell
+    x_mitgcm = x[1:]-x[1] #ensure starts at 0, and ignore first cell. MITgcm has a glacier for first cell
     
     sysPrint('\tMelt Rates min/mean/max: %.2f, %.2f, %.2f [m/day]:' %(np.min(b_mitgcm),np.mean(b_mitgcm),np.max(b_mitgcm)))
     # plt.figure()
@@ -254,7 +254,7 @@ for ii in range(iterationsToRun):
     # plt.show()
     # plt.close()
     data.dt = 1.0/365 # 1 day step for glaciome1d, as we will take 1 step
-    data.X_externalGrid = x_mitgcm
+    data.X_externalGrid = x_mitgcm + data.X[0] # if terminus moves in GLACIOME, the melt grid must too
     data.B_externalGrid = b_mitgcm*365 #days to years
 
     # Ready to now run GLACIOME1D. We run 1 timestep with dt set to the coupling timestep. If this creates CLF issues

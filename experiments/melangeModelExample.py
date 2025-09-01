@@ -1,7 +1,8 @@
 resetStart = False
-freshStart = True
+freshStart = False
 icebergCoverLambda = .60 
-iterationsToRun = 500 
-forceMelange = False
-couplingAlpha = 25e-5 # m^2 / (m yr)
-couplingUc0 = 7500 # m/yr
+iterationsToRun = 1400 
+forceMelange = True
+couplingAlpha = 0e-5 # m^2 / (m yr)
+couplingBeta = 50e-3 # m/m (this is a slope)
+couplingUc0 = 6500 # m/yr
