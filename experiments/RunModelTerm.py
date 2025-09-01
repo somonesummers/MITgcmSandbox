@@ -294,7 +294,7 @@ for ii in range(iterationsToRun):
         glmeWarningFlag = True
     signal.alarm(0) #turn the alarm off, because we made it
     sysPrint('\tNew      Length: %.3f, H0: %.3f, ∆L: %.3f, ∆H0: %.3f'%(data.L,data.H0,data.L-oldL,data.H0-oldH,))
-    sysPrint(f"term loc/depth {data.X[0]:5.0f}/{data.Ht:5.1f} m, calving/glacier speed: {data.Uc:0.0f}/{data.Ut:0.0f} m/yr")
+    sysPrint(f"\tterm loc/depth {data.X[0]:5.0f}/{data.Ht:5.1f} m, calving/glacier speed: {data.Uc:0.0f}/{data.Ut:0.0f} m/yr")
     sysPrint('\t\tSeconds to run GLACIOME step: %.4f' % (time.time() - start_time))
     
     if(data.H0 < 25.0 or data.L < 300): #limit small size of melang, glaciome1d gets slow 

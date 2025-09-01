@@ -221,7 +221,8 @@ for ii in range(iterationsToRun):
     # vertical melt per day, the value glaciome wants. 
     b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[0,:,1:-1,1:],axis=0)/lambdaHelper,axis=0)/(dx*dy)*(24*3600)
 
-    if(np.mean(b_mitgcm)==0):
+    if(np.mean(b_mitgcm) > -1e-4):
+        sysPrint(f'\t\tMITgcm melt rates looks problematic min/ave/min: {np.min(b_mitgcm):.2f}/{np.mean(b_mitgcm):.2f}/{np.max(b_mitgcm):.2f}')
         # This means MITgcm has had an overflow. We can try once to re-advect bergs and try again. To do this, we delete the 
         # last BRGFlx file and skipping the rest of this loop with a CONTINUE statement. This consumes one iteration of the 
         # main loop that we will not get back. Also increment counter of how many of these weve had to ensure we dont get more
@@ -233,6 +234,9 @@ for ii in range(iterationsToRun):
         mitgcmWarningCount = mitgcmWarningCount + 1
         sysPrint('\t\t WARNING MITgcm NANs, shuffling bergs and trying again. Failure %i' %mitgcmWarningCount)
         os.system('rm results/BRGFlx.%010i.*' %maxStep) #Delete last BRGFlx
+        #reset ICEBERG mitgcm files to previous state
+        for tmp_name in ['bergMask','numBergsPerCell','openFrac','totalBergArea','meltMask','driftMask','barrierMask','icebergs_depths','icebergs_widths','icebergs_length']:
+            os.system(f'cp -v input/temp_{tmp_name}.bin input/{tmp_name}.bin' )
         continue # This skips rest of loop. Next loop will delete last GLACIOME automatically, 
                  # run GLACIOME again, advect bergs, run MITgcm and hopefully resolve error. This technically does
                  # iterate the Melange for 2 days in 1 day of Ocean. Use carefully. Shorter MITgcm timesteps (dt) should reduce
@@ -264,14 +268,15 @@ for ii in range(iterationsToRun):
 
     if(forceMelange):
         alpha = couplingAlpha
+        beta = couplingBeta
         U0 = couplingUc0
         F = data.force()
         ucRamp = 0
        # if(index > 35):
         #    ucRamp = (index - 35) * 5
          #   sysPrint(f'\tRamping on: {ucRamp}')
-        data.Uc = U0 + ucRamp - alpha * F
-        sysPrint('\tNew Uc: %.3f m/year'%(data.Uc))
+        data.Uc = U0 + ucRamp - alpha * F - beta * data.X[0]
+        data.Ht = 600 - data.X[0] * beta
     sysPrint('\tPrevious Length: %.3f, H0: %.3f'%(oldL, oldH))
     # data.steadystate()
 
@@ -281,12 +286,14 @@ for ii in range(iterationsToRun):
                     # Can happen when mélange thickness increases down fjord, need to look into more 
     try:
         data.prognostic(method='lm')
-    except (Exception):
+    except Exception as e:
+        sysPrint(str(e))
         data = dataCopy
         data.t = data.t + data.dt #step forward one day to keep up with MITgcm
         glmeWarningFlag = True
     signal.alarm(0) #turn the alarm off, because we made it
     sysPrint('\tNew      Length: %.3f, H0: %.3f, ∆L: %.3f, ∆H0: %.3f'%(data.L,data.H0,data.L-oldL,data.H0-oldH,))
+    sysPrint(f"\tterm loc/depth {data.X[0]:5.0f}/{data.Ht:5.1f} m, calving/glacier speed: {data.Uc:0.0f}/{data.Ut:0.0f} m/yr")
     sysPrint('\t\tSeconds to run GLACIOME step: %.4f' % (time.time() - start_time))
     
     if(data.H0 < 25.0 or data.L < 300): #limit small size of melang, glaciome1d gets slow 
@@ -322,7 +329,9 @@ for ii in range(iterationsToRun):
     oldStartTime = (oldStartIter)*dt #read directly from input/data now
     # we delete the old pickups to reduce file size and file count. We could strategically leave them every
     # 100 iterations or so, but currently we do not. 
-    os.system('rm results/pick*.%010i.*' %int((oldStartTime-24*3600)/dt)) #save last one, but delete 2 ago
+    os.system('rm results/pick*.%010i.*' %int((oldStartTime-48*3600)/dt)) #save last two, but delete 3 ago
+    # we save 2 as we let MITgcm fail 2x in a row before failing the whole program, so this lets us have
+    # an old good state (hopefully)
 
     sysPrint('\tadjust start iteration %i to %i' %(oldStartIter,int(newStartTime/dt)))
     replaceAll('input/data','nIter0=%i' %(int(oldStartIter)), 'nIter0=%i' % int(newStartTime/dt))
