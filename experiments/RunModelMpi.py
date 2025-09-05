@@ -212,7 +212,7 @@ for ii in range(iterationsToRun):
     # continuiously. 
 
     lambdaHelper = 1-openFrac[0,1:-1,1:]
-    lambdaHelper[lambdaHelper == 0] = 0.01
+    lambdaHelper[lambdaHelper == 0] = 0.01 #set minimum for icefrac to smooth edge cases, maybe un-needed?
     # data is of list ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY']
     # Vertically sum all of the fresh water fluxes [m^3/s] cells/ divide by surface area 
     # (lamdba helper and dx*dy) of bergs in that cell [m/s]. dx*dy is outside the sum 
@@ -221,7 +221,7 @@ for ii in range(iterationsToRun):
     # vertical melt per day, the value glaciome wants. 
     b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[0,:,1:-1,1:],axis=0)/lambdaHelper,axis=0)/(dx*dy)*(24*3600)
 
-    if(np.mean(b_mitgcm) > -1e-4):
+    if(np.mean(b_mitgcm) > -1e-4 or np.mean(b_mitgcm) < -1000): #sometimes returns 0 or -inf both are problems
         sysPrint(f'\t\tMITgcm melt rates looks problematic min/ave/min: {np.min(b_mitgcm):.2f}/{np.mean(b_mitgcm):.2f}/{np.max(b_mitgcm):.2f}')
         # This means MITgcm has had an overflow. We can try once to re-advect bergs and try again. To do this, we delete the 
         # last BRGFlx file and skipping the rest of this loop with a CONTINUE statement. This consumes one iteration of the 
