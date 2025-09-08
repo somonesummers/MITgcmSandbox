@@ -92,6 +92,13 @@ C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
       CALL DIAGNOSTICS_ADDTOLIST( diagNum,
      I     diagName, diagCode, diagUnits, diagTitle, 0, myThid )
 
+      diagName  = 'BRGhFacC'
+      diagTitle = 
+     &     'Ocean fraction (HfacC) in icebergs'
+      diagUnits = 'none            '
+      diagCode  = 'SM      MR      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I     diagName, diagCode, diagUnits, diagTitle, 0, myThid )
 #ifdef ALLOW_PER_BERG_DIAG
 C     Could implement per berg diagnostics here
 #endif /* ALLOW_PER_BERG_DIAG */      

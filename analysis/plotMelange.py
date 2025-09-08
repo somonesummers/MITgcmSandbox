@@ -36,6 +36,8 @@ parser.add_argument('-n','--NumView', nargs=1, default=[100], type=int,
                     help='How many files to look back for cascade plots [defaut = 100]')
 parser.add_argument('-s','--silent', action='count', default=0,
                     help='Option to silence showing of plots')
+parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
+                    help='optional specification of start and endtime in DAYS [default = Full Range]')
 args = parser.parse_args()
 
 # print(args)
@@ -58,10 +60,21 @@ ax6 = axes[1,2]
 
 seedColor=['green','blue','violet','red']
 # seedColor=['xkcd:dandelion','xkcd:rose','xkcd:lavender','xkcd:apple','xkcd:periwinkle','xkcd:seafoam','xkcd:umber']
-n = len(files)
+
+
+jShift = 0
+if(args.timeRange == None):
+    toIterate = np.arange(len(files))
+else:
+    if(args.timeRange[1] == 0):
+        toIterate = np.arange(len(files[args.timeRange[0]:]))
+    else:
+        toIterate = np.arange(len(files[args.timeRange[0]:args.timeRange[1]]))
+    jShift = args.timeRange[0]
+
+n = len(toIterate)
 subSample = max([int(np.ceil(n / 10)),1])
 
-toIterate = np.arange(n)
 H0Time = np.zeros(np.shape(toIterate))
 VTime = np.zeros(np.shape(toIterate))
 UcTime = np.zeros(np.shape(toIterate))
@@ -69,8 +82,8 @@ lengthTime = np.zeros(np.shape(toIterate))
 timeTime = np.zeros(np.shape(toIterate))
 iterationNumber = np.zeros(np.shape(toIterate))
 for j in toIterate:
-    file = files[j]
-    with open(files[j], 'rb') as fileName:
+    file = files[j + jShift]
+    with open(files[j + jShift], 'rb') as fileName:
         data = pickle.load(fileName)
         fileName.close()
     it = file.replace('./', '').replace('.pickle', '').replace(fileStr,'')
@@ -79,7 +92,7 @@ for j in toIterate:
     H = np.concatenate(([data.H0], data.H, [data.HL]))
     W = np.concatenate(([data.W0], data.W, [data.WL]))
     VTime[j] = simpson(H*W, x=X_)*1e-9
-    lengthTime[j]=data.X[-1]
+    lengthTime[j]=data.X[-1] - data.X[0]
     UcTime[j] = data.Uc
     timeTime[j] = data.t * 365
     iterationNumber[j]=int(it)
@@ -98,8 +111,8 @@ if(args.Uc[0] == 1):
     ax2.grid(alpha=.5)
 
 
-ax5.plot(iterationNumber,lengthTime,'-')
-sca=ax5.scatter(iterationNumber,lengthTime,s=None,c=timeTime,cmap='viridis')
+ax5.plot(timeTime,lengthTime,'-')
+sca=ax5.scatter(timeTime,lengthTime,s=None,c=timeTime,cmap='viridis')
 cbar=plt.colorbar(sca)
 cbar.set_label('Time [Days]')
 ax5.set_ylabel('Mélange length [m]')
@@ -178,11 +191,12 @@ for j in toIterate[shiftIndex::subSample]:
     # ax4.set_ylabel('$\\mu_w$')  
 
     colors = makeColors(seedColor[3],n)   
-    ax4.plot(X*1e-3,B/constant.daysYear,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
+    ax4.plot(X_[1:-1]*1e-3,B[:-1]/constant.daysYear,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
     ax4.set_xlabel('Distance Along Mélange [km]')
     ax4.set_ylabel('Meltrate B [m/day]')     
     # ax4.legend()
     ax4.grid(alpha=.5)
+
 
 strTemp = 'View'
 if(args.Uc[0] == 1):

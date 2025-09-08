@@ -173,8 +173,8 @@ for k in kList:
         if(args.shadow > 0): #enable berg shadows here
             localBergs = True
             dataBergs = mds.rdmds("results/BRGFlx",i)
-            dataBergPlot = dataBergs[0,:,:,:]
-            dataBergPlot[dataBergPlot != 0] = 1
+            dataBergPlot = dataBergs[5,:,:,:]
+            # dataBergPlot[dataBergPlot != 0] = 1
             dataBergPlot[dataBergPlot == 0] = np.nan
         else:
             localBergs = False
@@ -236,18 +236,18 @@ for k in kList:
                 cmap='gray',
                 alpha = .2)
         plt.plot(x[ySlice,:],topo[ySlice,:],color='black')
-        # if(localBergs):
-        #     # plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
-        #     cp2 = plt.contourf(
-        #         x[ySlice,:],
-        #         np.squeeze(z),
-        #         np.squeeze(openFrac[:, ySlice, :]),
-        #         [.4,.6,.8,.9,.95],
-        #         extend="min",
-        #         alpha=.1,
-        #         cmap='cmo.gray')
-        #     #cbar2 = plt.colorbar(cp2)
-        #     #cbar2.set_label('Ocean Fraction')
+        if(args.shadow > 0):
+            # plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
+            cp2 = plt.contourf(
+                x[ySlice,:],
+                np.squeeze(z),
+                np.squeeze(dataBergPlot[:, ySlice, :]),
+                [.4,.6,.8,.9,.95],
+                extend="min",
+                alpha=.1,
+                cmap='cmo.gray')
+            #cbar2 = plt.colorbar(cp2)
+            #cbar2.set_label('Ocean Fraction')
         cbar = plt.colorbar(cp,orientation="horizontal",fraction=0.06,format='%.2f')
         cbar.set_label(cbarLabel[k])
         if(showDensity and (dynName[k] == 'dynDiag')):

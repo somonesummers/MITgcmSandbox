@@ -64,14 +64,14 @@ def setUpPrint(msg):
 email = 'psummers8@gatech.edu'
 # set high level run configurations
 
-briefSummaryOfExp = """Coupling MITgcm and Melange1D
+briefSummaryOfExp = """
+finModel is a smaller verion of minkeModel for running on mac locally
+
+Coupling MITgcm and Melange1D
 Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
 
-november is coupled with variable Uc and 4x enhanced melt
-Summer forcing, seasonal SGD to 1300
-vary alpha, vary U_b
-compare to foxtrotV 
+alpha is messing with moving bathrymetry within pickupfiles
 
 need to still: 
 Copy MITgcmPickup/iceberg/GLACIOME files from origin of choice
@@ -87,27 +87,28 @@ setUpPrint('====== Welcome to the mélange building script =====')
 
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'november_a25_ub3000'
-run_config['ndays'] = 1 # simulation time (days)
+run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
+run_config['run_name'] = 'alpha3'
+run_config['ndays'] = .5 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-wallWidthInd = 5 #width of walls in units of dy
+wallWidthInd = 2 #width of walls in units of dy
 run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
-run_config['Lx_m'] = 102000 # domain size in x (m)
-run_config['Ly_m'] = 5600 + (2 * wallWidthInd * run_config['horiz_res_m']) # domain size in y (m) with walls (1 wall each side)
+run_config['Lx_m'] = 40000 # domain size in x (m)
+run_config['Ly_m'] = 4800 + (2 * wallWidthInd * run_config['horiz_res_m']) # domain size in y (m) with walls (1 wall each side)
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
-
+run_config['terminus_m'] = 800
+terminus_index = int(run_config['terminus_m']/run_config['horiz_res_m'])
 grid_params['Nr'] = 32 # num of z-grid points
 
-run_config['make_icebergs'] = False # Do we make bergs? No if running from spin-up
+run_config['make_icebergs'] = True # Do we make bergs? No if running from spin-up
 
 setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s" %(run_config['run_name'],makeDirs,writeFiles))
 input("Confirm above is accurate before continuing...")
 
 # Variables to adjust ======================
 assign_deltaT = 0 # [C]
-assign_plumeSGD = 1300 #[m^3/s]
+assign_plumeSGD = 0 #[m^3/s]
 season_sw = 's'
 
 # Offshore current =========================
@@ -117,7 +118,7 @@ indexOSC = int(lengthOffShoreLength/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 400 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 25000 # [meters] of extent of ice
+iceExtent = 15000 # [meters] of extent of ice
 iceCoverage = 60 # % of ice cover in melange, stay under 90% ideally
 doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
@@ -134,7 +135,7 @@ MITgcm_release = 'MITgcm-checkpoint68z' #Sept 2024 release
 #MITgcm_code_dir = os.path.join(group_home_dir, 'shared/mitgcm_releases', MITgcm_release)
 
 # you probably don't need to touch this
-run_config['use_MPI'] = True # for multi-processing
+run_config['use_MPI'] = False # for multi-processing
 run_config['lf'] = '\r\n' # linebreak characters 
 if OSX == 'Darwin':
     run_config['exps_dir'] = os.path.join('/Users/psummers8/Documents/MITgcm/MITgcm/experiments') 
@@ -433,13 +434,14 @@ if run_config['test']:
     run_config['tavg_freq'] = 1 # multiples of timestep
     
 else:
-    run_config['inst_freq'] = 24 # multiples of hours (must be at least every day for coupling to get iceberg melt rates)
-    run_config['tavg_freq'] = 24 # multiples of hours 
+    run_config['inst_freq'] = 1 # multiples of hours (must be at least every day for coupling to get iceberg melt rates)
+    run_config['tavg_freq'] = 1 # multiples of hours 
+
 
 #---------specify time averaged fields------#
 # NOTE: many more options available see mitgcm docs
 diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
-                    ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY','BRGhFacC'],
+                    ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY'],
                     ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntR'],
                     ['TRAC01','TRAC02']
                     ]
@@ -592,7 +594,7 @@ d = np.zeros([grid_params['Ny'], grid_params['Nx']]) - domain_params['H']
 setUpPrint('fjord end: %i' %fjordEnd)
 d[:wallWidthInd, 1:fjordEnd] = 0  # walls of fjord
 d[-wallWidthInd:, 1:fjordEnd] = 0
-d[: , 0] = 0 #cap west side
+d[: , :(terminus_index+1)] = 0 #cap west side
 
 
 plt.figure(figsize=(10, 4))
@@ -698,6 +700,9 @@ for i in np.arange(fjordEnd,grid_params['Nx']):
 
 plt.figure()
 plt.plot(V_ns[0,0,:],label='along coast current')
+plt.legend()
+plt.ylabel('Along shore current')
+plt.xlabel('Along fjord grid count')
 plt.show()
 plt.close()
 
@@ -771,7 +776,7 @@ setUpPrint(runoff)
 wsg = 1 
 
 # ice front location
-icefront=1 # adjacent to wall at western end of domain, simulate wall of ice
+icefront=(terminus_index+1) # adjacent to wall at western end of domain, simulate wall of ice
 
 # plume location
 plume_loc = int(np.round(grid_params['Ny']/2))
@@ -888,7 +893,7 @@ if(run_config['make_icebergs']):
     maxBergWidth = 0 # (m) - set to zero if 'prescribing' max iceberg depth
     minBergWidth = 40 # (m)
 
-    iceStart = 1
+    iceStart = (terminus_index+1)
     iceExtentIndex = int(np.round((iceExtent)/run_config['horiz_res_m']))
 
     # Iceberg mask

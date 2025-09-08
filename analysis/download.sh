@@ -34,13 +34,13 @@ do
   #Sometimes one login is slower, can flip between here
   echo ' output file (if there)'
   rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/output* $EXP/
-  echo ' input/'
-  rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/input/ $EXP/input
   echo ' couplingResults/'
   rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/couplingResults/ $EXP/couplingResults
-  echo 'figs/'
-  rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/figs/ $EXP/figs
   if $doResults; then
+    echo 'figs/'
+    rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/figs/ $EXP/figs
+    echo ' input/'
+    rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/input/ $EXP/input
     echo ' results/'
     rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/results/ $EXP/results
   fi

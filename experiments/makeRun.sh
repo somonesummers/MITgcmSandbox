@@ -8,7 +8,7 @@ case "${unameOut}" in
     Darwin*)    MACHINE="Mac";;
 esac
 echo "Idenitfied machine as ${MACHINE}"
-echo "Already built, clean up run folder, then make simlinks and run"
+echo "Already built: clean up run folder, then make simlinks and run"
 cd results
 touch test.txt #this ensures the dir is not empty (rm -f * also probably works, but hey if it ain't broke, don't fix it)
 rm *

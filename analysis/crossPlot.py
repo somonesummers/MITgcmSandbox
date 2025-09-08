@@ -143,8 +143,8 @@ print('cross section is y =', y[ySlice,0], 'index', ySlice)
 print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
 dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag']
-name = ["Temp", "Sal", "U", "W", "V", "fwFlx",'TracePlume','TraceBerg']
-cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m^3/s]","[Vol Frac]","[Vol Frac]"]
+name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg']
+cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]"]
 
 #In KM for x,y for better axis labeling
 x = x/1000
@@ -168,15 +168,7 @@ for k in kList:
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         fig = plt.figure(figsize=(10, 5))
         ax = fig.add_subplot(111, projection='3d',computed_zorder=False)
-        if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
-            localBergs = True
-        else:
-            localBergs = False
-        if((not localBergs) and k==5):
-            #fill melt image with 0s if bergs in run but not frame
-            data = np.zeros(np.shape(mds.rdmds("results/%s"%(dynName[k-1]), i)))
-        else:
-            data = mds.rdmds("results/%s"%(dynName[k]), i)
+        data = mds.rdmds("results/%s"%(dynName[k]), i)
         kk = k
         if k == 0:
             lvl = tempRange
@@ -218,7 +210,7 @@ for k in kList:
         alpha= .9,
         zdir='x',offset=y[ySlice,0],zorder=2
         )
-        if(localBergs):
+        if(False):
             cp2 = plt.contourf(
                 np.squeeze(openFrac[:, ySlice, :]),
                 XX,
@@ -242,7 +234,7 @@ for k in kList:
             zdir='y',offset=x[0,xSlice],zorder=3
         )
 
-        if(localBergs):
+        if(False):
             cp2 = plt.contourf(
                 YY[:,0:ySlice+1],
                 np.squeeze(openFrac[:, 0:ySlice+1, xSlice]),
@@ -265,7 +257,7 @@ for k in kList:
             alpha= .9,
             zdir='y',offset=x[0,xSlice],zorder=0
         )
-        if(localBergs):
+        if(False):
             cp2 = plt.contourf(
                 YY[:,ySlice:],
                 np.squeeze(openFrac[:, ySlice:, xSlice]),
@@ -329,7 +321,7 @@ for k in kList:
             alpha= .9,
             zdir='z',offset=z.min(),zorder=-1
         )
-        if(localBergs):
+        if(False):
             cp2 = plt.contourf(
                 np.squeeze(y),
                 np.squeeze(x),
@@ -340,7 +332,7 @@ for k in kList:
                 cmap='cmo.gray',
                 zdir='z',offset=z.min(),zorder=-1)
 
-        cbar = fig.colorbar(cp,pad=0.2,fraction=.04)
+        cbar = fig.colorbar(cp,pad=0.0,fraction=.04,orientation='horizontal')
         cbar.set_label(cbarLabel[k])
         
         #Topography along fjord
@@ -362,7 +354,7 @@ for k in kList:
         ax.set_box_aspect([2,6,1]) # y,x,z
         ax.view_init(elev=25., azim=-40)
         j = i/sizeStep
-
+        plt.tight_layout()
         str = "figs/cross_%s%05i.png" % (name[k],j)
         plt.tight_layout()
         plt.savefig(str, format='png', dpi=plotDPI)
