@@ -131,8 +131,6 @@ print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
 # iceEdge = np.interp(z[zSlice,0,0],ice[0,:],x[0,:])
 
-name = ["Temp", "Sal", "U", "W", "V"]
-cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 if(isBerg):
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag','dynDiag']
@@ -156,12 +154,13 @@ for k in kList:
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
         if(args.shadow > 0): #enable berg shadows here
-            localBergs = True
             dataBergs = mds.rdmds("results/BRGFlx",i)
-            dataBergPlot = dataBergs[5,:,:,:]
+            if(dataBergs.shape[0] < 6):
+                dataBergPlot = dataBergs[0,:,:,:]
+                dataBergPlot[dataBergPlot != 0] = .2
+            else:
+                dataBergPlot = dataBergs[5,:,:,:]
             dataBergPlot[dataBergPlot == 0] = np.nan
-        else:
-            localBergs = False
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         kk = k
         if k == 0:
@@ -219,15 +218,6 @@ for k in kList:
                 extend="both",
                 cmap=cm,
             )
-        if(localBergs):
-            cberg = plt.contourf(
-                np.squeeze(x),
-                np.squeeze(y),
-                np.squeeze(dataBergPlot[zSlice, :, :]),
-                [0,1,2],
-                extend="both",
-                cmap='gray',
-                alpha = .2)
         cbar = plt.colorbar(cp,orientation="horizontal",fraction=0.06,format='%.2f')
         cbar.set_label(cbarLabel[k])
         ax1 = plt.gca()

@@ -19,13 +19,16 @@ parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
 parser.add_argument('-s','--shadow', action='count', default=0,
                     help='option of shadow for mélange [default (off)]')
+parser.add_argument('-xl','--xlimit', nargs='?', type=int, default = None,
+                    help='optional max x [default = entire frame]')
+parser.add_argument('-dpi','--dpi', nargs='?', type=int, default = 125,
+                    help='dpi spec [default = 125]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
 yCrossSection = 1000
 xCrossSection = 5000
 zDepth = -50
-plotDPI = 100
 cleanPNGs = True
 showQuiver = False
 showZeros = True
@@ -109,7 +112,7 @@ if(os.path.isfile('input/bathymetry.bin')):
 else:
     topo = np.zeros(np.shape(x))
 
-
+oldAveraging = True
 if(isBerg):
     bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
     bergMask = bergMask.reshape(np.shape(x))
@@ -174,13 +177,18 @@ for k in kList:
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
-        localBergs = False
-        if(args.shadow > 0): #enable berg shadows here
-            localBergs = True
+        if(isBerg):
             dataBergs = mds.rdmds("results/BRGFlx",i)
-            dataBergPlot = np.nanmean(dataBergs[0,:,:,:],axis=1)
-            dataBergPlot[dataBergPlot != 0] = 1
-            dataBergPlot[dataBergPlot == 0] = np.nan
+            if(dataBergs.shape[0] == 6):
+                openFrac = dataBergPlot = dataBergs[5,:,:,:] #directly saved for these runs
+                oldAveraging = False
+        if(args.shadow > 0): #enable berg shadows here
+            if(dataBergs.shape[0] < 6):
+                dataBergPlot = dataBergs[0,:,:,:]
+                dataBergPlot[dataBergPlot != 0] = .2
+            else:
+                dataBergPlot = dataBergs[5,:,:,:]
+            dataBergPlot[dataBergPlot == 0] = 1 #np.nan
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         kk = k
         if k == 0:
@@ -232,15 +240,17 @@ for k in kList:
         # if(k == 5): #special bounds to highlight refreezing areas
         #     cp.cmap.set_under('r')
         plt.plot(x[0,:],topo[int(np.shape(x)[0]/2),:],color='black')
-        if(localBergs):
-            cberg = plt.contourf(
-                np.squeeze(x[0,:]),
+        if(args.shadow > 0):
+            cp2 = plt.contourf(
+                x[0,:],
                 np.squeeze(z),
-                np.squeeze(dataBergPlot[:, :]),
-                [0,1,2],
+                np.squeeze(np.nanmean(dataBergPlot[:, 1:-1, :],axis=1)),
+                [.4,.6,.8,.9,.95],
                 extend="both",
-                cmap='gray',
-                alpha = .2)
+                alpha=.2,
+                cmap='cmo.gray')
+            #cbar2 = plt.colorbar(cp2)
+            #cbar2.set_label('Ocean Fraction')
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
         if(showDensity and (dynName[k] == 'dynDiag')):
@@ -272,7 +282,8 @@ for k in kList:
                     alpha=0.5
                 )
                 plt.clabel(cc, inline=3, fontsize=8)
-
+        if(args.xlimit != None):
+            plt.xlim([0, args.xlimit])
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, 1:-1, :]),np.nanmax(data[kk, :, 1:-1, :]),np.max(np.isnan(data[kk, :, 1:-1, :]))))
         plt.ylabel('Depth [m]')
         plt.title("%s Width Averaged at %.02f days" % (name[k], i/86400.0*dt))
@@ -280,7 +291,7 @@ for k in kList:
         
         str = "figs/sideAvg_%s%05i.png" % (name[k],j)
         plt.tight_layout()
-        plt.savefig(str, format='png', dpi=plotDPI)
+        plt.savefig(str, format='png', dpi=args.dpi)
         if(args.quick > 1):
             plt.show()
         plt.close()

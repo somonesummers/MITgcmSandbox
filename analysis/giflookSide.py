@@ -171,13 +171,13 @@ for k in kList:
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
         if(args.shadow > 0): #enable berg shadows here
-            localBergs = True
             dataBergs = mds.rdmds("results/BRGFlx",i)
-            dataBergPlot = dataBergs[5,:,:,:]
-            # dataBergPlot[dataBergPlot != 0] = 1
+            if(dataBergs.shape[0] < 6):
+                dataBergPlot = dataBergs[0,:,:,:]
+                dataBergPlot[dataBergPlot != 0] = .2
+            else:
+                dataBergPlot = dataBergs[5,:,:,:]
             dataBergPlot[dataBergPlot == 0] = np.nan
-        else:
-            localBergs = False
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         kk = k
         if k == 0:
@@ -226,15 +226,6 @@ for k in kList:
                 extend="both",
                 cmap=cm,
             )
-        if(localBergs):
-            cberg = plt.contourf(
-                np.squeeze(x[ySlice,:]),
-                np.squeeze(z),
-                np.squeeze(dataBergPlot[:, ySlice, :]),
-                [0,1,2],
-                extend="both",
-                cmap='gray',
-                alpha = .2)
         plt.plot(x[ySlice,:],topo[ySlice,:],color='black')
         if(args.shadow > 0):
             # plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
@@ -244,7 +235,7 @@ for k in kList:
                 np.squeeze(dataBergPlot[:, ySlice, :]),
                 [.4,.6,.8,.9,.95],
                 extend="min",
-                alpha=.1,
+                alpha=.2,
                 cmap='cmo.gray')
             #cbar2 = plt.colorbar(cp2)
             #cbar2.set_label('Ocean Fraction')

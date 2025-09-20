@@ -22,6 +22,8 @@ parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
                     help='option specification of views to plot [default = all]')
 parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
                     help='optional specification of numFrames [default = 60]')
+parser.add_argument('-s','--shadow', action='count', default=0,
+                    help='option of shadow for mélange [default (off)]')
 parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
 args = parser.parse_args()
@@ -69,6 +71,13 @@ for line in fileinput.input('input/data'):
             dt = float(line[8:-2])
 print('dt is loaded as', dt)
 
+#Decide if iceBerg data files exist
+if(os.path.isfile('input/bergMask.bin')):
+    isBerg = True
+    print('Found icebergs for this run')
+else:
+    isBerg = False
+
 #Find Diagnostic file, iterate through them
 maxStep = 0
 sizeStep = 1e10
@@ -97,13 +106,6 @@ if((maxStep-startStep)/sizeStep > 60):   #if more than 60 frames, downscale to b
     sizeStep = sizeStep * dwnScale
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
-#Decide if iceBerg data files exist
-if(os.path.isfile('input/bergMask.bin')):
-    isBerg = False
-    print('Found icebergs for this run')
-else:
-    isBerg = False
-
 #Clean up old gifs and pngs
 os.system('rm -f figs/cross_*.png')
 os.system('rm -f figs/autoCross_*.gif')
@@ -121,18 +123,6 @@ if(os.path.isfile('input/bathymetry.bin')):
 else:
     topo = np.zeros(np.shape(x))
    
-#Import Berg Locations        
-if(isBerg):
-    # prep for contour plot of icebergs
-    openFrac = np.fromfile('input/openFrac.bin', dtype='>f8')
-    openFrac = openFrac.reshape((np.shape(z)[0], np.shape(x)[0], np.shape(x)[1]))
-    bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
-    bergMask = bergMask.reshape(np.shape(x))
-    for j in range(np.shape(x)[0]): #clean up non-berg parts of this mask
-            for i in range(np.shape(x)[1]):
-                if bergMask[j,i] == 0:
-                    openFrac[:,j,i] = 1
-
 
 # Print actual cross section values
 xSlice = np.argmin(np.abs(x[0,:] - xCrossSection))
@@ -142,9 +132,14 @@ print('cross section is x =', x[0,xSlice], 'index', xSlice)
 print('cross section is y =', y[ySlice,0], 'index', ySlice)
 print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
-dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag']
-name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg']
-cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]"]
+if(isBerg):
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag']
+    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg']
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]"]
+else:
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
+    name = ["Temp", "Sal", "U", "W", "V"]
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
 
 #In KM for x,y for better axis labeling
 x = x/1000
@@ -153,7 +148,7 @@ y = y/1000
 if(usePcolor):
     print('pcolor not supported for this function yet, using contourf')
 
-ghostAlpha = .2
+ghostAlpha = .1
 
 #NOTE matplotlib x and y and MITgcm x,y are FLIPPED below. Be careful.
 if(args.quick > 0):
@@ -169,6 +164,14 @@ for k in kList:
         fig = plt.figure(figsize=(10, 5))
         ax = fig.add_subplot(111, projection='3d',computed_zorder=False)
         data = mds.rdmds("results/%s"%(dynName[k]), i)
+        if(args.shadow > 0): #enable berg shadows here
+            dataBergs = mds.rdmds("results/BRGFlx",i)
+            if(dataBergs.shape[0] < 6):
+                dataBergPlot = dataBergs[0,:,:,:]
+                dataBergPlot[dataBergPlot != 0] = .2
+            else:
+                dataBergPlot = dataBergs[5,:,:,:]
+            dataBergPlot[dataBergPlot == 0] = np.nan
         kk = k
         if k == 0:
             lvl = tempRange
@@ -210,13 +213,13 @@ for k in kList:
         alpha= .9,
         zdir='x',offset=y[ySlice,0],zorder=2
         )
-        if(False):
+        if(args.shadow > 0):
             cp2 = plt.contourf(
-                np.squeeze(openFrac[:, ySlice, :]),
+                np.squeeze(dataBergPlot[:, ySlice, :]),
                 XX,
                 ZZ,
                 [.4,.6,.8,.9,.95],
-                extend="min",
+                extend="both",
                 alpha=bergAlpha,
                 cmap='cmo.gray',
                 zdir='x',offset=y[ySlice,0],zorder=2)
@@ -234,10 +237,10 @@ for k in kList:
             zdir='y',offset=x[0,xSlice],zorder=3
         )
 
-        if(False):
+        if(args.shadow > 0):
             cp2 = plt.contourf(
                 YY[:,0:ySlice+1],
-                np.squeeze(openFrac[:, 0:ySlice+1, xSlice]),
+                np.squeeze(dataBergPlot[:, 0:ySlice+1, xSlice]),
                 ZZ[:,0:ySlice+1],
                 [.4,.6,.8,.9,.95],
                 extend="min",
@@ -257,10 +260,10 @@ for k in kList:
             alpha= .9,
             zdir='y',offset=x[0,xSlice],zorder=0
         )
-        if(False):
+        if(args.shadow > 0):
             cp2 = plt.contourf(
                 YY[:,ySlice:],
-                np.squeeze(openFrac[:, ySlice:, xSlice]),
+                np.squeeze(dataBergPlot[:, ySlice:, xSlice]),
                 ZZ[:,ySlice:],
                 [.4,.6,.8,.9,.95],
                 extend="min",
@@ -321,11 +324,11 @@ for k in kList:
             alpha= .9,
             zdir='z',offset=z.min(),zorder=-1
         )
-        if(False):
+        if(args.shadow > 0):
             cp2 = plt.contourf(
                 np.squeeze(y),
                 np.squeeze(x),
-                np.squeeze(openFrac[zSlice, :, :]),
+                np.squeeze(dataBergPlot[zSlice, :, :]),
                 [.05,.1,.2,.4,.8],
                 extend="min",
                 alpha=bergAlpha,
