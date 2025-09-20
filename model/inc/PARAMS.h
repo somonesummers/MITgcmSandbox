@@ -190,6 +190,16 @@ C                           = 0: fully explicit
 C                           = 1: implicit on provisional velocity
 C                                (i.e., before grad.Eta increment)
 C                           = 2: fully implicit (combined with Impl Surf.Press)
+C     selectPenetratingSW :: select treatment of penetrating shortwave radiation
+C                            (requires to define SHORTWAVE_HEATING):
+C                           = 0: no shortwave penetration
+C                           = 1: constant in time and horizontally uniform
+C                                fraction of shortwave penetration (default)
+C                           = 2: constant in time, but non-uniform fraction of
+C                                shortwave penetration (not yet coded)
+C                           > 2: time varying fraction of shortwave penetration
+C                                according to external function (e.g. BGC model,
+C                                not yet coded)
 C     momForcingOutAB     :: =1: take momentum forcing contribution
 C                            out of (=0: in) Adams-Bashforth time stepping.
 C     tracForcingOutAB    :: =1: take tracer (Temp,Salt,pTracers) forcing contribution
@@ -239,7 +249,7 @@ C-    plotLevel           :: controls printing of field maps ; higher -> more fl
      &        saltAdvScheme, saltVertAdvScheme,
      &        selectKEscheme, selectVortScheme, selectMetricTerms,
      &        selectCoriScheme, select3dCoriScheme,
-     &        selectBotDragQuadr, pCellMix_select,
+     &        selectBotDragQuadr, selectPenetratingSW, pCellMix_select,
      &        readBinaryPrec, writeBinaryPrec,
      &        rwSuffixType, monitorSelect, debugLevel, plotLevel
       INTEGER cg2dMaxIters
@@ -270,6 +280,7 @@ C-    plotLevel           :: controls printing of field maps ; higher -> more fl
       INTEGER selectCoriScheme
       INTEGER select3dCoriScheme
       INTEGER selectBotDragQuadr
+      INTEGER selectPenetratingSW
       INTEGER pCellMix_select
       INTEGER readBinaryPrec
       INTEGER writeBinaryPrec
@@ -562,11 +573,13 @@ C                        & Last iteration, in addition multiple of dumpFreq iter
 
 C--   COMMON /PARM_R/ "Real" valued parameters used by the model.
 C     cg2dTargetResidual
-C          :: Target residual for cg2d solver; no unit (RHS normalisation)
+C          :: Target residual for cg2d solver ; no unit (RHS normalisation)
 C     cg2dTargetResWunit
-C          :: Target residual for cg2d solver; W unit (No RHS normalisation)
+C          :: Target residual for cg2d solver ; W unit (No RHS normalisation)
 C     cg3dTargetResidual
-C               :: Target residual for cg3d solver.
+C          :: Target residual for cg3d solver ; no unit (RHS normalisation)
+C     cg3dTargetResWunit
+C          :: Target residual for cg3d solver ; W unit (No RHS normalisation)
 C     cg2dpcOffDFac :: Averaging weight for preconditioner off-diagonal.
 C     Note. 20th May 1998
 C           I made a weird discovery! In the model paper we argue
@@ -815,7 +828,7 @@ C     phiEuler      :: Euler angle, rotation about original z-axis
 C     thetaEuler    :: Euler angle, rotation about new x-axis
 C     psiEuler      :: Euler angle, rotation about new z-axis
       COMMON /PARM_R/ cg2dTargetResidual, cg2dTargetResWunit,
-     & cg2dpcOffDFac, cg3dTargetResidual,
+     & cg2dpcOffDFac, cg3dTargetResidual, cg3dTargetResWunit,
      & delR, delRc, xgOrigin, ygOrigin, rSphere, recip_rSphere,
      & radius_fromHorizGrid, seaLev_Z, top_Pres, rSigmaBnd,
      & deltaT, deltaTMom, dTtracerLev, deltaTFreeSurf, deltaTClock,
@@ -864,6 +877,7 @@ C     psiEuler      :: Euler angle, rotation about new z-axis
       _RL cg2dTargetResidual
       _RL cg2dTargetResWunit
       _RL cg3dTargetResidual
+      _RL cg3dTargetResWunit
       _RL cg2dpcOffDFac
       _RL delR(Nr)
       _RL delRc(Nr+1)

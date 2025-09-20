@@ -265,6 +265,11 @@ C--   Set (free)surface-related parameters
       salt_EvPrRn = 0.
       temp_addMass = UNSET_RL
       salt_addMass = UNSET_RL
+#ifdef SHORTWAVE_HEATING
+      selectPenetratingSW = 1
+#else
+      selectPenetratingSW = 0
+#endif
       selectBalanceEmPmR  = UNSET_I
       balanceQnet         = .FALSE.
       balancePrintMean    = .FALSE.
@@ -291,6 +296,7 @@ C--   Elliptic solver parameters
       cg2dPreCondFreq    = 1
       cg3dMaxIters       = 150
       cg3dTargetResidual = 1. _d -7
+      cg3dTargetResWunit = -1.
       useNSACGSolver     = .FALSE.
       useSRCGSolver      = .FALSE.
 
