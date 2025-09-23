@@ -22,8 +22,10 @@ parser.add_argument('--quiver', nargs="?", type=int, default = 1,
                     help='specify if quiver arrows are shown [Default = True]')
 parser.add_argument('-s','--shadow', action='count', default=0,
                     help='option of shadow for mélange [default (off)]')
-parser.add_argument('--plotX', nargs="?", type=float,default = None,
-                    help='optional max X value for plotting [m]')
+parser.add_argument('-xl','--xlimit', nargs='?', type=int, default = None,
+                    help='optional max x [default = entire frame]')
+parser.add_argument('-dpi','--dpi', nargs='?', default=175,type=int,
+                    help='dpi to print [default = 175]')
 args = parser.parse_args()
 
 # Pick cross section to view from file or default
@@ -46,7 +48,7 @@ elif(os.path.isfile('../plotHelper.py')):
     from plotHelper import *
 else:  
     print('no defaults found')
-print('Plot DPI:',plotDPI,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
+print('Plot DPI:',args.dpi,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
 
 if(args.zDepth != None):
     print('** Manual zDepth detected **')
@@ -268,10 +270,10 @@ for k in kList:
         # plt.xlim([-8000, 25000]) # if zooming into a specific region
         j = i/sizeStep + startStep
         str = "figs/map%s%05i.png" % (name[k],j)
-        if(args.plotX != None):
-            plt.xlim([0,args.plotX])        
+        if(args.xlimit != None):
+            plt.xlim([0,args.xlimit])        
         plt.tight_layout()
-        plt.savefig(str, format='png', dpi=plotDPI)
+        plt.savefig(str, format='png', dpi=args.dpi)
         if(args.quick > 1):
             plt.show()
         plt.close()

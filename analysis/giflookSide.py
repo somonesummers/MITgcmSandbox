@@ -21,8 +21,27 @@ parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
 parser.add_argument('-s','--shadow', action='count', default=0,
                     help='option of shadow for mélange [default (off)]')
+parser.add_argument('-xl','--xlimit', nargs='?', type=int, default = None,
+                    help='optional max x [default = entire frame]')
+parser.add_argument('-m','--melange', action='count', default=0,
+                    help='add melange depth to output, only final melange frame for now')
+parser.add_argument('-dpi','--dpi', nargs='?', default=175,type=int,
+                    help='dpi to print [default = 175]')
 args = parser.parse_args()
 
+if(args.melange > 0):
+    sys.path.append('/Users/psummers8/Documents/glaciome1D')
+    sys.path.append('/storage/home/hcoda1/2/psummers8/glaciome1d')
+    from glaciome1D import constants, glaciome
+    import glob
+    import pickle
+    files = sorted(glob.glob('couplingResults/MITgcmRun_*.pickle'))
+    with open(files[-1], 'rb') as fileName:
+        print(f'melange file {files[-1]}')
+        pickleData = pickle.load(fileName)
+        fileName.close()
+    X_ = np.concatenate(([pickleData.X[0]], pickleData.X_, [pickleData.X[-1]])) - pickleData.X[0]
+    H = np.concatenate(([pickleData.H0], pickleData.H, [pickleData.HL]))
 # Pick cross section to view from file or default
 yCrossSection = 1000
 xCrossSection = 5000
@@ -51,7 +70,7 @@ if(args.yCrossSection != None):
 #Overwrite local settings here if desired
 # usePcolor = True
 
-print('Plot DPI:',plotDPI,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
+print('Plot DPI:',args.dpi,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
@@ -100,6 +119,9 @@ else:
 x = mds.rdmds("results/XC")
 y = mds.rdmds("results/YC")
 z = np.squeeze(mds.rdmds("results/RC"))
+
+if(args.melange > 0):
+    X_ = X_ + x[1,1] #bump melange to beyond glacier
 
 if(os.path.isfile('input/bathymetry.bin')):
     topo = np.fromfile('input/bathymetry.bin', dtype='>f8')
@@ -177,7 +199,7 @@ for k in kList:
                 dataBergPlot[dataBergPlot != 0] = .2
             else:
                 dataBergPlot = dataBergs[5,:,:,:]
-            dataBergPlot[dataBergPlot == 0] = np.nan
+            dataBergPlot[dataBergPlot == 0] = 1 #np.nan
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         kk = k
         if k == 0:
@@ -233,10 +255,18 @@ for k in kList:
                 x[ySlice,:],
                 np.squeeze(z),
                 np.squeeze(dataBergPlot[:, ySlice, :]),
-                [.4,.6,.8,.9,.95],
+                [.2,.4,.6,.8,.95],
                 extend="min",
                 alpha=.2,
                 cmap='cmo.gray')
+            # cp2 = plt.pcolormesh(
+            #     x[ySlice,:],
+            #     np.squeeze(z),
+            #     np.squeeze(dataBergPlot[:, ySlice, :]),
+            #     vmin=.4,
+            #     vmax=.95,
+            #     alpha=.2,
+            #     cmap='cmo.gray')
             #cbar2 = plt.colorbar(cp2)
             #cbar2.set_label('Ocean Fraction')
         cbar = plt.colorbar(cp,orientation="horizontal",fraction=0.06,format='%.2f')
@@ -280,8 +310,15 @@ for k in kList:
                 w/np.sqrt(u**2 + w**2 + 1e-12),
                 alpha=.5
                 )
-
-        # plt.xlim([0, 10000])
+        if(args.melange > 0):
+            locColor = 'xkcd:dark gray'
+            if(k == 0 or k == 7):
+                locColor = 'xkcd:gray' #these need a lighter color to be visible
+            plt.plot(np.append(X_,X_[::-1]),np.append(-917/1020*H,(1-917/1020)*H[::-1]),
+                color=locColor, linewidth=2, linestyle = '--',
+                )
+        if(args.xlimit != None):
+            plt.xlim([0, args.xlimit])
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, ySlice, :]),np.nanmax(data[kk, :, ySlice, :]),np.max(np.isnan(data[kk, :, ySlice, :]))))
         plt.ylabel('Depth [m]')
         plt.title("%s y = %i at %.02f days" % (name[k], y[ySlice,0], i/86400.0*dt))
@@ -289,8 +326,9 @@ for k in kList:
         
         str = "figs/side_%s%05i.png" % (name[k],j)
         
-        plt.savefig(str, format='png', dpi=plotDPI)
+        plt.savefig(str, format='png', dpi=args.dpi)
         if(args.quick > 1):
+            plt.savefig(f'figs/side_{name[k]}{j:05.0f}.svg', format='svg', dpi=args.dpi)
             plt.show()
         plt.close()
     if(args.quick == 0):

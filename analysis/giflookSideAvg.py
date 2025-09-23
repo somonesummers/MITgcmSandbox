@@ -180,7 +180,7 @@ for k in kList:
         if(isBerg):
             dataBergs = mds.rdmds("results/BRGFlx",i)
             if(dataBergs.shape[0] == 6):
-                openFrac = dataBergPlot = dataBergs[5,:,:,:] #directly saved for these runs
+                openFrac[:,:,:] = dataBergs[5,:,:,:] #directly saved for these runs
                 oldAveraging = False
         if(args.shadow > 0): #enable berg shadows here
             if(dataBergs.shape[0] < 6):
@@ -246,7 +246,7 @@ for k in kList:
                 np.squeeze(z),
                 np.squeeze(np.nanmean(dataBergPlot[:, 1:-1, :],axis=1)),
                 [.4,.6,.8,.9,.95],
-                extend="both",
+                extend="min",
                 alpha=.2,
                 cmap='cmo.gray')
             #cbar2 = plt.colorbar(cp2)
