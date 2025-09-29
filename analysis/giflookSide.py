@@ -190,17 +190,19 @@ else:
 for k in kList:
     print("\t" + name[k])
     for i in np.arange(startStep, maxStep + 1, sizeStep):
+        data = mds.rdmds("results/%s"%(dynName[k]), i)
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
         if(args.shadow > 0): #enable berg shadows here
             dataBergs = mds.rdmds("results/BRGFlx",i)
             if(dataBergs.shape[0] < 6):
-                dataBergPlot = dataBergs[0,:,:,:]
+                dataBergPlot = dataBergs[0,:,:,:].copy()
                 dataBergPlot[dataBergPlot != 0] = .2
+                dataBergPlot[data[0,:,:,:] < -1] = .2 #attemp to recapture freezing limit ice
+                dataBergPlot[:,np.nansum(dataBergs[0,:,:,:],axis=0) == 0] = 0 #attemp to recapture freezing limit ice
             else:
                 dataBergPlot = dataBergs[5,:,:,:]
             dataBergPlot[dataBergPlot == 0] = 1 #np.nan
-        data = mds.rdmds("results/%s"%(dynName[k]), i)
         kk = k
         if k == 0:
             lvl = tempRange

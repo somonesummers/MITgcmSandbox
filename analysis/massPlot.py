@@ -136,10 +136,9 @@ for i in range(len(args.files)):
     # ax2.set_yscale('log')
     if(i == 0):
         ax2_2 = ax2.twinx()
-    ax2_2.plot(timeTime,VTime,color='xkcd:indigo',linestyle=lStyle[i],label='volume')
-    ax2_2.set_ylabel('Mélange H0 [m]',color='xkcd:indigo')
+    ax2_2.plot(timeTime,bFluxSmooth/VTime*3.154e7,color='xkcd:indigo',linestyle=lStyle[i],label='volume')
     ax2_2.tick_params(axis='y',labelcolor='xkcd:indigo')
-    ax2_2.set_ylabel('Volume [m^3]')
+    ax2_2.set_ylabel('Melt Flux/Volume [1/yr]',color='xkcd:indigo')
     # ax2_2.set_yscale('log')
     # ax2_2.grid(alpha=.25,color='xkcd:mulberry')
     ax2.set_xlabel('Time [days]')

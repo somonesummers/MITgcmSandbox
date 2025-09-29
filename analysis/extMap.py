@@ -146,8 +146,8 @@ print('depth is z =', z[zSlice], 'index', zSlice)
 # name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg']
 # cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]"]
 
-# dynNameList = ['heatDiag','uMomDiag','presDiag']
-dynNameList = ['presDiag']
+dynNameList = ['heatDiag','momDiag','presDiag']
+# dynNameList = ['presDiag']
 for dynName in dynNameList:
     metadata = mds.parsemeta(f'results/{dynName}.{startStep:010d}.001.001.meta')
     name = metadata['fldList']
@@ -188,7 +188,7 @@ for dynName in dynNameList:
                 dataBergPlot[dataBergPlot == 0] = 1 #np.nan
             data = mds.rdmds("results/%s"%(dynName), i)
             kk = k
-            if(dynName == 'uMomDiag'):
+            if(dynName == 'momDiag'):
                 cm = 'cmo.balance'
                 lvl = np.linspace(-2e-5,2e-5,31)
             elif(name[k] == 'PHI_NH'):

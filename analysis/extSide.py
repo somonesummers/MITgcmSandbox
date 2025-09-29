@@ -141,10 +141,10 @@ if(isBerg):
                     
 if(np.min(openFrac) < 0 or np.max(openFrac) > 1):
     print(f'Error in openFrac min/max: {np.min(openFrac):0.2f}/{np.max(openFrac):0.2f}')
-print('averaging over all cross sections')
 
-# dynNameList = ['heatDiag','uMomDiag','presDiag']
-dynNameList = ['presDiag']
+
+dynNameList = ['presDiag','momDiag','heatDiag',]
+# dynNameList = ['presDiag']
 for dynName in dynNameList:
     metadata = mds.parsemeta(f'results/{dynName}.{startStep:010d}.001.001.meta')
     name = metadata['fldList']
@@ -185,18 +185,18 @@ for dynName in dynNameList:
                 dataBergPlot[dataBergPlot == 0] = 1 #np.nan
             data = mds.rdmds("results/%s"%(dynName), i)
             kk = k
-            if(dynName == 'uMomDiag'):
+            cbarLabel = None
+            if(dynName == 'momDiag'):
                 cm = 'cmo.balance'
                 lvl = np.linspace(-2e-5,2e-5,31)
-            elif(name[k] == 'PHI_NH'):
-                cm = 'PuOr'
-                lvl = np.linspace(-1e-4,1e-4,31)
-            elif(name[k] == 'PHIHYD'):
+                cbarLabel = '[m/s^2]'
+            elif(dynName == 'presDiag'):
                 cm = 'PuOr'
                 data[k,data[k,:,:,:] == 0] = np.nan
                 for tmp_i in range(data.shape[1]):
                     data[k,tmp_i,ySlice,:] = data[k,tmp_i,ySlice,:] - np.nanmean(data[k,tmp_i,ySlice,2:-2])
-                lvl = np.linspace(-.1,.1,31)
+                lvl = np.linspace(-.2,.2,31)
+                cbarLabel = '[m^2/s^2]'
             else:
                 minVal = np.nanmin(data[k,:,:,:])
                 maxVal = np.nanmax(data[k,:,:,:])
@@ -242,7 +242,8 @@ for dynName in dynNameList:
                 #cbar2 = plt.colorbar(cp2)
                 #cbar2.set_label('Ocean Fraction')
             cbar = plt.colorbar(cp)
-            # cbar.set_label(cbarLabel[k])
+            if(cbarLabel != None):
+                cbar.set_label(cbarLabel)
             if(showDensity):
                 salt = dataQuiv[1,:,ySlice,:]
                 if(i == startStep): #only calc pressure once
@@ -276,7 +277,7 @@ for dynName in dynNameList:
                 plt.xlim([0, args.xlimit])
             plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, ySlice, :]),np.nanmax(data[kk, :, ySlice, :]),np.max(np.isnan(data[kk, :, ySlice, :]))))
             plt.ylabel('Depth [m]')
-            plt.title("%s Width Averaged at %.02f days" % (name[k], i/86400.0*dt))
+            plt.title("%s y = %i at %.02f days" % (name[k], y[ySlice,0], i/86400.0*dt))
             j = i/sizeStep
             
             str = "figs/side_%s%05i.png" % (name[k],j)

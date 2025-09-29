@@ -15,6 +15,8 @@ parser.add_argument('-n','--numFrames', nargs=1, default=[150],type=int,
                     help='Max number of samples from time series [defaut = 150]')
 parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
+parser.add_argument('-x','--xCrossSection', nargs=1, default=20000, type=float,
+                    help='optional x location (m) [default 20000]')
 parser.add_argument('-sgd','--sgd', action='count', default=0,
                     help='optional specification to normalize by (SGD/1000), T,S excluded [default = off]')
 args = parser.parse_args()
@@ -43,19 +45,6 @@ elif(os.path.isfile('../plotHelper.py')):
 else:  
     print('no defaults found')
 print('Plot DPI:',plotDPI)
-
-
-
-dt = 0.0   
-for line in fileinput.input('input/data'):
-        if "deltaT=" in line:
-            dt = float(line[8:-2])
-print('dt is loaded as', dt)
-
-
-x = np.squeeze(mds.rdmds("results/XC")[1])
-z = np.squeeze(mds.rdmds("results/RC"))
-dz = np.load("results/dz.npy")
 
 #extracting SGD
 sgd = (args.sgd > 0)
@@ -88,7 +77,6 @@ if(sgd):
         runoff = np.pi*cleanRad**2*cleanVel
     f = interpolate.interp1d(seasonTime, runoff,fill_value='0')
 
-
 figLabels = ["(a)","(b)","(c)","(d)","(d)","(f)"]
 fig, axes = plt.subplots(3, 2, figsize=(12, 8), layout="constrained")
 ax1 = axes[0,0]
@@ -99,8 +87,28 @@ ax5 = axes[2,0]
 ax6 = axes[2,1]
 #Total melt over time
 
+if(os.path.isfile('input/bergMask.bin')):
+    isBerg = True
+    print('Found icebergs for this run')
+else:
+    isBerg = False
+
+x = np.squeeze(mds.rdmds("results/XC")[1])
+z = np.squeeze(mds.rdmds("results/RC"))
+dz = np.load("results/dz.npy")
+
+xCrossSection = args.xCrossSection 
+xSlice = np.argmin(np.abs(x[:] - xCrossSection))
+print('cross section is x =', x[xSlice],'index', xSlice)
+
 for j in range(len(folders)):
     folder = folders[j]
+
+    dt = 0.0   
+    for line in fileinput.input('%s/input/data' %folder):
+            if "deltaT=" in line:
+                dt = float(line[8:-2])
+    print('dt is loaded as', dt)
 
     #Find time steps to take
     maxStep = 0
@@ -109,7 +117,7 @@ for j in range(len(folders)):
 
     for file in os.listdir('%s%s' %(folder,resultFolder)):
         # print(file)
-        if "BRGFlx.0" in file:
+        if "dynDiag.0" in file:
             words = file.split(".")
             # print(words[1])  
             if int(words[1]) > maxStep:
@@ -137,7 +145,7 @@ for j in range(len(folders)):
     units = ["[m^3/s]"]
 
 
-    weightsTmp = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), startStep)
+    weightsTmp = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'dynDiag'), startStep)
     wghts = weightsTmp[0,:,:,:]
     for i in range(len(dz)):
         wghts[i,:,:] = dz[i]
@@ -194,16 +202,20 @@ for j in range(len(folders)):
     uLength = np.zeros([len(x),len(timeSteps)])
     wLength = np.zeros([len(x),len(timeSteps)])
     for i in range(len(timeSteps)):
-        data = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), timeSteps[i])
         dataOcean = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'dynDiag'), timeSteps[i])
+        if(isBerg):
+            data = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), timeSteps[i])
+        else:
+            data = np.zeros_like(dataOcean)
         fwOverTime[i] = np.nansum(data[0,:,:,:])
         melangeMask = data[0,:,:,:].copy()
-        melangeMask[melangeMask != 0] = 1
-        melangeMask[data[0,:,:,:] < -1] = 1 #attemp to recapture freezing limit ice
-        melangeMask[:,np.nansum(data[0,:,:,:],axis=0) == 0] = 0 #attemp to recapture freezing limit ice
+        melangeMask[:,:,:] = 1
+        melangeMask[dataOcean[1,:,:,:] < 5] = 0 #salt = 0 means its a wall
+        melangeMask[:,:,xSlice:] = 0 #nan out everything beyond xSlice
         melangeMask[:,:,1] = 0 #exclude glacier face and plume
         data[:, melangeMask == 0] = np.nan #nan all zero melt cells
-        dataOcean[:, melangeMask == 0] = np.nan #nan all zero melt cells# spd = ((dataOcean[2,:,:,:]**2 + dataOcean[3,:,:,:]**2 + dataOcean[4,:,:,:]**2)**(.5))
+        dataOcean[:, melangeMask == 0] = np.nan #nan all zero melt cells
+        # spd = ((dataOcean[2,:,:,:]**2 + dataOcean[3,:,:,:]**2 + dataOcean[4,:,:,:]**2)**(.5))
         spd = dataOcean[2,:,:,:]
         if(sgd):
             sgdFactor = f(i*dt)/1000
@@ -341,7 +353,7 @@ for j in range(len(folders)):
     ax6.set_ylabel('W [m/s]')
     ax6.set_xlabel('Time [days]')
 
-plt.savefig('figs/meltDetails%s.png' %fileEnding, format='png',dpi=plotDPI)
+plt.savefig('figs/meltOceanDetails%s.png' %fileEnding, format='png',dpi=plotDPI)
 if(args.silent == 0):
     plt.show()
 plt.close()
@@ -423,8 +435,9 @@ ax6.set_title('Upwelling')
 ax6.set_ylabel('Depth [m]')
 ax6.set_xlabel('Time [days]')
 ax6.set_ylim([zMin,0])
+
 plt.suptitle(fileEnding)
-plt.savefig('figs/meltDepthView%s.png' %fileEnding, format='png',dpi=plotDPI)
+plt.savefig('figs/meltOceanDepthView%s.png' %fileEnding, format='png',dpi=plotDPI)
 if(args.silent == 0):
     plt.show()
 plt.close()
@@ -506,9 +519,9 @@ ax6.set_title('Upwelling')
 ax6.set_ylabel('Length [m]')
 ax6.set_xlabel('Time [days]')
 ax6.set_ylim([0,xMax])
-plt.suptitle('Naive depth averaging ' + fileEnding)
+plt.suptitle('Naive depth averaging ' + fileEnding )
 
-plt.savefig('figs/meltLengthView%s.png' %fileEnding, format='png',dpi=plotDPI)
+plt.savefig('figs/meltOceamLengthView%s.png' %fileEnding, format='png',dpi=plotDPI)
 if(args.silent == 0):
     plt.show()
 plt.close()
