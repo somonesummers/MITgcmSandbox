@@ -68,8 +68,9 @@ briefSummaryOfExp = """Coupling MITgcm and Melange1D
 Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
 
-Quebec starts with 500m3/s Oscar conditions
-Ramps with season SGD 25 to 1500
+Romeo starts with 500m3/s Oscar conditions
+Additional diags to probe cause of collapse
+Ramps from SGD 500 to 2000 in 5 years
 Vary alpha and beta values
 Coupled with variable Uc and 4x enhanced melt
 Summer forcing
@@ -89,7 +90,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'quebec_blank'
+run_config['run_name'] = 'Romeo_a0'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -368,7 +369,7 @@ params03['monitorSelect'] = 1
 
 # Force with yearly cycle
 nt = 120
-daysOfCycle = 365 #1 years
+daysOfCycle = 365*5 #years
 # ForcingValue = np.sin(2*np.pi * np.arange(nt)/nt) # This sets temp variations at BCs
 ForcingValue = assign_deltaT * np.ones(nt) # This sets temp variations at BCs
 
@@ -442,10 +443,13 @@ else:
 diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
                     ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY','BRGhFacC'],
                     ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntR'],
-                    ['TRAC01','TRAC02']
+                    ['TRAC01','TRAC02'],
+                    ['Um_Diss','Um_Advec','Um_Cori','Um_dPhiX','Wm_Diss','Wm_Advec'],
+                    ['ADVx_TH','ADVy_TH','ADVr_TH','UTHMASS','VTHMASS','WTHMASS'],
+                    ['PHIHYD','PHI_NH'],
                     ]
 diag_fields_max = 0
-diag_fields_avg_name = ['dynDiag','BRGFlx','plumeDiag','ptraceDiag']
+diag_fields_avg_name = ['dynDiag','BRGFlx','plumeDiag','ptraceDiag','momDiag','heatDiag','presDiag']
 
 numdiags_avg = len(diag_fields_avg)
 numdiags_avg_total = 0
@@ -757,11 +761,11 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 ## Total runoff (m^3/s)
 ## Seasonal Peak
-runoff = -2*assign_plumeSGD * np.sin(2*np.pi * np.arange(nt)/nt) - assign_plumeSGD
-runoff[runoff <  25 ] = 25
+# runoff = -2*assign_plumeSGD * np.sin(2*np.pi * np.arange(nt)/nt) - assign_plumeSGD
+# runoff[runoff <  25 ] = 25
 ## linear ramp
-#runoff = 500 + assign_plumeSGD * np.arange(nt)/float(nt)
-#runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
+runoff = 500 + assign_plumeSGD * np.arange(nt)/float(nt)
+runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
 # runoff = runoff[::-1] #flipping around for building melange
 ## Constant
 # runoff = assign_plumeSGD * np.ones(nt)
