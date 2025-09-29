@@ -68,10 +68,11 @@ briefSummaryOfExp = """Coupling MITgcm and Melange1D
 Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
 
-november is coupled with variable Uc and 4x enhanced melt
-Summer forcing, seasonal SGD to 1300
-vary alpha, vary U_b
-compare to foxtrotV 
+Quebec starts with 500m3/s Oscar conditions
+Ramps with season SGD 25 to 1500
+Vary alpha and beta values
+Coupled with variable Uc and 4x enhanced melt
+Summer forcing
 
 need to still: 
 Copy MITgcmPickup/iceberg/GLACIOME files from origin of choice
@@ -88,7 +89,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'november_a25_ub3000'
+run_config['run_name'] = 'quebec_blank'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -107,7 +108,7 @@ input("Confirm above is accurate before continuing...")
 
 # Variables to adjust ======================
 assign_deltaT = 0 # [C]
-assign_plumeSGD = 1300 #[m^3/s]
+assign_plumeSGD = 1500 #[m^3/s]
 season_sw = 's'
 
 # Offshore current =========================
@@ -366,8 +367,8 @@ params03['monitorFreq'] = 21600.0 # 6 hours
 params03['monitorSelect'] = 1
 
 # Force with yearly cycle
-nt = 48
-daysOfCycle = 365
+nt = 120
+daysOfCycle = 365 #1 years
 # ForcingValue = np.sin(2*np.pi * np.arange(nt)/nt) # This sets temp variations at BCs
 ForcingValue = assign_deltaT * np.ones(nt) # This sets temp variations at BCs
 
@@ -757,10 +758,10 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 ## Total runoff (m^3/s)
 ## Seasonal Peak
 runoff = -2*assign_plumeSGD * np.sin(2*np.pi * np.arange(nt)/nt) - assign_plumeSGD
-runoff[runoff <  10 ] = 10
+runoff[runoff <  25 ] = 25
 ## linear ramp
-# runoff = 1 + assign_plumeSGD * np.arange(nt)/float(nt)
-# runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
+#runoff = 500 + assign_plumeSGD * np.arange(nt)/float(nt)
+#runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
 # runoff = runoff[::-1] #flipping around for building melange
 ## Constant
 # runoff = assign_plumeSGD * np.ones(nt)
