@@ -92,7 +92,8 @@ if((maxStep-startStep)/sizeStep > args.numFrames):   #if more than numFrames, do
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 #Decide if iceBerg data files exist
-if(os.path.isfile(f'results/BRGFlx.{startStep:010d}.data')):
+if(os.path.isfile(f'results/BRGFlx.{startStep:010d}.data') or 
+    os.path.isfile(f'results/BRGFlx.{startStep:010d}.001.001.data')):
     isBerg = True
     print('Found icebergs for this run')
 else:

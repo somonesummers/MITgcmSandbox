@@ -23,7 +23,7 @@ C           which should be enough for most applications.
 #ifdef ALLOW_FIZHI
       PARAMETER ( size3dBuf = Nr+NrPhys )
 #elif defined(ALLOW_ICEBERG)
-      PARAMETER ( size3dBuf = maxBergCt )
+      PARAMETER ( size3dBuf = brg_MaxBergCt )
 #else
       PARAMETER ( size3dBuf = 2*Nr )
 #endif

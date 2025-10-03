@@ -111,7 +111,7 @@ C--   Add drag contribution:
        DO j=1-OLy,sNy+OLy
         DO i=1-OLx+1,sNx+OLx
          IF ( k.LE.
-     &       MAX( kBergBotC(i-1,j,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+     &       MAX( brg_kBotC(i-1,j,bi,bj),brg_kBotC(i,j,bi,bj) ) ) THEN
           cDrag(i,j) = cDrag(i,j) 
      &       + brg_DragForm * dragFac *  
      &                   drF(k) * fillFactor(i,j)
@@ -136,7 +136,7 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
         DO i=1-OLx+1,sNx+OLx-1
           uSq = 0. _d 0
           IF ( k.LE.
-     &         MAX( kBergBotC(i-1,j,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+     &         MAX( brg_kBotC(i-1,j,bi,bj),brg_kBotC(i,j,bi,bj) ) ) THEN
            uSq = KE(i,j)+KE(i-1,j)
           ENDIF
           IF ( uSq.GT.zeroRL ) THEN
@@ -166,7 +166,7 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
         DO i=1-OLx+1,sNx+OLx-1
           uSq = 0. _d 0
           IF ( k.LE.
-     &         MAX( kBergBotC(i-1,j,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+     &         MAX( brg_kBotC(i-1,j,bi,bj),brg_kBotC(i,j,bi,bj) ) ) THEN
            uSq = KE(i,j)+KE(i-1,j)
           ENDIF
           IF ( uSq.GT.zeroRL ) THEN
@@ -196,7 +196,7 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
         DO i=1-OLx+1,sNx+OLx-1
           uSq = 0. _d 0
           IF ( k.LE.
-     &         MAX( kBergBotC(i-1,j,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+     &     MAX( brg_kBotC(i-1,j,bi,bj),brg_kBotC(i,j,bi,bj) ) ) THEN
            uSq = KE(i,j)+KE(i-1,j)
           ENDIF
           IF ( uSq.GT.zeroRL ) THEN
@@ -216,12 +216,12 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
 C-     Explicit case: diagnose directly the iceberg stress, only implemented case
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
-           icebergDragU(i,j,k,bi,bj) = - cDrag(i,j)
+           brg_DragU(i,j,k,bi,bj) = - cDrag(i,j)
      &                                  * uFld(i,j) * rUnit2mass
           ENDDO
          ENDDO
        ENDIF
-       CALL DIAGNOSTICS_FILL_RS( icebergDragU, 'BRG_TauX',
+       CALL DIAGNOSTICS_FILL_RS( brg_DragU, 'BRG_TauX',
      &                          0, Nr, 1, bi, bj, myThid )
        CALL DIAGNOSTICS_FILL_RS( hFacC, 'BRGhFacC',
      &                          0, Nr, 1, bi, bj, myThid )
