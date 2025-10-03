@@ -146,9 +146,12 @@ if(np.min(openFrac) < 0 or np.max(openFrac) > 1):
 dynNameList = ['presDiag','momDiag','heatDiag',]
 # dynNameList = ['presDiag']
 for dynName in dynNameList:
-    metadata = mds.parsemeta(f'results/{dynName}.{startStep:010d}.001.001.meta')
-    name = metadata['fldList']
-    # print(metadata)
+    if(dynName == 'presDiag'):
+        name = ['PHIHYD', 'PHI_NH']
+    elif(dynName == 'momDiag'):
+        name = ['Um_Diss','Um_Advec','Um_Cori','Um_dPhiX','Wm_Diss','Wm_Advec']
+    elif(dynName == 'heatDiag'):
+        name = ['ADVx_TH','ADVy_TH','ADVr_TH','UTHMASS','VTHMASS','WTHMASS']
     if(args.quick > 0):
         startStep = maxStep
         cleanPNGs = False
@@ -188,14 +191,14 @@ for dynName in dynNameList:
             cbarLabel = None
             if(dynName == 'momDiag'):
                 cm = 'cmo.balance'
-                lvl = np.linspace(-2e-5,2e-5,31)
+                lvl = np.linspace(-5e-5,5e-5,31)
                 cbarLabel = '[m/s^2]'
             elif(dynName == 'presDiag'):
-                cm = 'PuOr'
+                cm = 'PuOr_r'
                 data[k,data[k,:,:,:] == 0] = np.nan
                 for tmp_i in range(data.shape[1]):
                     data[k,tmp_i,ySlice,:] = data[k,tmp_i,ySlice,:] - np.nanmean(data[k,tmp_i,ySlice,2:-2])
-                lvl = np.linspace(-.2,.2,31)
+                lvl = np.linspace(-.4,.4,31)
                 cbarLabel = '[m^2/s^2]'
             else:
                 minVal = np.nanmin(data[k,:,:,:])
@@ -275,7 +278,7 @@ for dynName in dynNameList:
                     plt.clabel(cc, inline=3, fontsize=8)
             if(args.xlimit != None):
                 plt.xlim([0, args.xlimit])
-            plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, ySlice, :]),np.nanmax(data[kk, :, ySlice, :]),np.max(np.isnan(data[kk, :, ySlice, :]))))
+            plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, ySlice, 2:-2]),np.nanmax(data[kk, :, ySlice, 2:-2]),np.max(np.isnan(data[kk, :, ySlice, :]))))
             plt.ylabel('Depth [m]')
             plt.title("%s y = %i at %.02f days" % (name[k], y[ySlice,0], i/86400.0*dt))
             j = i/sizeStep

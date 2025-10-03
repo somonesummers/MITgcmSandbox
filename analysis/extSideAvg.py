@@ -142,11 +142,17 @@ print('averaging over all cross sections')
 # name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg']
 # cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]"]
 
-dynNameList = ['heatDiag','momDiag','presDiag']
+dynNameList = ['presDiag','momDiag','heatDiag']
 # dynNameList = ['presDiag']
 for dynName in dynNameList:
-    metadata = mds.parsemeta(f'results/{dynName}.{startStep:010d}.001.001.meta')
-    name = metadata['fldList']
+    # metadata = mds.parsemeta(f'results/{dynName}.{startStep:010d}.001.001.meta')
+    # name = metadata['fldList'] so this works, but not when made into global files sadly
+    if(dynName == 'presDiag'):
+        name = ['PHIHYD', 'PHI_NH']
+    elif(dynName == 'momDiag'):
+        name = ['Um_Diss','Um_Advec','Um_Cori','Um_dPhiX','Wm_Diss','Wm_Advec']
+    elif(dynName == 'heatDiag'):
+        name = ['ADVx_TH','ADVy_TH','ADVr_TH','UTHMASS','VTHMASS','WTHMASS']
     # print(metadata)
     if(args.quick > 0):
         startStep = maxStep
@@ -186,17 +192,15 @@ for dynName in dynNameList:
             kk = k
             if(dynName == 'momDiag'):
                 cm = 'cmo.balance'
-                lvl = np.linspace(-2e-5,2e-5,31)
-            elif(name[k] == 'PHI_NH'):
-                cm = 'cmo.balance'
-                lvl = np.linspace(-1e-4,1e-4,31)
-            elif(name[k] == 'PHIHYD'):
-                cm = 'cmo.tempo'
-                minVal = np.nanmin(data[k,:,:,:])
-                maxVal = np.nanmax(data[k,:,:,:])
-                mn = np.nanmean(data[k,:,:,:])
-                sd = np.nanstd(data[k,:,:,:])
-                lvl = np.linspace(mn-3*sd,mn+3*sd,31)
+                lvl = np.linspace(-5e-5,5e-5,31)
+            elif(dynName == 'presDiag'):
+                cm = 'PuOr_r'
+                # data[k,data[k,:,:,:] == 0] = np.nan
+                # print(np.nansum(openFrac,axis=(0,1)))
+                for tmp_i in range(data.shape[1]):
+                    data[k,tmp_i,:,:] = data[k,tmp_i,:,:] - np.nanmean(data[k,tmp_i,5:-5,2:-2])
+                lvl = np.linspace(-.4,.4,31)
+                cbarLabel = '[m^2/s^2]'
             else:
                 minVal = np.nanmin(data[k,:,:,:])
                 maxVal = np.nanmax(data[k,:,:,:])

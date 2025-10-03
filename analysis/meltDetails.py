@@ -30,6 +30,8 @@ colors = ['xkcd:blue','xkcd:gray','xkcd:red']
 resultFolder = '/results'
 fileEnding = ""
 
+if(args.timeRange != None):
+    fileEnding = f'{fileEnding}_T{args.timeRange[0]}_{args.timeRange[1]}' 
 thresholds = [0.04,.04,.04]
 
 if(os.path.isfile('input/plotHelperLocal.py')):
@@ -52,10 +54,16 @@ for line in fileinput.input('input/data'):
             dt = float(line[8:-2])
 print('dt is loaded as', dt)
 
-
+y = np.squeeze(mds.rdmds("results/YC")[:,0])
 x = np.squeeze(mds.rdmds("results/XC")[1])
 z = np.squeeze(mds.rdmds("results/RC"))
 dz = np.load("results/dz.npy")
+ny = len(y)
+
+zDepth = -600
+zSlice = np.argmin(np.abs(z[:]- zDepth))
+print('depth is z =', z[zSlice], 'index', zSlice)
+
 
 #extracting SGD
 sgd = (args.sgd > 0)
@@ -89,7 +97,7 @@ if(sgd):
     f = interpolate.interp1d(seasonTime, runoff,fill_value='0')
 
 
-figLabels = ["(a)","(b)","(c)","(d)","(d)","(f)"]
+figLabels = ["(a)","(b)","(c)","(d)","(d)","(f)","(g)","(h)"]
 fig, axes = plt.subplots(3, 2, figsize=(12, 8), layout="constrained")
 ax1 = axes[0,0]
 ax2 = axes[0,1]
@@ -186,6 +194,8 @@ for j in range(len(folders)):
     sDepth = np.zeros([len(z),len(timeSteps)])
     uDepth = np.zeros([len(z),len(timeSteps)])
     wDepth = np.zeros([len(z),len(timeSteps)])
+    pDepth = np.zeros([len(z),len(timeSteps)])
+    hfDepth = np.zeros([len(z),len(timeSteps)])
     # Length view
     fwLength = np.zeros([len(x),len(timeSteps)])
     bLength = np.zeros([len(x),len(timeSteps)])
@@ -193,9 +203,12 @@ for j in range(len(folders)):
     sLength = np.zeros([len(x),len(timeSteps)])
     uLength = np.zeros([len(x),len(timeSteps)])
     wLength = np.zeros([len(x),len(timeSteps)])
+    pLength = np.zeros([len(x),len(timeSteps)])
+    hfLength = np.zeros([len(x),len(timeSteps)])
     for i in range(len(timeSteps)):
         data = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), timeSteps[i])
         dataOcean = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'dynDiag'), timeSteps[i])
+        dataPress = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'presDiag'), timeSteps[i])
         fwOverTime[i] = np.nansum(data[0,:,:,:])
         melangeMask = data[0,:,:,:].copy()
         melangeMask[melangeMask != 0] = 1
@@ -204,6 +217,10 @@ for j in range(len(folders)):
         melangeMask[:,:,1] = 0 #exclude glacier face and plume
         data[:, melangeMask == 0] = np.nan #nan all zero melt cells
         dataOcean[:, melangeMask == 0] = np.nan #nan all zero melt cells# spd = ((dataOcean[2,:,:,:]**2 + dataOcean[3,:,:,:]**2 + dataOcean[4,:,:,:]**2)**(.5))
+        meanP = np.nanmean(dataPress[0,:,int(ny/2),2:-2],axis=(1)) #find anomoly relative to centerline average
+        # print(meanP)
+        dataPress[0,:,:,:] = dataPress[0,:,:,:] - meanP[:,None,None] #get anomoly before NANing
+        dataPress[:, melangeMask == 0] = np.nan
         spd = dataOcean[2,:,:,:]
         if(sgd):
             sgdFactor = f(i*dt)/1000
@@ -216,13 +233,18 @@ for j in range(len(folders)):
         sDepth[:,i] = np.nanmean(dataOcean[1,:,:,:],axis=(1,2))
         uDepth[:,i] = np.nanmean(spd,axis=(1,2))/sgdFactor
         wDepth[:,i] = np.nanmean(dataOcean[3,:,:,:],axis=(1,2))/sgdFactor
+        pDepth[:,i] = np.nanmean(dataPress[0,:,:,:],axis=(1,2))/sgdFactor
+        hfDepth[:,i] = np.nanmean(data[5,:,:,:],axis=(1,2))
         #length values
-        fwLength[:,i] = np.nansum(data[0,:,:,:],axis=(0,1))/(x[1]-x[0])/sgdFactor
-        bLength[:,i] = np.nanmean(data[2,:,:,:],axis=(0,1))/sgdFactor
-        tLength[:,i] = np.nanmean(dataOcean[0,:,:,:],axis=(0,1))
-        sLength[:,i] = np.nanmean(dataOcean[1,:,:,:],axis=(0,1))
-        uLength[:,i] = np.nanmean(spd,axis=(0,1))/sgdFactor
-        wLength[:,i] = np.nanmean(dataOcean[3,:,:,:],axis=(0,1))/sgdFactor
+        
+        fwLength[:,i] = np.nansum(data[0,:zSlice,:,:],axis=(0,1))/(x[1]-x[0])/sgdFactor
+        bLength[:,i] = np.nanmean(data[2,:zSlice,:,:],axis=(0,1))/sgdFactor
+        tLength[:,i] = np.nanmean(dataOcean[0,:zSlice,:,:],axis=(0,1))
+        sLength[:,i] = np.nanmean(dataOcean[1,:zSlice,:,:],axis=(0,1))
+        uLength[:,i] = np.nanmean(spd[:zSlice,:,:],axis=(0,1))/sgdFactor
+        wLength[:,i] = np.nanmean(dataOcean[3,:zSlice,:,:],axis=(0,1))/sgdFactor
+        pLength[:,i] = np.nanmean(dataPress[0,:zSlice,:,:],axis=(0,1))/sgdFactor
+        hfLength[:,i] = np.nanmean(data[5,:zSlice,:,:],axis=(0,1))
         #percentile values
         MROverTime[i] = np.nanmean(data[2,:,:,:]) #melt ratem m/day
         Mr25Time[i] = np.nanpercentile(data[2,:,:,:],25,weights=wghts,method='inverted_cdf')
@@ -347,13 +369,18 @@ if(args.silent == 0):
 plt.close()
 
 ## Next figure
-fig, axes = plt.subplots(3, 2, figsize=(12, 8), layout="constrained")
+fig, axes = plt.subplots(4, 2, figsize=(12, 8), layout="constrained")
 ax1 = axes[0,0]
 ax2 = axes[0,1]
 ax3 = axes[1,0]
 ax4 = axes[1,1]
 ax5 = axes[2,0]
 ax6 = axes[2,1]
+ax7 = axes[3,0]
+ax8 = axes[3,1]
+
+iceRange = np.linspace(0,1,11)
+pRange = np.linspace(-.4,.4,31)
 
 #minor cleaning, nansum returns 0 if all nan, nanmean returns nan if all nan. We prefer the 2nd behavior
 fwDepth[np.isnan(tDepth)] = np.nan
@@ -394,9 +421,9 @@ cp = ax4.contourf(timeSteps*dt/86400,z,uDepth,
                 uRange,
                 cmap=uCmap)
 cbar = plt.colorbar(cp)
-cbar.set_label('Speed [m/s]')
+cbar.set_label('Velocity [m/s]')
 ax4.grid(alpha=.5)
-ax4.set_title('Speed')
+ax4.set_title('U Vel Down Fjord')
 ax4.set_ylabel('Depth [m]')
 ax4.set_xlabel('Time [days]')
 ax4.set_ylim([zMin,0])
@@ -417,12 +444,37 @@ cp = ax6.contourf(timeSteps*dt/86400,z,wDepth,
                 cmap=wCmap,
                 extend="both")
 cbar = plt.colorbar(cp)
-cbar.set_label('upwelling [m/s]')
+cbar.set_label('Upwelling [m/s]')
 ax6.grid(alpha=.5)
 ax6.set_title('Upwelling')
 ax6.set_ylabel('Depth [m]')
 ax6.set_xlabel('Time [days]')
 ax6.set_ylim([zMin,0])
+
+cp = ax7.contourf(timeSteps*dt/86400,z,pDepth,
+                pRange,
+                cmap="PuOr_r",
+                extend="both")
+cbar = plt.colorbar(cp)
+cbar.set_label('Pressure [m^2/s^2]')
+ax7.grid(alpha=.5)
+ax7.set_title('HYD Pressure Anom')
+ax7.set_ylabel('Depth [m]')
+ax7.set_xlabel('Time [days]')
+ax7.set_ylim([zMin,0])
+
+cp = ax8.contourf(timeSteps*dt/86400,z,1-hfDepth,
+                iceRange,
+                cmap="Grays",
+                extend="both")
+cbar = plt.colorbar(cp)
+cbar.set_label('Ice Vol Fraction [ ]')
+ax8.grid(alpha=.5)
+ax8.set_title('Ice Fill')
+ax8.set_ylabel('Depth [m]')
+ax8.set_xlabel('Time [days]')
+ax8.set_ylim([zMin,0])
+
 plt.suptitle(fileEnding)
 plt.savefig('figs/meltDepthView%s.png' %fileEnding, format='png',dpi=plotDPI)
 if(args.silent == 0):
@@ -430,13 +482,15 @@ if(args.silent == 0):
 plt.close()
 
 ## Next figure
-fig, axes = plt.subplots(3, 2, figsize=(12, 8), layout="constrained")
+fig, axes = plt.subplots(4, 2, figsize=(12, 8), layout="constrained")
 ax1 = axes[0,0]
 ax2 = axes[0,1]
 ax3 = axes[1,0]
 ax4 = axes[1,1]
 ax5 = axes[2,0]
 ax6 = axes[2,1]
+ax7 = axes[3,0]
+ax8 = axes[3,1]
 
 #minor cleaning, nansum returns 0 if all nan, nanmean returns nan if all nan. We prefer the 2nd behavior
 fwLength[np.isnan(tLength)] = np.nan
@@ -477,9 +531,9 @@ cp = ax4.contourf(timeSteps*dt/86400,x,uLength,
                 uRange,
                 cmap=uCmap)
 cbar = plt.colorbar(cp)
-cbar.set_label('Speed [m/s]')
+cbar.set_label('Velocity [m/s]')
 ax4.grid(alpha=.5)
-ax4.set_title('Speed')
+ax4.set_title('U Vel Down Fjord')
 ax4.set_ylabel('Length [m]')
 ax4.set_xlabel('Time [days]')
 ax4.set_ylim([0,xMax])
@@ -500,12 +554,37 @@ cp = ax6.contourf(timeSteps*dt/86400,x,wLength,
                 cmap=wCmap,
                 extend="both")
 cbar = plt.colorbar(cp)
-cbar.set_label('upwelling [m/s]')
+cbar.set_label('Upwelling [m/s]')
 ax6.grid(alpha=.5)
 ax6.set_title('Upwelling')
 ax6.set_ylabel('Length [m]')
 ax6.set_xlabel('Time [days]')
 ax6.set_ylim([0,xMax])
+
+cp = ax7.contourf(timeSteps*dt/86400,x,pLength,
+                pRange,
+                cmap="PuOr_r",
+                extend="both")
+cbar = plt.colorbar(cp)
+cbar.set_label('Pressure [m^2/s^2]')
+ax7.grid(alpha=.5)
+ax7.set_title('HYD Pressure Anom')
+ax7.set_ylabel('Length [m]')
+ax7.set_xlabel('Time [days]')
+ax7.set_ylim([0,xMax])
+
+cp = ax8.contourf(timeSteps*dt/86400,x,1-hfLength,
+                iceRange,
+                cmap="Grays",
+                extend="both")
+cbar = plt.colorbar(cp)
+cbar.set_label('Ice Fraction [ ]')
+ax8.grid(alpha=.5)
+ax8.set_title('Ice Frac')
+ax8.set_ylabel('Length [m]')
+ax8.set_xlabel('Time [days]')
+ax8.set_ylim([0,xMax])
+
 plt.suptitle('Naive depth averaging ' + fileEnding)
 
 plt.savefig('figs/meltLengthView%s.png' %fileEnding, format='png',dpi=plotDPI)

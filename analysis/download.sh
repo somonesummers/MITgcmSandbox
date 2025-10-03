@@ -36,11 +36,11 @@ do
   rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/output* $EXP/
   echo ' couplingResults/'
   rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/couplingResults/ $EXP/couplingResults
+  echo ' input/'
+  rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/input/ $EXP/input
   if $doResults; then
     echo 'figs/'
     rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/figs/ $EXP/figs
-    echo ' input/'
-    rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/input/ $EXP/input
     echo ' results/'
     rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/results/ $EXP/results
   fi

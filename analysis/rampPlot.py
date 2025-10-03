@@ -120,18 +120,20 @@ for i in range(len(args.files)):
     if(args.sgd != None):
         from scipy import interpolate
         from MITgcmutils import mds
-        y = np.squeeze(mds.rdmds("results/YC")[:,0])
+        remoteResult = args.files[i].rsplit('/',1)[0]
+        print(f'remoteResult is ({remoteResult})')
+        y = np.squeeze(mds.rdmds(f"{remoteResult}/../results/YC")[:,0])
         dy = 2*y[0]
-        for line in fileinput.input('input/data'):
+        for line in fileinput.input(f'{remoteResult}/../input/data'):
             if "ExternForcingPeriod=" in line:
                 period = float(line[21:-2])
             elif "ExternForcingCycle=" in line:
                 cycle = float(line[20:-2])
         nt = int(cycle/period)
-        plumeMask = np.fromfile('input/plumeMask.bin', dtype='>f8') #(2 is line, 3 is semi-cone)
-        rad = np.fromfile('input/runoffRad.bin', dtype='>f8')
+        plumeMask = np.fromfile(f'{remoteResult}/../input/plumeMask.bin', dtype='>f8') #(2 is line, 3 is semi-cone)
+        rad = np.fromfile(f'{remoteResult}/../input/runoffRad.bin', dtype='>f8')
         rad = rad.reshape((nt,len(plumeMask)))
-        vel = np.fromfile('input/runoffVel.bin', dtype='>f8')
+        vel = np.fromfile(f'{remoteResult}/../input/runoffVel.bin', dtype='>f8')
         vel = vel.reshape((nt,len(plumeMask)))
 
         plumeType = np.max(plumeMask)
