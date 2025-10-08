@@ -51,8 +51,8 @@ C     !LOCAL VARIABLES:
 
        DO j=1,sNy
         DO i=1,sNx
-         IF ( openFraction(I,J,K,bi,bj) .GT. 0. _d 0 ) THEN
-          gT_arr(i,j) = gT_arr(i,j) + ICEBERGTendT3D(i,j,k,bi,bj)
+         IF ( brg_OpenFraction(I,J,K,bi,bj) .GT. 0. _d 0 ) THEN
+          gT_arr(i,j) = gT_arr(i,j) + brg_TendT3D(i,j,k,bi,bj)
          ENDIF
         ENDDO
        ENDDO
@@ -104,8 +104,8 @@ C     !LOCAL VARIABLES:
 
        DO j=1,sNy
         DO i=1,sNx
-         IF ( openFraction(I,J,K,bi,bj) .GT. 0. _d 0 ) THEN
-          gS_arr(i,j) = gS_arr(i,j) + ICEBERGTendS3D(i,j,k,bi,bj)
+         IF ( brg_OpenFraction(I,J,K,bi,bj) .GT. 0. _d 0 ) THEN
+          gS_arr(i,j) = gS_arr(i,j) + brg_TendS3D(i,j,k,bi,bj)
          ENDIF
         ENDDO
        ENDDO

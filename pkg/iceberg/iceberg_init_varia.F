@@ -52,15 +52,15 @@ C     brg_CDragQuadFld used in iceberg_u/v_drag_coeff
         DO j = 1-OLy, sNy+OLy
          DO i = 1-OLx, sNx+OLx
           DO K = 1,Nr
-           icebergHeatFlux3D      (i,j,K,bi,bj) = 0. _d 0
-           icebergFWFlux3D        (i,j,K,bi,bj) = 0. _d 0
-           icebergMeltRate3D      (i,j,K,bi,bj) = 0. _d 0
-           icebergTendT3D         (i,j,K,bi,bj) = 0. _d 0
-           icebergTendS3D         (i,j,K,bi,bj) = 0. _d 0
+           brg_HeatFlux3D      (i,j,K,bi,bj) = 0. _d 0
+           brg_FwFlux3D        (i,j,K,bi,bj) = 0. _d 0
+           brg_MeltRate3D      (i,j,K,bi,bj) = 0. _d 0
+           brg_TendT3D         (i,j,K,bi,bj) = 0. _d 0
+           brg_TendS3D         (i,j,K,bi,bj) = 0. _d 0
 #ifdef ALLOW_DIAGNOSTICS
             IF ( useDiagnostics ) THEN
-             icebergDragU(i,j,k,bi,bj) = 0.
-             icebergDragV(i,j,k,bi,bj) = 0.
+             brg_DragU(i,j,k,bi,bj) = 0.
+             brg_DragV(i,j,k,bi,bj) = 0.
             ENDIF
 #endif /* ALLOW_DIAGNOSTICS */
 #ifdef ALLOW_PTRACERS

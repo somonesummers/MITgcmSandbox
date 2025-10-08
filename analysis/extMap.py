@@ -149,8 +149,12 @@ print('depth is z =', z[zSlice], 'index', zSlice)
 dynNameList = ['heatDiag','momDiag','presDiag']
 # dynNameList = ['presDiag']
 for dynName in dynNameList:
-    metadata = mds.parsemeta(f'results/{dynName}.{startStep:010d}.001.001.meta')
-    name = metadata['fldList']
+    if(dynName == 'presDiag'):
+        name = ['PHIHYD', 'PHI_NH']
+    elif(dynName == 'momDiag'):
+        name = ['Um_Diss','Um_Advec','Um_Cori','Um_dPhiX','Wm_Diss','Wm_Advec']
+    elif(dynName == 'heatDiag'):
+        name = ['ADVx_TH','ADVy_TH','ADVr_TH','UTHMASS','VTHMASS','WTHMASS']
     # print(metadata)
     if(args.quick > 0):
         startStep = maxStep
@@ -190,19 +194,19 @@ for dynName in dynNameList:
             kk = k
             if(dynName == 'momDiag'):
                 cm = 'cmo.balance'
-                lvl = np.linspace(-2e-5,2e-5,31)
+                lvl = np.linspace(-5e-5,5e-5,31)
             elif(name[k] == 'PHI_NH'):
-                cm = 'PuOr'
-                lvl = np.linspace(-1e-4,1e-4,31)
+                cm = 'PuOr_r'
+                lvl = np.linspace(-.4,.4,31)
             elif(name[k] == 'PHIHYD'):
-                cm = 'PuOr'
+                cm = 'PuOr_r'
                 data[:,dataQuiv[2,:,:,:] == 0] = np.nan
                 minVal = np.nanmin(data[k,zSlice,:,:])
                 maxVal = np.nanmax(data[k,zSlice,:,:])
                 mn = np.nanmean(data[k,zSlice,:,2:-2])
                 data[k,:,:,:] -= mn
                 sd = np.nanstd(data[k,zSlice,:,:])
-                lvl = np.linspace(-0.1,0.1,31)
+                lvl = np.linspace(-.4,.4,31)
             else:
                 minVal = np.nanmin(data[k,zSlice,:,:])
                 maxVal = np.nanmax(data[k,zSlice,:,:])

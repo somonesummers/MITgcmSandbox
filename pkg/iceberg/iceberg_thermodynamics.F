@@ -86,11 +86,11 @@ C     hf_berg :: heat flux from single berg in single cell (W m^-2)
 C     tendT_berg, tendS_berg :: heat and salt tendencies from all bergs within a single cell (K s^-1, psu s^-1)
 C
 C     - MAIN OUTPUT FIELDS (defined in ICEBERG.h and initialised in iceberg_init_varia.F)
-C     icebergFWFlux3D :: freshwater flux due to freezing or melting of all icebergs (m^3 s^-1)
-C     icebergHeatFlux3D :: heat flux from all icebergs (W m^-2)
-C     icebergTendT3D :: temperature tendency from all icebergs (K ^s-1)
-C     icebergTendS3D :: salt tendency from all icebergs (psy s^-1)
-C     icebergMeltRate3D :: cell-average melt rate from all icebergs (m d^-1)
+C     brg_FwFlux3D :: freshwater flux due to freezing or melting of all icebergs (m^3 s^-1)
+C     brg_HeatFlux3D :: heat flux from all icebergs (W m^-2)
+C     brg_TendT3D :: temperature tendency from all icebergs (K ^s-1)
+C     brg_TendS3D :: salt tendency from all icebergs (psy s^-1)
+C     brg_MeltRate3D :: cell-average melt rate from all icebergs (m d^-1)
 C
       INTEGER I,J,K,bi,bj,n, cellNum, numBergs, bergBottomCell, iTracer
       _RL bergDepth, bergLength, bergWidth
@@ -115,9 +115,9 @@ C
       _RL tProf(1:Nr)
       _RL sProf(1:Nr)
       _RL pProf(1:Nr)
-      _RL depth_list(1:maxBergCt)
-      _RL width_list(1:maxBergCt)
-      _RL length_list(1:maxBergCt)
+      _RL depth_list(1:brg_MaxBergCt)
+      _RL width_list(1:brg_MaxBergCt)
+      _RL length_list(1:brg_MaxBergCt)
       PARAMETER(rho_0=1027.0D0)
       LOGICAL  DIFFERENT_MULTIPLE
       EXTERNAL DIFFERENT_MULTIPLE
@@ -156,11 +156,11 @@ C===============================================================================
       DO J = 1, sNy
       DO I = 1, sNx
       DO K = 1, Nr
-        icebergFWFlux3D(I,J,K,bi,bj) = 0. _d 0
-        icebergHeatFlux3D(I,J,K,bi,bj) = 0. _d 0
-        icebergTendT3D(I,J,K,bi,bj) = 0. _d 0
-        icebergTendS3D(I,J,K,bi,bj) = 0. _d 0
-        icebergMeltRate3D(I,J,K,bi,bj) = 0. _d 0
+        brg_FwFlux3D(I,J,K,bi,bj) = 0. _d 0
+        brg_HeatFlux3D(I,J,K,bi,bj) = 0. _d 0
+        brg_TendT3D(I,J,K,bi,bj) = 0. _d 0
+        brg_TendS3D(I,J,K,bi,bj) = 0. _d 0
+        brg_MeltRate3D(I,J,K,bi,bj) = 0. _d 0
       ENDDO
       ENDDO
       ENDDO
@@ -179,11 +179,11 @@ C -----------------------------------------------------------------
 C ------------------------- Preliminaries -----------------------------
 C------------------------------------------------------------------
 C    Check if there are icebergs
-       IF ( abs(icebergMask(I,J,bi,bj)) .EQ. 1 ) THEN
+       IF ( abs(brg_Mask(I,J,bi,bj)) .EQ. 1 ) THEN
      
 C     Get iceberg cell number and number of icebergs in this cell
-       cellNum = icebergMaskNums(I,J,bi,bj)
-       numBergs = icebergNumBergs(I,J,bi,bj)
+       cellNum = brg_MaskNums(I,J,bi,bj)
+       numBergs = brg_NumBergs(I,J,bi,bj)
        
        IF ( numBergs .GT. 0 ) THEN
         
@@ -204,16 +204,16 @@ C      Get profiles of temperature and salinity
        ENDDO
        
 C     Pre-allocate berg geometry profiles
-      DO n = 1,maxBergCt
+      DO n = 1,brg_MaxBergCt
         depth_list(n) = 0. _d 0
         length_list(n) = 0. _d 0
         width_list(n) = 0. _d 0
       ENDDO
        
       DO n = 1,numBergs
-        depth_list(n) = icebergDepths(I,J,n,bi,bj)
-        length_list(n) = icebergLength(I,J,n,bi,bj)
-        width_list(n) = icebergWidths(I,J,n,bi,bj)
+        depth_list(n) = brg_Depths(I,J,n,bi,bj)
+        length_list(n) = brg_Length(I,J,n,bi,bj)
+        width_list(n) = brg_Widths(I,J,n,bi,bj)
       ENDDO 
 
 #ifdef ALLOW_PER_BERG_DIAG
@@ -307,17 +307,17 @@ C ------------------------- Iceberg drift ------------------------------
 C------------------------------------------------------------------
 C    Calculate relative current velocity along iceberg draught
 C     - Extract all currents along iceberg draught
-      IF ( abs(driftMask(I,J,bi,bj)) .EQ. 1 ) THEN
+      IF ( abs(brg_DriftMask(I,J,bi,bj)) .EQ. 1 ) THEN
       col_speed = 0. _d 0 ! reset column speed between icebergs
       DO K = 1,bergBottomCell
-       IF ( icebergMask(i,j,bi,bj) .EQ. 1 ) THEN ! iceberg is oriented east-west
+       IF ( brg_Mask(i,j,bi,bj) .EQ. 1 ) THEN ! iceberg is oriented east-west
         IF ( K .EQ. bergBottomCell ) THEN
          remainder = bergDepth - (abs(rC(K))-(drF(K)/2.0D0)) ! calculate how much iceberg protrudes into cell containing iceberg base
          col_speed = col_speed+(uVel(I,J,K,bi,bj)*(remainder/drF(K))) ! scale velocity in bottom cell according to length of iceberg relative to height of cell
         ELSE
           col_speed = col_speed + uVel(I,J,K,bi,bj)
         ENDIF
-       ELSEIF ( icebergMask(I,J,bi,bj) .EQ. -1 ) THEN ! iceberg is oriented north-south
+       ELSEIF ( brg_Mask(I,J,bi,bj) .EQ. -1 ) THEN ! iceberg is oriented north-south
         IF ( K .EQ. bergBottomCell ) THEN
          remainder = bergDepth - (abs(rC(K))-(drF(K)/2.0D0)) ! calculate how much iceberg protrudes into cell containing iceberg base
          col_speed = col_speed+(vVel(I,J,K,bi,bj)*(remainder/drF(K))) ! scale velocity in bottom cell according to length of iceberg relative to height of cell
@@ -335,7 +335,7 @@ C     - Estimate iceberg drift velocity
 
 C --- ENTER VERTICAL LOOP ---
 C    Loop down through water column and calculate melt rate
-      IF (meltMask(i,j,bi,bj) .EQ. 1) THEN ! only if calculating melt here
+      IF (brg_MeltMask(i,j,bi,bj) .EQ. 1) THEN ! only if calculating melt here
       DO K = 1,Nr
       IF ( abs(K) .LE. abs(bergBottomCell) ) THEN ! only calculate melt if a berg is in this cell
        
@@ -361,7 +361,7 @@ C -----------------------------------------------------------------
 C ---------------------- Ambient conditions ---------------------------
 C------------------------------------------------------------------
 C     - Get relative current velocity at this depth
-       IF ( icebergMask(i,j,bi,bj) .EQ. 1 ) THEN ! iceberg is oriented east-west
+       IF ( brg_Mask(i,j,bi,bj) .EQ. 1 ) THEN ! iceberg is oriented east-west
         rel_speed_la =
      &   sqrt( (driftVel-uVel(I,J,K,bi,bj))**2.0D0 
      &           + wVel(I,J,K,bi,bj)**2.0D0 )
@@ -372,7 +372,7 @@ C     - Get relative current velocity at this depth
      &   sqrt( (driftVel-uVel(I,J,K,bi,bj))**2.0D0 
      &           + vVel(I,J,K,bi,bj)**2.0D0 )
         ENDIF
-       ELSEIF ( icebergMask(I,J,bi,bj) .EQ. -1 ) THEN ! iceberg is oriented north-south
+       ELSEIF ( brg_Mask(I,J,bi,bj) .EQ. -1 ) THEN ! iceberg is oriented north-south
         rel_speed_la =
      &   sqrt( (driftVel-vVel(I,J,K,bi,bj))**2.0D0 
      &           + wVel(I,J,K,bi,bj)**2.0D0 )
@@ -386,15 +386,15 @@ C     - Get relative current velocity at this depth
        ENDIF    
        
 C    - Make sure current speeds are greater than background velocity (sides only because plumes rise along sides - not clear how melt-driven convection would affect water velocity at iceberg base?)
-       IF ( rel_speed_la .LT. icebergBGvel ) THEN
-        rel_speed_la = icebergBGvel
+       IF ( rel_speed_la .LT. brg_uMin ) THEN
+        rel_speed_la = brg_uMin
        ENDIF
-       IF ( rel_speed_sa .LT. icebergBGvel ) THEN
-        rel_speed_sa = icebergBGvel
+       IF ( rel_speed_sa .LT. brg_uMin ) THEN
+        rel_speed_sa = brg_uMin
        ENDIF
        IF ( K .EQ. bergBottomCell ) THEN 
-        IF ( rel_speed_base .LT. icebergBGvel ) THEN
-        rel_speed_base = icebergBGvel
+        IF ( rel_speed_base .LT. brg_uMin ) THEN
+        rel_speed_base = brg_uMin
         ENDIF       
        ENDIF
 
@@ -526,25 +526,25 @@ C --- for heat and salt.
 C     Loop through water column again and calculate variables of interest
       DO K = 1,Nr
       
-      icebergFWFlux3D(I,J,K,bi,bj) = fwProf(K) ! m^3 s^-1
+      brg_FwFlux3D(I,J,K,bi,bj) = fwProf(K) ! m^3 s^-1
       
 C    Only calculate if necessary
-      IF ( abs(icebergFWFlux3D(I,J,K,bi,bj)) .GT. 0.D0 ) THEN
+      IF ( abs(brg_FwFlux3D(I,J,K,bi,bj)) .GT. 0.D0 ) THEN
       
 
 C    Convert freshwater (m^3 s^-1) to melt rate (m d^-1)
-      icebergMeltRate3D(I,J,K,bi,bj) = 
-     &       (icebergFWFlux3D(I,J,K,bi,bj)/icebergArea3D(I,J,K,bi,bj))
+      brg_MeltRate3D(I,J,K,bi,bj) = 
+     &       (brg_FwFlux3D(I,J,K,bi,bj)/brg_Area3D(I,J,K,bi,bj))
      &       *86400.*(rho_0/1000.)
      
 C     Convert melt rate (m d^-1) to freshwater (kg m^-2 s^-1)
-       fw_cell = -icebergMeltRate3D(I,J,K,bi,bj)/94.22
+       fw_cell = -brg_MeltRate3D(I,J,K,bi,bj)/94.22
        
 C     Heat required to melt this much ice (W m^-2 meters of berg, not model)
-       icebergHeatFlux3D(I,J,K,bi,bj) = -fw_cell*333.55E+3
+       brg_HeatFlux3D(I,J,K,bi,bj) = -fw_cell*333.55E+3
 
 C     Compute tendencies
-      tendT_berg = -icebergHeatFlux3D(I,J,K,bi,bj)*eps5
+      tendT_berg = -brg_HeatFlux3D(I,J,K,bi,bj)*eps5
       tendS_berg = fw_cell*mass2rUnit
      &       *MAX(salt(I,J,K,bi,bj), 0.D0)
        
@@ -552,11 +552,11 @@ C     Scale by 'icefrontlength': in icefront, this is the ratio of the horizonta
 C     of the ice front in each model grid cell divided by the grid cell area
 C     (icefrontlength = dy/dxdy = 1/dx)
 C     Or simply the area of ice in the cell divided by the volume of the cell
-      icebergTendT3D(I,J,K,bi,bj) = tendT_berg 
-     &      * ( icebergArea3D(I,J,K,bi,bj)
+      brg_TendT3D(I,J,K,bi,bj) = tendT_berg 
+     &      * ( brg_Area3D(I,J,K,bi,bj)
      &     / (dxG(I,J,bi,bj) * dyG(I,J,bi,bj) * abs(drF(K))) )  ! volume of cell
-      icebergTendS3D(I,J,K,bi,bj) = tendS_berg 
-     &      * ( icebergArea3D(I,J,K,bi,bj)
+      brg_TendS3D(I,J,K,bi,bj) = tendS_berg 
+     &      * ( brg_Area3D(I,J,K,bi,bj)
      &     / (dxG(I,J,bi,bj) * dyG(I,J,bi,bj) * abs(drF(K))) )
      
 #ifdef ALLOW_PTRACERS
@@ -567,7 +567,7 @@ C     Input tracer mass
          !this is a mass flux of tracer. Mask contains concentration
          brg_ptr_addMass3D(I,J,K,bi,bj,iTracer) = 
      &    brg_ptracerMask(I,J,iTracer,bi,bj) * 1000.0 * !m^3 to kg
-     &    icebergFWFlux3D(I,J,K,bi,bj)
+     &    brg_FwFlux3D(I,J,K,bi,bj)
 
         ENDIF
        ENDIF
@@ -590,13 +590,13 @@ C     Input tracer mass
 C     Write to diagnostics
 #ifdef ALLOW_DIAGNOSTICS
          IF ( useDiagnostics ) THEN
-          CALL DIAGNOSTICS_FILL_RS(icebergMeltRate3D,'BRGmltRt',
+          CALL DIAGNOSTICS_FILL_RS(brg_MeltRate3D,'BRGmltRt',
      &      0,Nr,0,1,1,myThid)
-          CALL DIAGNOSTICS_FILL_RS(icebergFWFlux3D,'BRGfwFlx',
+          CALL DIAGNOSTICS_FILL_RS(brg_FwFlux3D,'BRGfwFlx',
      &      0,Nr,0,1,1,myThid)
-          CALL DIAGNOSTICS_FILL_RS(icebergHeatFlux3D,'BRGhtFlx',
+          CALL DIAGNOSTICS_FILL_RS(brg_HeatFlux3D,'BRGhtFlx',
      &      0,Nr,0,1,1,myThid)
-          CALL DIAGNOSTICS_FILL_RS(icebergArea3D,'BRGarea3D',
+          CALL DIAGNOSTICS_FILL_RS(brg_Area3D,'BRGarea3D',
      &      0,Nr,0,1,1,myThid)
          ENDIF
 #endif /* ALLOW_DIAGNOSTICS */

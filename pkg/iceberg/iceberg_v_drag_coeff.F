@@ -110,7 +110,7 @@ C--   Add drag contribution:
        DO j=1-OLy+1,sNy+OLy
         DO i=1-OLx,sNx+OLx
          IF ( k.LE.
-     &       MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+     &       MAX( brg_kBotC(i,j-1,bi,bj),brg_kBotC(i,j,bi,bj) ) ) THEN
           cDrag(i,j) = cDrag(i,j) 
      &       + brg_DragForm * dragFac * 
      &                  drF(k) * fillFactor(i,j)
@@ -135,7 +135,7 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
          DO i=1-OLx,sNx+OLx-1
           vSq = 0. _d 0
           IF ( k.LE.
-     &       MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+     &       MAX( brg_kBotC(i,j-1,bi,bj),brg_kBotC(i,j,bi,bj) ) ) THEN
            vSq = KE(i,j)+KE(i,j-1)
           ENDIF
           IF ( vSq.GT.zeroRL ) THEN
@@ -165,7 +165,7 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
          DO i=1-OLx,sNx+OLx-1
           vSq = 0. _d 0
           IF ( k.LE.
-     &       MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+     &       MAX( brg_kBotC(i,j-1,bi,bj),brg_kBotC(i,j,bi,bj) ) ) THEN
            vSq = KE(i,j)+KE(i,j-1)
           ENDIF
           IF ( vSq.GT.zeroRL ) THEN
@@ -195,7 +195,7 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
          DO i=1-OLx,sNx+OLx-1
           vSq = 0. _d 0
           IF ( k.LE.
-     &       MAX( kBergBotC(i,j-1,bi,bj),kBergBotC(i,j,bi,bj) ) ) THEN
+     &     MAX( brg_kBotC(i,j-1,bi,bj),brg_kBotC(i,j,bi,bj) ) ) THEN
            vSq = KE(i,j)+KE(i,j-1)
           ENDIF
           IF ( vSq.GT.zeroRL ) THEN
@@ -215,12 +215,12 @@ C-    average grid-cell-center KE to get velocity norm @ U.pt
 C-     Explicit case: diagnose directly the iceberg stress, only implemented case
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
-           icebergDragV(i,j,k,bi,bj) = - cDrag(i,j)
+           brg_DragV(i,j,k,bi,bj) = - cDrag(i,j)
      &                                  * vFld(i,j) * rUnit2mass
           ENDDO
          ENDDO
        ENDIF
-       CALL DIAGNOSTICS_FILL_RS( icebergDragV, 'BRG_TauY',
+       CALL DIAGNOSTICS_FILL_RS( brg_DragV, 'BRG_TauY',
      &                          0, Nr, 1, bi, bj, myThid )
       ENDIF !useDiagnostics+ 
 #endif /* ALLOW_DIAGNOSTICS */

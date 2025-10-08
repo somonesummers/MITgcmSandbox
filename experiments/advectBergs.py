@@ -51,7 +51,9 @@ from melangeModel import *
 
 icebergPhi = np.min([.8,icebergCoverLambda]) # Scaling from GLACIOME1D
 icebergCoverLambda = np.min([.9,icebergCoverLambda * 2]) # How full filled cells are
-
+randSeed = random.randint(1,2**31)
+np.random.seed(randSeed)
+print(f'\t\tRandom seed {randSeed}')
 print('\t\tLambda/Phi %.3f/%.3f' %(icebergCoverLambda,icebergPhi))
 ## Get most recent data from MITgcm
 

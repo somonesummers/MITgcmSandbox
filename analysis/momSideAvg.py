@@ -181,7 +181,7 @@ for k in kList:
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         kk = k
         if k == 0:
-            data[k,:,:,:] -= dataBergs[3,:,:,:] / (1020 * dz[:,None,None])
+            # data[k,:,:,:] -= dataBergs[3,:,:,:] / (1020 * dz[:,None,None]) #if you want to remove bergs
             lvl = np.linspace(-4e-5,4e-5,31)
             cm = 'cmo.balance'
         elif k == 1:

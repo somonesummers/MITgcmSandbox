@@ -38,70 +38,70 @@ C     I,J,K,bi,bj - Loop counters, helpers for hFactors
 C      Read iceberg mask
        IF (ICEBERGmaskFile .NE. ' ' ) THEN
         CALL READ_REC_XY_RL
-     &     (ICEBERGmaskFile,icebergMask,1,0,myThid)
+     &     (ICEBERGmaskFile,brg_Mask,1,0,myThid)
        ENDIF
 
 C      Read iceberg numbers file
        IF (ICEBERGmaskNumsFile .NE. ' ' ) THEN
         CALL READ_REC_XY_RL
-     &     (ICEBERGmaskNumsFile,icebergMaskNums,1,0,myThid)
+     &     (ICEBERGmaskNumsFile,brg_MaskNums,1,0,myThid)
        ENDIF
    
 C      Read iceberg num per cell file
        IF (ICEBERGnumPerCellFile .NE. ' ' ) THEN
         CALL READ_REC_XY_RL
-     &     (ICEBERGnumPerCellFile,icebergNumBergs,1,0,myThid)
+     &     (ICEBERGnumPerCellFile,brg_NumBergs,1,0,myThid)
        ENDIF
 
 C      Read melt mask
        IF (ICEBERGmeltFile .NE. ' ' ) THEN
         CALL READ_REC_XY_RL
-     &     (ICEBERGmeltFile,meltMask,1,0,myThid)
+     &     (ICEBERGmeltFile,brg_MeltMask,1,0,myThid)
        ENDIF
 
 C      Read drift mask
        IF (ICEBERGdriftFile .NE. ' ' ) THEN
         CALL READ_REC_XY_RL
-     &     (ICEBERGdriftFile,driftMask,1,0,myThid)
+     &     (ICEBERGdriftFile,brg_DriftMask,1,0,myThid)
        ENDIF
    
 C      Read barrier mask
        IF (ICEBERGbarrierFile .NE. ' ' ) THEN
         CALL READ_REC_XY_RL
-     &     (ICEBERGbarrierFile,barrierMask,1,0,myThid)
+     &     (ICEBERGbarrierFile,brg_BarrierMask,1,0,myThid)
        ENDIF
    
 C      Read iceberg area
        IF (ICEBERGareaFile .NE. ' ' ) THEN
         CALL READ_REC_XYZ_RL
-     &     (ICEBERGareaFile,icebergArea3D,1,0,myThid)
+     &     (ICEBERGareaFile,brg_Area3D,1,0,myThid)
        ENDIF
 
 C      Read iceberg lengths
        IF (ICEBERGlengthFile .NE. ' ' ) THEN
         CALL READ_REC_3D_RL
      &     (ICEBERGlengthFile,precFloat64,
-     &         maxBergCt,icebergLength,1,0,myThid) 
+     &         brg_MaxBergCt,brg_Length,1,0,myThid) 
        ENDIF
 
 C      Read iceberg widths
        IF (ICEBERGwidthsFile .NE. ' ' ) THEN
         CALL READ_REC_3D_RL
      &     (ICEBERGwidthsFile,precFloat64,
-     &         maxBergCt,icebergWidths,1,0,myThid)
+     &         brg_MaxBergCt,brg_Widths,1,0,myThid)
        ENDIF
 
 C      Read iceberg depths
        IF (ICEBERGdepthsFile .NE. ' ' ) THEN
         CALL READ_REC_3D_RL
      &     (ICEBERGdepthsFile,precFloat64,
-     &         maxBergCt,icebergDepths,1,0,myThid)
+     &         brg_MaxBergCt,brg_Depths,1,0,myThid)
        ENDIF
 
 C      Read open fraction file
       IF ( ICEBERGopenFracFile .NE. ' ' ) THEN
         CALL READ_REC_XYZ_RL
-     &     (ICEBERGopenFracFile,openFraction,1,0,myThid)  
+     &     (ICEBERGopenFracFile,brg_OpenFraction,1,0,myThid)  
  
 C          Partially block cells filled by icebergs, hFacC cell center
            DO bj = myByLo(myThid), myByHi(myThid)
@@ -113,25 +113,25 @@ C             If we want to make icebergs physical barriers,
 C             set both hFacC and recip_hFacC.
 C               REQUIRES CPP_OPTIONS.h: #undef NONLIN_FRSURF
 C             otherwise this is overwritten everytimestep.
-               IF ( barrierMask(I,J,bi,bj) .GT. 0. _d 0 ) THEN
+               IF ( brg_BarrierMask(I,J,bi,bj) .GT. 0. _d 0 ) THEN
 C              Loop through water column
                 DO K = 1, Nr !1 is the surface
-                  hFacC(I,J,K,bi,bj) = openFraction(I,J,K,bi,bj)
+                  hFacC(I,J,K,bi,bj) = brg_OpenFraction(I,J,K,bi,bj)
                  IF(hFacC(I,J,K,bi,bj).LT.hFacMin) THEN
                     hFacC(I,J,K,bi,bj) = 0. _d 0
                     recip_hFacC(I,J,K,bi,bj) = 0. _d 0
                  ELSE
                     recip_hFacC(I,J,K,bi,bj) = 
-     &                             1. _d 0 / openFraction(I,J,K,bi,bj)
+     &                   1. _d 0 / brg_OpenFraction(I,J,K,bi,bj)
                  ENDIF !hFacC.LT.hFacMin
                  IF(hFacC(I,J,K,bi,bj).LT. 1. _d 0 .AND. 
-     &              kBergBotC(I,J,bi,bj) .LT. K) THEN
-                    kBergBotC(I,J,bi,bj) = K !finding deepest berg
+     &              brg_kBotC(I,J,bi,bj) .LT. K) THEN
+                    brg_kBotC(I,J,bi,bj) = K !finding deepest berg
                  ENDIF ! hFacC.LT.1
                 ENDDO ! end k
-               ELSE !BarrierMask.GT.0
-                kBergBotC(i,j,bi,bj) = 0  
-               ENDIF !BarrierMask.GT.0
+               ELSE !brg_BarrierMask.GT.0
+                brg_kBotC(i,j,bi,bj) = 0  
+               ENDIF !brg_BarrierMask.GT.0
               ENDDO ! end I
              ENDDO ! end J
             ENDDO ! end bi
@@ -149,10 +149,11 @@ C     for a way to do that.
           DO I=1-OLx,sNx+OLx
            Im1=MAX(I-1,1-OLx)
            Jm1=MAX(J-1,1-OLy)
-C          only update if you are in barrierMask or a neighbor,
+C          only update if you are in brg_BarrierMask or a neighbor,
 C            and not boundary tile or face
-           IF ((barrierMask(I,J,bi,bj) 
-     &      + barrierMask(Im1,J,bi,bj) + barrierMask(I,Jm1,bi,bj)) 
+           IF ((brg_BarrierMask(I,J,bi,bj) 
+     &      + brg_BarrierMask(Im1,J,bi,bj) 
+     &      + brg_BarrierMask(I,Jm1,bi,bj)) 
      &      .GT. 0. _d 0 ) THEN
             IF(maskInW(I,J,bi,bj).NE.0) THEN !only if not boundary
              IF (DYG(I,J,bi,bj).EQ.0.) THEN
@@ -185,7 +186,7 @@ C      &                0.5 * (hFacC(I,J,K,bi,bj) + hFacC(I,Jm1,K,bi,bj))
               ENDIF !hFacS.EQ.0
              ENDIF !GXG.EQ.0
             ENDIF !maskInW.NE.0
-           ENDIF !barrierMask.GT.0
+           ENDIF !brg_BarrierMask.GT.0
           ENDDO !I 
          ENDDO !J
         ENDDO !K

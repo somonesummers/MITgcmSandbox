@@ -9,6 +9,6 @@ C    ----------------------------
 C    maxBerg   :: maximum total number of bergs per cell
 C
 CEOP 
-      INTEGER, parameter :: maxBergCt = 500
+      INTEGER, parameter :: brg_MaxBergCt = 500
 
  

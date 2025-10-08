@@ -40,9 +40,9 @@ C  msgBuf               :: message buffer
 CEOP
 
       NAMELIST /ICEBERG_PARM01/
-     &     icebergRho,
+     &     brg_Rho,
      &     brg_iceTemp,
-     &     icebergBGvel,
+     &     brg_uMin,
      &     brg_lambda1,
      &     brg_lambda2,
      &     brg_lambda3,
@@ -69,32 +69,32 @@ C    PARM02 - inputs relating to passive tracers
 #endif /* ALLOW_PTRACERS */ 
 
 C Set defaults values for parameters in ICEBERG.h
-      icebergRho                   =  917.0 _d 0
-      brg_iceTemp                  = .0 _d 0
-      icebergBGvel                 = 0.06
-      brg_lambda1                  = -0.0573D0
-      brg_lambda2                  = 0.0832D0
-      brg_lambda3                  = 0.000761D0
-      brg_GamT                     = 0.022
-      brg_GamS                     = 0.00062
-      brg_c_w                      = 3974.D0
-      brg_c_i                      = 2000.D0
-      brg_L                        = 334000D0
-      brg_Cd                       = 0.0025
-      brg_DragForm                 = 0.0025
-      brg_SelectDrag               = 3 
-      brg_SelectFill               = 3 
+      brg_Rho                   =  917.0 _d 0
+      brg_iceTemp               = .0 _d 0
+      brg_uMin                  = 0.06
+      brg_lambda1               = -0.0573D0
+      brg_lambda2               = 0.0832D0
+      brg_lambda3               = 0.000761D0
+      brg_GamT                  = 0.022
+      brg_GamS                  = 0.00062
+      brg_c_w                   = 3974.D0
+      brg_c_i                   = 2000.D0
+      brg_L                     = 334000D0
+      brg_Cd                    = 0.0025
+      brg_DragForm              = 0.0025
+      brg_SelectDrag            = 3 
+      brg_SelectFill            = 3 
       ICEBERGmaskFile              = ' '
-      ICEBERGmeltFile              = ' '
+      ICEBERGmeltFile           = ' '
       ICEBERGmaskNumsFile          = ' '
       ICEBERGlengthFile            = ' '
       ICEBERGwidthsFile            = ' '
       ICEBERGdepthsFile            = ' '
-      ICEBERGnumPerCellFile        = ' '
-      ICEBERGdriftFile             = ' '
-      ICEBERGbarrierFile           = ' '
-      ICEBERGopenFracFile          = ' '
-      ICEBERGareaFile              = ' '
+      ICEBERGnumPerCellFile     = ' '
+      ICEBERGdriftFile          = ' '
+      ICEBERGbarrierFile        = ' '
+      ICEBERGopenFracFile       = ' '
+      ICEBERGareaFile           = ' '
 
 #ifdef ALLOW_PTRACERS
 C Default values for PARM02
