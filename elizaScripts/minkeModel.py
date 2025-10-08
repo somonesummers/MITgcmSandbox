@@ -51,7 +51,7 @@ def find_closest_indices(sorted_A, sorted_B):
             closest_indices.append(len(sorted_B) - 1)
         else:
             before = pos - 1
-            after = pos
+            
             closest_indices.append(before if abs(sorted_B[before] - a) <= abs(sorted_B[after] - a) else after)
     return closest_indices
 
@@ -90,7 +90,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Romeo_a0'
+run_config['run_name'] = 'Romeo_a0_smoothPlume'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -764,7 +764,7 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 # runoff = -2*assign_plumeSGD * np.sin(2*np.pi * np.arange(nt)/nt) - assign_plumeSGD
 # runoff[runoff <  25 ] = 25
 ## linear ramp
-runoff = 500 + assign_plumeSGD * np.arange(nt)/float(nt)
+runoff = 800 + assign_plumeSGD * np.arange(nt)/float(nt)
 runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
 # runoff = runoff[::-1] #flipping around for building melange
 ## Constant
