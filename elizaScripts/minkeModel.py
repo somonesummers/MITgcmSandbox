@@ -16,18 +16,24 @@ import sys
 import glob
 import cmocean
 from bisect import bisect_left
+from scipy.interpolate import make_interp_spline
+import sys
 
 OSX = platform.system()
-
-from scipy.interpolate import make_interp_spline
-
-import sys
+baseDir = ''
 if OSX == 'Darwin':
     import gsw
-    sys.path.append('/Users/psummers8/Documents/MITgcm/MITgcm/elizaScripts/main_scripts')
+    baseDir = '/Users/psummers8/Documents/MITgcm/MITgcm'
+elif "psumme03" in current_directory:
+    OSX = 'Tufts'
+    baseDir = '/cluster/home/psumme03/MITgcmSandbox'
+elif "psummers8" in current_directory::
+    OSX = 'PACE'
+    baseDir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox'
 else:
-    sys.path.append('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/elizaScripts/main_scripts')
+    raise ExceptionType("unknown OSX or running location, please configure")
 
+sys.path.append(f'{baseDir}/elizaScripts/main_scripts')
 import run_config_funcs as rcf # type: ignore # import helpter functions
 
 #Set up new folder
@@ -138,10 +144,7 @@ MITgcm_release = 'MITgcm-checkpoint68z' #Sept 2024 release
 # you probably don't need to touch this
 run_config['use_MPI'] = True # for multi-processing
 run_config['lf'] = '\r\n' # linebreak characters 
-if OSX == 'Darwin':
-    run_config['exps_dir'] = os.path.join('/Users/psummers8/Documents/MITgcm/MITgcm/experiments') 
-else:
-    run_config['exps_dir'] = os.path.join('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/experiments') 
+run_config['exps_dir'] = os.path.join(f'{baseDir}/experiments') 
 run_config['run_dir'] = os.path.join(run_config['exps_dir'], run_config['run_name'])
 setUpPrint('run_config is %s' %run_config)
 
@@ -157,18 +160,13 @@ if(makeDirs):
         os.makedirs(run_config['%s_dir'% subdir], exist_ok=True)
      
 # copy over defaults
-    if OSX == 'Darwin':
-        default_dirs = os.listdir('/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg/')
-    else:
-        default_dirs = os.listdir('/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Berg/')
+    default_dirs = os.listdir(f'{baseDir}/DEFAULT_Berg/')
+
     for dir00 in default_dirs:
         if dir00.startswith('.'):
             continue
             
-        if OSX == 'Darwin':
-            default_dir = '/Users/psummers8/Documents/MITgcm/MITgcm/DEFAULT_Berg/%s/'%dir00
-        else:
-            default_dir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox/DEFAULT_Berg/%s/'%dir00    
+        default_dir = f'{baseDir}/DEFAULT_Berg/{dir00}/'    
         default_files = os.listdir(default_dir)
         dst_dir = os.path.join(run_config['run_dir'], dir00)
         
