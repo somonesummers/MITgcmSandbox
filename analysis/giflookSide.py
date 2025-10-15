@@ -172,9 +172,9 @@ ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
 print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
 if(isBerg):
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx','ptraceDiag','ptraceDiag']
-    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg']
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]"]
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag','BRGFlx','BRGFlx']
+    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg','BrgDrag_x','BrgDrag_y']
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]","[N/m^2]","[N/m^2]"]
 else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
     name = ["Temp", "Sal", "U", "W", "V"]
@@ -231,6 +231,14 @@ for k in kList:
             lvl = bergTracerRange
             cm = bergTracerCmap
             kk = 1
+        elif k == 8:
+            lvl = np.linspace(-1,1,31)
+            cm = 'cmo.balance'
+            kk = 3
+        elif k == 9:
+            lvl = np.linspace(-1,1,31)
+            cm = 'cmo.balance'
+            kk = 4
         plt.figure(figsize=(10, 4))
         if(usePcolor):
             cp = plt.pcolormesh(
@@ -291,7 +299,7 @@ for k in kList:
             )
             plt.clabel(cc, inline=3, fontsize=8)
         if(showZeros):
-            if( k == 2 or k == 6 or k == 7):
+            if(True):
                 cc = plt.contour(
                     np.squeeze(x[ySlice,:]),
                     np.squeeze(z),

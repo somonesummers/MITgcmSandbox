@@ -92,8 +92,8 @@ if((maxStep-startStep)/sizeStep > args.numFrames):   #if more than numFrames, do
 print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
 
 #Decide if iceBerg data files exist
-if(os.path.isfile(f'results/BRGFlx.{startStep:010d}.data') or 
-    os.path.isfile(f'results/BRGFlx.{startStep:010d}.001.001.data')):
+if(os.path.isfile(f'results/BRGFlx.{int(startStep):010d}.data') or 
+    os.path.isfile(f'results/BRGFlx.{int(startStep):010d}.001.001.data')):
     isBerg = True
     print('Found icebergs for this run')
 else:
@@ -125,6 +125,7 @@ if(isBerg):
                     openFrac[:,j,i] = 1
                 if topo[j,i] == 0 and i > 1:
                     openFrac[:,j,i] = 0 #zero weight non-ocean cell
+    # print(np.nansum(openFrac[:,:,0:3],axis=(1)))
 else:
     openFrac = mds.rdmds("results/hFacC")
     openFrac[:,:,0] = 1
@@ -134,9 +135,9 @@ if(np.min(openFrac) < 0 or np.max(openFrac) > 1):
 print('averaging over all cross sections')
 
 if(isBerg):
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'BRGFlx','ptraceDiag','ptraceDiag']
-    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg']
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]"]
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag','BRGFlx','BRGFlx']
+    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg','BrgDrag_x','BrgDrag_y']
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]","[N/m^2]","[N/m^2]"]
 else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
     name = ["Temp", "Sal", "U", "W", "V"]
@@ -158,6 +159,7 @@ for k in kList:
             dataBergs = mds.rdmds("results/BRGFlx",i)
             if(dataBergs.shape[0] == 6):
                 openFrac[:,:,:] = dataBergs[5,:,:,:] #directly saved for these runs
+                openFrac[:,:,0] = 1
                 oldAveraging = False
         if(args.shadow > 0): #enable berg shadows here
             if(dataBergs.shape[0] < 6):
@@ -195,6 +197,14 @@ for k in kList:
             lvl = bergTracerRange
             cm = bergTracerCmap
             kk = 1
+        elif k == 8:
+            lvl = np.linspace(-1,1,31)
+            cm = 'cmo.balance'
+            kk = 3
+        elif k == 9:
+            lvl = np.linspace(-1,1,31)
+            cm = 'cmo.balance'
+            kk = 4
         plt.figure(figsize=(12, 5))
         if(usePcolor):
             cp = plt.pcolormesh(
@@ -209,7 +219,7 @@ for k in kList:
             cp = plt.contourf(
                 np.squeeze(x[0,:]),
                 np.squeeze(z),
-                np.squeeze(np.average(data[kk, :, 1:-1, :], weights=openFrac[:,1:-1,:],axis=1)),
+                np.squeeze(np.average(data[kk, :, :, :], weights=openFrac[:,:,:],axis=1)),
                 lvl,
                 extend="both",
                 cmap=cm,

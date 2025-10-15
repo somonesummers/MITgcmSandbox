@@ -17,6 +17,10 @@ parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
 parser.add_argument('-sgd','--sgd', action='count', default=0,
                     help='optional specification to normalize by (SGD/1000), T,S excluded [default = off]')
+parser.add_argument('-x','--xCrossSection', nargs=1, type=float,default = None,
+                    help='optional slice location [m]')
+parser.add_argument('-z','--zCrossSection', nargs=1, type=float,default = None,
+                    help='optional slice location [m]')
 args = parser.parse_args()
 
 
@@ -60,9 +64,21 @@ z = np.squeeze(mds.rdmds("results/RC"))
 dz = np.load("results/dz.npy")
 ny = len(y)
 
-zDepth = -600
+if(args.zCrossSection == None):
+    zDepth = np.min(z) #only look above this
+else:
+    zDepth = args.zCrossSection[0]
+    fileEnding = fileEnding + f'_z{np.abs(zDepth)}'
 zSlice = np.argmin(np.abs(z[:]- zDepth))
 print('depth is z =', z[zSlice], 'index', zSlice)
+
+if(args.xCrossSection == None):
+    xReach = 0 #only look above this
+else:
+    xReach = args.xCrossSection[0]
+    fileEnding = fileEnding + f'_x{xReach}'
+xSlice = np.argmin(np.abs(x[:]- xReach))
+print('reach is x =', x[xSlice], 'index', xSlice)
 
 
 #extracting SGD
@@ -227,14 +243,14 @@ for j in range(len(folders)):
         else:
             sgdFactor = 1
         #depth values
-        fwDepth[:,i] = np.nansum(data[0,:,:,:],axis=(1,2))/dz/sgdFactor
-        bDepth[:,i] = np.nanmean(data[2,:,:,:],axis=(1,2))/sgdFactor
-        tDepth[:,i] = np.nanmean(dataOcean[0,:,:,:],axis=(1,2))
-        sDepth[:,i] = np.nanmean(dataOcean[1,:,:,:],axis=(1,2))
-        uDepth[:,i] = np.nanmean(spd,axis=(1,2))/sgdFactor
-        wDepth[:,i] = np.nanmean(dataOcean[3,:,:,:],axis=(1,2))/sgdFactor
-        pDepth[:,i] = np.nanmean(dataPress[0,:,:,:],axis=(1,2))/sgdFactor
-        hfDepth[:,i] = np.nanmean(data[5,:,:,:],axis=(1,2))
+        fwDepth[:,i] = np.nansum(data[0,:,:,xSlice:],axis=(1,2))/dz/sgdFactor
+        bDepth[:,i] = np.nanmean(data[2,:,:,xSlice:],axis=(1,2))/sgdFactor
+        tDepth[:,i] = np.nanmean(dataOcean[0,:,:,xSlice:],axis=(1,2))
+        sDepth[:,i] = np.nanmean(dataOcean[1,:,:,xSlice:],axis=(1,2))
+        uDepth[:,i] = np.nanmean(spd[:,:,xSlice:],axis=(1,2))/sgdFactor
+        wDepth[:,i] = np.nanmean(dataOcean[3,:,:,xSlice:],axis=(1,2))/sgdFactor
+        pDepth[:,i] = np.nanmean(dataPress[0,:,:,xSlice:],axis=(1,2))/sgdFactor
+        hfDepth[:,i] = np.nanmean(data[5,:,:,xSlice:],axis=(1,2))
         #length values
         
         fwLength[:,i] = np.nansum(data[0,:zSlice,:,:],axis=(0,1))/(x[1]-x[0])/sgdFactor
@@ -391,13 +407,15 @@ cp = ax1.contourf(timeSteps*dt/86400,z,fwDepth,
 cbar = plt.colorbar(cp)
 cbar.set_label('FW flux/meter [m^2/s]')
 ax1.grid(alpha=.5)
-ax1.set_title('FW Flux')
+ax1.set_title('FW Flux (un-normalized SUM)')
 ax1.set_ylabel('Depth [m]')
 ax1.set_xlabel('Time [days]')
 ax1.set_ylim([zMin,0])
 
 cp = ax2.contourf(timeSteps*dt/86400,z,bDepth,
-                cmap=meltCmap)
+                np.linspace(0,2,31),
+                cmap=meltCmap,
+                extend='both')
 cbar = plt.colorbar(cp)
 cbar.set_label('Averge Meltrate [m/day]')
 ax2.grid(alpha=.5)
@@ -475,7 +493,7 @@ ax8.set_ylabel('Depth [m]')
 ax8.set_xlabel('Time [days]')
 ax8.set_ylim([zMin,0])
 
-plt.suptitle(fileEnding)
+plt.suptitle(f'View Beyond x = {xReach} m')
 plt.savefig('figs/meltDepthView%s.png' %fileEnding, format='png',dpi=plotDPI)
 if(args.silent == 0):
     plt.show()
@@ -501,13 +519,15 @@ cp = ax1.contourf(timeSteps*dt/86400,x,fwLength,
 cbar = plt.colorbar(cp)
 cbar.set_label('FW flux/meter [m^2/s]')
 ax1.grid(alpha=.5)
-ax1.set_title('FW Flux')
+ax1.set_title('FW Flux (un-normalized SUM)')
 ax1.set_ylabel('Length [m]')
 ax1.set_xlabel('Time [days]')
 ax1.set_ylim([0,xMax])
 
 cp = ax2.contourf(timeSteps*dt/86400,x,bLength,
-                cmap=meltCmap)
+                np.linspace(0,2,31),
+                cmap=meltCmap,
+                extend='both')
 cbar = plt.colorbar(cp)
 cbar.set_label('Averge Meltrate [m/day]')
 ax2.grid(alpha=.5)
@@ -585,7 +605,7 @@ ax8.set_ylabel('Length [m]')
 ax8.set_xlabel('Time [days]')
 ax8.set_ylim([0,xMax])
 
-plt.suptitle('Naive depth averaging ' + fileEnding)
+plt.suptitle(f'Naive depth averaging\nAbove {-zDepth} m')
 
 plt.savefig('figs/meltLengthView%s.png' %fileEnding, format='png',dpi=plotDPI)
 if(args.silent == 0):

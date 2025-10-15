@@ -38,9 +38,9 @@ args = parser.parse_args()
 
 fig, axes = plt.subplots(2, 2, figsize=(10, 6), layout="constrained")
 ax1 = axes[0,0]
-ax2 = axes[1,0]
+ax4 = axes[1,0]
 ax3 = axes[0,1]
-ax4 = axes[1,1]
+ax2 = axes[1,1]
 
 lStyle = ['-','--',':','-.',(0, (3, 4, 1, 2, 1, 2))] #final one is dash dot dott
 meltColors = ['xkcd:tomato','xkcd:rose','xkcd:wine','xkcd:grape purple','xkcd:grape']
@@ -86,13 +86,13 @@ for i in range(len(args.files)):
         endFluxTime[j] = data.HL*data.WL*data.U[-1] / 3.154e7 #m^3/s
         lengthTime[j]=data.X[-1] - data.X[0]  #difference between these
         if(j != toIterate[0]): #include mass loss to length loss
-            endFluxTime[j] += data.HL*data.WL * (lengthTime[j-1] - lengthTime[j]) / 86400 #m^3/s
+            endFluxTime[j] += data.HL*data.WL * (lengthTime[j-1] - lengthTime[j]) / (data.dt * 3.154e7) #m^3/s
         inFluxTime[j] = data.Ht*data.Uc*data.WL / 3.154e7 #m^3/s
         bFluxTime[j] = -1*simpson(data.B*data.W, x=data.X_)/ 3.154e7  #m^3/s
-        BTime[j] = -1 * np.mean(data.B) /365.0 # we flip this for plotting purposes
+        BTime[j] = -1 * np.mean(data.B) /365.25 # we flip this for plotting purposes
         H0Time[j]=data.H0
         UcTime[j] = data.Uc
-        timeTime[j] = data.t*365.0 
+        timeTime[j] = data.t*365.25 
         pressTime[j] = data.force()#data.H0*data.pressure(data.H0) #should I use force?
 
         iterationNumber[j]=int(it)
@@ -128,21 +128,29 @@ for i in range(len(args.files)):
     if(args.labels != None):
         ax1.legend()
 
-    ax2.plot(timeTime,pressTime,color='xkcd:sunflower',linestyle=lStyle[i])
-    ax2.scatter(timeTime[0],pressTime[0],s=50,marker='*',color='black')
-    ax2.set_ylabel('Mélange Force/Width [$Nm^{-1}$]',color='xkcd:black')
-    ax2.tick_params(axis='y',labelcolor='xkcd:black')
+    mflxColor = 'xkcd:blood red'
+    dflxColor = 'xkcd:deep green'
+    ax2.plot(timeTime,VTime/endFluxTime/(86400.0),color=dflxColor,linestyle=lStyle[i],alpha = .25)
+    ax2.plot(timeTime,VTime/endFluxSmooth/(86400.0),color=dflxColor,linestyle=lStyle[i])
+    ax2.scatter(timeTime[0],VTime[0]/endFluxSmooth[0]/(86400.0),s=50,marker='*',color='black')
+    ax2.set_ylabel('Discharge Flux Timescale [days]',color=dflxColor)
+    ax2.tick_params(axis='y',labelcolor=dflxColor)
     ax2.grid(alpha=.25)
     # ax2.set_yscale('log')
     if(i == 0):
         ax2_2 = ax2.twinx()
-    ax2_2.plot(timeTime,bFluxSmooth/VTime*3.154e7,color='xkcd:indigo',linestyle=lStyle[i],label='volume')
-    ax2_2.tick_params(axis='y',labelcolor='xkcd:indigo')
-    ax2_2.set_ylabel('Melt Flux/Volume [1/yr]',color='xkcd:indigo')
+    ax2_2.plot(timeTime,VTime/bFluxTime/(86400.0),color=mflxColor,linestyle=lStyle[i],alpha=.25)
+    ax2_2.plot(timeTime,VTime/bFluxSmooth/(86400.0),color=mflxColor,linestyle=lStyle[i],label='meltTimeScale')
+    ax2_2.scatter(timeTime[0],VTime[0]/bFluxSmooth[0]/(86400.0),s=50,marker='*',color='black')
+    ax2_2.tick_params(axis='y',labelcolor=mflxColor)
+    ax2_2.set_ylabel('Melt Flux Timescale [days]',color=mflxColor)
     # ax2_2.set_yscale('log')
     # ax2_2.grid(alpha=.25,color='xkcd:mulberry')
+    ax2_2.set_ylim([0, 150])
+    ax2.set_ylim([0, 150])
     ax2.set_xlabel('Time [days]')
     ax2.set_title('')
+
 
     if(i == 0): #Plot blanks for legend 
         ax3.plot([],[],color='xkcd:sand',linestyle='-',label='In')   
@@ -181,7 +189,7 @@ for i in range(len(args.files)):
     ax4.set_xlabel('Time [days]')
     ax4.grid(alpha=.5)
     ax4.set_title('')
-    # ax4.legend()
+    ax4.set_ylim([0,2])
 
 dirStr = ''
 if(os.path.isdir('figs')):

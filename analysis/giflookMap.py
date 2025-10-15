@@ -135,9 +135,9 @@ print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
 
 if(isBerg):
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag','dynDiag']
-    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg','SPD']
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]","[m/s]"]
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag','BRGFlx','BRGFlx','dynDiag']
+    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg','BrgDrag_x','BrgDrag_y','SPD']
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]","[N/m^2]","[N/m^2]","[m/s]"]
 else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
     name = ["Temp", "Sal", "U", "W", "V"]
@@ -193,6 +193,14 @@ for k in kList:
             cm = bergTracerCmap
             kk = 1
         elif k == 8:
+            lvl = np.linspace(-1,1,31)
+            cm = 'cmo.balance'
+            kk = 3
+        elif k == 9:
+            lvl = np.linspace(-1,1,31)
+            cm = 'cmo.balance'
+            kk = 4
+        elif k == 10:
             lvl = np.linspace(0,np.max(uRange),31)
             cm = 'cmo.speed'
 
