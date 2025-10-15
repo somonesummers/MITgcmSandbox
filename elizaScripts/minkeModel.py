@@ -27,7 +27,7 @@ if OSX == 'Darwin':
 elif "psumme03" in current_directory:
     OSX = 'Tufts'
     baseDir = '/cluster/home/psumme03/MITgcmSandbox'
-elif "psummers8" in current_directory::
+elif "psummers8" in current_directory:
     OSX = 'PACE'
     baseDir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox'
 else:
