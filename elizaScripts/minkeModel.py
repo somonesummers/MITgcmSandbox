@@ -20,6 +20,7 @@ from scipy.interpolate import make_interp_spline
 import sys
 
 OSX = platform.system()
+current_directory = os.getcwd()
 baseDir = ''
 if OSX == 'Darwin':
     import gsw
