@@ -107,8 +107,8 @@ for i in range(len(args.files)):
         lengthTime[j]=data.X[-1] - data.X[0]  #difference between these
         UcTime[j] = data.Uc
         UtTime[j] = data.Ut
-        BTime[j] = -1 * np.mean(data.B) /365.0 # we flip this for plotting purposes
-        timeTime[j] = data.t*365.0 
+        BTime[j] = -1 * np.mean(data.B) /365.25 # we flip this for plotting purposes
+        timeTime[j] = data.t*365.25 
         pressTime[j] = data.force()#data.H0*data.pressure(data.H0) #should I use force?
         spdTime[j]=np.mean(data.U)
         gTime[j]=np.mean(data.gg)
@@ -285,9 +285,9 @@ for i in range(len(args.files)):
     roughG = gTime
     spdTime = np.convolve(np.concatenate((spdTime[0]*np.ones(padL),spdTime,spdTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
     gTime = np.convolve(np.concatenate((gTime[0]*np.ones(padL),gTime,gTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
-    ax4.plot(drivingVariable,roughSPD/365.0,color='xkcd:apple',alpha=0.25)
-    ax4.plot(drivingVariable,spdTime/365.0,color='xkcd:apple',linestyle=lStyle[i])
-    ax4.scatter(drivingVariable[0],spdTime[0]/365.0,s=50,marker='*',color='black')
+    ax4.plot(drivingVariable,roughSPD/365.25,color='xkcd:apple',alpha=0.25)
+    ax4.plot(drivingVariable,spdTime/365.25,color='xkcd:apple',linestyle=lStyle[i])
+    ax4.scatter(drivingVariable[0],spdTime[0]/365.25,s=50,marker='*',color='black')
     ax4.set_ylabel('Speed [m/day]',color='xkcd:apple')
     ax4.tick_params(axis='y',labelcolor='xkcd:apple')
     ax4.grid(alpha=.5)

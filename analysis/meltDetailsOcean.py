@@ -370,7 +370,8 @@ ax6 = axes[2,1]
 #minor cleaning, nansum returns 0 if all nan, nanmean returns nan if all nan. We prefer the 2nd behavior
 fwDepth[np.isnan(tDepth)] = np.nan
 
-zMin=np.min(z[~np.isnan(np.nanmean(fwDepth,axis=1))])
+# zMin=np.min(z[~np.isnan(np.nanmean(fwDepth,axis=1))])
+# zMin = -320
 cp = ax1.contourf(timeSteps*dt/86400,z,fwDepth,
                 cmap='cmo.dense')
 cbar = plt.colorbar(cp)
@@ -393,7 +394,8 @@ ax2.set_ylim([zMin,0])
 
 cp = ax3.contourf(timeSteps*dt/86400,z,tDepth,
                 tempRange,
-                cmap=tempCmap)
+                cmap=tempCmap,
+                extend='both')
 cbar = plt.colorbar(cp)
 cbar.set_label('Temperature [C]')
 ax3.grid(alpha=.5)
@@ -404,6 +406,7 @@ ax3.set_ylim([zMin,0])
 
 cp = ax4.contourf(timeSteps*dt/86400,z,uDepth,
                 uRange,
+                extend='both',
                 cmap=uCmap)
 cbar = plt.colorbar(cp)
 cbar.set_label('Speed [m/s]')

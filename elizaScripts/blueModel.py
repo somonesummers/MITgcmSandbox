@@ -58,7 +58,7 @@ def find_closest_indices(sorted_A, sorted_B):
             closest_indices.append(len(sorted_B) - 1)
         else:
             before = pos - 1
-            
+            after = pos
             closest_indices.append(before if abs(sorted_B[before] - a) <= abs(sorted_B[after] - a) else after)
     return closest_indices
 
@@ -75,9 +75,9 @@ briefSummaryOfExp = """Coupling MITgcm and Melange1D
 Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
 
-Romeo starts with 500m3/s Oscar conditions
+Sierra starts with 500m3/s Oscar conditions
+Ramps SGD seasonally, with background increasing temp
 Additional diags to probe cause of collapse
-constant SGD
 Coupled with variable Uc and 4x enhanced melt
 Summer forcing
 
@@ -96,7 +96,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Romeo_sgd1000c'
+run_config['run_name'] = 'sierra'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -114,8 +114,8 @@ setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s
 input("Confirm above is accurate before continuing...")
 
 # Variables to adjust ======================
-assign_deltaT = 0 # [C]
-assign_plumeSGD = 1000 #[m^3/s]
+assign_deltaT = 3 # [C]
+assign_plumeSGD = 1500 #[m^3/s]
 season_sw = 's'
 
 # Offshore current =========================
@@ -124,7 +124,7 @@ lengthOffShoreLength = 10e3 #width of offshore region [m]
 indexOSC = int(lengthOffShoreLength/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
-iceBergDepth = 400 # max iceberg depth [meters], used for ICEBERG package
+iceBergDepth = 300 # max iceberg depth [meters], used for ICEBERG package
 iceExtent = 25000 # [meters] of extent of ice
 iceCoverage = 60 # % of ice cover in melange, stay under 90% ideally
 doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
@@ -366,10 +366,10 @@ params03['monitorFreq'] = 21600.0 # 6 hours
 params03['monitorSelect'] = 1
 
 # Force with yearly cycle
-nt = 120
-daysOfCycle = 365*5 #years
+nt = 480
+daysOfCycle = 365*10 #years
 # ForcingValue = np.sin(2*np.pi * np.arange(nt)/nt) # This sets temp variations at BCs
-ForcingValue = assign_deltaT * np.ones(nt) # This sets temp variations at BCs
+ForcingValue = assign_deltaT * np.arange(nt)/nt # This sets temp variations at BCs, linear ramp
 
 params03['periodicExternalForcing'] = True
 params03['ExternForcingPeriod'] = daysOfCycle*86400/nt
@@ -442,7 +442,7 @@ diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
                     ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY','BRGhFacC'],
                     ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntR'],
                     ['TRAC01','TRAC02'],
-                    ['Um_Diss','Um_Advec','Um_dPhiX','AB_gU','AB_gV','AB_gW'],
+                    ['Um_Diss','Um_Advec','Um_Cori','Um_dPhiX','Wm_Diss','Wm_Advec'],
                     ['ADVx_TH','ADVy_TH','ADVr_TH','UTHMASS','VTHMASS','WTHMASS'],
                     ['PHIHYD','PHI_NH'],
                     ]
@@ -759,14 +759,14 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 ## Total runoff (m^3/s)
 ## Seasonal Peak
-# runoff = -2*assign_plumeSGD * np.sin(2*np.pi * np.arange(nt)/nt) - assign_plumeSGD
-# runoff[runoff <  25 ] = 25
+runoff = -2*assign_plumeSGD * np.sin(2*np.pi * np.arange(nt)/(nt/10)) - assign_plumeSGD
+runoff[runoff <  25 ] = 25
 ## linear ramp
-# runoff = 800 + assign_plumeSGD * np.arange(nt)/float(nt)
-# runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
+# runoff = 500 + assign_plumeSGD * np.arange(nt)/float(nt)
+runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
 # runoff = runoff[::-1] #flipping around for building melange
 ## Constant
-runoff = assign_plumeSGD * np.ones(nt)
+# runoff = assign_plumeSGD * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
@@ -831,12 +831,12 @@ if(plumeMask[plume_loc,icefront] == 3):
 elif(plumeMask[plume_loc,icefront] == 2):
     plt.plot(time,runoffRad[:,plume_loc,icefront] * run_config['horiz_res_m'] * wsg,label='SGD',linewidth=3, linestyle='--')
 ax1=plt.gca()
-# ax2=ax1.twinx()
-# ax2.plot(time,sampleTForcing,label='T mid-depth',color='r')
+ax2=ax1.twinx()
+ax2.plot(time,sampleTForcing,label='T mid-depth',color='r')
 sampleTForcing
 ax1.set_xlabel('Time [days]')
 ax1.set_ylabel('SGD [$m^3/s$]')
-# ax2.set_ylabel('Temp [C]')
+ax2.set_ylabel('Temp [C]')
 ax1.legend()
 # ax2.legend()
 if(writeFiles):
@@ -1337,8 +1337,8 @@ if(makeDirs):
         os.remove(run_config['run_dir']+'/input/setupReport.txt')
         setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')
     shutil.move('setupReport.txt', run_config['run_dir']+'/input')
-    print(f"Copying {__file__} to {run_config['run_dir']}/input/buildScript.py")
-    shutil.copy(f'{__file__}',f"{run_config['run_dir']}/input/buildScript.py")
+    print(f'Copying {__file__} to {run_config['run_dir']}/input/buildScript.py')
+    shutil.copy(f'{__file__}',f'{run_config['run_dir']}/input/buildScript.py')
     replaceAll(run_config['run_dir']+'/input/buildScript.py','makeDirs = True', 'makeDirs = False') 
     rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
     setupNotes.close()
