@@ -23,7 +23,7 @@ then
 	fi
 	mpirun -np 5 ./mitgcmuv > Report$TIME.txt
 else
-	srun ./mitgcmuv
+	srun -vv ./mitgcmuv
 fi
 
 echo "Done running..."

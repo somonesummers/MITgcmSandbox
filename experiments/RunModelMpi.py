@@ -361,7 +361,7 @@ for ii in range(iterationsToRun):
     # per timestep, which quickly become insane for long runs. This step collects all those tile files into
     # 2 global files (*.data, *.meta), then deletes the tiles files. This reduces files count by a factor of 20
     # This VASTLY improves data transfer and compression speeds. 
-    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
+    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag','presDiag','momDiag','heatDiag']
 
     endIter = int((newStartTime + 24*3600)/dt)
     sysPrint('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)

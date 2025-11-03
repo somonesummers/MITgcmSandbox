@@ -70,8 +70,7 @@ Enables pTracers for plume and icebergs seperately
 
 Romeo starts with 500m3/s Oscar conditions
 Additional diags to probe cause of collapse
-Ramps from SGD 500 to 2000 in 5 years
-Vary alpha and beta values
+constant SGD
 Coupled with variable Uc and 4x enhanced melt
 Summer forcing
 
@@ -90,7 +89,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Romeo_a0_smoothPlume'
+run_config['run_name'] = 'Romeo_sgd1000c'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -109,7 +108,7 @@ input("Confirm above is accurate before continuing...")
 
 # Variables to adjust ======================
 assign_deltaT = 0 # [C]
-assign_plumeSGD = 1500 #[m^3/s]
+assign_plumeSGD = 1000 #[m^3/s]
 season_sw = 's'
 
 # Offshore current =========================
@@ -444,7 +443,7 @@ diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
                     ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY','BRGhFacC'],
                     ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntR'],
                     ['TRAC01','TRAC02'],
-                    ['Um_Diss','Um_Advec','Um_Cori','Um_dPhiX','Wm_Diss','Wm_Advec'],
+                    ['Um_Diss','Um_Advec','Um_dPhiX','AB_gU','AB_gV','AB_gW'],
                     ['ADVx_TH','ADVy_TH','ADVr_TH','UTHMASS','VTHMASS','WTHMASS'],
                     ['PHIHYD','PHI_NH'],
                     ]
@@ -764,11 +763,11 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 # runoff = -2*assign_plumeSGD * np.sin(2*np.pi * np.arange(nt)/nt) - assign_plumeSGD
 # runoff[runoff <  25 ] = 25
 ## linear ramp
-runoff = 800 + assign_plumeSGD * np.arange(nt)/float(nt)
-runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
+# runoff = 800 + assign_plumeSGD * np.arange(nt)/float(nt)
+# runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
 # runoff = runoff[::-1] #flipping around for building melange
 ## Constant
-# runoff = assign_plumeSGD * np.ones(nt)
+runoff = assign_plumeSGD * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
@@ -1339,8 +1338,8 @@ if(makeDirs):
         os.remove(run_config['run_dir']+'/input/setupReport.txt')
         setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')
     shutil.move('setupReport.txt', run_config['run_dir']+'/input')
-    print(f'Copying {__file__} to {run_config['run_dir']}/input/buildScript.py')
-    shutil.copy(f'{__file__}',f'{run_config['run_dir']}/input/buildScript.py')')
+    print(f"Copying {__file__} to {run_config['run_dir']}/input/buildScript.py")
+    shutil.copy(f'{__file__}',f"{run_config['run_dir']}/input/buildScript.py")
     replaceAll(run_config['run_dir']+'/input/buildScript.py','makeDirs = True', 'makeDirs = False') 
     rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
     setupNotes.close()
