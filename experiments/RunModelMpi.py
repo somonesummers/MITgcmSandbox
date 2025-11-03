@@ -122,9 +122,10 @@ elif(freshStart): #This distinguises between a new coupled run, or continuing a 
             if "nIter0" in line:
                 oldStartIter = int(line[8:-2])
 
-    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
+    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag','presDiag','momDiag','heatDiag']
+    # prefixes = ['presDiag','momDiag','heatDiag']
     endIter = int((24*3600)/dt)
-    sysPrint('\tcondensing diagnostic tile files to global files iter:%i' %endIter)
+    # sysPrint('\tcondensing diagnostic tile files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t == %s ==' %prefixes[k])
         dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter)
