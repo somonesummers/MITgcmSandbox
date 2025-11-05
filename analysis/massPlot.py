@@ -86,7 +86,7 @@ for i in range(len(args.files)):
         endFluxTime[j] = data.HL*data.WL*data.U[-1] / 3.154e7 #m^3/s
         lengthTime[j]=data.X[-1] - data.X[0]  #difference between these
         if(j != toIterate[0]): #include mass loss to length loss
-            endFluxTime[j] += data.HL*data.WL * (lengthTime[j-1] - lengthTime[j]) / (data.dt * 3.154e7) #m^3/s
+            endFluxTime[j] += (data.H[-2])*data.WL * (lengthTime[j-1] - lengthTime[j]) / (data.dt * 3.154e7) #m^3/s
         inFluxTime[j] = data.Ht*data.Uc*data.WL / 3.154e7 #m^3/s
         bFluxTime[j] = -1*simpson(data.B*data.W, x=data.X_)/ 3.154e7  #m^3/s
         BTime[j] = -1 * np.mean(data.B) /365.25 # we flip this for plotting purposes

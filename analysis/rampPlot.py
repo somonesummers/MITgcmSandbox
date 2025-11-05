@@ -108,7 +108,7 @@ for i in range(len(args.files)):
         UcTime[j] = data.Uc
         UtTime[j] = data.Ut
         BTime[j] = -1 * np.mean(data.B) /365.25 # we flip this for plotting purposes
-        timeTime[j] = data.t*365.25 
+        timeTime[j] = data.t*365 
         pressTime[j] = data.force()#data.H0*data.pressure(data.H0) #should I use force?
         spdTime[j]=np.mean(data.U)
         gTime[j]=np.mean(data.gg)
@@ -150,7 +150,8 @@ for i in range(len(args.files)):
         # print(np.shape(seasonTime))
         # print(np.shape(runoff))
         f = interpolate.interp1d(seasonTime, runoff,fill_value='0')
-        timeTime = f(timeTime)
+        timeTime = f(timeTime % (cycle/86400))
+        print(timeTime % (cycle/86400))
         timeLabel = 'SGD [$m^3/s$]'
 
     N = args.windowMean #window over to smooth in time points (days)

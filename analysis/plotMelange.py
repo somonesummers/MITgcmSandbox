@@ -94,7 +94,7 @@ for j in toIterate:
     VTime[j] = simpson(H*W, x=X_)*1e-9
     lengthTime[j]=data.X[-1] - data.X[0]
     UcTime[j] = data.Uc
-    timeTime[j] = data.t * 365
+    timeTime[j] = data.t * 365.25
     iterationNumber[j]=int(it)
 
 if(timeTime[0] != 0):
@@ -119,12 +119,20 @@ ax5.set_ylabel('Mélange length [m]')
 ax5.set_xlabel('Time [days]')
 ax5.grid(alpha=.5)
 
+a = 0
+b = 0
+c = 0
+a, b, c= np.polynomial.polynomial.polyfit(H0Time, lengthTime, 2)
+# print(f'({c:.3g})L^2 + ({b:.3g}) L + ({a:.3g})')
+
 ax6.plot(H0Time,lengthTime,'-')
 sca=ax6.scatter(H0Time,lengthTime,s=None,c=timeTime,cmap='viridis')
+ax6.plot(H0Time,c*H0Time**2 + b*H0Time + a,'--',color='k',alpha=.5)
 cbar=plt.colorbar(sca)
 cbar.set_label('Time [Days]')
 ax6.set_ylabel('Mélange Length [m]')
 ax6.set_xlabel('Mélange H0 [m]')
+ax6.set_title(f'({c:.3g})H^2 + ({b:.3g}) H + ({a:.3g})')
 ax6.grid(alpha=.5)
 
 

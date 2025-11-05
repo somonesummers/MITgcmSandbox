@@ -9,6 +9,7 @@ from scipy.interpolate import interp1d
 import cmocean
 sys.path.append('/Users/psummers8/Documents/glaciome1D')
 sys.path.append('/storage/home/hcoda1/2/psummers8/glaciome1d')
+sys.path.append('/cluster/home/psumme03/glaciome1d')
 from glaciome1D import constants, glaciome
 import glob
 import pickle
