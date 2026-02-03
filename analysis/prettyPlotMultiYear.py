@@ -311,7 +311,7 @@ for i in range(len(years)):
     ax3.plot(timeTime,bFluxSmooth,color='xkcd:red',linestyle=lStyle[i])
     ax3.plot(timeTime,inFluxTime-endFluxSmooth-bFluxSmooth,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.75)
     ax3.plot(timeTime,inFluxTime-endFluxTime-bFluxTime,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.25)
-    ax3.plot([timeTime[0],timeTime[-1]],[0,0],color = 'gray',alpha=.5,linestyle='--')    
+    # ax3.plot([timeTime[0],timeTime[-1]],[0,0],color = 'gray',alpha=.5,linestyle='--')    
     ax3.set_ylabel('Volume flux [$\\mathrm{m^2/y}$]')
     ax3.set_xlabel(timeLabel)
     ax3.grid(alpha=.5)
@@ -385,7 +385,7 @@ for i in range(len(years)):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=RuntimeWarning)
                 u = np.squeeze(np.nanmean(data[2, ::zSkip, :, ::ySkip],axis=1))
-                w = np.squeeze(np.nanmean(data[3, ::zSkip, :, ::ySkip],axis=1))*10
+                w = np.squeeze(np.nanmean(data[3, ::zSkip, :, ::ySkip],axis=1))
             qv = ax5.quiver(
                 x[ySlice,::ySkip],
                 np.squeeze(z[::zSkip]),

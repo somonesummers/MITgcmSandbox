@@ -146,9 +146,9 @@ if(isBerg):
     name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg']
     cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]"]
 else:
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
-    name = ["Temp", "Sal", "U", "W", "V"]
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]"]
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag','ptraceDiag','ptraceDiag']
+    name = ["Temp", "Sal", "U", "W", "V",'TracePlume','TraceBerg']
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]","[Vol Frac]","[Vol Frac]"]
 
 if(args.quick > 0):
     startStep = maxStep
@@ -181,15 +181,15 @@ for k in kList:
         elif k == 4:
             lvl = vRange
             cm = vCmap
-        elif k == 5:
+        elif k == 5 and isBerg:
             lvl = meltRange
             cm = meltCmap
             kk = k - 3
-        elif k == 6:
+        elif k == 6 or ((not isBerg) and k == 5):
             lvl = plumeTracerRange
             cm = plumeTracerCmap
             kk = 0
-        elif k == 7:
+        elif k == 7 or ((not isBerg) and k == 6)::
             lvl = bergTracerRange
             cm = bergTracerCmap
             kk = 1

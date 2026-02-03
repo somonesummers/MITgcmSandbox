@@ -55,7 +55,7 @@ parser.add_argument('-y','--yCrossSection', nargs=1, type=float,default = 5000,
                     help='Y slice location [default 5000 m]')
 parser.add_argument('-s','--shadow', action='count', default=1,
                     help='option of shadow for mélange [default (off)]')
-parser.add_argument('-xl','--xlimit', nargs='?', type=int, default = 30,
+parser.add_argument('-xl','--xlimit', nargs='?', type=int, default = 30000,
                     help='optional max x [default = 30 km]')
 parser.add_argument('-Y','--Years', nargs='*', type=int, default = [1,2],
                     help='years to plot, default = [1,2]')
@@ -101,7 +101,7 @@ for line in fileinput.input('input/data'):
             dt = float(line[8:-2])
 print('dt is loaded as', dt)
 
-x = mds.rdmds("results/XC")/1e3 
+x = mds.rdmds("results/XC") 
 x = x - x[0,1]
 y = mds.rdmds("results/YC")
 z = np.squeeze(mds.rdmds("results/RC"))
@@ -386,13 +386,15 @@ for i in range(len(years)):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=RuntimeWarning)
                 u = np.squeeze(np.nanmean(data[2, ::zSkip, :, ::ySkip],axis=1))
-                w = np.squeeze(np.nanmean(data[3, ::zSkip, :, ::ySkip],axis=1))*10
+                w = np.squeeze(np.nanmean(data[3, ::zSkip, :, ::ySkip],axis=1))
             qv = ax5.quiver(
                 x[ySlice,::ySkip],
                 np.squeeze(z[::zSkip]),
                 u,#/np.sqrt(u**2 + w**2 + 1e-12),
                 w,#/np.sqrt(u**2 + w**2 + 1e-12),
                 alpha=.4,
+                angles='xy',
+                pivot='tail',
                 #width = .004, #width of line
                 #scale = 40
                 )
