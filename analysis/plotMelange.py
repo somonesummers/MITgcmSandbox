@@ -149,11 +149,11 @@ elif(subSample > 1):
     print('\tSubsampling at %i' %subSample)
 # print(shiftIndex)
 for j in toIterate[shiftIndex::subSample]:
-    file = files[j]
+    file = files[j + jShift]
     name = file.replace('./', '').replace('.pickle', '').replace(fileStr,'')
     print(file)
     linestyle = '-'
-    with open(files[j], 'rb') as file:
+    with open(files[j + jShift], 'rb') as file:
         data = pickle.load(file)
         file.close()
     X = data.X

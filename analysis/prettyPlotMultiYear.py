@@ -23,6 +23,8 @@ import cmocean
 import glob
 import pickle
 import gsw
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import warnings
 saveProfiles = False
 
 constant = constants()
@@ -37,7 +39,7 @@ parser.add_argument('-sgd','--sgd', nargs='*', type=float, default = None,
                     help='SGD, any value loads SGD from input, needs results RY')
 parser.add_argument('--silent', action='count', default=0,
                     help='Option to silence showing of plots')
-parser.add_argument('-t','--timeRange', nargs=2, type=int, default = [0, 0],
+parser.add_argument('-t','--timeRange', nargs=2, type=int, default = [94, 459],
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
 parser.add_argument('-w','--windowMean', nargs='?', type=int, default=10,
                     help='window width for time averaging melt rates [default = 10]')
@@ -53,6 +55,8 @@ parser.add_argument('-s','--shadow', action='count', default=1,
                     help='option of shadow for mélange [default (off)]')
 parser.add_argument('-xl','--xlimit', nargs='?', type=int, default = 30,
                     help='optional max x [default = 30 km]')
+parser.add_argument('-Y','--Years', nargs='*', type=int, default = [1,2],
+                    help='years to plot, default = [1,2]')
 args = parser.parse_args()
 
 showDensity = False
@@ -62,7 +66,8 @@ showQuiver = True
 # print(args)
 figLabels = ["(a)","(b)","(c)","(e)","(d)","(f)"] 
 # These are out of order as I shuffled them after making the script. Sorry it is terrible
-plt.figure(figsize=(16, 6),layout="constrained")
+plt.figure(figsize=(16, 6),layout="tight")
+# plt.figure(figsize=(16, 6))
 ax5 = plt.subplot(2,4,(1,2))
 ax6 = plt.subplot(2,4,(3,4))
 ax1 = plt.subplot(2,4,5)
@@ -71,12 +76,19 @@ ax3 = plt.subplot(2,4,6) # It is really horrible.
 ax4 = plt.subplot(2,4,8)
 axes = [ax5, ax6, ax1, ax2, ax3, ax4]
 
-lStyle = ['-','--',':','-.',(0, (3, 2, 1, 2, 1, 2)),(0, (2, 3, 1, 2, 1, 2, 1, 2,))]
+lStyle = ['-',':','--','-.',(0, (3, 2, 1, 2, 1, 2)),(0, (2, 3, 1, 2, 1, 2, 1, 2,))]
 meltColors = ['xkcd:tomato red','xkcd:rose','xkcd:wine','xkcd:grape purple','xkcd:grape','xkcd:violet']
 
-colorList = ['xkcd:light blue',
-                'xkcd:bright orange','xkcd:tomato',
-                'xkcd:faded pink','xkcd:dark blue']
+
+#colors matching phase
+colorMapForLine = colormaps['cmo.phase']
+n_colors = 5
+colorTmp = colorMapForLine(np.linspace(0,1,n_colors+1))
+colorList = colorTmp[:-1]
+# Paul's Custom colors
+# colorList = ['xkcd:light blue',
+#                 'xkcd:bright orange','xkcd:tomato',
+#                 'xkcd:faded pink','xkcd:dark blue']
 
 if(args.silent > 0): #print status for script
     print(f"rampPlot: {args}")
@@ -92,8 +104,10 @@ x = x - x[0,1]
 y = mds.rdmds("results/YC")
 z = np.squeeze(mds.rdmds("results/RC"))
 
-for i in range(len(args.files)):
-    fileStr = args.files[i]
+years = args.Years
+for i in range(len(years)):
+    print(f'Year {years[i]}, index {i}')
+    fileStr = 'couplingResults/MITgcmRun_'
     files = sorted(glob.glob('%s*.pickle'%fileStr))
     jShift = 0
     if(args.timeRange[0] == 0):
@@ -125,12 +139,13 @@ for i in range(len(args.files)):
     endFluxTime = np.zeros(np.shape(toIterate))
     inFluxTime = np.zeros(np.shape(toIterate))
     for j in toIterate:
-        file = files[j + jShift]
-        with open(files[j + jShift], 'rb') as fileName:
+        if(j + jShift + years[i]*365 >= len(files)):
+            print('Truncating final year, seem to have ended early')
+            break #stop building data if end of file
+        file = files[j + jShift + years[i]*365]
+        with open(files[j + jShift + years[i]*365], 'rb') as fileName:
             data = pickle.load(fileName)
             fileName.close()
-        if(j == toIterate[-1]):
-            print(f"Final state: {data}")
         it = file.replace(fileStr,'').replace('./', '').replace('.pickle', '')
         H0Time[j]=data.H0
         xTermTime[j] = data.X[0]
@@ -143,7 +158,7 @@ for i in range(len(args.files)):
         lengthTime[j]=data.X[-1] - data.X[0]  #difference between these
         UcTime[j] = data.Uc
         UtTime[j] = data.Ut
-        BTime[j] = -1 * np.mean(data.B) /365.25 # we flip this for plotting purposes
+        BTime[j] = -1 * np.mean(data.B) # we flip this for plotting purposes
         BShapeTime[j,:] = -1 * data.B /365.25
         timeTime[j] = data.t*365 
         pressTime[j] = data.force()#data.H0*data.pressure(data.H0) #should I use force?
@@ -151,20 +166,21 @@ for i in range(len(args.files)):
         gTime[j]=np.mean(data.gg)
         muSTime[j] = data.param.muS
         iterationNumber[j]=int(it)
-        endFluxTime[j] = data.HL*data.WL*data.U[-1] / 3.154e7 #m^3/s
+        endFluxTime[j] = data.HL*data.U[-1] #m^2/y
         if(j != toIterate[0]): #include mass loss to length loss
-            endFluxTime[j] += (data.H[-2])*data.WL * (lengthTime[j-1] - lengthTime[j]) / (data.dt * 3.154e7) #m^3/s
-        inFluxTime[j] = data.Ht*data.Uc*data.WL / 3.154e7 #m^3/s
-        bFluxTime[j] = -1*simpson(data.B*data.W, x=data.X_)/ 3.154e7  #m^3/s
-    timeTime = timeTime - timeTime[0]
+            endFluxTime[j] += (data.H[-2]) * (lengthTime[j-1] - lengthTime[j]) / (data.dt) #m^2/y
+        inFluxTime[j] = data.Ht*data.Uc #m^2/y
+        bFluxTime[j] = -1*simpson(data.B, x=data.X_)  #m^3/s
+    timeTime[timeTime == 0] = np.nan
+    timeTime = timeTime - timeTime[0] #times of 0 should stay 0
     # if(not args.timeRange == None):
     #     timeTime = timeTime + args.timeRange[0]
-    timeLabel = 'Time [days]'
+    timeLabel = 'Day of year'
     
     from scipy import interpolate
     from MITgcmutils import mds
-    remoteResult = args.files[i].rsplit('/',1)[0]
-    print(f'remoteResult is ({remoteResult})')
+    remoteResult = args.files[0].rsplit('/',1)[0]
+    # print(f'remoteResult is ({remoteResult})')
     dy = 2*y[0,0]
     for line in fileinput.input(f'{remoteResult}/../input/data'):
         if "ExternForcingPeriod=" in line:
@@ -177,6 +193,9 @@ for i in range(len(args.files)):
     rad = rad.reshape((nt,len(plumeMask)))
     vel = np.fromfile(f'{remoteResult}/../input/runoffVel.bin', dtype='>f8')
     vel = vel.reshape((nt,len(plumeMask)))
+    T_bc = np.fromfile(f'{remoteResult}/../input/EBCt.bin', dtype='>f8')
+    extraDim = int(np.size(T_bc) / 32 / 24) #480 for sierra, 120 for Quebec
+    T_bc = T_bc.reshape((extraDim, 32, 24))  
 
     plumeType = np.max(plumeMask)
     cleanRad = rad[:,plumeMask == plumeType]
@@ -192,10 +211,11 @@ for i in range(len(args.files)):
     # print(np.shape(seasonTime))
     # print(np.shape(runoff))
     f = interpolate.interp1d(seasonTime, runoff,fill_value='0')
+    f_temp = interpolate.interp1d(seasonTime, np.mean(T_bc,axis=(1,2)),fill_value='0')
     if(args.sgd != None):
+        TempTime = f_temp(timeTime % (cycle/86400))
         timeTime = f(timeTime % (cycle/86400))
-        timeLabel = 'SGD [$m^3/s$]'
-
+        timeLabel = 'SGD [$\\mathrm{m^3/s}$]'
     N = args.windowMean #window over to smooth in time points (days)
     #Pad edges of BTime to have smooth edges and work for short time series
     padL = int(N/2)
@@ -207,33 +227,27 @@ for i in range(len(args.files)):
     bFluxSmooth = np.convolve(np.concatenate((bFluxTime[0]*np.ones(padL),bFluxTime,bFluxTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
     endFluxSmooth = np.convolve(np.concatenate((endFluxTime[0]*np.ones(padL),endFluxTime,endFluxTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
 
-    forceLabel = 'Melt Rate [m/day]'
-    forceString = 'Melt'
-    notforceTime = UcTime
-    notforceLabel = 'Calving Rate [m/yr]'
-    notforceString = 'Calving'
-
+    forceLabel = 'Melt Rate [m/d]'
+    forceString = 'melt'
     # plt.suptitle('Mélange over Time')
-    if(args.labels == None):
-        ax1.plot(timeTime,forceTime,color=meltColors[i],linestyle=lStyle[i])
-    else: #labels names have been supplied
-        ax1.plot(timeTime,forceTime,color=meltColors[0],linestyle=lStyle[i],label=args.labels[i])
-    ax1.plot(timeTime,forceTimeRough,color=meltColors[0],linestyle='-',alpha=.25)
-    ax1.scatter(timeTime[0],forceTime[0],s=50,marker='*',color='black')
+    tempColor = 'xkcd:magenta'
     
-    ax1.set_ylabel(forceLabel,color=meltColors[0])
-    ax1.tick_params(axis='y',labelcolor=meltColors[0])
-    if(args.fixForce > 0):
-        ax1.set_ylim([0.95 * np.nanmean(forceTimeRough), 1.05* np.nanmean(forceTimeRough)])
+    # ax1.plot(timeTime + years[i]*365,f((timeTime  + args.timeRange[0] + years[i]*365) % (cycle/86400)),color='xkcd:azure',linestyle=lStyle[i],alpha=.5)
+    ax1.plot(timeTime,f((timeTime  + args.timeRange[0] + years[i]*365) % (cycle/86400)),color='xkcd:azure',linestyle=lStyle[i],alpha=.5)
+    ax1.set_ylabel('SGD [$\\mathrm{m^3/s}$]',color='xkcd:azure')
+    ax1.tick_params(axis='y',labelcolor='xkcd:azure')
     ax1.set_xlabel(timeLabel)
     ax1.grid(alpha=.5)
     ax1.set_xticks([0,73,73*2,73*3,73*4,73*5])
-    ax1_2 = ax1.twinx()
-    ax1_2.plot(timeTime,f((timeTime  + args.timeRange[0]) % (cycle/86400)),color='xkcd:azure',linestyle=lStyle[i],alpha=.5)
-    ax1_2.set_ylabel('SGD [$m^3/s$]',color='xkcd:azure')
-    ax1_2.tick_params(axis='y',labelcolor='xkcd:azure')
+    if(False): #plot temp or not
+        if(i == 0):
+            ax1_2 = ax1.twinx()
+        ax1_2.plot(timeTime,f_temp(((timeTime  + args.timeRange[0] + years[i]*365) % (cycle/86400))),color=tempColor,linestyle=lStyle[i])
+        # ax1.scatter(timeTime[0],forceTime[0],s=50,marker='*',color='black')
+        
+        ax1_2.set_ylabel('Depth avg shelf temp [C]',color=tempColor)
+        ax1_2.tick_params(axis='y',labelcolor=tempColor)
 
-    # ax1.set_title('Melt')
     if(args.labels != None):
         ax1.legend(loc=args.legLoc)
     xString =''
@@ -247,51 +261,48 @@ for i in range(len(args.files)):
     roughHT = H0Time
     lengthTime = np.convolve(np.concatenate((lengthTime[0]*np.ones(padL),lengthTime,lengthTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
     H0Time = np.convolve(np.concatenate((H0Time[0]*np.ones(padL),H0Time,H0Time[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
-    ax2.plot(drivingVariable,roughLT,color='xkcd:blueberry',alpha=0.25)
-    ax2.plot(drivingVariable,lengthTime,color='xkcd:blueberry',linestyle=lStyle[i])
-    # ax2.scatter(drivingVariable[0],lengthTime[0],s=50,marker='*',color='black')
-    ax2.set_ylabel('Mélange length [m]',color='xkcd:blueberry')
-    ax2.tick_params(axis='y',labelcolor='xkcd:blueberry')
+    ax2.plot(timeTime,forceTime/365.25,color=meltColors[0],linestyle=lStyle[i])
+    ax2.plot(timeTime,forceTimeRough/365.25,color=meltColors[0],linestyle='-',alpha=.25)
+    ax2.set_ylabel('Melt rate, $\\dot b$ [m/d]',color=meltColors[0])
+    ax2.tick_params(axis='y',labelcolor=meltColors[0])
+    print(f'Year {years[i]} avg melt rate is {np.mean(forceTimeRough)/365.25} [m/d]')
+
     ax2.grid(alpha=.5)
     ax2.set_xticks([0,73,73*2,73*3,73*4,73*5])
     # sca=ax2.scatter(BTime,lengthTime,s=None,c=timeTime,cmap='cividis')
     # cbar=plt.colorbar(sca)
     # cbar.set_label('Iteration')
-    if(True): #gate patch addition
+    if(i == (len(years)-1)): #gate patch addition
         from matplotlib import patches
         init_xlim = ax2.get_xlim()
         init_ylim = ax2.get_ylim()
-        p1 = patches.Rectangle([0   ,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[0],alpha=.1,edgecolor=None)
-        p2 = patches.Rectangle([73  ,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[1],alpha=.1,edgecolor=None)
-        p3 = patches.Rectangle([73*2,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[2],alpha=.1,edgecolor=None)
-        p4 = patches.Rectangle([73*3,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[3],alpha=.1,edgecolor=None)
-        p5 = patches.Rectangle([73*4,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[4],alpha=.1,edgecolor=None)
+        p1 = patches.Rectangle([0   ,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[0],alpha=.1,edgecolor=None,zorder=-1)
+        p2 = patches.Rectangle([73  ,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[1],alpha=.1,edgecolor=None,zorder=-1)
+        p3 = patches.Rectangle([73*2,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[2],alpha=.1,edgecolor=None,zorder=-1)
+        p4 = patches.Rectangle([73*3,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[3],alpha=.1,edgecolor=None,zorder=-1)
+        p5 = patches.Rectangle([73*4,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[4],alpha=.1,edgecolor=None,zorder=-1)
         ax2.add_patch(p1)
         ax2.add_patch(p2)
         ax2.add_patch(p3)
         ax2.add_patch(p4)
         ax2.add_patch(p5)
 
-
-
-
-    if(False): #gate for plotting thickness
+    if(True): #gate for 2nd plot
         if(i == 0):
             ax2_2 = ax2.twinx()
-        ax2_2.plot(drivingVariable,roughHT,color='xkcd:mulberry',alpha=0.25)
-        ax2_2.plot(drivingVariable,H0Time,color='xkcd:mulberry',linestyle=lStyle[i])
-        # ax2_2.scatter(drivingVariable[0],H0Time[0],s=50,marker='*',color='black')
-        ax2_2.set_ylabel('Mélange H0 [m]',color='xkcd:mulberry')
-        ax2_2.tick_params(axis='y',labelcolor='xkcd:mulberry')
-        # ax2_2.grid(alpha=.25,color='xkcd:mulberry')
+        ax2_2.plot(drivingVariable,roughLT,color='xkcd:blueberry',alpha=0.25)
+        ax2_2.plot(drivingVariable,lengthTime,color='xkcd:blueberry',linestyle=lStyle[i])
+        ax2_2.set_ylabel('Mélange length, $L$    [m]',color='xkcd:blueberry')
+        ax2_2.tick_params(axis='y',labelcolor='xkcd:blueberry')
     ax2.set_xlabel(drivingLabel)
+    ax2.set_ylim([0,1.6])
     # ax2.set_title('Size')
 
     if(i == 0): #Plot blanks for legend 
-        ax3.plot([],[],color='xkcd:sand',linestyle='-',label='In')   
-        ax3.plot([],[],color='xkcd:apple',linestyle='-',label='Out')  
-        ax3.plot([],[],color='xkcd:red',linestyle='-',label='Melt')  
-        ax3.plot([],[],color='xkcd:sky blue',linestyle='-',label='Net',alpha=.5)
+        ax3.plot([],[],color='xkcd:sand',linestyle='-',label='$Q_{in}$')   
+        ax3.plot([],[],color='xkcd:apple',linestyle='-',label='$Q_{out}$')  
+        ax3.plot([],[],color='xkcd:red',linestyle='-',label='$Q_{melt}$')  
+        ax3.plot([],[],color='xkcd:sky blue',linestyle='-',label='$Q_{net}$',alpha=.5)
         # ax3.plot([],[],color='xkcd:indigo',linestyle='-',label='Volume')
     ax3.plot(timeTime,inFluxTime,color='xkcd:sand',linestyle=lStyle[i])   
     ax3.plot(timeTime,endFluxTime,color='xkcd:apple',linestyle=lStyle[i],alpha = .25)  
@@ -301,23 +312,29 @@ for i in range(len(args.files)):
     ax3.plot(timeTime,inFluxTime-endFluxSmooth-bFluxSmooth,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.75)
     ax3.plot(timeTime,inFluxTime-endFluxTime-bFluxTime,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.25)
     ax3.plot([timeTime[0],timeTime[-1]],[0,0],color = 'gray',alpha=.5,linestyle='--')    
-    ax3.set_ylabel('Volume Flux [m^3/s]')
-    ax3.set_xlabel('Time [days]')
+    ax3.set_ylabel('Volume flux [$\\mathrm{m^2/y}$]')
+    ax3.set_xlabel(timeLabel)
     ax3.grid(alpha=.5)
     # ax3.set_title('')
     # ax3.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15),ncol=4)
-    ax3.legend()
+    ax3.legend(fontsize='small',ncols = 3,framealpha=.2)
     ax3.set_xticks([0,73,73*2,73*3,73*4,73*5])
-    
-    # for ii in range(len(timeTime)):
-    #     ax4.plot(np.linspace(0,1,20),BShapeTime[ii,:],alpha = .1,color=colorList[int(timeTime[ii]/73)%5])
-    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[  0: 73,:],axis=0),alpha = 1,color=colorList[0],label='Late Winter')
-    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[ 73:164,:],axis=0),alpha = 1,color=colorList[1],label='Plume Rise')
-    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[164:219,:],axis=0),alpha = 1,color=colorList[2],label='Plume Peak')
-    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[219:292,:],axis=0),alpha = 1,color=colorList[3],label='Plume Fall')
-    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[292:365,:],axis=0),alpha = 1,color=colorList[4],label='Early Winter')
+
+
+    ## Melt shapes
+    if(i == 0): #Plot blanks for legend 
+        ax4.plot([],[],color=colorList[0],linestyle=lStyle[0],label='Late Winter')   
+        ax4.plot([],[],color=colorList[1],linestyle=lStyle[0],label='Spring')  
+        ax4.plot([],[],color=colorList[2],linestyle=lStyle[0],label='Summer')  
+        ax4.plot([],[],color=colorList[3],linestyle=lStyle[0],label='Autumn')
+        ax4.plot([],[],color=colorList[4],linestyle=lStyle[0],label='Early Winter')
+    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[  0: 73,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[0])
+    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[ 73:164,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[1])
+    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[164:219,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[2])
+    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[219:292,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[3])
+    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[292:365,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[4])
     ax4.grid(alpha=.5)
-    ax4.legend(loc=9)
+    ax4.legend(loc=9,fontsize='small')
     # if(i == 0):
     #     ax4_2=ax4.twinx()
     # ax4_2.plot(drivingVariable,roughG,color='xkcd:lilac',alpha=0.25)
@@ -327,175 +344,136 @@ for i in range(len(args.files)):
     # ax4_2.tick_params(axis='y',labelcolor='xkcd:lilac')
     # ax4.set_title('Avg Speed and Fluidity $g^{\\prime}$')
     ax4.set_xlabel('Fraction along mélange [ ]')
-    ax4.set_ylabel('Melt Rate [m/day]')
+    ax4.set_ylabel('Melt rate, $\\dot b$ [m/d]')
     ax4.set_ylim([0,1.6])
-## Do temp, U plotting first
-ySlice = np.argmin(np.abs(y[:,0] - args.yCrossSection))
-print('cross section is y =', y[ySlice,0], 'index', ySlice)
+    if(i == 0):    
+        ## Do temp, U plotting first, only for first year
+        ySlice = np.argmin(np.abs(y[:,0] - args.yCrossSection))
+        print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
-shift = 146
-data = mds.rdmds("results/dynDiag", int((np.max([args.timeRange[0],1])+shift)*86400.0/dt))
-data[:,data[1,:,:,:] == 0] = np.nan #if salt = 0 its a wall, nan it out for averging later
+        shift = 146 # add this many to day 0 of viewed year
+        data = mds.rdmds("results/dynDiag", int((np.max([args.timeRange[0],1])+shift)*86400.0/dt))
+        data[:,data[1,:,:,:] == 0] = np.nan #if salt = 0 its a wall, nan it out for averging later
 
-if(args.shadow > 0): #enable berg shadows here
-    dataBergs = mds.rdmds("results/BRGFlx",int((np.max([args.timeRange[0],1])+shift)*86400.0/dt))
-    if(dataBergs.shape[0] < 6):
-        dataBergPlot = dataBergs[0,:,:,:].copy()
-        dataBergPlot[dataBergPlot != 0] = .2
-        dataBergPlot[data[0,:,:,:] < -1] = .2 #attemp to recapture freezing limit ice
-        dataBergPlot[:,np.nansum(dataBergs[0,:,:,:],axis=0) == 0] = 0 #attemp to recapture freezing limit ice
-    else:
-        dataBergPlot = dataBergs[5,:,:,:]
-    dataBergPlot[dataBergPlot == 0] = 1 #np.nan
-## Temp
-lvl = np.linspace(-2, 4.0, 31)
-cm = 'RdYlBu_r'
-cp = ax5.contourf(
+        if(args.shadow > 0): #enable berg shadows here
+            dataBergs = mds.rdmds("results/BRGFlx",int((np.max([args.timeRange[0],1])+shift)*86400.0/dt))
+            if(dataBergs.shape[0] < 6):
+                dataBergPlot = dataBergs[0,:,:,:].copy()
+                dataBergPlot[dataBergPlot != 0] = .2
+                dataBergPlot[data[0,:,:,:] < -1] = .2 #attemp to recapture freezing limit ice
+                dataBergPlot[:,np.nansum(dataBergs[0,:,:,:],axis=0) == 0] = 0 #attemp to recapture freezing limit ice
+            else:
+                dataBergPlot = dataBergs[5,:,:,:]
+            dataBergPlot[dataBergPlot == 0] = 1 #np.nan
+        ## Temp
+        lvl = np.linspace(-2, 4.0, 31)
+        cm = 'RdYlBu_r'
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            plotData = np.squeeze(np.nanmean(data[0, :, :, :],axis=1))
+        cp = ax5.contourf(
+                        np.squeeze(x[ySlice,:]),
+                        np.squeeze(z),
+                        plotData,
+                        lvl,
+                        extend="both",
+                        cmap=cm,
+                        )
+        if(True and showQuiver):
+            zSkip = 1
+            ySkip = 5
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=RuntimeWarning)
+                u = np.squeeze(np.nanmean(data[2, ::zSkip, :, ::ySkip],axis=1))
+                w = np.squeeze(np.nanmean(data[3, ::zSkip, :, ::ySkip],axis=1))*10
+            qv = ax5.quiver(
+                x[ySlice,::ySkip],
+                np.squeeze(z[::zSkip]),
+                u,#/np.sqrt(u**2 + w**2 + 1e-12),
+                w,#/np.sqrt(u**2 + w**2 + 1e-12),
+                alpha=.4,
+                #width = .004, #width of line
+                #scale = 40
+                )
+            plt.quiverkey(qv,1.08,.95,.1,'10 cm/s')
+        if(args.shadow > 0):
+                    # plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
+                    cp2 = ax5.contourf(
+                        x[ySlice,:],
+                        np.squeeze(z),
+                        np.squeeze(1-dataBergPlot[:, ySlice, :])*100,
+                        [5,20,40,60,80],
+                        extend="max",
+                        alpha=.3,
+                        cmap='cmo.gray_r')
+        if(showDensity):
+            salt = np.squeeze(data[1,:,ySlice,:])
+            pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
+            CT = gsw.CT_from_t(salt, data[0,:,ySlice,:], pressure)
+            density = gsw.rho(salt, CT, 0) - 1000 #in-stu density less 1000
+            densityLevels = np.linspace(22,28,31)
+            cc = ax5.contour(
                 np.squeeze(x[ySlice,:]),
                 np.squeeze(z),
-                np.squeeze(np.nanmean(data[0, :, :, :],axis=1)),
-                lvl,
-                extend="both",
-                cmap=cm,
-                )
-if(True and showQuiver):
-    zSkip = 1
-    ySkip = 5
-    u = np.squeeze(np.nanmean(data[2, ::zSkip, :, ::ySkip],axis=1))
-    w = np.squeeze(np.nanmean(data[3, ::zSkip, :, ::ySkip],axis=1))
-    ax5.quiver(
-        x[ySlice,::ySkip],
-        np.squeeze(z[::zSkip]),
-        u,#/np.sqrt(u**2 + w**2 + 1e-12),
-        w,#/np.sqrt(u**2 + w**2 + 1e-12),
-        alpha=.4,
-        #width = .004, #width of line
-        #scale = 40
-        )
-if(args.shadow > 0):
-            # plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
-            cp2 = ax5.contourf(
-                x[ySlice,:],
-                np.squeeze(z),
-                np.squeeze(1-dataBergPlot[:, ySlice, :]),
-                [.05,.2,.4,.6,.8],
-                extend="max",
-                alpha=.3,
-                cmap='cmo.gray_r')
-if(showDensity):
-    salt = np.squeeze(data[1,:,ySlice,:])
-    pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
-    CT = gsw.CT_from_t(salt, data[0,:,ySlice,:], pressure)
-    density = gsw.rho(salt, CT, 0) - 1000 #in-stu density less 1000
-    densityLevels = np.linspace(22,28,31)
-    cc = ax5.contour(
-        np.squeeze(x[ySlice,:]),
-        np.squeeze(z),
-        np.squeeze(density),
-        densityLevels,
-        colors='black',
-        linewidths=0.5,
-        alpha=0.5
-    )
-    plt.clabel(cc, inline=3, fontsize=8)
-if(args.xlimit != None):
-    ax5.set_xlim([0, args.xlimit])
+                np.squeeze(density),
+                densityLevels,
+                colors='black',
+                linewidths=0.5,
+                alpha=0.5
+            )
+            plt.clabel(cc, inline=3, fontsize=8)
+        if(args.xlimit != None):
+            ax5.set_xlim([0, args.xlimit])
+        if(i == 0):
+            divider = make_axes_locatable(ax5)
+            ax5_cb = divider.append_axes("right", size="2%", pad="15%")
+            ax5_cb2 = divider.append_axes("right", size="2%", pad="10%")
+            fig = ax5.get_figure()
+            fig.add_axes(ax5_cb)
+            fig.add_axes(ax5_cb2)
+        ax5.yaxis.tick_right()
+        ax5.yaxis.set_label_position("right")
+        ax5.set_xlabel('Along fjord [km]')
+        ax5.set_ylabel('Depth [m]')
+        ax5.set_title(f"Fjord on day {shift:.0f} of year {years[0]}")
+        cbar = plt.colorbar(cp,cax=ax5_cb,ticks=[-1, 0, 1,2,3,4], orientation="vertical",fraction=0.06,format='%.0f')
+        cbar.set_label('Temperature [C]')
+        cbar2 = plt.colorbar(cp2,cax=ax5_cb2, orientation="vertical",fraction=0.06,format='%.0f')
+        cbar2.set_label('Ice fraction $\\varphi$ [%]')
 
-ax5.set_xlabel('Along Fjord [km]')
-ax5.set_ylabel('Depth [m]')
-# ax5.set_title("Temperature y = %i at %.02f days" % (y[ySlice,0], args.timeRange[0]+shift))
-cbar = plt.colorbar(cp,orientation="vertical",fraction=0.06,format='%.2f')
-cbar.set_label('Temperature [C]')
-cbar2 = plt.colorbar(cp2,orientation="vertical",fraction=0.06,format='%.2f')
-cbar2.set_label('Ice Fraction $\\varphi$ [ ]')
-
-if(True):
+    #melange model cross section
     mapName = 'cmo.phase'
     colorMapForMelange= colormaps[mapName]
     n_colors = len(toIterate)
     melange_Colors = colorMapForMelange(np.linspace(0,1,n_colors+1))
+    if(i == 0):
+        divider = make_axes_locatable(ax6)
+        ax6_cb = divider.append_axes("right", size="2%", pad="2%")
+        fig = ax6.get_figure()
+        fig.add_axes(ax6_cb)
+
+    ax6.plot([],[],color='gray',linestyle=lStyle[i],label=f'Year {years[i]}')  
+    #Thick lines
     for j in toIterate[::73]:
         p = ax6.plot(np.append(X_fullTime[j,:],X_fullTime[j,::-1]),np.append(-917/1020*H_fullTime[j,:],(1-917/1020)*H_fullTime[j,::-1]),
             color=melange_Colors[j], # colorList[int(j/73)] or melange_Colors[j]
-            linewidth=1, linestyle = '-',
+            linewidth=2, linestyle = lStyle[i],
             )
-    sc = ax6.scatter([],[],c=[],vmin=0,vmax=365,cmap=mapName)
-    cbar = plt.colorbar(sc)
-    cbar.set_label('Day of Year')
-else: #this is the Uvel plot
-    ## Uvel
-    lvl = np.linspace(-0.2, 0.2, 31)
-    cm = 'cmo.balance'
-    cp = ax6.contourf(
-                    np.squeeze(x[ySlice,:]),
-                    np.squeeze(z),
-                    np.squeeze(data[2, :, ySlice, :]),
-                    lvl,
-                    extend="both",
-                    cmap=cm,
-                    )
-    if(args.shadow > 0):
-                # plt.plot(x[ySlice,:],-np.max(maxDepth,axis=0),color='gray',linestyle='dotted')
-                cp2 = ax6.contourf(
-                    x[ySlice,:],
-                    np.squeeze(z),
-                    np.squeeze(1-dataBergPlot[:, ySlice, :]),
-                    [.05,.2,.4,.6,.8],
-                    extend="max",
-                    alpha=.2,
-                    cmap='cmo.gray_r')
-    if(showQuiver):
-        zSkip = 1
-        ySkip = 5
-        u = np.squeeze(data[2, ::zSkip, ySlice, ::ySkip])
-        w = np.squeeze(data[3, ::zSkip, ySlice, ::ySkip])
-        ax6.quiver(
-            x[ySlice,::ySkip],
-            np.squeeze(z[::zSkip]),
-            u,#/np.sqrt(u**2 + w**2 + 1e-12),
-            w,#/np.sqrt(u**2 + w**2 + 1e-12),
-            alpha=.5,
-            #width = .004, #width of line
-            #scale = 40
-            )
-    if(showDensity):
-        salt = np.squeeze(data[1,:,ySlice,:])
-        pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
-        CT = gsw.CT_from_t(salt, data[0,:,ySlice,:], pressure)
-        density = gsw.rho(salt, CT, 0) - 1000 #in-stu density less 1000
-        densityLevels = np.linspace(22,28,31)
-        cc = ax6.contour(
-            np.squeeze(x[ySlice,:]),
-            np.squeeze(z),
-            np.squeeze(density),
-            densityLevels,
-            colors='black',
-            linewidths=0.5,
-            alpha=0.5
-        )
-        plt.clabel(cc, inline=3, fontsize=8)
-    if(showZero):
-        cc = ax6.contour(
-            np.squeeze(x[ySlice,:]),
-            np.squeeze(z),
-            np.squeeze(data[2, :, ySlice, :]),
-            [0],
-            colors='gray',
-            linewidths=0.5,
-            alpha=0.5
-        )
-        plt.clabel(cc, inline=3, fontsize=8)
-    if(args.xlimit != None):
-        ax6.set_xlim([0, args.xlimit])
-
-    ax6.set_xlabel('Along Fjord [km]')
+    ## thin lines
+    # for j in toIterate[::28]:
+    #     p = ax6.plot(np.append(X_fullTime[j,:],X_fullTime[j,::-1]),np.append(-917/1020*H_fullTime[j,:],(1-917/1020)*H_fullTime[j,::-1]),
+    #         color=melange_Colors[j], # colorList[int(j/73)] or melange_Colors[j]
+    #         linewidth=1, linestyle = lStyle[i],alpha=.3
+    #         )
+    if(i == len(years)-1):
+        sc = ax6.scatter([],[],c=[],vmin=0,vmax=365,cmap=mapName,alpha=1)
+        cbar = plt.colorbar(sc,cax=ax6_cb,ticks=[0,73,73*2,73*3,73*4,73*5])
+        cbar.set_label('Day of Year')
+        ax6.legend(loc=4)
     ax6.set_ylabel('Depth [m]')
-    # ax5.set_title("Temperature y = %i at %.02f days" % (y[ySlice,0], args.timeRange[0]))
-    cbar = plt.colorbar(cp,orientation="vertical",fraction=0.06,format='%.2f')
-    cbar.set_label('Temperature [C]')
-    # cbar2 = plt.colorbar(cp2,orientation="vertical",fraction=0.06,format='%.2f')
-    # cbar2.set_label('Ice Fraction $\\varphi$ [ ]')
-    # plt.tight_layout()
+    ax6.set_xlabel('Length, $L$ [m]')
+
+# plt.tight_layout()
 
 ## label and save
 for label,ax in zip(figLabels,axes):

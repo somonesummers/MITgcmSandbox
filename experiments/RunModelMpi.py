@@ -284,7 +284,7 @@ for ii in range(iterationsToRun):
     signal.signal(signal.SIGALRM,handler) #setting a timer for glaciome1d
     signal.alarm(600) # if its not done in 10 minutes, its probably at minimum size. 
                     # if this is happening for non-trivially small melange, something is off.
-                    # Can happen when mélange thickness increases down fjord, need to look into more 
+                    # Can happen when mélange thickness increases down fjord, caused by freezing which should be fixed now 
     try:
         data.prognostic(method='lm')
     except Exception as e:

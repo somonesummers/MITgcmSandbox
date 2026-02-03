@@ -49,6 +49,9 @@ depth = np.asarray(file_id.variables['z'])
 temp = np.asarray(file_id.variables['temp'])
 temp_qc = file_id.variables['temp']
 salt = np.asarray(file_id.variables['sal'])
+temp[salt < 0] = np.nan
+salt[salt < 0] = np.nan
+
 profile = np.asarray(file_id.variables['profile'])
 
 pressure = np.zeros_like(salt)
@@ -111,34 +114,56 @@ freezeS100 = [0,50]
 freezeT100 = [-.011,-2.919]
 
 ## Pick a few fun TS and density profiles
-for i in [8,9,10,29]:
-    plt.figure(i,figsize=(10, 5))
-    ax1 = plt.subplot(121)
-    cp = ax1.scatter(salt[:,i],temp[:,i],c=depth[:],linestyle='-',marker='o')
-    cbar = plt.colorbar(cp) 
-    cbar.set_label('Depth [m]')
-    ax1.plot(mixingS,mixingT,linewidth=.5,color='gray',alpha=.5,linestyle='--')
-    ax1.plot(meltS,meltT,linewidth=.5,color='gray',alpha=.5,linestyle='--')
-    ax1.plot(freezeS,freezeT,linewidth=.5,color='red',alpha=.5,linestyle='--')
-    ax1.plot(freezeS100,freezeT100,linewidth=.5,color='red',alpha=.5,linestyle='--')
-    ax1.set_title(i)
-    ax1.set_xlim([26,35.5])
-    ax1.set_ylim([-2.5,4.75]) 
-    ax1.set_ylabel('Temp [C]')
-    ax1.set_xlabel('Salinity [PSU]')
-    
-    ax2 = plt.subplot(122)
-    ax2.plot(density[:,i],depth)
-    ax2.set_ylabel('Depth')
-    ax2.set_xlabel('Density')
-    ax2.set_ylim([-10,900])
-    ax2.set_xlim([25,28])
-    ax2.invert_yaxis()
-    plt.tight_layout()
-    ax2.grid(alpha=.5)
-    plt.show()
-    plt.close()
-    np.savez('shelfProfile2015',T=temp[:,i],S=salt[:,i],z=depth[:],density=density[:,i])
+picks = [10,9,8,12,14,15,16,19,21,22,29]
+order = [1,2,3,4,5,6,7,8,9,10,12]
+distAlong = np.zeros(len(picks))
+for i in range(len(picks)):
+    if(i == 0):
+        distAlong[i] = 0
+    else:
+        distTemp = np.sqrt((utm_x[picks[i]] - utm_x[picks[i-1]])**2 + (utm_y[picks[i]] - utm_y[picks[i-1]])**2)
+        distAlong[i] = distAlong[i-1] + distTemp /1e3
+# gate for all TS profiles
+if(True):
+    for i in [8,9,10,29]:
+        plt.figure(figsize=(12, 6))
+        
+        plt.subplot(131)
+        cp = plt.scatter(salt[:,i],temp[:,i],c=depth[:],linestyle='-',marker='o')
+        cbar = plt.colorbar(cp) 
+        cbar.set_label('Depth [m]')
+        plt.plot(mixingS,mixingT,linewidth=.5,color='gray',alpha=.5,linestyle='--')
+        plt.plot(meltS,meltT,linewidth=.5,color='gray',alpha=.5,linestyle='--')
+        plt.plot(freezeS,freezeT,linewidth=.5,color='red',alpha=.5,linestyle='--')
+        plt.plot(freezeS100,freezeT100,linewidth=.5,color='red',alpha=.5,linestyle='--')
+        plt.title(f"xCTD {i}, along fjord")
+        ax = plt.gca()
+        ax.set_xlabel('Salinity')
+        ax.set_ylabel('Temp [C]')
+        ax.set_xlim([26,35.5])
+        ax.set_ylim([-2,5])      
+
+        plt.subplot(132)
+        cp = plt.scatter(salt[:,i],depth[:],linestyle='-',marker='o')
+        ax = plt.gca()
+        ax.set_xlabel('Salinity')
+        ax.set_ylabel('Depth [m]')
+        plt.grid(alpha = .5)
+        ax.invert_yaxis()
+
+        plt.subplot(133)
+        cp = plt.scatter(temp[:,i],depth[:],linestyle='-',marker='o')
+        ax = plt.gca()
+        ax.set_xlabel('Temp [C]')
+        ax.set_ylabel('Depth [m]')
+        ax.invert_yaxis()
+        plt.grid(alpha = .5)
+
+        plt.tight_layout()
+        plt.show()
+        plt.close()
+        if(i == 6):
+            np.savez('shelfProfile2015',T=temp[:,i],S=salt[:,i],z=depth[:],density=density[:,i])
 # %%
 
 #Sub 0, on shelf
@@ -211,15 +236,8 @@ for i in [8,9,10,29]:
 
 
 #Sub 1, Along fjord
-picks = [10,9,8,12,14,15,16,19,21,22,29]
-order = [1,2,3,4,5,6,7,8,9,10,12]
-distAlong = np.zeros(len(picks))
-for i in range(len(picks)):
-    if(i == 0):
-        distAlong[i] = 0
-    else:
-        distTemp = np.sqrt((utm_x[picks[i]] - utm_x[picks[i-1]])**2 + (utm_y[picks[i]] - utm_y[picks[i-1]])**2)
-        distAlong[i] = distAlong[i-1] + distTemp /1e3
+
+
 sTime = datetime.datetime.fromtimestamp(int(time[picks[0]]))
 eTime = datetime.datetime.fromtimestamp(int(time[picks[-1]]))
 print(distAlong)
