@@ -282,7 +282,7 @@ for ii in range(iterationsToRun):
     # data.steadystate()
 
     signal.signal(signal.SIGALRM,handler) #setting a timer for glaciome1d
-    signal.alarm(600) # if its not done in 10 minutes, its probably at minimum size. 
+    signal.alarm(6000) # if its not done in 100 minutes, its probably at minimum size. 
                     # if this is happening for non-trivially small melange, something is off.
                     # Can happen when mélange thickness increases down fjord, need to look into more 
     try:
