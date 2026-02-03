@@ -172,9 +172,9 @@ ySlice = np.argmin(np.abs(y[:,0] - yCrossSection))
 print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
 if(isBerg):
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag','BRGFlx','BRGFlx']
-    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg','BrgDrag_x','BrgDrag_y']
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]","[N/m^2]","[N/m^2]"]
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','ptraceDiag','ptraceDiag','BRGFlx','BRGFlx','BRGFlx']
+    name = ["Temp", "Sal", "U", "W", "V",'TracePlume','TraceBerg', "BRGmltRt",'BrgDrag_x','BrgDrag_y']
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]","[Vol Frac]","[Vol Frac]","[m/d]","[N/m^2]","[N/m^2]"]
 else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
     name = ["Temp", "Sal", "U", "W", "V"]
@@ -220,17 +220,17 @@ for k in kList:
             lvl = vRange
             cm = vCmap
         elif k == 5:
-            lvl = meltRange
-            cm = meltCmap
-            kk = k - 3
-        elif k == 6:
             lvl = plumeTracerRange
             cm = plumeTracerCmap
             kk = 0
-        elif k == 7:
+        elif k == 6:
             lvl = bergTracerRange
             cm = bergTracerCmap
             kk = 1
+        elif k == 7:
+            lvl = meltRange
+            cm = meltCmap
+            kk = 2        
         elif k == 8:
             lvl = np.linspace(-1,1,31)
             cm = 'cmo.balance'
