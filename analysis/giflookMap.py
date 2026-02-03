@@ -52,7 +52,7 @@ print('Plot DPI:',args.dpi,'; clean PNGs:',cleanPNGs, '; usePcolor:', usePcolor)
 
 if(args.zDepth != None):
     print('** Manual zDepth detected **')
-    zDepth = args.zDepth
+    zDepth = args.zDepth[0]
 
 dt = 0.0   
 for line in fileinput.input('input/data'):
