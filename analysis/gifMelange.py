@@ -142,12 +142,12 @@ for j in toIterate[shiftIndex:]:
     ax1.set_xlim([0,25])
     ax2.set_xlim([0,25])
     ax3.set_xlim([0,25])
-    ax4.set_xlim([0,25])
+    # ax4.set_xlim([0,25])
 
-    ax1.set_ylim([50, 350])
+    ax1.set_ylim([50, 450])
     ax2.set_ylim(-200, 20)
     ax3.set_ylim([2,20])
-    ax4.set_ylim([.1,1.5])
+    ax4.set_ylim([0,1.6])
 
 
     dirStr = ''

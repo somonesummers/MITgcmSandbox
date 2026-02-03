@@ -9,6 +9,7 @@ from scipy.interpolate import interp1d
 import cmocean
 sys.path.append('/Users/psummers8/Documents/glaciome1D')
 sys.path.append('/storage/home/hcoda1/2/psummers8/glaciome1d')
+sys.path.append('/cluster/home/psumme03/glaciome1d')
 from glaciome1D import constants, glaciome
 import glob
 import pickle
@@ -38,7 +39,7 @@ oceanDensity = 1030 # [kg/m^3]
 minBergDepth = 5 # bergs not allowed to shrink/melt smaller than this [m]
 maxBergDepth = 450 # bergs not allowed to shrink/melt smaller than this [m]
 maxLambda = .90 # Cells are full at this lambda [hard limit]
-scaleMin = 0.2 # percent error allowed between MITgcm effective depth and GLACIOME depth
+scaleMin = 0.2 # error allowed between MITgcm effective depth and GLACIOME depth
 ## Bergs added to top off to icebergCoverLamba left of refreshGate
 icebergRefreshingGate = 3
 maxBergs = 500

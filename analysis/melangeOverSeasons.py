@@ -12,19 +12,36 @@ import os
 sys.path.append('/Users/psummers8/Documents/glaciome1D')
 sys.path.append('/storage/home/hcoda1/2/psummers8/glaciome1d')
 from glaciome1D import constants, glaciome
-
+from matplotlib import colormaps
+import cmocean
 import glob
 import pickle
 import argparse
 
-def makeColors(seedColor, n):
-    color1 = 'xkcd:light ' + seedColor
-    color2 = 'xkcd:dark ' + seedColor
-    rlin = np.linspace(mcolors.to_rgb(color1)[0],mcolors.to_rgb(color2)[0],n)
-    glin = np.linspace(mcolors.to_rgb(color1)[1],mcolors.to_rgb(color2)[1],n)
-    blin = np.linspace(mcolors.to_rgb(color1)[2],mcolors.to_rgb(color2)[2],n)
-    colors = np.stack((rlin,glin,blin), axis=0)
-    return colors
+def meltFlatRate(strength,n):
+    x = np.linspace(1,1,n)
+    return x*strength
+
+def meltLinearRate(strength,n):
+    x = np.linspace(0,1,n)
+    baseLine = .6 -.4*x 
+    return baseLine*strength/np.mean(baseLine)
+
+def meltLessLinearRate(strength,n):
+    x = np.linspace(0,1,n)
+    baseLine = .5 -.2*x 
+    return baseLine*strength/np.mean(baseLine)
+
+def meltBackLinearRate(strength,n):
+    x = np.linspace(0,1,n)
+    baseLine = .3 +.2*x 
+    return baseLine*strength/np.mean(baseLine)
+
+def meltURate(strength,n):
+    x = np.linspace(0,1,n)
+    arc = .5 + 50*(x-.5)**6
+    maxV = np.mean(arc) - .015 #extra bit seems to help glaciome get right value for U shape
+    return arc*strength/maxV
 
 # Take input options. Some defaults are set here, so be aware
 parser = argparse.ArgumentParser(description='Plot options for melange profiles')
@@ -125,27 +142,64 @@ for j in toIterate:
 # plt.show()
 # plt.close()
 
-colorList = ['xkcd:dark blue','xkcd:light blue',
-                'xkcd:bright orange','xkcd:tomato',
-                'xkcd:faded pink']
-seasonShift = 14
+## Colors to match cmo phase
+colorMapForLine = colormaps['cmo.phase']
+n_colors = 5
+colorTmp = colorMapForLine(np.linspace(0,1,n_colors+1))
+colorList = colorTmp[:-1].copy()
+print(colorList)
+#we have to do a little shuffle to align with main pub scheme which starts at late winter
+colorList[0] = colorTmp[4] 
+colorList[1:] = colorTmp[:-2]
+print(colorList[1:])
+## Paul's custom colors
+# colorList = ['xkcd:dark blue','xkcd:light blue',
+#                 'xkcd:bright orange','xkcd:tomato',
+#                 'xkcd:faded pink']
+seasonShift = 21
 fig, axes = plt.subplots(2, 3, figsize=(12, 6), layout="constrained")
 axes = axes.reshape([6,1])[:,0]
 axes[0].plot([],[],color=colorList[0],label='Early Winter')
 axes[0].plot([],[],color=colorList[1],label='Late Winter')
-axes[0].plot([],[],color=colorList[2],label='Plume Up')
-axes[0].plot([],[],color=colorList[3],label='Plume')
-axes[0].plot([],[],color=colorList[4],label='Plume down')
-for i in range(int(n/73)-3):
-    axes[0].plot(np.mean(meltTime[i*73+seasonShift:(i+1)*73+seasonShift,:],axis=0),color=colorList[i%5])
-    axes[i%5 + 1].plot(np.transpose(meltTime[i*73+seasonShift:(i+1)*73+seasonShift,:]),color=colorList[i%5],alpha=.1)
+axes[0].plot([],[],color=colorList[2],label='Spring')
+axes[0].plot([],[],color=colorList[3],label='Summer')
+axes[0].plot([],[],color=colorList[4],label='Autumn')
+avgMelt = []
+for i in range(int(n/73)-3): #loop over every season
+    axes[0].plot(np.linspace(0,1,20),np.mean(meltTime[i*73+seasonShift:(i+1)*73+seasonShift,:],axis=0),color=colorList[i%5])
+    axes[i%5 + 1].plot(np.linspace(0,1,20),np.transpose(meltTime[i*73+seasonShift:(i+1)*73+seasonShift,:]),color=colorList[i%5],alpha=.05)
+    avgMelt.append(np.mean(meltTime[i*73+seasonShift:(i+1)*73+seasonShift,:]))
+
+num = 21
+x_loc = np.linspace(0,1,num)
+axes[1].plot(x_loc,meltLinearRate(np.mean(avgMelt[0::5]),num) ,'--',color='black',label='Linear')
+axes[1].plot(x_loc,meltLessLinearRate(np.mean(avgMelt[0::5]),num) ,':',color='xkcd:black',label='Less Linear')
+axes[2].plot(x_loc,meltLinearRate(np.mean(avgMelt[1::5]),num) ,'--',color='black',label='Linear')
+axes[3].plot(x_loc,meltLinearRate(np.mean(avgMelt[2::5]),num) ,'--',color='black',label='Linear')
+axes[4].plot(x_loc,meltURate(np.mean(avgMelt[3::5]),num) ,'--',color='black',label='U Shaped')
+axes[5].plot(x_loc,meltFlatRate(np.mean(avgMelt[4::5]),num) ,'--',color='black',label='Flat')
+
 for i in range(6):
-    axes[i].set_ylim([0,2])
+    axes[i].set_ylim([0,1.6])
+    axes
     if( i % 3 == 0):
         axes[i].set_ylabel('Net Melt Rate [m/day]')
     if(i > 2):
-        axes[i].set_xlabel('Distance along mélange [1/20]')
+        axes[i].set_xlabel('Fraction along mélange [ ]')
 axes[0].legend()
+axes[1].legend()
+axes[2].legend()
+axes[3].legend()
+axes[4].legend(loc=9)
+axes[5].legend()
+
+figLabels = ["(a)","(b)","(c)","(d)","(e)","(f)"]
+for label,ax in zip(figLabels,axes.reshape(6,1)):
+    ax=ax[0]
+    ax.text(
+        ax.get_xlim()[0], ax.get_ylim()[1]*1.05, label,
+        fontsize='x-large', va='bottom',ha='right', fontfamily='sans serif')
+
 plt.savefig(f'figs/meltOverMonths.png',format='png',dpi=200)
 plt.show()
 plt.close()

@@ -53,15 +53,15 @@ args = parser.parse_args()
 
 # print(args)
 figLabels = ["(a)","(b)","(c)","(d)","(e)","(f)","(g)","(h)"]
-fig, axes = plt.subplots(4, 2, figsize=(10, 6), layout="constrained")
-ax1   = axes[0,0]
-ax1_2 = axes[1,0]
-ax2   = axes[2,0]
-ax2_2 = axes[3,0]
-ax3   = axes[0,1]
-ax3_2 = axes[1,1]
-ax4   = axes[2,1]
-ax4_2 = axes[3,1]
+fig, axes = plt.subplots(3, 2, figsize=(14, 6), layout="constrained")
+ax1     = axes[0,0]
+ax2     = axes[1,0]
+ax2_2   = axes[2,0]
+# ax2_2 = axes[3,0]
+ax1_2   = axes[0,1]
+ax4     = axes[1,1]
+ax4_2   = axes[2,1]
+# ax4_2 = axes[3,1]
 
 lStyle = ['-','--',':','-.',(0, (3, 2, 1, 2, 1, 2)),(0, (2, 3, 1, 2, 1, 2, 1, 2,))]
 meltColors = ['xkcd:tomato red','xkcd:rose','xkcd:wine','xkcd:grape purple','xkcd:grape','xkcd:violet']
@@ -120,40 +120,51 @@ for i in range(len(args.files)):
         iterationNumber[j]=int(it)
     timeTime = timeTime - timeTime[0] + jShift# shift to start at t=0
 
-    timeLabel = 'Time [days]'
-    if(args.sgd != None):
-        from scipy import interpolate
-        from MITgcmutils import mds
-        y = np.squeeze(mds.rdmds("results/YC")[:,0])
-        dy = 2*y[0]
-        for line in fileinput.input('input/data'):
-            if "ExternForcingPeriod=" in line:
-                period = float(line[21:-2])
-            elif "ExternForcingCycle=" in line:
-                cycle = float(line[20:-2])
-        nt = int(cycle/period)
-        plumeMask = np.fromfile('input/plumeMask.bin', dtype='>f8') #(2 is line, 3 is semi-cone)
-        rad = np.fromfile('input/runoffRad.bin', dtype='>f8')
-        rad = rad.reshape((nt,len(plumeMask)))
-        vel = np.fromfile('input/runoffVel.bin', dtype='>f8')
-        vel = vel.reshape((nt,len(plumeMask)))
+    timeLabel = 'Time [yr]'
+    from scipy import interpolate
+    from MITgcmutils import mds
+    inputDirect = file.split('couplingResults')[0]
+    print(inputDirect)
+    y = np.squeeze(mds.rdmds(f"{inputDirect}results/YC")[:,0])
+    dy = 2*y[0]
+    for line in fileinput.input(f'{inputDirect}input/data'):
+        if "ExternForcingPeriod=" in line:
+            period = float(line[21:-2])
+        elif "ExternForcingCycle=" in line:
+            cycle = float(line[20:-2])
+    nt = int(cycle/period)
+    plumeMask = np.fromfile(f'{inputDirect}input/plumeMask.bin', dtype='>f8') #(2 is line, 3 is semi-cone)
+    rad = np.fromfile(f'{inputDirect}input/runoffRad.bin', dtype='>f8')
+    rad = rad.reshape((nt,len(plumeMask)))
+    vel = np.fromfile(f'{inputDirect}input/runoffVel.bin', dtype='>f8')
+    vel = vel.reshape((nt,len(plumeMask)))
+    T_bc = np.fromfile(f'{inputDirect}input/EBCt.bin', dtype='>f8')
+    extraDim = int(np.size(T_bc) / 32 / 24) #480 for sierra, 120 for Quebec
+    T_bc = T_bc.reshape((extraDim, 32, 24))
 
-        plumeType = np.max(plumeMask)
-        cleanRad = rad[:,plumeMask == plumeType]
-        cleanVel = vel[:,plumeMask == plumeType]
-        seasonTime = np.linspace(0,cycle/86400,nt)
-        if(plumeType == 2):
-            runoff = dy*cleanRad[:,0]*cleanVel[:,0]
-        else: #semi-rad
-            runoff = np.pi*cleanRad**2*cleanVel
-        # print(f'seasonTime {seasonTime}, nt {nt}')
-        # print(f'runoff {runoff}')
-        # print(f'plume type {plumeType}')
-        # print(np.shape(seasonTime))
-        # print(np.shape(runoff))
-        f = interpolate.interp1d(seasonTime, runoff,fill_value='0')
-        timeTime = f(timeTime)
-        timeLabel = 'SGD [$m^3/s$]'
+
+    plumeType = np.max(plumeMask)
+    cleanRad = rad[:,plumeMask == plumeType]
+    cleanVel = vel[:,plumeMask == plumeType]
+    seasonTime = np.linspace(0,cycle/86400,nt)
+    if(plumeType == 2):
+        runoff = dy*cleanRad[:,0]*cleanVel[:,0]
+    else: #semi-rad
+        runoff = np.pi*cleanRad**2*cleanVel
+    # print(f'seasonTime {seasonTime}, nt {nt}')
+    # print(f'runoff {runoff}')
+    # print(f'plume type {plumeType}')
+    # print(np.shape(seasonTime))
+    # print(np.shape(runoff))
+    f = interpolate.interp1d(seasonTime, runoff,fill_value='0')
+    f_temp = interpolate.interp1d(seasonTime, np.mean(T_bc,axis=(1,2)),fill_value='0')
+    SGD_Time = f(timeTime)
+    T_Time = f_temp(timeTime)
+    # timeLabel = 'SGD [$m^3/s$]'
+
+    #Shift to align with model defined years
+    timeTime = timeTime - 94
+    timeTime = timeTime/365
 
     N = args.windowMean #window over to smooth in time points (days)
     #Pad edges of BTime to have smooth edges and work for short time series
@@ -186,7 +197,6 @@ for i in range(len(args.files)):
         ax1.plot(timeTime,forceTime,color=meltColors[0],linestyle=lStyle[i],label=args.labels[i])
     if(args.rampVariable[0] == 0):
         ax1.plot(timeTime,forceTimeRough,color=meltColors[0],linestyle='-',alpha=.25)
-    ax1.scatter(timeTime[0],forceTime[0],s=50,marker='*',color='black')
     # sca=ax1.scatter(BTime,H0Time,s=None,c=timeTime,cmap='cividis')
     # cbar=plt.colorbar(sca)
     # cbar.set_label('Iteration')
@@ -205,15 +215,14 @@ for i in range(len(args.files)):
         #     ax1_2 = ax1.twinx()
         roughNFT = notforceTime
         notforceTime = np.convolve(np.concatenate((notforceTime[0]*np.ones(padL),notforceTime,notforceTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
-        ax1_2.plot(timeTime,roughNFT,color='xkcd:azure',alpha=0.25)
-        ax1_2.plot(timeTime,notforceTime,color='xkcd:azure',linestyle=lStyle[i])
-        ax1_2.scatter(timeTime[0],notforceTime[0],s=50,marker='*',color='black')
-        ax1_2.set_ylabel(notforceLabel,color='xkcd:azure')
+        # ax1_2.plot(timeTime,roughNFT,color='xkcd:azure',alpha=0.25)
+        ax1_2.plot(timeTime,SGD_Time,color='xkcd:azure',linestyle=lStyle[i])
+        ax1_2.set_ylabel('SGD [m^3/s]',color='xkcd:azure')
         ax1_2.tick_params(axis='y',labelcolor='xkcd:azure')
         # if(args.xTerminus > 0 and i == 0):
         #     ax1_2.plot(timeTime,UtTime,color='xkcd:gray',linestyle=lStyle[i])
         #     ax1_2.scatter(timeTime[0],UtTime[0],s=50,marker='*',color='black')
-        ax1_2.grid(alpha=.25)
+        ax1_2.grid(alpha=.5)
     ax1.set_ylabel(forceLabel,color=meltColors[0])
     ax1.tick_params(axis='y',labelcolor=meltColors[0])
     if(args.fixForce > 0):
@@ -221,8 +230,8 @@ for i in range(len(args.files)):
     # ax1.set_xlabel(timeLabel)
     ax1.grid(alpha=.5)
     # ax1.set_title('Melt and Calving')
-    if(args.labels != None):
-        ax1.legend(loc=args.legLoc)
+    # if(args.labels != None):
+    #     ax1.legend(loc=args.legLoc)
     xString =''
     if(args.xVariable[0] == 0):
         drivingVariable = forceTime
@@ -240,49 +249,52 @@ for i in range(len(args.files)):
     roughHT = H0Time
     lengthTime = np.convolve(np.concatenate((lengthTime[0]*np.ones(padL),lengthTime,lengthTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
     H0Time = np.convolve(np.concatenate((H0Time[0]*np.ones(padL),H0Time,H0Time[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
-    ax2.plot(drivingVariable,roughLT,color='xkcd:blueberry',alpha=0.25)
-    ax2.plot(drivingVariable,lengthTime,color='xkcd:blueberry',linestyle=lStyle[i])
-    ax2.scatter(drivingVariable[0],lengthTime[0],s=50,marker='*',color='black')
-    ax2.set_ylabel('Length [m]',color='xkcd:blueberry')
-    ax2.tick_params(axis='y',labelcolor='xkcd:blueberry')
-    ax2.grid(alpha=.5)
+    ax2_2.plot(drivingVariable,roughLT,color='xkcd:blueberry',alpha=0.25)
+    ax2_2.plot(drivingVariable,lengthTime,color='xkcd:blueberry',linestyle=lStyle[i])
+    ax2_2.set_ylabel('Length [m]',color='xkcd:blueberry')
+    ax2_2.tick_params(axis='y',labelcolor='xkcd:blueberry')
+    ax2_2.grid(alpha=.5)
+    ax2_2.set_xlabel(drivingLabel)
     # sca=ax2.scatter(BTime,lengthTime,s=None,c=timeTime,cmap='cividis')
     # cbar=plt.colorbar(sca)
     # cbar.set_label('Iteration')
     # if(i == 0):
     #     ax2_2 = ax2.twinx()
-    ax2_2.plot(drivingVariable,roughHT,color='xkcd:mulberry',alpha=0.25)
-    ax2_2.plot(drivingVariable,H0Time,color='xkcd:mulberry',linestyle=lStyle[i])
-    ax2_2.scatter(drivingVariable[0],H0Time[0],s=50,marker='*',color='black')
-    ax2_2.set_ylabel('Max\nThickness [m]',color='xkcd:mulberry')
-    ax2_2.tick_params(axis='y',labelcolor='xkcd:mulberry')
-    ax2_2.grid(alpha=.5)
-    ax2_2.set_xlabel(drivingLabel)
+    if(args.labels != None):
+        ax2.plot(drivingVariable,T_Time,color='xkcd:magenta',linestyle=lStyle[i],label=args.labels[i])
+    else:
+        ax2.plot(drivingVariable,T_Time,color='xkcd:magenta',linestyle=lStyle[i])
+    ax2.set_ylabel('Mean Shelf Temp [C]',color='xkcd:magenta')
+    ax2.tick_params(axis='y',labelcolor='xkcd:magenta')
+    ax2.grid(alpha=.5)
+    # ax2.set_xlabel(drivingLabel)
+    if(args.labels != None):
+        ax2.legend(loc=args.legLoc)
     # ax2.set_title('Size')
 
-    roughPress = pressTime
-    pressTime = np.convolve(np.concatenate((pressTime[0]*np.ones(padL),pressTime,pressTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
-    ax3.plot(drivingVariable,roughPress,color='xkcd:sunflower',alpha=0.25)
-    ax3.plot(drivingVariable,pressTime,color='xkcd:sunflower',linestyle=lStyle[i])
-    ax3.scatter(drivingVariable[0],pressTime[0],s=50,marker='*',color='black')
-    # sca=ax3.scatter(BTime,pressTime,s=None,c=timeTime,cmap='cividis')
-    # cbar=plt.colorbar(sca)
-    # cbar.set_label('Time [days]')
-    ax3.set_ylabel('Mélange F/W\n[$Nm^{-1}$]',color='xkcd:squash') #very similar to sunflower, slightly darker for text
-    ax3.tick_params(axis='y',labelcolor='xkcd:squash')
-    # ax3.set_yscale('log')
-    # ax3.set_xlabel(drivingLabel)
-    ax3.grid(alpha=.5)
-    # ax3.set_title('Terminus Condition')
-    if(args.xTerminus > 0):
-        # if(i == 0):
-        #     ax3_2 = ax3.twinx()
-        ax3_2.plot(timeTime,xTermTime,color='xkcd:pumpkin',linestyle=lStyle[i])
-        ax3_2.scatter(timeTime[0],xTermTime[0],s=50,marker='*',color='black')
-        ax3_2.set_ylabel('Terminus\nposition [m]',color='xkcd:pumpkin')
-        ax3_2.tick_params(axis='y',labelcolor='xkcd:pumpkin')
-        ax3_2.grid(alpha=.5)
-        # ax3_2.set_xlabel(drivingLabel)
+    # roughPress = pressTime
+    # pressTime = np.convolve(np.concatenate((pressTime[0]*np.ones(padL),pressTime,pressTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
+    # ax3.plot(drivingVariable,roughPress,color='xkcd:sunflower',alpha=0.25)
+    # ax3.plot(drivingVariable,pressTime,color='xkcd:sunflower',linestyle=lStyle[i])
+    # ax3.scatter(drivingVariable[0],pressTime[0],s=50,marker='*',color='black')
+    # # sca=ax3.scatter(BTime,pressTime,s=None,c=timeTime,cmap='cividis')
+    # # cbar=plt.colorbar(sca)
+    # # cbar.set_label('Time [days]')
+    # ax3.set_ylabel('Mélange F/W\n[$Nm^{-1}$]',color='xkcd:squash') #very similar to sunflower, slightly darker for text
+    # ax3.tick_params(axis='y',labelcolor='xkcd:squash')
+    # # ax3.set_yscale('log')
+    # # ax3.set_xlabel(drivingLabel)
+    # ax3.grid(alpha=.5)
+    # # ax3.set_title('Terminus Condition')
+    # if(args.xTerminus > 0):
+    #     # if(i == 0):
+    #     #     ax3_2 = ax3.twinx()
+    #     ax3_2.plot(timeTime,xTermTime,color='xkcd:pumpkin',linestyle=lStyle[i])
+    #     ax3_2.scatter(timeTime[0],xTermTime[0],s=50,marker='*',color='black')
+    #     ax3_2.set_ylabel('Terminus\nposition [m]',color='xkcd:pumpkin')
+    #     ax3_2.tick_params(axis='y',labelcolor='xkcd:pumpkin')
+    #     ax3_2.grid(alpha=.5)
+    #     # ax3_2.set_xlabel(drivingLabel)
 ## Speed and Fluidity
     roughSPD = spdTime
     roughG = gTime
@@ -290,7 +302,6 @@ for i in range(len(args.files)):
     gTime = np.convolve(np.concatenate((gTime[0]*np.ones(padL),gTime,gTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
     ax4.plot(drivingVariable,roughSPD/365.0,color='xkcd:apple',alpha=0.25)
     ax4.plot(drivingVariable,spdTime/365.0,color='xkcd:apple',linestyle=lStyle[i])
-    ax4.scatter(drivingVariable[0],spdTime[0]/365.0,s=50,marker='*',color='black')
     ax4.set_ylabel('Speed [m/day]',color='xkcd:apple')
     ax4.tick_params(axis='y',labelcolor='xkcd:apple')
     ax4.grid(alpha=.5)
@@ -301,7 +312,6 @@ for i in range(len(args.files)):
     # cbar.set_label('Time [days]')
     ax4_2.plot(drivingVariable,roughG,color='xkcd:lilac',alpha=0.25)
     ax4_2.plot(drivingVariable,gTime,color='xkcd:lilac',linestyle=lStyle[i])
-    ax4_2.scatter(drivingVariable[0],gTime[0],s=50,marker='*',color='black')
     ax4_2.set_ylabel('fluidity [$yr^{-1}$]   ',color='xkcd:lilac')
     ax4_2.tick_params(axis='y',labelcolor='xkcd:lilac')
     ax4_2.set_xlabel(drivingLabel)
@@ -314,12 +324,12 @@ ax1.xaxis.set_ticklabels([])
 ax1_2.xaxis.set_ticklabels([])
 ax2.xaxis.set_ticklabels([])
 # ax2_2.xaxis.set_ticklabels([])
-ax3.xaxis.set_ticklabels([])
-ax3_2.xaxis.set_ticklabels([])
+# ax3.xaxis.set_ticklabels([])
+# ax3_2.xaxis.set_ticklabels([])
 ax4.xaxis.set_ticklabels([])
 # ax4_2.xaxis.set_ticklabels([])
 
-for label,ax in zip(figLabels,axes.reshape(8,1)):
+for label,ax in zip(figLabels,axes.reshape(6,1)):
     ax=ax[0]
     ax.text(
         ax.get_xlim()[0], ax.get_ylim()[1], label,

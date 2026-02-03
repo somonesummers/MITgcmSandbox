@@ -22,7 +22,7 @@ import os
 # sys.path.append('/hdd/glaciome/models/glaciome1D')
 # sys.path.insert(0, '')
 sys.path.append('/Users/psummers8/Documents/glaciome1D')
-sys.path.append('/storage/home/hcoda1/2/psummers8/glaciome1d')
+sys.path.append('/cluster/home/psumme03/glaciome1d')
 from glaciome1D import constants, glaciome
 import glob
 import pickle
@@ -66,38 +66,7 @@ mitgcmWarningCount = 0
 
 # This used to reset the directory to initial conditions, currently out of date, doesnt work for spun up starts
 if(resetStart):
-    sysPrint("Resetting this experiment directory, DELETING FILES AND FIGS. Steps to run: %i..." %iterationsToRun)
-    time.sleep(1)
-    # Reset iceberg files (don't need to do this so long as mélange is roughly similar)
-    # os.system('rm input/icebergs_length.bin input/icebergs_depths.bin input/icebergs_widths.bin')
-    # os.system('cp input/icebergs_length_init.bin input/icebergs_length.bin')
-    # os.system('cp input/icebergs_depths_init.bin input/icebergs_depths.bin')
-    # os.system('cp input/icebergs_widths_init.bin input/icebergs_widths.bin')
-
-    # Clean out itermediate save states and figures
-    os.system("find couplingResults/MITgcmRun_*.pickle ! -name 'MITgcmRun_00000.pickle' -type f -exec rm {} +")
-    os.system("rm couplingResults/*.txt")
-    os.system("rm input/pickup*.data input/pickup*.meta")
-    os.system("rm figs/*")
-
-    # Reset data file with correct start/stop times
-    for line in fileinput.input('input/data'):
-            if "nIter0=" in line:
-                startIter = float(line[8:-2])
-            elif "endTime=" in line:
-                endTime = float(line[9:-2])
-    sysPrint('\tadjust start iteration %i to %i' %(int(startIter),int(0)))
-    replaceAll('input/data','nIter0=%i' %(int(startIter)), 'nIter0=%i' % int(0))
-    # So ptracers Iter0 should actually be 0, it is when the tracer exp starts, not what to load
-    # replaceAll('input/data.ptracers','Iter0=%i' %(int(startIter)), 'Iter0=%i' % int(0))
-    sysPrint('\tadjust end time %i to %i' %(int(endTime),int(86400)))
-    replaceAll('input/data','endTime=%i' %(int(endTime)), 'endTime=%i' %(int(86400)))
-
-    #Set melange to length consistent with initial glaciome1d size
-    os.system("~/.conda/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
-
-    #Run intial MITgcm, this resets the results folder
-    os.system('bash ../makeRun.sh')
+    sysPrint("No longer supported")
 elif(freshStart): #This distinguises between a new coupled run, or continuing a paused coupled run
     #Make couplingResults directory if not there already
     os.system("mkdir -p couplingResults")
@@ -111,8 +80,13 @@ elif(freshStart): #This distinguises between a new coupled run, or continuing a 
     #os.system('cp input/icebergs_widths_init.bin input/icebergs_widths.bin')
     
     # run initial MITgcm
-    os.system('bash ../makeRunMpi.sh > MITgcmInitOut.txt')
-
+    os.system("touch results/test.txt")
+    os.chdir("results")
+    os.system("rm *")
+    os.system("cp ../build/mitgcmuv .")
+    os.system("ln -s ../input/* .")
+    os.system("mpirun -v -n 30 ./mitgcmuv")
+    os.chdir("../")
     # Clean tile level files
     dt = 0.0
     oldStartIter = 0   
@@ -282,9 +256,9 @@ for ii in range(iterationsToRun):
     # data.steadystate()
 
     signal.signal(signal.SIGALRM,handler) #setting a timer for glaciome1d
-    signal.alarm(6000) # if its not done in 100 minutes, its probably at minimum size. 
+    signal.alarm(600) # if its not done in 10 minutes, its probably at minimum size. 
                     # if this is happening for non-trivially small melange, something is off.
-                    # Can happen when mélange thickness increases down fjord, caused by freezing which should be fixed now 
+                    # Can happen when mélange thickness increases down fjord, need to look into more 
     try:
         data.prognostic(method='lm')
     except Exception as e:
@@ -354,7 +328,7 @@ for ii in range(iterationsToRun):
     os.system("~/.conda/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
 
     os.chdir("results")
-    os.system('srun ./mitgcmuv') # srun has no outputs, all in STDOUT/STDERR.*.*
+    os.system('mpirun -v -n 30 ./mitgcmuv') # srun has no outputs, all in STDOUT/STDERR.*.*
     os.chdir("../")
     
     # Create global files to reduce file counts
