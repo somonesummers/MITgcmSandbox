@@ -11,8 +11,8 @@ import argparse
 parser = argparse.ArgumentParser(description='Plot streamfunctions width averaged')
 parser.add_argument('-q','--quick', action='count', default=0,
                     help='quick option for last from only, double to show plot(s)')
-parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
-                    help='option specification of views to plot [default = all]')
+parser.add_argument('-k','--kValues', nargs='*', type=int, default = [0],
+                    help='option specification of views to plot [default = stream only]')
 parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
                     help='optional specification of numFrames [default = 60]')
 parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
@@ -30,7 +30,7 @@ yCrossSection = 1000
 xCrossSection = 5000
 zDepth = -50
 cleanPNGs = True
-showQuiver = False
+showQuiver = True
 showZeros = True
 showDensity = False
 makeMovie = False   
@@ -137,9 +137,9 @@ if(np.min(openFrac) < 0 or np.max(openFrac) > 1):
 print('averaging over all cross sections')
 
 
-dynName = ['dynDiag','dynDiag']
-name = ["Psi", "UfromPsi"]
-cbarLabel = ["[mSv]","[m/s]"]
+dynName = ['dynDiag','dynDiag','dynDiag']
+name = ["Psi", "UfromPsi", "WfromPsi"]
+cbarLabel = ["[mSv]","[m/s]","[m/s]"]
 
 
 if(args.quick > 0):
@@ -172,7 +172,7 @@ for k in kList:
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         kk = k
         if k == 0:
-            lvl = np.linspace(-45,45,19)
+            lvl = np.linspace(-45,45,37)
             cm = "bwr"
             kk = 2
             dataPsi = -1 * np.cumsum(np.average(data[kk, ::-1, :, :],axis=1,weights=openFrac[::-1,:,:]) * dy * np.sum(openFrac[::-1,:,:],axis=1) * dz[::-1,None],axis=0)[::-1,:] * 1e-3
@@ -183,6 +183,13 @@ for k in kList:
             kk = 2
             dataPsi = -1 * np.cumsum(np.average(data[kk, ::-1, :, :],axis=1,weights=openFrac[::-1,:,:]) * dy * np.sum(openFrac[::-1,:,:],axis=1) * dz[::-1,None],axis=0)[::-1,:] * 1e-3
             dataPsi = 1 * np.gradient(dataPsi,axis=0) / (dy * np.sum(openFrac,axis=1)) / dz[:,None] * 1e3
+            # dataPsi = np.cumsum(np.sum(data[kk, :, :, :],axis=1) * (dy),axis=0) * 1e-3
+        if k == 2:
+            lvl = wRange
+            cm = wCmap
+            kk = 2
+            dataPsi = -1 * np.cumsum(np.average(data[kk, ::-1, :, :],axis=1,weights=openFrac[::-1,:,:]) * dy * np.sum(openFrac[::-1,:,:],axis=1) * dz[::-1,None],axis=0)[::-1,:] * 1e-3
+            dataPsi = 1 * np.gradient(dataPsi,axis=1) / (dy * np.sum(openFrac,axis=1)) / dz[:,None] * 1e3
             # dataPsi = np.cumsum(np.sum(data[kk, :, :, :],axis=1) * (dy),axis=0) * 1e-3
         plt.figure(figsize=(12, 5))
         if(usePcolor):
@@ -219,7 +226,7 @@ for k in kList:
             #cbar2.set_label('Ocean Fraction')
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
-        if(k == 1 and (dynName[k] == 'dynDiag')):
+        if(k > 0 and (dynName[k] == 'dynDiag')):
             salt = np.squeeze(np.average(data[1,:,1:-1,:],weights=openFrac[:,1:-1,:],axis=1))
             if(i == startStep): #only calc pressure once
                 pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
@@ -251,12 +258,28 @@ for k in kList:
                 np.squeeze(x[0,:]),
                 np.squeeze(z),
                 np.squeeze(dataPsi),
-                lvl,
+                lvl[2:-2:4],
                 colors='black',
                 linewidths=0.5,
                 alpha=1
             )
             plt.clabel(cc, inline=3, fontsize=8)
+        if(showQuiver):
+            downSampleX = 5
+            downSampleZ = 1
+            # np.average(data[kk, ::-1, :, :],axis=1,weights=openFrac[::-1,:,:])
+            u = np.squeeze(np.average(dataQuiv[2, :, :, :],axis=1,weights = openFrac))[::downSampleZ,::downSampleX]
+            w = np.squeeze(np.average(dataQuiv[3, :, :, :],axis=1,weights = openFrac))[::downSampleZ,::downSampleX]
+            plt.quiver(
+                np.squeeze(x)[0,::downSampleX],
+                np.squeeze(z)[::downSampleZ],
+                u,#/np.sqrt(u**2 + w**2 + 1e-12),
+                w,#/np.sqrt(u**2 + w**2 + 1e-12),
+                alpha=.2,
+                width = .001, #width of line
+                scale = 1,
+                angles='xy'#60
+                )
         if(args.xlimit != None):
             plt.xlim([0, args.xlimit])
         plt.xlabel('Along Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(dataPsi),np.nanmax(dataPsi),np.max(np.isnan(dataPsi))))
@@ -273,7 +296,10 @@ for k in kList:
 
     
     if(args.quick == 0):
-        os.system('magick -delay %f figs/sideStream_%s*.png -colors 256 -depth 256 figs/sideStream_%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k]))
+        timeStr = ''
+        if(args.timeRange != None):
+            timeStr = f'_T_{args.timeRange[0]}_{args.timeRange[1]}'
+        os.system('magick -delay %f figs/sideStream_%s*.png -depth 32 +dither -verbose figs/sideStream_%s%s.gif' %(500/((maxStep-startStep)/sizeStep), name[k], name[k],timeStr))
         if(makeMovie):
             os.system('ffmpeg -r %f -i figs/sideStream_%s%%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p figs/sideStream_%s.mov' %(80/((maxStep-startStep)/sizeStep), name[k], name[k]))
 
