@@ -189,7 +189,7 @@ for k in kList:
             lvl = plumeTracerRange
             cm = plumeTracerCmap
             kk = 0
-        elif k == 7 or ((not isBerg) and k == 6)::
+        elif k == 7 or ((not isBerg) and k == 6):
             lvl = bergTracerRange
             cm = bergTracerCmap
             kk = 1
