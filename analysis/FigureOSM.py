@@ -15,15 +15,15 @@ parser.add_argument('-s','--silent', action='count', default=0,
                     help='Option to silence showing of plots')
 parser.add_argument('-n','--numFrames', nargs=1, default=[250],type=int,
                     help='Max number of samples from time series [defaut = 250]')
-parser.add_argument('-t','--timeRange', nargs=2, type=int, default = [500, 835],
+parser.add_argument('-t','--timeRange', nargs=2, type=int, default = [500, 860],
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
 args = parser.parse_args()
 
 # Should start in march, end 1 year later
 
 t_range = [-2.2, 4.2]
-u_range = [-0.08, 0.08]
-w_range = [-1e-4, 6e-4]
+u_range = [-0.1, 0.1]
+w_range = [-1e-4, 8e-4]
 # Pick cross section to view from file or default
 plotDPI = 150
 manualMax = None
@@ -115,15 +115,23 @@ for i in range(len(folders)):
     tmpSize[0] = stepsToAverage
     print(tmpSize)
     dataArray = np.zeros(tmpSize)
+    tmpSize[1] = 2
+    dataArray_tracer = np.zeros(tmpSize)
     timeSteps = np.arange(maxStep-(stepsToAverage-1)*sizeStep, maxStep + 1, sizeStep)
     print("averaging over final",(timeSteps[-1]-timeSteps[0])*dt/86400,"days")
     for j in range(len(timeSteps)):
         dataArray[j,:,:,:,:] = mds.rdmds("%s%s/dynDiag"%(folder,resultFolder), timeSteps[j])[:,:,:,:]
+        dataArray_tracer[j,:,:,:,:] = mds.rdmds("%s%s/ptraceDiag"%(folder,resultFolder), timeSteps[j])[:,:,:,:]
         dataArray[j,:,dataArray[j,1,:,:,:] == 0] = np.nan #cells in walls are set to NAN
+        dataArray_tracer[j,:,dataArray[j,1,:,:,:] == 0] = np.nan #cells in walls are set to NAN
     MAM_data = np.nanmean(dataArray[0:9,:,:,:,:],axis=0)
     JJA_data = np.nanmean(dataArray[9:18,:,:,:,:],axis=0)
     SON_data = np.nanmean(dataArray[18:27,:,:,:,:],axis=0)
     DJF_data = np.nanmean(dataArray[27:36,:,:,:,:],axis=0)
+    MAM_data_tracer = np.nanmean(dataArray_tracer[0:9,:,:,:,:],axis=0)
+    JJA_data_tracer = np.nanmean(dataArray_tracer[9:18,:,:,:,:],axis=0)
+    SON_data_tracer = np.nanmean(dataArray_tracer[18:27,:,:,:,:],axis=0)
+    DJF_data_tracer = np.nanmean(dataArray_tracer[27:36,:,:,:,:],axis=0)
     # annual_data = np.nanmean(dataArray,axis=0)
     # mélange 1-10 km ()
     ax1.plot(np.nanmean(MAM_data[0,:,:,1:25],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
@@ -152,10 +160,10 @@ for i in range(len(folders)):
     ax5.plot(np.nanmean(SON_data[2,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
     ax5.plot(np.nanmean(DJF_data[2,:,:,75:150],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
 
-    ax6.plot(np.nanmean(MAM_data[3,:,:,75:150],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
-    ax6.plot(np.nanmean(JJA_data[3,:,:,75:150],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
-    ax6.plot(np.nanmean(SON_data[3,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
-    ax6.plot(np.nanmean(DJF_data[3,:,:,75:150],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
+    ax6.plot(np.nanmean(MAM_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
+    ax6.plot(np.nanmean(JJA_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
+    ax6.plot(np.nanmean(SON_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
+    ax6.plot(np.nanmean(DJF_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
 
 ax1.plot([],[],label='MAM',linestyle='-',color=colors[0])
 ax1.plot([],[],label='JJA',linestyle='-',color=colors[1])
@@ -163,36 +171,38 @@ ax1.plot([],[],label='SON',linestyle='-',color=colors[2])
 ax1.plot([],[],label='DJF',linestyle='-',color=colors[3])
 
 ax1.grid(alpha=.5)
-ax1.set_title('Mélange')
+top_title = 'Mélange [0-10 km]'
+bottom_title = 'Mid Fjord [30-60 km]'
+ax1.set_title(top_title)
 ax1.set_ylabel('Depth [m]')
 ax1.set_xlabel('Temperature [C]')
 ax1.set_xlim(t_range)
 ax1.legend()
 ax2.grid(alpha=.5)
-ax2.set_title('Mélange')
+ax2.set_title(top_title)
 ax2.set_ylabel('Depth [m]')
 ax2.set_xlabel('Horz Speed [m/s]')
 ax2.set_xlim(u_range)
 ax3.grid(alpha=.5)
-ax3.set_title('Mélange')
+ax3.set_title(top_title)
 ax3.set_ylabel('Depth [m]')
 ax3.set_xlabel('Vertica Speed [m/s]')
 ax3.set_xlim(w_range)
 ax4.grid(alpha=.5)
-ax4.set_title('Mid Fjord')
+ax4.set_title(bottom_title)
 ax4.set_ylabel('Depth [m]')
 ax4.set_xlabel('Temperature [C]')
 ax4.set_xlim(t_range)
 ax5.grid(alpha=.5)
-ax5.set_title('Mid Fjord')
+ax5.set_title(bottom_title)
 ax5.set_ylabel('Depth [m]')
 ax5.set_xlabel('Horz Speed [m/s]')
 ax5.set_xlim(u_range)
 ax6.grid(alpha=.5)
-ax6.set_title('Mid Fjord')
+ax6.set_title(bottom_title)
 ax6.set_ylabel('Depth [m]')
-ax6.set_xlabel('Vertica Speed [m/s]')
-ax6.set_xlim(w_range)
+ax6.set_xlabel('Plume Fraction [%]')
+ax6.set_xlim([-.01, .04])
 
 for label,ax in zip(figLabels,axes.flatten()):
     ax.text(
