@@ -8,15 +8,19 @@ import fileinput
 import argparse
 
 # Take input options. Some defaults are set here, so be aware
-parser = argparse.ArgumentParser(description='Plot options for fresh water flux over time')
+parser = argparse.ArgumentParser(description='Plot options for fjord conditions')
 parser.add_argument('-f','--files', nargs='*', default=['.'],
                     help='folders to plot [default is .]')
+parser.add_argument('-l','--labels', nargs='*', default=None,
+                    help='file string label plots [default = None]')
 parser.add_argument('-s','--silent', action='count', default=0,
                     help='Option to silence showing of plots')
 parser.add_argument('-n','--numFrames', nargs=1, default=[250],type=int,
                     help='Max number of samples from time series [defaut = 250]')
 parser.add_argument('-t','--timeRange', nargs=2, type=int, default = [500, 860],
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
+parser.add_argument('-dpi','--dpi', nargs='?', default=200,type=int,
+                    help='dpi to print [default = 200]')
 args = parser.parse_args()
 
 # Should start in march, end 1 year later
@@ -25,7 +29,7 @@ t_range = [-2.2, 4.2]
 u_range = [-0.1, 0.1]
 w_range = [-1e-4, 8e-4]
 # Pick cross section to view from file or default
-plotDPI = 150
+plotDPI = args.dpi
 manualMax = None
 
 folders = args.files
@@ -154,6 +158,8 @@ for i in range(len(folders)):
     ax4.plot(np.nanmean(JJA_data[0,:,:,75:154],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
     ax4.plot(np.nanmean(SON_data[0,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
     ax4.plot(np.nanmean(DJF_data[0,:,:,75:150],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
+    if(args.labels != None):
+        ax4.plot([],[],color='gray',label=args.labels[i])
 
     ax5.plot(np.nanmean(MAM_data[2,:,:,75:150],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
     ax5.plot(np.nanmean(JJA_data[2,:,:,75:150],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
@@ -193,6 +199,8 @@ ax4.set_title(bottom_title)
 ax4.set_ylabel('Depth [m]')
 ax4.set_xlabel('Temperature [C]')
 ax4.set_xlim(t_range)
+if(args.labels != None):
+    ax4.legend()
 ax5.grid(alpha=.5)
 ax5.set_title(bottom_title)
 ax5.set_ylabel('Depth [m]')
@@ -201,7 +209,7 @@ ax5.set_xlim(u_range)
 ax6.grid(alpha=.5)
 ax6.set_title(bottom_title)
 ax6.set_ylabel('Depth [m]')
-ax6.set_xlabel('Plume Fraction [%]')
+ax6.set_xlabel('SGD Fraction [ ]')
 ax6.set_xlim([-.01, .04])
 
 for label,ax in zip(figLabels,axes.flatten()):
