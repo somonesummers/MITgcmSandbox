@@ -19,8 +19,8 @@ parser.add_argument('-n','--numFrames', nargs=1, default=[250],type=int,
                     help='Max number of samples from time series [defaut = 250]')
 parser.add_argument('-t','--timeRange', nargs=2, type=int, default = [500, 860],
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
-parser.add_argument('-dpi','--dpi', nargs='?', default=200,type=int,
-                    help='dpi to print [default = 200]')
+parser.add_argument('-dpi','--dpi', nargs='?', default=400,type=int,
+                    help='dpi to print [default = 400]')
 args = parser.parse_args()
 
 # Should start in march, end 1 year later
@@ -29,7 +29,6 @@ t_range = [-2.2, 4.2]
 u_range = [-0.1, 0.1]
 w_range = [-1e-4, 8e-4]
 # Pick cross section to view from file or default
-plotDPI = args.dpi
 manualMax = None
 
 folders = args.files
@@ -52,7 +51,10 @@ elif(os.path.isfile('../plotHelper.py')):
     print('no custom plotting settings, using local default')
     from plotHelper import *
 else:  
+
     print('no defaults found')
+
+plotDPI = args.dpi
 print('Plot DPI:',plotDPI)
 
 
@@ -138,43 +140,43 @@ for i in range(len(folders)):
     DJF_data_tracer = np.nanmean(dataArray_tracer[27:36,:,:,:,:],axis=0)
     # annual_data = np.nanmean(dataArray,axis=0)
     # mélange 1-10 km ()
-    ax1.plot(np.nanmean(MAM_data[0,:,:,1:25],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
+    # ax1.plot(np.nanmean(MAM_data[0,:,:,1:25],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
     ax1.plot(np.nanmean(JJA_data[0,:,:,1:25],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
-    ax1.plot(np.nanmean(SON_data[0,:,:,1:25],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
+    # ax1.plot(np.nanmean(SON_data[0,:,:,1:25],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
     ax1.plot(np.nanmean(DJF_data[0,:,:,1:25],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
 
-    ax2.plot(np.nanmean(MAM_data[2,:,:,1:25],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
+    # ax2.plot(np.nanmean(MAM_data[2,:,:,1:25],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
     ax2.plot(np.nanmean(JJA_data[2,:,:,1:25],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
-    ax2.plot(np.nanmean(SON_data[2,:,:,1:25],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
+    # ax2.plot(np.nanmean(SON_data[2,:,:,1:25],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
     ax2.plot(np.nanmean(DJF_data[2,:,:,1:25],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
 
-    ax3.plot(np.nanmean(MAM_data[3,:,:,1:25],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
+    # ax3.plot(np.nanmean(MAM_data[3,:,:,1:25],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
     ax3.plot(np.nanmean(JJA_data[3,:,:,1:25],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
-    ax3.plot(np.nanmean(SON_data[3,:,:,1:25],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
+    # ax3.plot(np.nanmean(SON_data[3,:,:,1:25],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
     ax3.plot(np.nanmean(DJF_data[3,:,:,1:25],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
 
     # mid fjord 30-60 km
-    ax4.plot(np.nanmean(MAM_data[0,:,:,75:150],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
+    # ax4.plot(np.nanmean(MAM_data[0,:,:,75:150],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
     ax4.plot(np.nanmean(JJA_data[0,:,:,75:154],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
-    ax4.plot(np.nanmean(SON_data[0,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
+    # ax4.plot(np.nanmean(SON_data[0,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
     ax4.plot(np.nanmean(DJF_data[0,:,:,75:150],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
     if(args.labels != None):
-        ax4.plot([],[],color='gray',label=args.labels[i])
+        ax4.plot([],[],color='gray',label=args.labels[i],linestyle=lStyle[i])
 
-    ax5.plot(np.nanmean(MAM_data[2,:,:,75:150],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
+    # ax5.plot(np.nanmean(MAM_data[2,:,:,75:150],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
     ax5.plot(np.nanmean(JJA_data[2,:,:,75:150],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
-    ax5.plot(np.nanmean(SON_data[2,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
+    # ax5.plot(np.nanmean(SON_data[2,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
     ax5.plot(np.nanmean(DJF_data[2,:,:,75:150],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
 
-    ax6.plot(np.nanmean(MAM_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
+    # ax6.plot(np.nanmean(MAM_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
     ax6.plot(np.nanmean(JJA_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
-    ax6.plot(np.nanmean(SON_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
+    # ax6.plot(np.nanmean(SON_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
     ax6.plot(np.nanmean(DJF_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
 
-ax1.plot([],[],label='MAM',linestyle='-',color=colors[0])
-ax1.plot([],[],label='JJA',linestyle='-',color=colors[1])
-ax1.plot([],[],label='SON',linestyle='-',color=colors[2])
-ax1.plot([],[],label='DJF',linestyle='-',color=colors[3])
+# ax1.plot([],[],label='MAM',linestyle='-',color=colors[0])
+ax1.plot([],[],label='Summer (JJA)',linestyle='-',color=colors[1])
+# ax1.plot([],[],label='SON',linestyle='-',color=colors[2])
+ax1.plot([],[],label='Winter (DJF)',linestyle='-',color=colors[3])
 
 ax1.grid(alpha=.5)
 top_title = 'Mélange [0-10 km]'
@@ -216,8 +218,12 @@ for label,ax in zip(figLabels,axes.flatten()):
     ax.text(
         ax.get_xlim()[0], ax.get_ylim()[1], label,
         fontsize='x-large', va='bottom',ha='center', fontfamily='sans serif')
+    
+timeString = ''
+if(args.timeRange != None):
+    timeString = f'_T_{args.timeRange[0]}_{args.timeRange[1]}'
 
-plt.savefig('figs/FigureOSM%s.png' %fileEnding, format='png',dpi=plotDPI)
+plt.savefig(f'figs/FigureOSM{fileEnding}{timeString}.png', format='png',dpi=plotDPI)
 if(args.silent == 0):
     plt.show()
 plt.close()

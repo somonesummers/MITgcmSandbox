@@ -276,9 +276,10 @@ for k in kList:
                 u,#/np.sqrt(u**2 + w**2 + 1e-12),
                 w,#/np.sqrt(u**2 + w**2 + 1e-12),
                 alpha=.2,
-                width = .001, #width of line
-                scale = 1,
-                angles='xy'#60
+                width = .002, #width of line
+                scale = .5,
+                angles='xy',#60
+                pivot='mid'
                 )
         if(args.xlimit != None):
             plt.xlim([0, args.xlimit])

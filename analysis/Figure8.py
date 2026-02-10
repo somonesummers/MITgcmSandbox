@@ -9,13 +9,9 @@ import xarray as xr
 import argparse
 
 # Take input options. Some defaults are set here, so be aware
-parser = argparse.ArgumentParser(description='Plot options for fresh water flux over time')
+parser = argparse.ArgumentParser(description='Plot options for intial conditions')
 parser.add_argument('-s','--silent', action='count', default=0,
                     help='Option to silence showing of plots')
-parser.add_argument('-n','--numFrames', nargs=1, default=[250],type=int,
-                    help='Max number of samples from time series [defaut = 150]')
-parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
-                    help='optional specification of start and endtime in DAYS [default = Full Range]')
 args = parser.parse_args()
 
 
@@ -121,8 +117,8 @@ for j in range(len(folders)):
     ax1.plot(timeSteps*dt/86400,fwOverTime,label=labels[j],color=colors[j])
 # Wrap up after plotting everything
 ax1.grid(alpha=.5)
-# ax1_1=ax1.twinx()
-# ax1_1.plot(timeSteps*dt/86400,MROverTime,label=labels[j],color='xkcd:rose',linestyle='-')
+ax1_1=ax1.twinx()
+ax1_1.plot(timeSteps*dt/86400,MROverTime,label=labels[j],color='xkcd:rose',linestyle='-')
 # ax1_1.plot(timeSteps*dt/86400,Mr68OverTime,label=labels[j],color='xkcd:light rose',linestyle='-')
 # ax1_1.plot(timeSteps*dt/86400,Mr32OverTime,label=labels[j],color='xkcd:light rose',linestyle='-')
 ax1_1.set_ylabel('Avg Melt Rate flux [m/d]')
