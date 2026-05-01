@@ -73,7 +73,6 @@ Srange = np.linspace(27,35,31)
 
 # %%
 #toss random very neg values
-
 lat = lat[lat[:] > -90]
 lon = lon[lon[:] > -90]
 print(np.shape(lat))
@@ -113,6 +112,13 @@ if(args.profile > 0):
         ax.set_ylim([-2.5,5])
         plt.show()
         plt.close()
+if(args.profile > 0):
+    for i in range(len(lat)):
+        plt.figure()
+        cp = plt.plot(temp[:,i],-depth[:],linestyle='-',marker='o')
+        plt.title(i)
+        plt.show()
+        plt.close()
 
 # %%
 #Sub 1, Along fjord
@@ -123,8 +129,11 @@ eTime = datetime.datetime.fromtimestamp(int(time[stop]))
 
 
 #Picks grab sub set, throwing out bad data, and also sets order such that they go down fjord as we go
-if(year == '2010mar'):
+if(year == '2010marSF'):
     picks = [3,5,2,1,6]
+elif(year == '2010m'):
+    picks = [6,1,0,2,5,4,3]
+    picks = picks[::-1]
 elif(year == '2015SF'):
     picks = [10,9,8,12,14,15,16,19,21,22,29]
 elif(year == '2016'):
@@ -151,7 +160,7 @@ for i in range(len(picks)):
 
 newProj.plot()
 # plt.scatter(zutm_x,zutm_y,alpha=.5,color='black')
-f=plt.scatter(utm_x[picks],utm_y[picks],c=picks)
+f=plt.scatter(utm_x[picks],utm_y[picks],c=distAlong)
 plt.plot(utm_x[picks],utm_y[picks])
 plt.colorbar(f)
 plt.title(f'Our Most Exclusive CTD casts {year}')
@@ -161,6 +170,7 @@ ax.set_ylim([7.26e6,7.37e6])
 strname = f'{year}Map.png'
 plt.savefig(strname, format='png', dpi=400)
 
+# distAlong = [1,2,3,4,5,6,7]
 fig= plt.figure(2,figsize=(12, 8))
 ax1 = plt.subplot(211)
 cf = ax1.contourf(
@@ -216,6 +226,12 @@ plt.tight_layout()
 
 strname = f'{year}AlongFjord.png'
 plt.savefig(strname, format='png', dpi=400)
+
+# fig= plt.figure(3,figsize=(12, 8))
+# f=plt.scatter(lat[picks],lon[picks],c=picks)
+# plt.plot(lat[picks],lon[picks])
+# plt.colorbar(f)
+
 plt.show()
 plt.close()
 

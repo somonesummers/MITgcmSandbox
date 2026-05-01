@@ -100,9 +100,9 @@ run_config['run_name'] = 'sierra'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-wallWidthInd = 5 #width of walls in units of dy
+wallWidthInd = 14 #width of walls in units of dy
 run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
-run_config['Lx_m'] = 102000 # domain size in x (m)
+run_config['Lx_m'] = 120000 # domain size in x (m)
 run_config['Ly_m'] = 5600 + (2 * wallWidthInd * run_config['horiz_res_m']) # domain size in y (m) with walls (1 wall each side)
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
@@ -114,13 +114,13 @@ setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s
 input("Confirm above is accurate before continuing...")
 
 # Variables to adjust ======================
-assign_deltaT = 3 # [C]
+assign_deltaT = 0 # [C]
 assign_plumeSGD = 1500 #[m^3/s]
 season_sw = 's'
 
 # Offshore current =========================
 oscStrength = 0.03 #[m/s] peak strength of offshore current
-lengthOffShoreLength = 10e3 #width of offshore region [m]
+lengthOffShoreLength = 20000 #width of offshore region [m]
 indexOSC = int(lengthOffShoreLength/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
@@ -759,7 +759,8 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 ## Total runoff (m^3/s)
 ## Seasonal Peak
-runoff = -2*assign_plumeSGD * np.sin(2*np.pi * np.arange(nt)/(nt/10)) - assign_plumeSGD
+rampedPeak = assign_plumeSGD + 1000 * np.arange(nt)/float(nt)
+runoff = -2*(rampedPeak)* np.sin(2*np.pi * np.arange(nt)/(nt/10)) - rampedPeak
 runoff[runoff <  25 ] = 25
 ## linear ramp
 # runoff = 500 + assign_plumeSGD * np.arange(nt)/float(nt)
@@ -827,9 +828,9 @@ plt.close()
 plt.figure()
 time = np.arange(nt)*params03['ExternForcingPeriod']/86400
 if(plumeMask[plume_loc,icefront] == 3):
-    plt.plot(time,runoffRad[:,plume_loc,icefront]**2 * np.pi * wsg,'SGD',linewidth=3, linestyle='--')
+    plt.plot(time,runoffRad[:,plume_loc,icefront]**2 * np.pi * wsg,'SGD',linewidth=1, linestyle='-',marker='.')
 elif(plumeMask[plume_loc,icefront] == 2):
-    plt.plot(time,runoffRad[:,plume_loc,icefront] * run_config['horiz_res_m'] * wsg,label='SGD',linewidth=3, linestyle='--')
+    plt.plot(time,runoffRad[:,plume_loc,icefront] * run_config['horiz_res_m'] * wsg,label='SGD',linewidth=1, linestyle='-',marker='.')
 ax1=plt.gca()
 ax2=ax1.twinx()
 ax2.plot(time,sampleTForcing,label='T mid-depth',color='r')
@@ -844,6 +845,12 @@ if(writeFiles):
 plt.show()
 plt.close()
 
+plt.plot(((time-80)%365),runoffRad[:,plume_loc,icefront] * run_config['horiz_res_m'] * wsg,label='SGD',linewidth=1, linestyle='-',marker='.')
+ax1=plt.gca()
+ax1.set_xlabel('DOY [day]')
+ax1.set_ylabel('SGD [$m^3/s$]')
+plt.show()
+plt.close()
 ## Boundary conditions
 
 # pre-allocate

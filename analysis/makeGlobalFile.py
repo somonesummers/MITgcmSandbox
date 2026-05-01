@@ -16,7 +16,9 @@ for line in fileinput.input('input/data'):
 
 ## Cleaning first time step to global files. This sometimes had a hiccup in runs in early Oct 2025
 print(f'dt loaded as {dt}')
-prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag','presDiag','momDiag','heatDiag']
+
+prefixes = ['dynDiag','ptraceDiag','plumeDiag','presDiag','momDiag','heatDiag']
+# prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag','presDiag','momDiag','heatDiag']
 # prefixes = ['presDiag','momDiag','heatDiag']
 
 maxStep = 0
@@ -34,6 +36,8 @@ for file in os.listdir('results'):
             startStep = int(words[1])
         if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
             sizeStep = abs(int(words[1]) - startStep)
+
+print(f'start {startStep}, step {sizeStep}, max {maxStep}')
 
 for i in np.arange(startStep, maxStep + 1, sizeStep):
 	print(f'condensing diagnostic tile files to global files for iteration {i}')
@@ -59,7 +63,7 @@ for i in np.arange(startStep, maxStep + 1, sizeStep):
 	    	elif(prefixes[k] == 'presDiag'):
 	    		meta['fldlist'] = ['PHIHYD','PHI_NH']
 	    mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=i, dataprec='float32',fields=meta['fldlist'],)
-	    os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],endIter)) #picks out tile level files
+	    os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],i)) #picks out tile level files
 
 # Clean up final files
 prefixes = ['Depth','DXC','DXF','DXG','DXV','DYC','DYF','DYG','DYU','hFacC','hFacS','hFacW',
@@ -71,13 +75,14 @@ for k in range(len(prefixes)):
     mds.wrmds('results/%s' %prefixes[k],dataTemp,dataprec='float32')
     os.system('rm results/%s.0*.0*' %(prefixes[k])) #picks out tile level files
 
-print('Making xArray datafile now')
+if(False):
+	print('Making xArray datafile now')
 
-ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = dt)
+	ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = dt)
 
-print(ds)
+	print(ds)
 
-ds.to_netcdf('xarray_data.nc') #this is slow, be patient
+	ds.to_netcdf('xarray_data.nc') #this is slow, be patient
 
 print('Done saving!')
 

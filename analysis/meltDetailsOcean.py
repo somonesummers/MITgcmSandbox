@@ -371,7 +371,7 @@ ax6 = axes[2,1]
 fwDepth[np.isnan(tDepth)] = np.nan
 
 # zMin=np.min(z[~np.isnan(np.nanmean(fwDepth,axis=1))])
-# zMin = -320
+zMin = -600
 cp = ax1.contourf(timeSteps*dt/86400,z,fwDepth,
                 cmap='cmo.dense')
 cbar = plt.colorbar(cp)

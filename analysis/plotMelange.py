@@ -36,6 +36,8 @@ parser.add_argument('-n','--NumView', nargs=1, default=[100], type=int,
                     help='How many files to look back for cascade plots [defaut = 100]')
 parser.add_argument('-s','--silent', action='count', default=0,
                     help='Option to silence showing of plots')
+parser.add_argument('-ex','--extended', action='count', default=0,
+                    help='Option to include the collapse tragectory')
 parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
 args = parser.parse_args()
@@ -43,6 +45,8 @@ args = parser.parse_args()
 # print(args)
 fileStr = args.files[0]
 files = sorted(glob.glob('%s*.pickle'%fileStr))
+collapseIt = len(files) -1
+files+= sorted(glob.glob('%s*.pickle'%(fileStr.replace('sweep','zTemp0'))))
 
 constant = constants()
 
@@ -54,9 +58,9 @@ fig, axes = plt.subplots(2, 3, figsize=(12, 6), layout="constrained")
 ax1 = axes[0,0]
 ax2 = axes[0,1]
 ax3 = axes[1,0]
-ax4 = axes[1,1]
+ax6 = axes[1,1]
 ax5 = axes[0,2]
-ax6 = axes[1,2]
+ax4 = axes[1,2]
 
 seedColor=['green','blue','violet','red']
 # seedColor=['xkcd:dandelion','xkcd:rose','xkcd:lavender','xkcd:apple','xkcd:periwinkle','xkcd:seafoam','xkcd:umber']
@@ -81,60 +85,6 @@ UcTime = np.zeros(np.shape(toIterate))
 lengthTime = np.zeros(np.shape(toIterate))
 timeTime = np.zeros(np.shape(toIterate))
 iterationNumber = np.zeros(np.shape(toIterate))
-for j in toIterate:
-    file = files[j + jShift]
-    with open(files[j + jShift], 'rb') as fileName:
-        data = pickle.load(fileName)
-        fileName.close()
-    it = file.replace('./', '').replace('.pickle', '').replace(fileStr,'')
-    H0Time[j]=data.H0
-    X_ = np.concatenate(([data.X[0]], data.X_, [data.X[-1]]))
-    H = np.concatenate(([data.H0], data.H, [data.HL]))
-    W = np.concatenate(([data.W0], data.W, [data.WL]))
-    VTime[j] = simpson(H*W, x=X_)*1e-9
-    lengthTime[j]=data.X[-1] - data.X[0]
-    UcTime[j] = data.Uc
-    timeTime[j] = data.t * 365.25
-    iterationNumber[j]=int(it)
-
-if(timeTime[0] != 0):
-    print(f"time shifted by {timeTime[0]:.02f} days")
-    timeTime = timeTime - timeTime[0] #remove any shift so that time starts at 0
-
-if(args.Uc[0] == 1):
-    ax2.plot(iterationNumber,UcTime,'-')
-    sca=ax2.scatter(iterationNumber,UcTime,s=None,c=timeTime,cmap='viridis')
-    # cbar=plt.colorbar(sca)
-    # cbar.set_label('Iteration [Days]')
-    ax2.set_ylabel('Calving Speed [m/yr]')
-    ax2.set_xlabel('Iteration [ ]')
-    ax2.grid(alpha=.5)
-
-
-ax5.plot(timeTime,lengthTime,'-')
-sca=ax5.scatter(timeTime,lengthTime,s=None,c=timeTime,cmap='viridis')
-cbar=plt.colorbar(sca)
-cbar.set_label('Time [Days]')
-ax5.set_ylabel('Mélange length [m]')
-ax5.set_xlabel('Time [days]')
-ax5.grid(alpha=.5)
-
-a = 0
-b = 0
-c = 0
-a, b, c= np.polynomial.polynomial.polyfit(H0Time, lengthTime, 2)
-# print(f'({c:.3g})L^2 + ({b:.3g}) L + ({a:.3g})')
-
-ax6.plot(H0Time,lengthTime,'-')
-sca=ax6.scatter(H0Time,lengthTime,s=None,c=timeTime,cmap='viridis')
-ax6.plot(H0Time,c*H0Time**2 + b*H0Time + a,'--',color='k',alpha=.5)
-cbar=plt.colorbar(sca)
-cbar.set_label('Time [Days]')
-ax6.set_ylabel('Mélange Length [m]')
-ax6.set_xlabel('Mélange H0 [m]')
-ax6.set_title(f'({c:.3g})H^2 + ({b:.3g}) H + ({a:.3g})')
-ax6.grid(alpha=.5)
-
 
 shiftIndex = 0
 limit = args.NumView[0]
@@ -162,6 +112,10 @@ for j in toIterate[shiftIndex::subSample]:
     H = np.concatenate(([data.H0],data.H,[1.5*data.H[-1]-0.5*data.H[-2]]))
     B = np.concatenate((data.B,[1.5*data.B[-1]-0.5*data.B[-2]])) * -1 #flip for plotting
     gg = np.concatenate(([1.5*data.gg[0]-0.5*data.gg[1]],data.gg,[1.5*data.gg[-1]-0.5*data.gg[-2]]))
+    g_loc = np.concatenate(([1.5*data.g_loc[0]-0.5*data.g_loc[1]],data.g_loc,[1.5*data.g_loc[-1]-0.5*data.g_loc[-2]]))
+    # print(np.sqrt((np.diff(data.U)/np.diff(data.X))**2))
+    # mu = np.sqrt((np.diff(U)/data.dx)**2)/(data.L*data.gg)
+    mu = (np.sqrt((np.diff(data.U)/data.dx)**2)/data.L+data.param.deps)/(data.gg/data.param.Uscale*data.param.Lscale)
     muW = data.muW# np.concatenate(([3*data.muW[0]-3*data.muW[1]+data.muW[2]],data.muW,[3*data.muW[-1]-3*data.muW[-2]+data.muW[-3]]))
     X = X-X[0]
     X_ = X_-X_[0]
@@ -169,12 +123,15 @@ for j in toIterate[shiftIndex::subSample]:
     colors = makeColors(seedColor[0],n)
     alphaList = np.arange(.1,.5,.4/n)
     alphaList[-subSample] = 1
-    ax1.plot(X*1e-3,(U+data.Ut-data.Uc)/constant.daysYear,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
+    ax1.plot(X*1e-3,(U+data.Ut-data.Uc)/constant.daysYear,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],
+        linestyle=linestyle,label=name)
     # ax1.plot(X*1e-3,(U+data.Ut-data.Uc)/constant.daysYear,marker='o',color=seedColor[j],linestyle=linestyle,label=names[j])
     ax1.set_xlabel('Distance Along Mélange [km]')
     ax1.set_ylabel('Speed [m/day]')
+    # ax1.set_title(f'Last {n} steps')
     ax1.grid(alpha=.5)
-    # ax1.legend()
+    # if j == shiftIndex:
+    #     ax1.legend()
 
     if(args.Uc[0] == 0):
         colors = makeColors(seedColor[1],n)
@@ -190,7 +147,7 @@ for j in toIterate[shiftIndex::subSample]:
     colors = makeColors(seedColor[2],n)
     ax3.plot(X_*1e-3,gg,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
     ax3.set_xlabel('Distance Along Mélange [km]')
-    ax3.set_ylabel('$g^{\\prime}$')
+    ax3.set_ylabel('$g^{\\prime}$ [1/yr]')
     ax3.grid(alpha=.5)
     # ax3.legend()
 
@@ -201,14 +158,44 @@ for j in toIterate[shiftIndex::subSample]:
     colors = makeColors(seedColor[3],n)   
     ax4.plot(X_[1:-1]*1e-3,B[:-1]/constant.daysYear,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
     ax4.set_xlabel('Distance Along Mélange [km]')
-    ax4.set_ylabel('Meltrate B [m/day]')     
+    ax4.set_ylabel('Meltrate B [m/day]')
     # ax4.legend()
     ax4.grid(alpha=.5)
 
+    colors = makeColors('orange',n)
+    colors2 = makeColors('plum',n)
+    ax5.plot(X*1e-3,muW,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
+    ax5.set_xlabel('Distance Along Mélange [km]')
+    ax5.set_ylabel('$\\mu_w$ []',color='xkcd:orange')
+    ax5.tick_params(axis='y',labelcolor='xkcd:orange')
+    if( j == shiftIndex):
+        ax5_2 = ax5.twinx()
+    ax5_2.plot(data.X_*1e-3,mu,marker='o',color=colors2[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
+    x_lims = ax5.get_xlim()
+    ax5_2.plot(ax5.get_xlim(),[.3,.3],color='xkcd:plum',linestyle='--',alpha =.15)
+    ax5_2.set_ylabel('$\\mu$ []',color='xkcd:plum')
+    ax5_2.tick_params(axis='y',labelcolor='xkcd:plum')
+    ax5.set_xlim(x_lims)
+    ax5.grid(alpha=.5)
+
+    colors = makeColors('periwinkle',n)
+    ax6.plot(X_*1e-3,g_loc,marker='o',color=colors[:,j-shiftIndex],alpha=alphaList[j-shiftIndex],linestyle=linestyle,label=name)
+    ax6.set_xlabel('Distance Along Mélange [km]')
+    ax6.set_ylabel('g_loc [1/yr]')
+    ax6.grid(alpha=.5)
+
+figLabels = ['(a)','(b)','(c)','(d)','(e)','(f)']
+for label,ax in zip(figLabels,axes.reshape(6,1)):
+    ax=ax[0]
+    ax.text(
+        ax.get_xlim()[0], ax.get_ylim()[1], label,
+        fontsize='x-large', va='bottom',ha='right', fontfamily='sans serif')
+
+
 
 strTemp = 'View'
-if(args.Uc[0] == 1):
-    strTemp = 'ViewUc'
+if(args.extended == 1):
+    strTemp = 'ViewExtended'
 dirStr = ''
 if(os.path.isdir('figs')):
     dirStr = 'figs/'

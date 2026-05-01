@@ -18,7 +18,7 @@ import glob
 import pickle
 
 saveProfiles = False
-matplotlib.rcParams.update({'font.size': 16})
+matplotlib.rcParams.update({'font.size': 12})
 constant = constants()
 
 # Take input options. Some defaults are set here, so be aware

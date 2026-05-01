@@ -125,42 +125,43 @@ for i in range(len(args.files)):
     from MITgcmutils import mds
     inputDirect = file.split('couplingResults')[0]
     print(inputDirect)
-    y = np.squeeze(mds.rdmds(f"{inputDirect}results/YC")[:,0])
-    dy = 2*y[0]
-    for line in fileinput.input(f'{inputDirect}input/data'):
-        if "ExternForcingPeriod=" in line:
-            period = float(line[21:-2])
-        elif "ExternForcingCycle=" in line:
-            cycle = float(line[20:-2])
-    nt = int(cycle/period)
-    plumeMask = np.fromfile(f'{inputDirect}input/plumeMask.bin', dtype='>f8') #(2 is line, 3 is semi-cone)
-    rad = np.fromfile(f'{inputDirect}input/runoffRad.bin', dtype='>f8')
-    rad = rad.reshape((nt,len(plumeMask)))
-    vel = np.fromfile(f'{inputDirect}input/runoffVel.bin', dtype='>f8')
-    vel = vel.reshape((nt,len(plumeMask)))
-    T_bc = np.fromfile(f'{inputDirect}input/EBCt.bin', dtype='>f8')
-    extraDim = int(np.size(T_bc) / 32 / 24) #480 for sierra, 120 for Quebec
-    T_bc = T_bc.reshape((extraDim, 32, 24))
+    if(args.sgd != None):
+        y = np.squeeze(mds.rdmds(f"{inputDirect}results/YC")[:,0])
+        dy = 2*y[0]
+        for line in fileinput.input(f'{inputDirect}input/data'):
+            if "ExternForcingPeriod=" in line:
+                period = float(line[21:-2])
+            elif "ExternForcingCycle=" in line:
+                cycle = float(line[20:-2])
+        nt = int(cycle/period)
+        plumeMask = np.fromfile(f'{inputDirect}input/plumeMask.bin', dtype='>f8') #(2 is line, 3 is semi-cone)
+        rad = np.fromfile(f'{inputDirect}input/runoffRad.bin', dtype='>f8')
+        rad = rad.reshape((nt,len(plumeMask)))
+        vel = np.fromfile(f'{inputDirect}input/runoffVel.bin', dtype='>f8')
+        vel = vel.reshape((nt,len(plumeMask)))
+        T_bc = np.fromfile(f'{inputDirect}input/EBCt.bin', dtype='>f8')
+        extraDim = int(np.size(T_bc) / 32 / 24) #480 for sierra, 120 for Quebec
+        T_bc = T_bc.reshape((extraDim, 32, 24))
 
 
-    plumeType = np.max(plumeMask)
-    cleanRad = rad[:,plumeMask == plumeType]
-    cleanVel = vel[:,plumeMask == plumeType]
-    seasonTime = np.linspace(0,cycle/86400,nt)
-    if(plumeType == 2):
-        runoff = dy*cleanRad[:,0]*cleanVel[:,0]
-    else: #semi-rad
-        runoff = np.pi*cleanRad**2*cleanVel
-    # print(f'seasonTime {seasonTime}, nt {nt}')
-    # print(f'runoff {runoff}')
-    # print(f'plume type {plumeType}')
-    # print(np.shape(seasonTime))
-    # print(np.shape(runoff))
-    f = interpolate.interp1d(seasonTime, runoff,fill_value='0')
-    f_temp = interpolate.interp1d(seasonTime, np.mean(T_bc,axis=(1,2)),fill_value='0')
-    SGD_Time = f(timeTime)
-    T_Time = f_temp(timeTime)
-    # timeLabel = 'SGD [$m^3/s$]'
+        plumeType = np.max(plumeMask)
+        cleanRad = rad[:,plumeMask == plumeType]
+        cleanVel = vel[:,plumeMask == plumeType]
+        seasonTime = np.linspace(0,cycle/86400,nt)
+        if(plumeType == 2):
+            runoff = dy*cleanRad[:,0]*cleanVel[:,0]
+        else: #semi-rad
+            runoff = np.pi*cleanRad**2*cleanVel
+        # print(f'seasonTime {seasonTime}, nt {nt}')
+        # print(f'runoff {runoff}')
+        # print(f'plume type {plumeType}')
+        # print(np.shape(seasonTime))
+        # print(np.shape(runoff))
+        f = interpolate.interp1d(seasonTime, runoff,fill_value='0')
+        f_temp = interpolate.interp1d(seasonTime, np.mean(T_bc,axis=(1,2)),fill_value='0')
+        SGD_Time = f(timeTime)
+        T_Time = f_temp(timeTime)
+        # timeLabel = 'SGD [$m^3/s$]'
 
     #Shift to align with model defined years
     timeTime = timeTime - 94
@@ -210,7 +211,7 @@ for i in range(len(args.files)):
 
         
     #If second axis is free and non-forced variable (B or Uc) changes, plot it
-    elif(True):
+    elif(args.sgd != None):
         # if(i == 0):
         #     ax1_2 = ax1.twinx()
         roughNFT = notforceTime
@@ -260,16 +261,17 @@ for i in range(len(args.files)):
     # cbar.set_label('Iteration')
     # if(i == 0):
     #     ax2_2 = ax2.twinx()
-    if(args.labels != None):
-        ax2.plot(drivingVariable,T_Time,color='xkcd:magenta',linestyle=lStyle[i],label=args.labels[i])
-    else:
-        ax2.plot(drivingVariable,T_Time,color='xkcd:magenta',linestyle=lStyle[i])
-    ax2.set_ylabel('Mean Shelf Temp [C]',color='xkcd:magenta')
-    ax2.tick_params(axis='y',labelcolor='xkcd:magenta')
-    ax2.grid(alpha=.5)
-    # ax2.set_xlabel(drivingLabel)
-    if(args.labels != None):
-        ax2.legend(loc=args.legLoc)
+    if(args.sgd != None):
+        if(args.labels != None):
+            ax2.plot(drivingVariable,T_Time,color='xkcd:magenta',linestyle=lStyle[i],label=args.labels[i])
+        else:
+            ax2.plot(drivingVariable,T_Time,color='xkcd:magenta',linestyle=lStyle[i])
+        ax2.set_ylabel('Mean Shelf Temp [C]',color='xkcd:magenta')
+        ax2.tick_params(axis='y',labelcolor='xkcd:magenta')
+        ax2.grid(alpha=.5)
+        # ax2.set_xlabel(drivingLabel)
+        if(args.labels != None):
+            ax2.legend(loc=args.legLoc)
     # ax2.set_title('Size')
 
     # roughPress = pressTime

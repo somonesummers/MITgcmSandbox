@@ -21,12 +21,21 @@ parser.add_argument('-t','--timeRange', nargs=2, type=int, default = [500, 860],
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
 parser.add_argument('-dpi','--dpi', nargs='?', default=400,type=int,
                     help='dpi to print [default = 400]')
+parser.add_argument('-u','--uRange', nargs='?', default=None,type=float,
+                    help='Max U velocity, default to uRange from helperfile')
+parser.add_argument('-p','--profile', action='count', default=0,
+                    help='option to plot with observed profiles')
 args = parser.parse_args()
+
+plt.rcParams.update({'font.size': 14})
 
 # Should start in march, end 1 year later
 
 t_range = [-2.2, 4.2]
-u_range = [-0.1, 0.1]
+if(args.uRange == None):
+    u_range = [-0.1, 0.1]
+else:
+    u_range = [-args.uRange, args.uRange]
 w_range = [-1e-4, 8e-4]
 # Pick cross section to view from file or default
 manualMax = None
@@ -58,14 +67,14 @@ plotDPI = args.dpi
 print('Plot DPI:',plotDPI)
 
 
-figLabels = ["(a)","(b)","(c)","(d)","(d)","(f)"]
-fig, axes = plt.subplots(2, 3, figsize=(12, 8), layout="constrained")
+figLabels = ["(a)","(b)","(c)","(d)","(e)","(f)"]
+fig, axes = plt.subplots(2, 2, figsize=(10, 8), layout="constrained")
 ax1 = axes[0,0]
 ax2 = axes[0,1]
-ax3 = axes[0,2]
+# ax3 = axes[0,2]
 ax4 = axes[1,0]
 ax5 = axes[1,1]
-ax6 = axes[1,2]
+# ax6 = axes[1,2]
 #Open figure before looping
 ## Plotting U as function of depth
 for i in range(len(folders)):
@@ -141,26 +150,44 @@ for i in range(len(folders)):
     # annual_data = np.nanmean(dataArray,axis=0)
     # mélange 1-10 km ()
     # ax1.plot(np.nanmean(MAM_data[0,:,:,1:25],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
+    if(args.profile > 0  and i == 0):
+        tt = np.load('2015_Melange_T.npy')
+        zz = -1*np.load('2015_Melange_Z.npy')
+        tt2 = np.load('2010mar_Melange_T.npy')
+        zz2 = -1*np.load('2010mar_Z.npy')
+        ax1.plot(tt,zz,color=colors[1],linewidth=2,linestyle=':')
+        # ax1.plot(tt2,zz2,color=colors[3],linewidth=2,linestyle=':')
     ax1.plot(np.nanmean(JJA_data[0,:,:,1:25],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
     # ax1.plot(np.nanmean(SON_data[0,:,:,1:25],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
     ax1.plot(np.nanmean(DJF_data[0,:,:,1:25],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
+
 
     # ax2.plot(np.nanmean(MAM_data[2,:,:,1:25],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
     ax2.plot(np.nanmean(JJA_data[2,:,:,1:25],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
     # ax2.plot(np.nanmean(SON_data[2,:,:,1:25],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
     ax2.plot(np.nanmean(DJF_data[2,:,:,1:25],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
 
-    # ax3.plot(np.nanmean(MAM_data[3,:,:,1:25],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
-    ax3.plot(np.nanmean(JJA_data[3,:,:,1:25],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
-    # ax3.plot(np.nanmean(SON_data[3,:,:,1:25],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
-    ax3.plot(np.nanmean(DJF_data[3,:,:,1:25],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
-
+    # # ax3.plot(np.nanmean(MAM_data[3,:,:,1:25],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
+    # ax3.plot(np.nanmean(JJA_data_tracer[0,:,:,1:25],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
+    # # ax3.plot(np.nanmean(SON_data[3,:,:,1:25],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
+    # ax3.plot(np.nanmean(DJF_data_tracer[0,:,:,1:25],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
+    # # ax3.ticklabel_format(axis='x', style='sci', scilimits=(0,0))
     # mid fjord 30-60 km
     # ax4.plot(np.nanmean(MAM_data[0,:,:,75:150],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
+    if(args.profile > 0 and i == 0):
+        tt = np.load('2015_Fjord_T.npy')
+        zz = -1*np.load('2015_Fjord_Z.npy')
+        tt2 = np.load('2010mar_Fjord_T.npy')
+        zz2 = -1*np.load('2010mar_Z.npy')
+        ax4.plot(tt,zz,color=colors[1],linewidth=2,linestyle=':')
+        # ax4.plot(tt2,zz2,color=colors[3],linewidth=2,linestyle=':')
     ax4.plot(np.nanmean(JJA_data[0,:,:,75:154],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
     # ax4.plot(np.nanmean(SON_data[0,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
     ax4.plot(np.nanmean(DJF_data[0,:,:,75:150],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
+
     if(args.labels != None):
+        if(i==0):
+            ax4.plot([],[],color='gray',label='xCTD',linestyle=':')
         ax4.plot([],[],color='gray',label=args.labels[i],linestyle=lStyle[i])
 
     # ax5.plot(np.nanmean(MAM_data[2,:,:,75:150],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
@@ -168,56 +195,62 @@ for i in range(len(folders)):
     # ax5.plot(np.nanmean(SON_data[2,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
     ax5.plot(np.nanmean(DJF_data[2,:,:,75:150],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
 
-    # ax6.plot(np.nanmean(MAM_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
-    ax6.plot(np.nanmean(JJA_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
-    # ax6.plot(np.nanmean(SON_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
-    ax6.plot(np.nanmean(DJF_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
+    # # ax6.plot(np.nanmean(MAM_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[0],linewidth=2,linestyle=lStyle[i])
+    # ax6.plot(np.nanmean(JJA_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[1],linewidth=2,linestyle=lStyle[i])
+    # # ax6.plot(np.nanmean(SON_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[2],linewidth=2,linestyle=lStyle[i])
+    # ax6.plot(np.nanmean(DJF_data_tracer[0,:,:,75:150],axis=(1,2)),z,color=colors[3],linewidth=2,linestyle=lStyle[i])
 
 # ax1.plot([],[],label='MAM',linestyle='-',color=colors[0])
 ax1.plot([],[],label='Summer (JJA)',linestyle='-',color=colors[1])
 # ax1.plot([],[],label='SON',linestyle='-',color=colors[2])
 ax1.plot([],[],label='Winter (DJF)',linestyle='-',color=colors[3])
 
+yRange = [-405,10]
+
 ax1.grid(alpha=.5)
 top_title = 'Mélange [0-10 km]'
 bottom_title = 'Mid Fjord [30-60 km]'
 ax1.set_title(top_title)
 ax1.set_ylabel('Depth [m]')
-ax1.set_xlabel('Temperature [C]')
+ax1.set_xlabel('Temp [C]')
 ax1.set_xlim(t_range)
+ax1.set_ylim(yRange)
 ax1.legend()
 ax2.grid(alpha=.5)
 ax2.set_title(top_title)
 ax2.set_ylabel('Depth [m]')
-ax2.set_xlabel('Horz Speed [m/s]')
+ax2.set_xlabel('U [m/s]')
 ax2.set_xlim(u_range)
-ax3.grid(alpha=.5)
-ax3.set_title(top_title)
-ax3.set_ylabel('Depth [m]')
-ax3.set_xlabel('Vertica Speed [m/s]')
-ax3.set_xlim(w_range)
+ax2.set_ylim(yRange)
+# ax3.grid(alpha=.5)
+# ax3.set_title(top_title)
+# ax3.set_ylabel('Depth [m]')
+# ax3.set_xlabel('SGD Fraction [ ]')
+# ax3.set_xlim([-.01, .04])
 ax4.grid(alpha=.5)
 ax4.set_title(bottom_title)
 ax4.set_ylabel('Depth [m]')
-ax4.set_xlabel('Temperature [C]')
+ax4.set_xlabel('Temp [C]')
 ax4.set_xlim(t_range)
+ax4.set_ylim(yRange)
 if(args.labels != None):
     ax4.legend()
 ax5.grid(alpha=.5)
 ax5.set_title(bottom_title)
 ax5.set_ylabel('Depth [m]')
-ax5.set_xlabel('Horz Speed [m/s]')
+ax5.set_xlabel('U [m/s]')
 ax5.set_xlim(u_range)
-ax6.grid(alpha=.5)
-ax6.set_title(bottom_title)
-ax6.set_ylabel('Depth [m]')
-ax6.set_xlabel('SGD Fraction [ ]')
-ax6.set_xlim([-.01, .04])
+ax5.set_ylim(yRange)
+# ax6.grid(alpha=.5)
+# ax6.set_title(bottom_title)
+# ax6.set_ylabel('Depth [m]')
+# ax6.set_xlabel('SGD Fraction [ ]')
+# ax6.set_xlim([-.01, .04])
 
-for label,ax in zip(figLabels,axes.flatten()):
-    ax.text(
-        ax.get_xlim()[0], ax.get_ylim()[1], label,
-        fontsize='x-large', va='bottom',ha='center', fontfamily='sans serif')
+# for label,ax in zip(figLabels,axes.flatten()):
+#     ax.text(
+#         ax.get_xlim()[0], ax.get_ylim()[1], label,
+#         fontsize='x-large', va='bottom',ha='center', fontfamily='sans serif')
     
 timeString = ''
 if(args.timeRange != None):

@@ -31,6 +31,8 @@ saveProfiles = False
 
 constant = constants()
 
+plt.rcParams.update({'font.size': 12})
+
 # Take input options. Some defaults are set here, so be aware
 parser = argparse.ArgumentParser(description='Plot options for melange changed over time')
 parser.add_argument('-f','--files', nargs='*', default=['couplingResults/MITgcmRun_'],
@@ -41,7 +43,7 @@ parser.add_argument('-sgd','--sgd', nargs='*', type=float, default = None,
                     help='SGD, any value loads SGD from input, needs results RY')
 parser.add_argument('--silent', action='count', default=0,
                     help='Option to silence showing of plots')
-parser.add_argument('-t','--timeRange', nargs=2, type=int, default = [94, 459],
+parser.add_argument('-t','--timeRange', nargs=2, type=int, default = [80, 80+365], #94, 459 
                     help='optional specification of start and endtime in DAYS [default = Full Range]')
 parser.add_argument('-w','--windowMean', nargs='?', type=int, default=10,
                     help='window width for time averaging melt rates [default = 10]')
@@ -66,22 +68,24 @@ showZero = False
 showQuiver = True
 
 # print(args)
-figLabels = ["(a)","(b)","(c)","(e)","(d)","(f)"] 
+figLabels = ["(a)","(b)","(c)","(d)","(e)","(f)"] 
 # These are out of order as I shuffled them after making the script. Sorry it is terrible
-plt.figure(figsize=(16, 7),layout="tight")
+plt.figure(figsize=(12, 10),layout="tight")
 # plt.figure(figsize=(16, 6))
-ax5 = plt.subplot(2,4,(1,2))
-ax6 = plt.subplot(2,4,(3,4))
-ax1 = plt.subplot(2,4,5)
-ax2 = plt.subplot(2,4,7) # I am so sorry. 
-ax3 = plt.subplot(2,4,6) # It is really horrible. 
-ax4 = plt.subplot(2,4,8)
-axes = [ax5, ax6, ax1, ax2, ax3, ax4]
-
+ax5 = plt.subplot(3,2,(1,2))
+ax6 = None #plt.subplot(2,4,(3,4))
+ax1 = plt.subplot(3,2,3)
+ax2 = plt.subplot(3,2,4) # I am so sorry. 
+ax3 = plt.subplot(3,2,5) # It is really horrible. 
+ax4 = plt.subplot(3,2,6)
+if(ax6 != None):
+    axes = [ax5, ax6, ax1, ax2, ax3, ax4]
+else:
+    axes = [ax5, ax1, ax2, ax3, ax4]
 lStyle = ['-',':','--','-.',(0, (3, 2, 1, 2, 1, 2)),(0, (2, 3, 1, 2, 1, 2, 1, 2,))]
 meltColors = ['xkcd:tomato red','xkcd:rose','xkcd:wine','xkcd:grape purple','xkcd:grape','xkcd:violet']
-
-
+lWidth = 2
+DOY_to_plot = 155
 #colors matching phase
 colorMapForLine = colormaps['cmo.phase']
 n_colors = 5
@@ -235,12 +239,23 @@ for i in range(len(years)):
     tempColor = 'xkcd:magenta'
     
     # ax1.plot(timeTime + years[i]*365,f((timeTime  + args.timeRange[0] + years[i]*365) % (cycle/86400)),color='xkcd:azure',linestyle=lStyle[i],alpha=.5)
-    ax1.plot(timeTime,f((timeTime  + args.timeRange[0] + years[i]*365) % (cycle/86400)),color='xkcd:azure',linestyle=lStyle[i],alpha=.5)
+    ax1.plot(timeTime,f((timeTime  + args.timeRange[0] + years[i]*365) % (cycle/86400)),
+                color='xkcd:azure',
+                linestyle=lStyle[i],
+                alpha=.5,
+                label=f'Year {years[i]}',
+                linewidth=lWidth)
     ax1.set_ylabel('SGD [$\\mathrm{m^3/s}$]',color='xkcd:azure')
     ax1.tick_params(axis='y',labelcolor='xkcd:azure')
     ax1.set_xlabel(timeLabel)
     ax1.grid(alpha=.5)
-    ax1.set_xticks([0,73,73*2,73*3,73*4,73*5])
+    ax1.set_xticks([0,60,121,182,244,305,365])
+    ax1.set_xticklabels(['Jan','Mar','May','Jul','Sep','Nov','Jan'])
+    if(i == 1):
+        prev_ylim = ax1.get_ylim()
+        ax1.plot([DOY_to_plot,DOY_to_plot],prev_ylim,'--',color='black',alpha=.2,label = f'Day {DOY_to_plot}')
+        ax1.set_ylim(prev_ylim)
+
     if(False): #plot temp or not
         if(i == 0):
             ax1_2 = ax1.twinx()
@@ -253,6 +268,7 @@ for i in range(len(years)):
     if(args.labels != None):
         ax1.legend(loc=args.legLoc)
     xString =''
+    ax1.legend()
 
     drivingVariable = timeTime
     drivingLabel = timeLabel
@@ -263,25 +279,27 @@ for i in range(len(years)):
     roughHT = H0Time
     lengthTime = np.convolve(np.concatenate((lengthTime[0]*np.ones(padL),lengthTime,lengthTime[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
     H0Time = np.convolve(np.concatenate((H0Time[0]*np.ones(padL),H0Time,H0Time[-1]*np.ones(padR))), np.ones(N)/N, mode='valid')
-    ax2.plot(timeTime,forceTime/365.25,color=meltColors[0],linestyle=lStyle[i])
-    ax2.plot(timeTime,forceTimeRough/365.25,color=meltColors[0],linestyle='-',alpha=.25)
-    ax2.set_ylabel('Melt rate, $\\dot b$ [m/d]',color=meltColors[0])
+    ax2.plot(timeTime,forceTime/365.25,color=meltColors[0],linestyle=lStyle[i],linewidth=lWidth)
+    # ax2.plot(timeTime,forceTimeRough/365.25,color=meltColors[0],linestyle='-',alpha=.25)
+    ax2.set_ylabel('Melt rate, $\\bar b$ [m/d]',color=meltColors[0])
     ax2.tick_params(axis='y',labelcolor=meltColors[0])
     print(f'Year {years[i]} avg melt rate is {np.mean(forceTimeRough)/365.25} [m/d]')
 
     ax2.grid(alpha=.5)
-    ax2.set_xticks([0,73,73*2,73*3,73*4,73*5])
+    # ax2.set_xticks([0,73,73*2,73*3,73*4,73*5])
+    ax2.set_xticks([0,60,121,182,244,305,365])
+    ax2.set_xticklabels(['Jan','Mar','May','Jul','Sep','Nov','Jan'])
     # sca=ax2.scatter(BTime,lengthTime,s=None,c=timeTime,cmap='cividis')
     # cbar=plt.colorbar(sca)
     # cbar.set_label('Iteration')
     if(i == (len(years)-1)): #gate patch addition
         init_xlim = ax2.get_xlim()
         init_ylim = ax2.get_ylim()
-        p1 = patches.Rectangle([0   ,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[0],alpha=.1,edgecolor=None,zorder=-1)
-        p2 = patches.Rectangle([73  ,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[1],alpha=.1,edgecolor=None,zorder=-1)
-        p3 = patches.Rectangle([73*2,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[2],alpha=.1,edgecolor=None,zorder=-1)
-        p4 = patches.Rectangle([73*3,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[3],alpha=.1,edgecolor=None,zorder=-1)
-        p5 = patches.Rectangle([73*4,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[4],alpha=.1,edgecolor=None,zorder=-1)
+        p1 = patches.Rectangle([0   ,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[0],alpha=.2,edgecolor=None,zorder=-1)
+        p2 = patches.Rectangle([73  ,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[1],alpha=.2,edgecolor=None,zorder=-1)
+        p3 = patches.Rectangle([73*2,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[2],alpha=.2,edgecolor=None,zorder=-1)
+        p4 = patches.Rectangle([73*3,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[3],alpha=.2,edgecolor=None,zorder=-1)
+        p5 = patches.Rectangle([73*4,init_ylim[0]],73,init_ylim[1]-init_ylim[0],facecolor=colorList[4],alpha=.2,edgecolor=None,zorder=-1)
         ax2.add_patch(p1)
         ax2.add_patch(p2)
         ax2.add_patch(p3)
@@ -291,11 +309,13 @@ for i in range(len(years)):
     if(True): #gate for 2nd plot
         if(i == 0):
             ax2_2 = ax2.twinx()
-        ax2_2.plot(drivingVariable,roughLT,color='xkcd:blueberry',alpha=0.25)
-        ax2_2.plot(drivingVariable,lengthTime,color='xkcd:blueberry',linestyle=lStyle[i])
+        # ax2_2.plot(drivingVariable,roughLT,color='xkcd:blueberry',alpha=0.25,linewidth=lWidth)
+        ax2_2.plot(drivingVariable,lengthTime,color='xkcd:blueberry',linestyle=lStyle[i],linewidth=lWidth)
         ax2_2.set_ylabel('Mélange length, $L$    [m]',color='xkcd:blueberry')
         ax2_2.tick_params(axis='y',labelcolor='xkcd:blueberry')
     ax2.set_xlabel(drivingLabel)
+    if(i == 0):
+        ax2.plot([DOY_to_plot,DOY_to_plot],[0,1.6],'--',color='black',alpha=.2)
     ax2.set_ylim([0,1.6])
     # ax2.set_title('Size')
 
@@ -305,21 +325,25 @@ for i in range(len(years)):
         ax3.plot([],[],color='xkcd:red',linestyle='-',label='$Q_{melt}$')  
         ax3.plot([],[],color='xkcd:sky blue',linestyle='-',label='$Q_{net}$',alpha=.5)
         # ax3.plot([],[],color='xkcd:indigo',linestyle='-',label='Volume')
-    ax3.plot(timeTime,inFluxTime,color='xkcd:sand',linestyle=lStyle[i])   
-    ax3.plot(timeTime,endFluxTime,color='xkcd:apple',linestyle=lStyle[i],alpha = .25)  
-    ax3.plot(timeTime,bFluxTime,color='xkcd:red',linestyle=lStyle[i],alpha = .25)   
-    ax3.plot(timeTime,endFluxSmooth,color='xkcd:apple',linestyle=lStyle[i])  
-    ax3.plot(timeTime,bFluxSmooth,color='xkcd:red',linestyle=lStyle[i])
-    ax3.plot(timeTime,inFluxTime-endFluxSmooth-bFluxSmooth,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.75)
-    ax3.plot(timeTime,inFluxTime-endFluxTime-bFluxTime,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.25)
-    ax3.plot([timeTime[0],timeTime[-1]],[0,0],color = 'gray',alpha=.5,linestyle='--')    
+    ax3.plot(timeTime,inFluxTime,color='xkcd:sand',linestyle=lStyle[i],linewidth=lWidth)   
+    # ax3.plot(timeTime,endFluxTime,color='xkcd:apple',linestyle=lStyle[i],alpha = .25)  
+    # ax3.plot(timeTime,bFluxTime,color='xkcd:red',linestyle=lStyle[i],alpha = .25)   
+    ax3.plot(timeTime,endFluxSmooth,color='xkcd:apple',linestyle=lStyle[i],linewidth=lWidth)  
+    ax3.plot(timeTime,bFluxSmooth,color='xkcd:red',linestyle=lStyle[i],linewidth=lWidth)
+    ax3.plot(timeTime,inFluxTime-endFluxSmooth-bFluxSmooth,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.75,linewidth=lWidth)
+    # ax3.plot(timeTime,inFluxTime-endFluxTime-bFluxTime,color='xkcd:sky blue',linestyle=lStyle[i],alpha=.25,linewidth=lWidth)
+    # ax3.plot([timeTime[0],timeTime[-1]],[0,0],color = 'gray',alpha=.5,linestyle='--')    
     ax3.set_ylabel('Volume flux [$\\mathrm{m^2/y}$]')
     ax3.set_xlabel(timeLabel)
+    if(i == 0):
+        ax3.plot([DOY_to_plot,DOY_to_plot],[-6.2e6, 7.9e6],'--',color='black',alpha=.2)
+    ax3.set_ylim([-6.2e6, 7.9e6])
     ax3.grid(alpha=.5)
     # ax3.set_title('')
     # ax3.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15),ncol=4)
-    ax3.legend(fontsize='small',ncols = 3,framealpha=.2)
-    ax3.set_xticks([0,73,73*2,73*3,73*4,73*5])
+    ax3.legend(fontsize='medium',ncols = 4,framealpha=.2,loc=9)
+    ax3.set_xticks([0,60,121,182,244,305,365])
+    ax3.set_xticklabels(['Jan','Mar','May','Jul','Sep','Nov','Jan'])
 
 
     ## Melt shapes
@@ -329,11 +353,11 @@ for i in range(len(years)):
         ax4.plot([],[],color=colorList[2],linestyle=lStyle[0],label='Summer')  
         ax4.plot([],[],color=colorList[3],linestyle=lStyle[0],label='Autumn')
         ax4.plot([],[],color=colorList[4],linestyle=lStyle[0],label='Early Winter')
-    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[  0: 73,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[0])
-    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[ 73:164,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[1])
-    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[164:219,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[2])
-    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[219:292,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[3])
-    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[292:365,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[4])
+    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[  0: 73,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[0],linewidth=lWidth)
+    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[ 73:164,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[1],linewidth=lWidth)
+    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[164:219,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[2],linewidth=lWidth)
+    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[219:292,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[3],linewidth=lWidth)
+    ax4.plot(np.linspace(0,1,20),np.mean(BShapeTime[292:365,:],axis=0),alpha = 1,linestyle=lStyle[i],color=colorList[4],linewidth=lWidth)
     ax4.grid(alpha=.5)
     ax4.legend(loc=9,fontsize='small')
     # if(i == 0):
@@ -344,20 +368,20 @@ for i in range(len(years)):
     # ax4_2.set_ylabel('fluidity $g^{\\prime}$ [$yr^{-1}$]   ',color='xkcd:lilac')
     # ax4_2.tick_params(axis='y',labelcolor='xkcd:lilac')
     # ax4.set_title('Avg Speed and Fluidity $g^{\\prime}$')
-    ax4.set_xlabel('Fraction along mélange [ ]')
-    ax4.set_ylabel('Melt rate, $\\dot b$ [m/d]')
+    ax4.set_xlabel('Fraction along mélange $\\xi$ [ ]')
+    ax4.set_ylabel('Melt rate, $b$ [m/d]')
     ax4.set_ylim([0,1.6])
     if(i == 0):    
         ## Do temp, U plotting first, only for first year
         ySlice = np.argmin(np.abs(y[:,0] - args.yCrossSection))
         print('cross section is y =', y[ySlice,0], 'index', ySlice)
 
-        shift = 146 # add this many to day 0 of viewed year
-        data = mds.rdmds("results/dynDiag", int((np.max([args.timeRange[0],1])+shift)*86400.0/dt))
+        shift = DOY_to_plot # add this many to day 0 of viewed year
+        data = mds.rdmds("results/dynDiag", int((np.max([args.timeRange[0],1]) + shift + 365*years[i])*86400.0/dt))
         data[:,data[1,:,:,:] == 0] = np.nan #if salt = 0 its a wall, nan it out for averging later
 
         if(args.shadow > 0): #enable berg shadows here
-            dataBergs = mds.rdmds("results/BRGFlx",int((np.max([args.timeRange[0],1])+shift)*86400.0/dt))
+            dataBergs = mds.rdmds("results/BRGFlx",int((np.max([args.timeRange[0],1]) + shift + 365*years[i])*86400.0/dt))
             if(dataBergs.shape[0] < 6):
                 dataBergPlot = dataBergs[0,:,:,:].copy()
                 dataBergPlot[dataBergPlot != 0] = .2
@@ -407,7 +431,7 @@ for i in range(len(years)):
                         np.squeeze(1-dataBergPlot[:, ySlice, :])*100,
                         [5,20,40,60,80],
                         extend="max",
-                        alpha=.3,
+                        alpha=.35,
                         cmap='cmo.gray_r')
         if(showDensity):
             salt = np.squeeze(data[1,:,ySlice,:])
@@ -434,6 +458,8 @@ for i in range(len(years)):
             fig = ax5.get_figure()
             fig.add_axes(ax5_cb)
             fig.add_axes(ax5_cb2)
+        ax5.set_xticks([0,5e3,10e3,15e3,20e3,25e3,30e3])
+        ax5.set_xticklabels([0,5,10,15,20,25,30])
         ax5.yaxis.tick_right()
         ax5.yaxis.set_label_position("right")
         ax5.set_xlabel('Along fjord [km]')
@@ -445,52 +471,62 @@ for i in range(len(years)):
         cbar2.set_label('Ice fraction $\\varphi$ [%]')
         init_xlim = ax5.get_xlim()
         init_ylim = ax5.get_ylim()
-        pat = patches.Rectangle([-3,init_ylim[0]],3,init_ylim[1]-init_ylim[0],facecolor='xkcd:ice blue',alpha=.9,clip_on=False)
+        pat = patches.Rectangle([-3e3,init_ylim[0]],3e3,init_ylim[1]-init_ylim[0],facecolor='xkcd:ice blue',alpha=.9,clip_on=False)
         ax5.add_patch(pat)
-        ax5.text(-1.5,(init_ylim[1]+init_ylim[0])/2,'Glacier',clip_on = False,rotation='vertical',va='center',ha='center',size='large')
+        ax5.text(-1.5e3,(init_ylim[1]+init_ylim[0])/2,'Glacier',clip_on = False,rotation='vertical',va='center',ha='center',size='large')
     #melange model cross section
-    mapName = 'cmo.phase'
-    colorMapForMelange= colormaps[mapName]
-    n_colors = len(toIterate)
-    melange_Colors = colorMapForMelange(np.linspace(0,1,n_colors+1))
-    if(i == 0):
-        divider = make_axes_locatable(ax6)
-        ax6_cb = divider.append_axes("right", size="2%", pad="2%")
-        fig = ax6.get_figure()
-        fig.add_axes(ax6_cb)
+        mapName = 'cmo.phase'
+        colorMapForMelange= colormaps[mapName]
+        n_colors = len(toIterate)
+        melange_Colors = colorMapForMelange(np.linspace(0,1,n_colors+1))
+        
+        for j in [shift]:
+            p = ax5.plot(np.append(X_fullTime[j,:],X_fullTime[j,::-1]),np.append(-917/1020*H_fullTime[j,:],(1-917/1020)*H_fullTime[j,::-1]),
+                color='xkcd:black', # colorList[int(j/73)] or melange_Colors[j]
+                linewidth=2,
+                alpha=.6,
+                linestyle = '--',
+                label=f'Continuum Mélange Profile')
+        ax5.legend(loc=4)
 
-    ax6.plot([],[],color='gray',linestyle=lStyle[i],label=f'Year {years[i]}')  
-    #Thick lines
-    for j in toIterate[::73]:
-        p = ax6.plot(np.append(X_fullTime[j,:],X_fullTime[j,::-1]),np.append(-917/1020*H_fullTime[j,:],(1-917/1020)*H_fullTime[j,::-1]),
-            color=melange_Colors[j], # colorList[int(j/73)] or melange_Colors[j]
-            linewidth=2, linestyle = lStyle[i],
-            )
-    ## thin lines
-    # for j in toIterate[::28]:
-    #     p = ax6.plot(np.append(X_fullTime[j,:],X_fullTime[j,::-1]),np.append(-917/1020*H_fullTime[j,:],(1-917/1020)*H_fullTime[j,::-1]),
-    #         color=melange_Colors[j], # colorList[int(j/73)] or melange_Colors[j]
-    #         linewidth=1, linestyle = lStyle[i],alpha=.3
-    #         )
-    if(i == len(years)-1):
-        sc = ax6.scatter([],[],c=[],vmin=0,vmax=365,cmap=mapName,alpha=1)
-        # cbar = plt.colorbar(sc,cax=ax6_cb,ticks=[0,31,59,90,120,151,181,212,243,273,304,334,365])
-        # cbar.ax.set_yticklabels(['','Jan','Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
-        cbar = plt.colorbar(sc,cax=ax6_cb,ticks=[0,73,73*2,73*3,73*4,73*5])
-        # cbar.ax.set_yticklabels(['0\n(Jan 1)','73\n(Mar 14)', '146\n(May 26)', '219\n(Aug 7)', '292\n(Oct 19)', '365\n(Dec 31)'])
-        cbar.set_label('Day of Year')
-        ax6.legend(loc=4)
-    ax6.set_ylabel('Depth [m]')
-    ax6.set_xlabel('Length, $L$ [m]')
+    if(ax6 != None):
+        if(i == 0):
+            divider = make_axes_locatable(ax6)
+            ax6_cb = divider.append_axes("right", size="2%", pad="2%")
+            fig = ax6.get_figure()
+            fig.add_axes(ax6_cb)
+        ax6.plot([],[],color='gray',linestyle=lStyle[i],label=f'Year {years[i]}')  
+        #Thick lines
+        for j in toIterate[::73]:
+            p = ax6.plot(np.append(X_fullTime[j,:],X_fullTime[j,::-1]),np.append(-917/1020*H_fullTime[j,:],(1-917/1020)*H_fullTime[j,::-1]),
+                color=melange_Colors[j], # colorList[int(j/73)] or melange_Colors[j]
+                linewidth=2, linestyle = lStyle[i],
+                )
+        ## thin lines
+        # for j in toIterate[::28]:
+        #     p = ax6.plot(np.append(X_fullTime[j,:],X_fullTime[j,::-1]),np.append(-917/1020*H_fullTime[j,:],(1-917/1020)*H_fullTime[j,::-1]),
+        #         color=melange_Colors[j], # colorList[int(j/73)] or melange_Colors[j]
+        #         linewidth=1, linestyle = lStyle[i],alpha=.3
+        #         )
+        if(i == len(years)-1):
+            sc = ax6.scatter([],[],c=[],vmin=0,vmax=365,cmap=mapName,alpha=1)
+            # cbar = plt.colorbar(sc,cax=ax6_cb,ticks=[0,31,59,90,120,151,181,212,243,273,304,334,365])
+            # cbar.ax.set_yticklabels(['','Jan','Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+            cbar = plt.colorbar(sc,cax=ax6_cb,ticks=[0,73,73*2,73*3,73*4,73*5])
+            # cbar.ax.set_yticklabels(['0\n(Jan 1)','73\n(Mar 14)', '146\n(May 26)', '219\n(Aug 7)', '292\n(Oct 19)', '365\n(Dec 31)'])
+            cbar.set_label('Day of Year')
+            ax6.legend(loc=4)
+        ax6.set_ylabel('Depth [m]')
+        ax6.set_xlabel('Length, $L$ [m]')
 
 # plt.tight_layout()
 
 ## label and save
 for label,ax in zip(figLabels,axes):
-    ax
-    ax.text(
-        ax.get_xlim()[0], ax.get_ylim()[1], label,
-        fontsize='x-large', va='bottom',ha='right', fontfamily='sans serif')
+    if(ax != None):
+        ax.text(
+            ax.get_xlim()[0], ax.get_ylim()[1], label,
+            fontsize='x-large', va='bottom',ha='right', fontfamily='sans serif')
 
 dirStr = ''
 if(os.path.isdir('figs')):

@@ -31,6 +31,10 @@ do
     echo " $EXP exists locally, syncing from PACE"
   fi
   
+  if $doResults; then
+  echo ' results/'
+  rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/results/ $EXP/results
+  fi
   #Sometimes one login is slower, can flip between here
   echo ' output file (if there)'
   rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/output* $EXP/
@@ -40,10 +44,7 @@ do
   rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/input/ $EXP/input
   echo 'figs/'
   rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/figs/ $EXP/figs
-  if $doResults; then
-    echo ' results/'
-    rsync -azh --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/results/ $EXP/results
-  fi
+
   # rsync -ah --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/output* $EXP/
   # rsync -ah --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/input/ $EXP/input
   # rsync -ah --info=progress2 psummers8@login-phoenix-rh9.pace.gatech.edu:~/MITgcmSandbox/experiments/$EXP/results/ $EXP/results
