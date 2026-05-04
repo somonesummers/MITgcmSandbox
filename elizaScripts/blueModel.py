@@ -75,8 +75,8 @@ briefSummaryOfExp = """Coupling MITgcm and Melange1D
 Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
 
-Sierra starts with 500m3/s Oscar conditions
-Ramps SGD seasonally, with background increasing temp
+Uniform is a big pool model, 20km pool off shore
+init case is a constant 250 m3/s plume to get initial conditions
 Additional diags to probe cause of collapse
 Coupled with variable Uc and 4x enhanced melt
 Summer forcing
@@ -96,7 +96,7 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'sierra'
+run_config['run_name'] = 'Uniform_250'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
@@ -108,14 +108,15 @@ run_config['Ly_m'] = 5600 + (2 * wallWidthInd * run_config['horiz_res_m']) # dom
 
 grid_params['Nr'] = 32 # num of z-grid points
 
-run_config['make_icebergs'] = False # Do we make bergs? No if running from spin-up
+run_config['make_icebergs'] = True # Do we make bergs? No if running from spin-up
 
 setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s" %(run_config['run_name'],makeDirs,writeFiles))
 input("Confirm above is accurate before continuing...")
 
 # Variables to adjust ======================
 assign_deltaT = 0 # [C]
-assign_plumeSGD = 1500 #[m^3/s]
+assign_plumeSGD = 250 #[m^3/s]
+base_SGD = 0 #[m^3/s]
 season_sw = 's'
 
 # Offshore current =========================
@@ -759,15 +760,15 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 ## Total runoff (m^3/s)
 ## Seasonal Peak
-rampedPeak = assign_plumeSGD + 1000 * np.arange(nt)/float(nt)
-runoff = -2*(rampedPeak)* np.sin(2*np.pi * np.arange(nt)/(nt/10)) - rampedPeak
-runoff[runoff <  25 ] = 25
+#rampedPeak = assign_plumeSGD + ramp_SGD * np.arange(nt)/float(nt)
+#runoff = -2*(rampedPeak)* np.sin(2*np.pi * np.arange(nt)/(nt/10)) - rampedPeak
+#runoff[runoff <  25 ] = 25
 ## linear ramp
 # runoff = 500 + assign_plumeSGD * np.arange(nt)/float(nt)
-runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
+# runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
 # runoff = runoff[::-1] #flipping around for building melange
 ## Constant
-# runoff = assign_plumeSGD * np.ones(nt)
+runoff = assign_plumeSGD * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
@@ -1317,7 +1318,7 @@ cluster_params['run_dir'] = os.path.join(cluster_params['exps_dir'], run_config[
 cluster_params['cpus_per_node'] = 10 
 
 #extra run commands for the sbatch script
-extraList = ["# ~/.conda/envs/MITgcm/bin/python RunModelMpi.py"]
+extraList = ["# ~/.conda/envs/MITgcm/bin/python -u RunModelMpi.py"]
 
 run_config['extraCommands'] = "".join(extraList)
      
