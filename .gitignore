@@ -17,6 +17,8 @@ _$*
 *.elc
 *.ln
 *.png
+elizaScripts/iceOnly
+*.npy
 core
 # CVS default ignores end
 *.pyc
