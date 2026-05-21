@@ -64,6 +64,8 @@ glmeWarningCount = 0
 mitgcmWarningFlag = 1 #if it fails first run, should error
 mitgcmWarningCount = 0
 
+#mpirun flags, these help reduce minor errors
+mpi_flags = '--quiet --mca btl_vader_single_copy_mechanism none'
 # This used to reset the directory to initial conditions, currently out of date, doesnt work for spun up starts
 if(resetStart):
     sysPrint("No longer supported")
@@ -85,7 +87,7 @@ elif(freshStart): #This distinguises between a new coupled run, or continuing a 
     os.system("rm *")
     os.system("cp ../build/mitgcmuv .")
     os.system("ln -s ../input/* .")
-    os.system("mpirun -v -n 30 ./mitgcmuv")
+    os.system(f"mpirun {mpi_flags} -n 30 ./mitgcmuv")
     os.chdir("../")
     # Clean tile level files
     dt = 0.0
@@ -96,7 +98,7 @@ elif(freshStart): #This distinguises between a new coupled run, or continuing a 
             if "nIter0" in line:
                 oldStartIter = int(line[8:-2])
 
-    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag','presDiag','momDiag','heatDiag']
+    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']#,'presDiag','momDiag','heatDiag']
     # prefixes = ['presDiag','momDiag','heatDiag']
     endIter = int((24*3600)/dt)
     # sysPrint('\tcondensing diagnostic tile files to global files iter:%i' %endIter)
@@ -328,7 +330,7 @@ for ii in range(iterationsToRun):
     os.system("~/.conda/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
 
     os.chdir("results")
-    os.system('mpirun -v -n 30 ./mitgcmuv') # srun has no outputs, all in STDOUT/STDERR.*.*
+    os.system(f'mpirun {mpi_flags} -n 30 ./mitgcmuv') # srun has no outputs, all in STDOUT/STDERR.*.*
     os.chdir("../")
     
     # Create global files to reduce file counts
@@ -336,7 +338,7 @@ for ii in range(iterationsToRun):
     # per timestep, which quickly become insane for long runs. This step collects all those tile files into
     # 2 global files (*.data, *.meta), then deletes the tiles files. This reduces files count by a factor of 20
     # This VASTLY improves data transfer and compression speeds. 
-    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag','presDiag','momDiag','heatDiag']
+    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']#,'presDiag','momDiag','heatDiag']
 
     endIter = int((newStartTime + 24*3600)/dt)
     sysPrint('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)
