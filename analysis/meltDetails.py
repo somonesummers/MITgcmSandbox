@@ -224,7 +224,17 @@ for j in range(len(folders)):
     for i in range(len(timeSteps)):
         data = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), timeSteps[i])
         dataOcean = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'dynDiag'), timeSteps[i])
-        dataPress = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'presDiag'), timeSteps[i])
+        load_pressure = False
+        try:
+            dataPress = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'presDiag'), timeSteps[i])
+            meanP = np.nanmean(dataPress[0,:,int(ny/2),2:-2],axis=(1)) #find anomoly relative to centerline average
+            # print(meanP)
+            dataPress[0,:,:,:] = dataPress[0,:,:,:] - meanP[:,None,None] #get anomoly before NANing
+            dataPress[:, melangeMask == 0] = np.nan
+            load_pressure = True
+        except:
+            pass #fine for now, will fail for later plots
+        spd = dataOcean[2,:,:,:]
         fwOverTime[i] = np.nansum(data[0,:,:,:])
         melangeMask = data[0,:,:,:].copy()
         melangeMask[melangeMask != 0] = 1
@@ -233,11 +243,7 @@ for j in range(len(folders)):
         melangeMask[:,:,1] = 0 #exclude glacier face and plume
         data[:, melangeMask == 0] = np.nan #nan all zero melt cells
         dataOcean[:, melangeMask == 0] = np.nan #nan all zero melt cells# spd = ((dataOcean[2,:,:,:]**2 + dataOcean[3,:,:,:]**2 + dataOcean[4,:,:,:]**2)**(.5))
-        meanP = np.nanmean(dataPress[0,:,int(ny/2),2:-2],axis=(1)) #find anomoly relative to centerline average
-        # print(meanP)
-        dataPress[0,:,:,:] = dataPress[0,:,:,:] - meanP[:,None,None] #get anomoly before NANing
-        dataPress[:, melangeMask == 0] = np.nan
-        spd = dataOcean[2,:,:,:]
+
         if(sgd):
             sgdFactor = f(i*dt)/1000
         else:
@@ -249,7 +255,8 @@ for j in range(len(folders)):
         sDepth[:,i] = np.nanmean(dataOcean[1,:,:,xSlice:],axis=(1,2))
         uDepth[:,i] = np.nanmean(spd[:,:,xSlice:],axis=(1,2))/sgdFactor
         wDepth[:,i] = np.nanmean(dataOcean[3,:,:,xSlice:],axis=(1,2))/sgdFactor
-        pDepth[:,i] = np.nanmean(dataPress[0,:,:,xSlice:],axis=(1,2))/sgdFactor
+        if(load_pressure):
+            pDepth[:,i] = np.nanmean(dataPress[0,:,:,xSlice:],axis=(1,2))/sgdFactor
         hfDepth[:,i] = np.nanmean(data[5,:,:,xSlice:],axis=(1,2))
         #length values
         
@@ -259,7 +266,8 @@ for j in range(len(folders)):
         sLength[:,i] = np.nanmean(dataOcean[1,:zSlice,:,:],axis=(0,1))
         uLength[:,i] = np.nanmean(spd[:zSlice,:,:],axis=(0,1))/sgdFactor
         wLength[:,i] = np.nanmean(dataOcean[3,:zSlice,:,:],axis=(0,1))/sgdFactor
-        pLength[:,i] = np.nanmean(dataPress[0,:zSlice,:,:],axis=(0,1))/sgdFactor
+        if(load_pressure):
+            pLength[:,i] = np.nanmean(dataPress[0,:zSlice,:,:],axis=(0,1))/sgdFactor
         hfLength[:,i] = np.nanmean(data[5,:zSlice,:,:],axis=(0,1))
         #percentile values
         MROverTime[i] = np.nanmean(data[2,:,:,:]) #melt ratem m/day
