@@ -122,7 +122,7 @@ elif(freshStart): #This distinguises between a new coupled run, or continuing a 
             if "nIter0" in line:
                 oldStartIter = int(line[8:-2])
 
-    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag','presDiag','momDiag','heatDiag']
+    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']#,'presDiag','momDiag','heatDiag']
     # prefixes = ['presDiag','momDiag','heatDiag']
     endIter = int((24*3600)/dt)
     # sysPrint('\tcondensing diagnostic tile files to global files iter:%i' %endIter)
@@ -362,7 +362,7 @@ for ii in range(iterationsToRun):
     # per timestep, which quickly become insane for long runs. This step collects all those tile files into
     # 2 global files (*.data, *.meta), then deletes the tiles files. This reduces files count by a factor of 20
     # This VASTLY improves data transfer and compression speeds. 
-    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag','presDiag','momDiag','heatDiag']
+    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']#,'presDiag','momDiag','heatDiag']
 
     endIter = int((newStartTime + 24*3600)/dt)
     sysPrint('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)

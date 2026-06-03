@@ -89,7 +89,7 @@ if((maxStep-startStep)/sizeStep > args.numFrames):   #if more than numFrames, do
     print('Reducing time resolution by', dwnScale)
     sizeStep = sizeStep * dwnScale
 
-print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
+print(f'startStep,sizeStep,maxStep: {startStep},{sizeStep},{maxStep}; [Days {startStep*dt/86400},{sizeStep*dt/86400},{maxStep*dt/86400}]')
 
 #Decide if iceBerg data files exist
 if(os.path.isfile(f'results/BRGFlx.{int(startStep):010d}.data') or 

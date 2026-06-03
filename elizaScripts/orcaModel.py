@@ -34,6 +34,11 @@ elif "psummers8" in current_directory:
 else:
     raise ExceptionType("unknown OSX or running location, please configure")
 
+sys.path.append('/cluster/home/psumme03/glaciome1d')
+from glaciome1D import constants, glaciome
+import glob
+import pickle
+
 sys.path.append(f'{baseDir}/elizaScripts/main_scripts')
 import run_config_funcs as rcf # type: ignore # import helpter functions
 
@@ -68,22 +73,22 @@ def setUpPrint(msg):
         setupNotes.write(str(msg) + "\n")
 
 # ## Main run configuration
-email = 'psummers8@gatech.edu'
+email = 'psumme03@tufts.edu'
 # set high level run configurations
 
-briefSummaryOfExp = """Coupling MITgcm and Melange1D
+briefSummaryOfExp = """MITgcm only, no coupling
 Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
 
-No icebergs for control run
-big pool model, 20km pool off shore
-ramping summer peak from 500 to 1500
-Coupled with variable Uc and 4x enhanced melt
-Summer forcing
+Jumbo aims to investigate how ocean melts mélange
+Considering melange shape and SGD for now
 
-Copy MITgcmPickup/iceberg/GLACIOME files from UniformInit is automatic
-move MITgcmRun_00000.pickle to proper place done automatically
-"""
+need to still: 
+Copy MITgcmPickup/iceberg/GLACIOME files from origin of choice
+move MITgcmRun_00000.pickle to proper place
+reset input/data
+input/data.ptracers ptracerInt0=1 for reseting tracers"""
+
 
 setUpPrint('====== Welcome to the mélange building script =====')
 
@@ -93,32 +98,31 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Uniform_noBergs'
-run_config['ndays'] = 1 # simulation time (days)
+run_config['run_name'] = 'jumbo_expL_sgd0'
+run_config['ndays'] = 200 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-wallWidthInd = 14 #width of walls in units of dy
+wallWidthInd = 5 #width of walls in units of dy
 run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
-run_config['Lx_m'] = 120000 # domain size in x (m)
+run_config['Lx_m'] = 102000 # domain size in x (m)
 run_config['Ly_m'] = 5600 + (2 * wallWidthInd * run_config['horiz_res_m']) # domain size in y (m) with walls (1 wall each side)
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 grid_params['Nr'] = 32 # num of z-grid points
 
-run_config['make_icebergs'] = False # Do we make bergs? No if running from spin-up
+run_config['make_icebergs'] = True # Do we make bergs? No if running from spin-up
 
 setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s" %(run_config['run_name'],makeDirs,writeFiles))
 input("Confirm above is accurate before continuing...")
 
 # Variables to adjust ======================
 assign_deltaT = 0 # [C]
-assign_plumeSGD = 1000 #[m^3/s]
-base_SGD = 500 #[m^3/s]
+assign_plumeSGD = 0 #[m^3/s]
 season_sw = 's'
 
 # Offshore current =========================
 oscStrength = 0.03 #[m/s] peak strength of offshore current
-lengthOffShoreLength = 20000 #width of offshore region [m]
+lengthOffShoreLength = 10e3 #width of offshore region [m]
 indexOSC = int(lengthOffShoreLength/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
@@ -127,8 +131,8 @@ iceExtent = 25000 # [meters] of extent of ice
 iceCoverage = 60 # % of ice cover in melange, stay under 90% ideally
 doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
-# Set median drafts to align with output from melange1D
-forceDraft = False
+# Set median drafts to align with output from melange1D (reads forceDraft.pickle, lives in this folder)
+forceDraft = True
 #========================================================================================
 # The rest of this should take care of it self mostly
 
@@ -356,7 +360,7 @@ params03['abEps'] = 0.1
 #if run_config['testing']:
     
 params03['chkptFreq'] = 0.0
-params03['pChkptFreq'] = 86400.0
+params03['pChkptFreq'] = 4320000.0 #50 days
 params03['taveFreq'] = 0.0
 params03['dumpFreq'] = 0.0
 params03['taveFreq'] = 0.0
@@ -364,10 +368,10 @@ params03['monitorFreq'] = 21600.0 # 6 hours
 params03['monitorSelect'] = 1
 
 # Force with yearly cycle
-nt = 480
-daysOfCycle = 365*10 #years
+nt = 120
+daysOfCycle = 365*5 #years
 # ForcingValue = np.sin(2*np.pi * np.arange(nt)/nt) # This sets temp variations at BCs
-ForcingValue = assign_deltaT * np.arange(nt)/nt # This sets temp variations at BCs, linear ramp
+ForcingValue = assign_deltaT * np.ones(nt) # This sets temp variations at BCs
 
 params03['periodicExternalForcing'] = True
 params03['ExternForcingPeriod'] = daysOfCycle*86400/nt
@@ -431,8 +435,8 @@ if run_config['test']:
     run_config['tavg_freq'] = 1 # multiples of timestep
     
 else:
-    run_config['inst_freq'] = 24 # multiples of hours (must be at least every day for coupling to get iceberg melt rates)
-    run_config['tavg_freq'] = 24 # multiples of hours 
+    run_config['inst_freq'] = 48 # multiples of hours
+    run_config['tavg_freq'] = 48 # multiples of hours 
 
 #---------specify time averaged fields------#
 # NOTE: many more options available see mitgcm docs
@@ -440,12 +444,12 @@ diag_fields_avg = [['THETA','SALT','UVEL','WVEL','VVEL'],
                     ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY','BRGhFacC'],
                     ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntR'],
                     ['TRAC01','TRAC02'],
-                   # ['Um_Diss','Um_Advec','Um_Cori','Um_dPhiX','Wm_Diss','Wm_Advec'],
-                   # ['ADVx_TH','ADVy_TH','ADVr_TH','UTHMASS','VTHMASS','WTHMASS'],
-                   # ['PHIHYD','PHI_NH'],
+                    ['Um_Diss','Um_Advec','Um_Cori','Um_dPhiX','Wm_Diss','Wm_Advec'],
+                    ['ADVx_TH','ADVy_TH','ADVr_TH','UTHMASS','VTHMASS','WTHMASS'],
+                    ['PHIHYD','PHI_NH'],
                     ]
 diag_fields_max = 0
-diag_fields_avg_name = ['dynDiag','BRGFlx','plumeDiag','ptraceDiag']#,'momDiag','heatDiag','presDiag']
+diag_fields_avg_name = ['dynDiag','BRGFlx','plumeDiag','ptraceDiag','momDiag','heatDiag','presDiag']
 
 numdiags_avg = len(diag_fields_avg)
 numdiags_avg_total = 0
@@ -757,15 +761,14 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 ## Total runoff (m^3/s)
 ## Seasonal Peak
-rampedPeak = base_SGD + assign_plumeSGD * np.arange(nt)/float(nt)
-runoff = -2*(rampedPeak)* np.sin(2*np.pi * np.arange(nt)/(nt/10)) - rampedPeak
-runoff[runoff <  25 ] = 25
+# runoff = -2*assign_plumeSGD * np.sin(2*np.pi * np.arange(nt)/nt) - assign_plumeSGD
+# runoff[runoff <  25 ] = 25
 ## linear ramp
 # runoff = 500 + assign_plumeSGD * np.arange(nt)/float(nt)
 # runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
 # runoff = runoff[::-1] #flipping around for building melange
 ## Constant
-# runoff = assign_plumeSGD * np.ones(nt)
+runoff = assign_plumeSGD * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
@@ -826,16 +829,16 @@ plt.close()
 plt.figure()
 time = np.arange(nt)*params03['ExternForcingPeriod']/86400
 if(plumeMask[plume_loc,icefront] == 3):
-    plt.plot(time,runoffRad[:,plume_loc,icefront]**2 * np.pi * wsg,'SGD',linewidth=1, linestyle='-',marker='.')
+    plt.plot(time,runoffRad[:,plume_loc,icefront]**2 * np.pi * wsg,'SGD',linewidth=3, linestyle='--')
 elif(plumeMask[plume_loc,icefront] == 2):
-    plt.plot(time,runoffRad[:,plume_loc,icefront] * run_config['horiz_res_m'] * wsg,label='SGD',linewidth=1, linestyle='-',marker='.')
+    plt.plot(time,runoffRad[:,plume_loc,icefront] * run_config['horiz_res_m'] * wsg,label='SGD',linewidth=3, linestyle='--')
 ax1=plt.gca()
-ax2=ax1.twinx()
-ax2.plot(time,sampleTForcing,label='T mid-depth',color='r')
+# ax2=ax1.twinx()
+# ax2.plot(time,sampleTForcing,label='T mid-depth',color='r')
 sampleTForcing
 ax1.set_xlabel('Time [days]')
 ax1.set_ylabel('SGD [$m^3/s$]')
-ax2.set_ylabel('Temp [C]')
+# ax2.set_ylabel('Temp [C]')
 ax1.legend()
 # ax2.legend()
 if(writeFiles):
@@ -843,12 +846,6 @@ if(writeFiles):
 plt.show()
 plt.close()
 
-plt.plot(((time-80)%365),runoffRad[:,plume_loc,icefront] * run_config['horiz_res_m'] * wsg,label='SGD',linewidth=1, linestyle='-',marker='.')
-ax1=plt.gca()
-ax1.set_xlabel('DOY [day]')
-ax1.set_ylabel('SGD [$m^3/s$]')
-plt.show()
-plt.close()
 ## Boundary conditions
 
 # pre-allocate
@@ -1115,17 +1112,23 @@ if(run_config['make_icebergs']):
         icebergs_length2D[:,j,i] = icebergs_length[k,:]
 
     if(forceDraft):
-        mX=np.load(run_config['run_dir']+'/input/melangeX.npy')
-        mH=np.load(run_config['run_dir']+'/input/melangeH.npy')
-        x_fd = np.arange(deltaX/2,deltaX*(nx+.5),deltaX)
+        files = sorted(glob.glob('forceDraft.pickle'))
+    # print(files)
+        with open(files[-1], 'rb') as file:
+            data = pickle.load(file)
+            file.close()
+        mX = np.concatenate(([data.X[0]], data.X_, [data.X[-1]]))
+        mH = np.concatenate(([data.H0], data.H, [data.HL]))
+        #x_fd = np.arange(deltaX/2,deltaX*(nx+.5),deltaX)
         depthHelper = icebergs_depths2D.copy()
         depthHelper[depthHelper == 0] = np.nan
-        depthMedian = np.nanmedian(depthHelper,axis=[0,1])
+        depthMedian = np.nanmean(depthHelper,axis=(0,1)) #this is horrible.
+        mDepthInterp = np.interp(x[0,:],mX,mH,0,0)
         del depthHelper
         for i in range(nx):
             for j in range(ny):
                 if(~np.isnan(depthMedian[i])):
-                    icebergs_depths2D[:,j,i] = icebergs_depths2D[:,j,i]/depthMedian[i]*np.interp(x,mX,mH,0,0)[i]
+                    icebergs_depths2D[:,j,i] = icebergs_depths2D[:,j,i]/depthMedian[i]*mDepthInterp[i]
                     # pass
 
         for i in range(nx):
@@ -1242,7 +1245,7 @@ if(run_config['make_icebergs']):
     cbar = plt.colorbar(pc)
     depthHelper = icebergs_depths2D.copy()
     depthHelper[depthHelper == 0] = np.nan
-    plt.plot(x[0,:],np.nanmedian(-depthHelper,axis=[0,1]),color='xkcd:red')
+    plt.plot(x[0,:],np.nanmean(-depthHelper,axis=(0,1)),color='xkcd:red')
     plt.suptitle('$\\varphi$')
     plt.ylabel('Depth [m]')
     plt.xlabel('Along fjord [m]')
@@ -1315,7 +1318,7 @@ cluster_params['run_dir'] = os.path.join(cluster_params['exps_dir'], run_config[
 cluster_params['cpus_per_node'] = 10 
 
 #extra run commands for the sbatch script
-extraList = ["# ~/.conda/envs/MITgcm/bin/python -u RunModelMpi.py"]
+extraList = ["# ~/.conda/envs/MITgcm/bin/python RunModelMpi.py"]
 
 run_config['extraCommands'] = "".join(extraList)
      
@@ -1337,16 +1340,13 @@ if(makeDirs):
     os.system("ln -s ~/MITgcmSandbox/experiments/advectBergs.py %s" %run_config['run_dir'])
     os.system("ln -s ~/MITgcmSandbox/experiments/RunModelMpi.py %s" %run_config['run_dir'])
     os.system("cp ../experiments/melangeModelExample.py %s/melangeModel.py" %run_config['run_dir'])
-    if(OSX == 'Tufts'):
-        os.system(f"cp -v ../uploadFiles/tufts_UniformInit/* {run_config['run_dir']}/input")
-        os.system(f"cp -v ../uploadFiles/tufts_UniformInit/MITgcmRun_00000.pickle {run_config['run_dir']}/couplingResults")
-        os.system("ln -s ~/MITgcmSandbox/experiments/RunModelMpiTufts.py %s" %run_config['run_dir'])
+
     if os.path.isfile(run_config['run_dir']+'/input/setupReport.txt'):   
         os.remove(run_config['run_dir']+'/input/setupReport.txt')
         setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')
     shutil.move('setupReport.txt', run_config['run_dir']+'/input')
     print(f"Copying {__file__} to {run_config['run_dir']}/input/buildScript.py")
-    shutil.copy(f'{__file__}',f"{run_config['run_dir']}/input/buildScript.py")
+    shutil.copy(f"{__file__}",f"{run_config['run_dir']}/input/buildScript.py")
     replaceAll(run_config['run_dir']+'/input/buildScript.py','makeDirs = True', 'makeDirs = False') 
     rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
     setupNotes.close()
