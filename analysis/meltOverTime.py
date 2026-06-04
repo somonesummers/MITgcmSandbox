@@ -26,7 +26,7 @@ parser.add_argument('-f','--folders', nargs='*', default=['.'],
                     help='folders with data we want to plot [default = .]')
 parser.add_argument('-l','--labels', nargs='*', default=['glaciome'],
                     help='file string label plots [default = glaciome]')
-parser.add_argument('-t','--time', nargs='?', default=None,
+parser.add_argument('-t','--time', nargs=1, default=None, type=int,
                     help='set max time step [default = None]')
 args = parser.parse_args()
 
@@ -44,7 +44,7 @@ resultFolder = '/results'
 glaciomeLocation = 'couplingResults/MITgcmRun_'
 fileEnding = ""
 
-manualMax = args.time
+manualMax = args.time[0]
 
 ## Umin melt thresholds 
 # thresholds = [0.03,0.05,0.04]
@@ -97,10 +97,10 @@ for j in range(len(folders)):
                 startStep = int(words[1])
             if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
                 sizeStep = abs(int(words[1]) - startStep)
-
-    print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
     if(manualMax != None):
-        maxStep = manualMax #if manual adjusting needed
+        maxStep = manualMax*86400/dt #if manual adjusting needed
+    print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
+
 
     dynName = ['BRGFlx']
     name = ['BRGfwFlx']
@@ -151,10 +151,10 @@ for i in range(len(folders)):
                 startStep = int(words[1])
             if abs(int(words[1]) - startStep) < sizeStep and abs(int(words[1]) - startStep) > 0:
                 sizeStep = abs(int(words[1]) - startStep)
-
-    print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
     if(manualMax != None):
-        maxStep = manualMax #if manual adjusting needed
+        maxStep = manualMax*86400/dt #if manual adjusting needed
+    print('startStep,sizeStep,maxStep:',startStep,sizeStep,maxStep)
+
     z = np.squeeze(mds.rdmds("%s%s/RC" %(folder,resultFolder))) #midpoints of cells
     dz = np.load("%s/input/dz.npy" %(folder)) # we now save this upon grid generation, much better
 
@@ -163,7 +163,8 @@ for i in range(len(folders)):
     units = ["[m^3/s]"]
 
     dataStart = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), startStep)
-    dataEnd = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), maxStep-sizeStep)
+    print(maxStep)
+    dataEnd = mds.rdmds("%s%s/%s"%(folder,resultFolder, dynName[0]), (maxStep-sizeStep)) #(maxStep-sizeStep)
     dataMeltOnly = dataEnd[0,:,:,:] # Only compute spd for melting grids
     data = mds.rdmds("%s%s/%s"%(folder,resultFolder, 'dynDiag'), maxStep)
     spd = (data[2,:,:,:]**2 + data[3,:,:,:]**2 + data[4,:,:,:]**2)**(0.5)
