@@ -347,7 +347,7 @@ def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email,
 
     ### Set variables for PBS
     cmd_list = ['#!/bin/bash \n', 
-                  cluster_params['sbatch_preamble'],
+                  "".join(cluster_params['sbatch_preamble']),
                   '#SBATCH -J %s # job name \n' %run_config['run_name'],
                   '#SBATCH -o output_%j.txt # output and error file name (%j expands to jobID)\n',
                   '#SBATCH -N%i --ntasks-per-node=%i   #total number of nodes,CPUs requested\n' %(nodes,np.ceil(ncpus/nodes)),
