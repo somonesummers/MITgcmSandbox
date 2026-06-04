@@ -19,6 +19,12 @@ from bisect import bisect_left
 from scipy.interpolate import make_interp_spline
 import sys
 
+def replaceAll(file,searchExp,replaceExp):
+    for line in fileinput.input(file, inplace=1):
+        if searchExp in line:
+            line = line.replace(searchExp,replaceExp)
+        sys.stdout.write(line)
+
 def find_closest_indices(sorted_A, sorted_B):
     closest_indices = []
     for a in sorted_A:
@@ -369,6 +375,7 @@ params03 = {}
 params03['dumpInitAndLast'] = False  #Reduce number of dumped files
 if(run_config['pickup_location'] == None):
     params03['nIter0'] = 0
+    replaceAll(f'{run_config['run_dir']}/input/data.ptracers','PTRACERS_Iter0=1', 'PTRACERS_Iter0=0')
 else:
     params03['nIter0'] = 1
 #params03['endTime'] = 864000.0
