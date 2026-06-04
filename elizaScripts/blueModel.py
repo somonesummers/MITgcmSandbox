@@ -22,18 +22,20 @@ import sys
 OSX = platform.system()
 current_directory = os.getcwd()
 baseDir = ''
-if OSX == 'Darwin':
-    import gsw
-    baseDir = '/Users/psummers8/Documents/MITgcm/MITgcm'
-elif "psumme03" in current_directory:
-    OSX = 'Tufts'
-    baseDir = '/cluster/home/psumme03/MITgcmSandbox'
-elif "psummers8" in current_directory:
-    OSX = 'PACE'
-    baseDir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox'
-else:
-    raise ExceptionType("unknown OSX or running location, please configure")
-
+# These boxed sections may require per-user customization
+#-------------------------------------------------------------------------------
+if OSX == 'Darwin':                                                            #
+    import gsw                                                                 #
+    baseDir = '/Users/psummers8/Documents/MITgcm/MITgcm'                       #
+elif "psumme03" in current_directory:                                          #
+    OSX = 'Tufts'                                                              #
+    baseDir = '/cluster/home/psumme03/MITgcmSandbox'                           #
+elif "psummers8" in current_directory:                                         #
+    OSX = 'PACE'                                                               #
+    baseDir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox'                 #
+else:                                                                          #
+    raise ExceptionType("unknown OSX or running location, please configure")   #
+#-------------------------------------------------------------------------------
 sys.path.append(f'{baseDir}/elizaScripts/main_scripts')
 import run_config_funcs as rcf # type: ignore # import helpter functions
 
@@ -129,6 +131,7 @@ doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
 doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
 # Set median drafts to align with output from melange1D
 forceDraft = False
+
 #========================================================================================
 # The rest of this should take care of it self mostly
 
@@ -1300,22 +1303,27 @@ if(makeDirs):
 # PACE (GaTech) 
 setUpPrint('====== sbatch script and settings =====')
 
-cluster_params = {}
-cluster_params['cluster_name'] = 'PACE'
-cluster_params['opt_file'] = 'darwin_amd64_gfortran' #<-- may need to update this at some point
-cluster_params['mvapich2_ver'] = '2.3.7' #'4.0.3' 4.1.2'
-cluster_params['mvapich2_inc_dir'] = '/usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-12.3.0/mvapich2-2.3.7-1-qv3gjagtbx5e3rlbdy6iy2sfczryftyt/' 
-cluster_params['netcdf_dir'] = ''
-cluster_params['use_mpi'] = True
+# cluster_params = {}
+# cluster_params['cluster_name'] = 'PACE'
+# cluster_params['opt_file'] = 'darwin_amd64_gfortran' #<-- may need to update this at some point
+# cluster_params['mvapich2_ver'] = '2.3.7' #'4.0.3' 4.1.2'
+# cluster_params['mvapich2_inc_dir'] = '/usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-12.3.0/mvapich2-2.3.7-1-qv3gjagtbx5e3rlbdy6iy2sfczryftyt/' 
+# cluster_params['netcdf_dir'] = ''
+# cluster_params['use_mpi'] = True
 
 cluster_params['email'] = email
-
 cluster_params['exps_dir'] = run_config['run_dir']
 cluster_params['run_dir'] = os.path.join(cluster_params['exps_dir'], run_config['run_name'])
-cluster_params['cpus_per_node'] = 10 
+if(OSX == 'Tufts'):
+    cluster_params['sbatch_preamble'] = ['#SBATCH -p mpi,batch\n']
+    cluster_params['load_list'] = ['module load openmpi/4.1.4\n']
+    cluster_params['cpus_per_node'] = 40 
+elif(OSX == 'PACE'):
+    cluster_params['sbatch_preamble'] = ['#SBATCH -q inferno\n', '#SBATCH --account=gts-arobel3-atlas\n']
+    cluster_params['load_list'] = []
+    cluster_params['cpus_per_node'] = 10 #PACE has bigger nodes, but when I ask for more core it stalls forever and never runs 
 
-#extra run commands for the sbatch script
-extraList = ["# ~/.conda/envs/MITgcm/bin/python -u RunModelMpi.py"]
+extraList = ["~/.conda/envs/MITgcm/bin/python -u RunModelMpi.py"]
 
 run_config['extraCommands'] = "".join(extraList)
      
@@ -1340,7 +1348,6 @@ if(makeDirs):
     if(OSX == 'Tufts'):
         os.system(f"cp -v ../uploadFiles/tufts_UniformInit/* {run_config['run_dir']}/input")
         os.system(f"cp -v ../uploadFiles/tufts_UniformInit/MITgcmRun_00000.pickle {run_config['run_dir']}/couplingResults")
-        os.system("ln -s ~/MITgcmSandbox/experiments/RunModelMpiTufts.py %s" %run_config['run_dir'])
     if os.path.isfile(run_config['run_dir']+'/input/setupReport.txt'):   
         os.remove(run_config['run_dir']+'/input/setupReport.txt')
         setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')
@@ -1348,7 +1355,8 @@ if(makeDirs):
     print(f"Copying {__file__} to {run_config['run_dir']}/input/buildScript.py")
     shutil.copy(f'{__file__}',f"{run_config['run_dir']}/input/buildScript.py")
     replaceAll(run_config['run_dir']+'/input/buildScript.py','makeDirs = True', 'makeDirs = False') 
-    rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
+    if(OSX != 'Darwin'):
+        rcf.createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs=1.2*comptime_hrs, email=email, mem_GB=1)
     setupNotes.close()
     print('Done! Remember to build before you run the script, building on MPI time is very inefficient')
 elif(writeFiles):

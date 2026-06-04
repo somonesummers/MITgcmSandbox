@@ -303,9 +303,9 @@ def createSIZEh(run_config, grid_params):
         text_str = "".join(sizehtext)
         f.writelines(text_str)    
     
+#Sherlock is the name of the stanford HPC, where this came from, and changing the name now would break things
 def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email, 
-                              min_walltime_hrs=10/60, max_walltime_hrs=48, mem_GB=1, 
-                              queue='inferno',account='gts-arobel3-atlas'):
+                              min_walltime_hrs=10/60, max_walltime_hrs=48, mem_GB=1):
 
     """
     function to generate sbatch code for slurm submission
@@ -325,8 +325,8 @@ def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email,
     
     ncpus = run_config['ncpus_xy'][0]*run_config['ncpus_xy'][1]
     
-    loadList = ['module load python/3.10.10\n',
-                'module spider anaconda3/2023.03\n']
+    loadList = run_config['load_list']
+
     loadCommand = "".join(loadList)
 
     try:
@@ -335,23 +335,23 @@ def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email,
         extraCommands = '\n'
 
     if ncpus > 1:
-        build_cmd = 'bash ../makeBuild.sh ../../.. -mpi\n'
-        run_cmd = 'bash ../makeRunMpi.sh'
+        build_cmd = '#bash ../makeBuild.sh ../../.. -mpi\n'
+        run_cmd = '#bash ../makeRunMpi.sh'
     else:
         # default to non-mpi
-        build_cmd = 'bash ../makeBuild.sh ../../..\n'
-        run_cmd = 'bash ../makeRun.sh'
+        build_cmd = '#bash ../makeBuild.sh ../../..\n'
+        run_cmd = '#bash ../makeRun.sh'
        
     # compute the minimum number of nodes necessary (assuming we get all cpus on each node)
     nodes = np.ceil(ncpus/cluster_params['cpus_per_node']) 
 
     ### Set variables for PBS
-    cmd_list = ['#!/bin/bash \n', '#SBATCH -J %s # job name \n' %run_config['run_name'],
+    cmd_list = ['#!/bin/bash \n', 
+                  cluster_params['sbatch_preamble'],
+                  '#SBATCH -J %s # job name \n' %run_config['run_name'],
                   '#SBATCH -o output_%j.txt # output and error file name (%j expands to jobID)\n',
-                  '#SBATCH --account=%s    #charge account\n' %(account),
                   '#SBATCH -N%i --ntasks-per-node=%i   #total number of nodes,CPUs requested\n' %(nodes,np.ceil(ncpus/nodes)),
                   '#SBATCH --mem-per-cpu=%sG\n' %mem_GB,
-                  '#SBATCH -q%s\n' %queue,
                   '#SBATCH -t %s # run time (hh:mm:ss)\n'%walltime_str,
                   '#SBATCH --mail-user=%s\n'%email,
                   '#SBATCH --mail-type=end,fail  # email me when the job finishes/fails\n',
