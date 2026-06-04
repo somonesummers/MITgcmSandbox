@@ -325,7 +325,7 @@ def createSBATCHfile_Sherlock(run_config, cluster_params, walltime_hrs, email,
     
     ncpus = run_config['ncpus_xy'][0]*run_config['ncpus_xy'][1]
     
-    loadList = run_config['load_list']
+    loadList = cluster_config['load_list']
 
     loadCommand = "".join(loadList)
 
