@@ -85,8 +85,7 @@ Coupled with variable Uc and 4x enhanced melt
 Summer forcing
 
 If this is a pickup, 
-Copying MITgcmPickup/iceberg/GLACIOME files from UniformInit is automatic
-moving MITgcmRun_00000.pickle to proper place done automatically
+Copying MITgcmPickup/iceberg/GLACIOME files from pickup_location is automatic
 """
 setUpPrint(f'System identified as {OSX}')
 setUpPrint('====== Welcome to the mélange building script =====')
@@ -109,8 +108,11 @@ run_config['Ly_m'] = fjord_width + (2 * wallWidthInd * run_config['horiz_res_m']
 
 grid_params['Nr'] = 32 # num of z-grid points
 
-run_config['make_icebergs'] = False # Do we make bergs? No if running from spin-up
+run_config['make_icebergs'] = False 
+
 run_config['pickup_location'] = None # location of spin-up files, None assumes net new run, uses donor glaciome 
+if (run_config['pickup_location'] == None):
+    run_config['make_icebergs'] = True 
 
 # # This ensures straight walled fjords in glaciome and MITgcm match. 
 # # For variable wall width you'll just have to ensure these match on your own
