@@ -29,9 +29,9 @@ esac
 if [ "$MACHINE" == "Linux" ];
 then
    if [[ "$PWD" == *"cluster"* ]]; then
-      MACHINE == "Tufts"
+      MACHINE="Tufts"
    elif [[ "$PWD" == *"hcoda"* ]]; then
-      MACHINE == "PACE"
+      MACHINE="PACE"
    else
       echo "Unknown linux platform. Please configure"
       exit 2
