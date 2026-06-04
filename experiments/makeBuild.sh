@@ -25,6 +25,18 @@ case "${unameOut}" in
     Linux*)     MACHINE="Linux";;
     Darwin*)    MACHINE="Mac";;
 esac
+
+if [ "$MACHINE" == "Linux" ];
+then
+   if [[ "$PWD" == *"cluster"* ]]; then
+      "$MACHINE" == "Tufts"
+   elif [[ "$PWD" == *"hcoda"* ]]; then
+      "$MACHINE" == "PACE"
+   else
+      echo "Unknown linux platform. Please configure"
+      exit 2
+   fi
+fi
 echo "Idenitfied machine as ${MACHINE}"
 
 cd build
@@ -36,16 +48,19 @@ else
    echo "File $FILE does not exist, no cleaning needed"
 fi
 
-if [ "$MACHINE" == "Linux" ];
-then
-	#BUILD_FILE='linux_amd64_pgf77_pace'
-	module load mvapich2/2.3.7-1 
-	#module load netcdf-fortran/4.6.1-mva2-hdf5-1.14
-	export MPI_HOME='/usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-12.3.0/mvapich2-2.3.7-1-qv3gjagtbx5e3rlbdy6iy2sfczryftyt/'
-	#export NETCDF_HOME='/usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-12.3.0/netcdf-c-4.9.2-hv6rtvb7476ibpgxpi54pcgkbouzswfl/'
-	BUILD_FILE='linux_amd64_gfortran'
+if [ "$MACHINE" == "PACE" ]; then
+   module load mvapich2/2.3.7-1 
+   #module load netcdf-fortran/4.6.1-mva2-hdf5-1.14
+   export MPI_HOME='/usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-12.3.0/mvapich2-2.3.7-1-qv3gjagtbx5e3rlbdy6iy2sfczryftyt/'
+   #export NETCDF_HOME='/usr/local/pace-apps/spack/packages/linux-rhel9-x86_64_v3/gcc-12.3.0/netcdf-c-4.9.2-hv6rtvb7476ibpgxpi54pcgkbouzswfl/'
+   BUILD_FILE='linux_amd64_gfortran'
+elif [ "$MACHINE" == "Tufts" ]; then
+   module load openmpi/4.1.4 
+   #module load netcdf-fortran/4.6.1-mva2-hdf5-1.14
+   export MPI_HOME='/opt/shared/openmpi/4.1.4/'
+   BUILD_FILE='linux_amd64_gfortran'
 else
-	BUILD_FILE='darwin_amd64_gfortran'
+   BUILD_FILE='darwin_amd64_gfortran'
 fi
 
 if [ -z $OPT2 ]; then
