@@ -19,36 +19,6 @@ from bisect import bisect_left
 from scipy.interpolate import make_interp_spline
 import sys
 
-OSX = platform.system()
-current_directory = os.getcwd()
-baseDir = ''
-# These boxed sections may require per-user customization
-#-------------------------------------------------------------------------------
-if OSX == 'Darwin':                                                            #
-    import gsw                                                                 #
-    baseDir = '/Users/psummers8/Documents/MITgcm/MITgcm'                       #
-elif "psumme03" in current_directory:                                          #
-    OSX = 'Tufts'                                                              #
-    baseDir = '/cluster/home/psumme03/MITgcmSandbox'                           #
-elif "psummers8" in current_directory:                                         #
-    OSX = 'PACE'                                                               #
-    baseDir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox'                 #
-else:                                                                          #
-    raise ExceptionType("unknown OSX or running location, please configure")   #
-#-------------------------------------------------------------------------------
-sys.path.append(f'{baseDir}/elizaScripts/main_scripts')
-import run_config_funcs as rcf # type: ignore # import helpter functions
-
-#Set up new folder
-makeDirs = True
-#Write input files, this lets us update the inputs with a full new run
-writeFiles = True
-
-
-
-if(makeDirs):
-    setupNotes = open("setupReport.txt", "w") 
-
 def find_closest_indices(sorted_A, sorted_B):
     closest_indices = []
     for a in sorted_A:
@@ -69,47 +39,91 @@ def setUpPrint(msg):
     if(makeDirs):
         setupNotes.write(str(msg) + "\n")
 
-# ## Main run configuration
-email = 'psummers8@gatech.edu'
-# set high level run configurations
+OSX = platform.system()
+current_directory = os.getcwd()
+baseDir = ''
+# These boxed sections may require per-user customization
+#-------------------------------------------------------------------------------
+if OSX == 'Darwin':                                                            #
+    import gsw                                                                 #
+    baseDir = '/Users/psummers8/Documents/MITgcm/MITgcm'                       #
+    email = 'psummers8@gatech.edu'                                             #
+elif "psumme03" in current_directory:                                          #
+    OSX = 'Tufts'                                                              #
+    baseDir = '/cluster/home/psumme03/MITgcmSandbox'                           #
+    email = 'psumme03@tufts.edu'                                               #
+elif "psummers8" in current_directory:                                         #
+    OSX = 'PACE'                                                               #
+    baseDir = '/storage/home/hcoda1/2/psummers8/MITgcmSandbox'                 #
+    email = 'psummers8@gatech.edu'                                             #
+else:                                                                          #
+    raise ExceptionType("unknown OSX or running location, please configure")   #
+                                                                               #
+#-------------------------------------------------------------------------------
+
+sys.path.append(f'{baseDir}/elizaScripts/main_scripts')
+import run_config_funcs as rcf # import helpter functions
+
+
+# Main script inputs
+#==============================================================================
+#Set up new folder
+makeDirs = True
+#Write input files, this lets us update the inputs with a full new run
+writeFiles = True
+
+if(makeDirs):
+    setupNotes = open("setupReport.txt", "w") 
 
 briefSummaryOfExp = """Coupling MITgcm and Melange1D
 Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
 
-No icebergs for control run
 big pool model, 20km pool off shore
 ramping summer peak from 500 to 1500
 Coupled with variable Uc and 4x enhanced melt
 Summer forcing
 
-Copy MITgcmPickup/iceberg/GLACIOME files from UniformInit is automatic
-move MITgcmRun_00000.pickle to proper place done automatically
+If this is a pickup, 
+Copying MITgcmPickup/iceberg/GLACIOME files from UniformInit is automatic
+moving MITgcmRun_00000.pickle to proper place done automatically
 """
-
+setUpPrint(f'System identified as {OSX}')
 setUpPrint('====== Welcome to the mélange building script =====')
 
-#========================================================================================
-#main values to imput 
-
+# Domain size and config ============================================
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'Uniform_noBergs'
+run_config['run_name'] = 'alpha'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 wallWidthInd = 14 #width of walls in units of dy
 run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
 run_config['Lx_m'] = 120000 # domain size in x (m)
-run_config['Ly_m'] = 5600 + (2 * wallWidthInd * run_config['horiz_res_m']) # domain size in y (m) with walls (1 wall each side)
+#If you change Fjord width you must update mélange width, and ensure that is starting from a reasonable steady state.
+fjord_width = 5600
+run_config['Ly_m'] = fjord_width + (2 * wallWidthInd * run_config['horiz_res_m']) # domain size in y (m) with walls (1 wall each side)
 # NOTE: the number of grid points in x and y should be multiples of the number of cpus.
 
 grid_params['Nr'] = 32 # num of z-grid points
 
 run_config['make_icebergs'] = False # Do we make bergs? No if running from spin-up
+run_config['pickup_location'] = None # location of spin-up files, None assumes net new run, uses donor glaciome 
 
-setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s" %(run_config['run_name'],makeDirs,writeFiles))
+# # This ensures straight walled fjords in glaciome and MITgcm match. 
+# # For variable wall width you'll just have to ensure these match on your own
+# if(run_config['pickup_location'] == None):
+#     files = glob.glob('melangeDefault.pickle')
+# else:
+#     files = glob.glob(f'{run_config['pickup_location']}/MITgcmRun_00000.pickle')
+# with open(files[-1], 'rb') as file:
+#         data = pickle.load(file)
+#         if(fjord_width != data.W[0]):
+#             raise ExceptionType("mélange file and fjord have different widths")
+
+setUpPrint(briefSummaryOfExp + "\nDirectory: %s \n\tmakeDirs: %s, writeFiles: %s, pickup: %s" %(run_config['run_name'],makeDirs,writeFiles,run_config['pickup_location']))
 input("Confirm above is accurate before continuing...")
 
 # Variables to adjust ======================
@@ -351,7 +365,10 @@ params02['cg3dTargetResidual'] = 1e-8
 # time stepping parameters 
 params03 = {}
 params03['dumpInitAndLast'] = False  #Reduce number of dumped files
-params03['nIter0'] = 1
+if(run_config['pickup_location'] == None):
+    params03['nIter0'] = 0
+else:
+    params03['nIter0'] = 1
 #params03['endTime'] = 864000.0
 deltaT = 15
 params03['abEps'] = 0.1
@@ -850,6 +867,8 @@ plt.plot(((time-80)%365),runoffRad[:,plume_loc,icefront] * run_config['horiz_res
 ax1=plt.gca()
 ax1.set_xlabel('DOY [day]')
 ax1.set_ylabel('SGD [$m^3/s$]')
+if(writeFiles):
+    plt.savefig("%splumeForcingMeteo" % (run_config['run_dir']+'/input/'))
 plt.show()
 plt.close()
 ## Boundary conditions
@@ -1303,7 +1322,7 @@ if(makeDirs):
 # PACE (GaTech) 
 setUpPrint('====== sbatch script and settings =====')
 
-# cluster_params = {}
+cluster_params = {}
 # cluster_params['cluster_name'] = 'PACE'
 # cluster_params['opt_file'] = 'darwin_amd64_gfortran' #<-- may need to update this at some point
 # cluster_params['mvapich2_ver'] = '2.3.7' #'4.0.3' 4.1.2'
@@ -1322,7 +1341,6 @@ elif(OSX == 'PACE'):
     cluster_params['sbatch_preamble'] = ['#SBATCH -q inferno\n', '#SBATCH --account=gts-arobel3-atlas\n']
     cluster_params['load_list'] = []
     cluster_params['cpus_per_node'] = 10 #PACE has bigger nodes, but when I ask for more core it stalls forever and never runs 
-
 extraList = ["~/.conda/envs/MITgcm/bin/python -u RunModelMpi.py"]
 
 run_config['extraCommands'] = "".join(extraList)
@@ -1345,9 +1363,11 @@ if(makeDirs):
     os.system("ln -s ~/MITgcmSandbox/experiments/advectBergs.py %s" %run_config['run_dir'])
     os.system("ln -s ~/MITgcmSandbox/experiments/RunModelMpi.py %s" %run_config['run_dir'])
     os.system("cp ../experiments/melangeModelExample.py %s/melangeModel.py" %run_config['run_dir'])
-    if(OSX == 'Tufts'):
-        os.system(f"cp -v ../uploadFiles/tufts_UniformInit/* {run_config['run_dir']}/input")
-        os.system(f"cp -v ../uploadFiles/tufts_UniformInit/MITgcmRun_00000.pickle {run_config['run_dir']}/couplingResults")
+    if(run_config['pickup_location'] != None):
+        os.system(f"cp -v {run_config['pickup_location']}/* {run_config['run_dir']}/input")
+        os.system(f"cp -v {run_config['pickup_location']}/MITgcmRun_00000.pickle {run_config['run_dir']}/couplingResults")
+    else:
+        os.system(f"cp -v melangeDefault.pickle {run_config['run_dir']}/couplingResults/MITgcmRun_00000.pickle")
     if os.path.isfile(run_config['run_dir']+'/input/setupReport.txt'):   
         os.remove(run_config['run_dir']+'/input/setupReport.txt')
         setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')
