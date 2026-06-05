@@ -99,14 +99,14 @@ setUpPrint('====== Welcome to the mélange building script =====')
 # Domain size and config ============================================
 run_config = {}
 grid_params = {}
-run_config['ncpus_xy'] = [15,2] # cpu distribution in the x and y directions
-run_config['run_name'] = 'alpha'
+run_config['ncpus_xy'] = [4,2] # cpu distribution in the x and y directions
+run_config['run_name'] = 'example'
 run_config['ndays'] = 1 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
-wallWidthInd = 14 #width of walls in units of dy
-run_config['horiz_res_m'] = 400 # horizontal grid spacing (m)
-run_config['Lx_m'] = 120000 # domain size in x (m)
+wallWidthInd = 4 #width of walls in units of dy
+run_config['horiz_res_m'] = 700 # horizontal grid spacing (m)
+run_config['Lx_m'] = 70000 # domain size in x (m)
 #If you change Fjord width you must update mélange width, and ensure that is starting from a reasonable steady state.
 fjord_width = 5600
 run_config['Ly_m'] = fjord_width + (2 * wallWidthInd * run_config['horiz_res_m']) # domain size in y (m) with walls (1 wall each side)
@@ -142,7 +142,7 @@ season_sw = 's'
 
 # Offshore current =========================
 oscStrength = 0.03 #[m/s] peak strength of offshore current
-lengthOffShoreLength = 20000 #width of offshore region [m]
+lengthOffShoreLength = 7000 #width of offshore region [m]
 indexOSC = int(lengthOffShoreLength/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
