@@ -17,7 +17,7 @@ for line in fileinput.input('input/data'):
 ## Cleaning first time step to global files. This sometimes had a hiccup in runs in early Oct 2025
 print(f'dt loaded as {dt}')
 
-prefixes = ['dynDiag','ptraceDiag','plumeDiag','presDiag','momDiag','heatDiag']
+prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']#,'presDiag','momDiag','heatDiag']
 # prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag','presDiag','momDiag','heatDiag']
 # prefixes = ['presDiag','momDiag','heatDiag']
 
@@ -75,7 +75,7 @@ for k in range(len(prefixes)):
     mds.wrmds('results/%s' %prefixes[k],dataTemp,dataprec='float32')
     os.system('rm results/%s.0*.0*' %(prefixes[k])) #picks out tile level files
 
-if(False):
+if(True):
 	print('Making xArray datafile now')
 
 	ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = dt)

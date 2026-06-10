@@ -391,7 +391,7 @@ for ii in range(iterationsToRun):
     sysPrint('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t == %s ==' %prefixes[k])
-        dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter)
+        dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter, returnmeta=True)
         mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
         os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],endIter))
     
