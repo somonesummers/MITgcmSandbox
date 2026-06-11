@@ -25,7 +25,7 @@ ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = 15,
 print(ds)
 
 #this enables compression for all variables (lossless), levels are 1-9 fastest to most compressed
-encoding = {var: {"zlib": True, "complevel": 5} for var in ds.data_vars}
+encoding = {var: {"zlib": True, "complevel": 3} for var in ds.data_vars}
 # print(ds.variables)
 
 ds.to_netcdf('xarray_data.nc',encoding=encoding) #this is slow, be patient
