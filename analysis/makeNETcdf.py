@@ -4,6 +4,7 @@ import sys
 import fileinput
 import numpy as np
 import xmitgcm ## this is new
+import argparse
 
 print('Making xArray datafile now')
 
@@ -19,6 +20,7 @@ for line in fileinput.input('input/data'):
 print(f'dt loaded as {dt}')
 
 # ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = dt)
+
 i_s = list(range(5760,2108160,5760))
 ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = 15,iters=i_s,geometry='cartesian')
 
