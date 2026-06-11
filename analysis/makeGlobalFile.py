@@ -63,7 +63,7 @@ for i in np.arange(startStep, maxStep + 1, sizeStep):
 	    	elif(prefixes[k] == 'presDiag'):
 	    		meta['fldlist'] = ['PHIHYD','PHI_NH']
 	    mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=i, dataprec='float32',fields=meta['fldlist'],)
-	    os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],i)) #picks out tile level files
+	    os.system('rm -f results/%s.%010i.0*.0*' %(prefixes[k],i)) #picks out tile level files
 
 # Clean up final files
 prefixes = ['Depth','DXC','DXF','DXG','DXV','DYC','DYF','DYG','DYU','hFacC','hFacS','hFacW',
