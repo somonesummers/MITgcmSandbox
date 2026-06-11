@@ -43,27 +43,30 @@ for i in np.arange(startStep, maxStep + 1, sizeStep):
 	print(f'condensing diagnostic tile files to global files for iteration {i}')
 	# sysPrint('\tcondensing diagnostic tile files to global files iter:%i' %endIter)
 	for k in range(len(prefixes)):
-	    print('\t == %s ==' %prefixes[k])
-	    dataTemp, it, meta = mds.rdmds("results/%s"%(prefixes[k]), i, returnmeta=True)
-	    # print(meta)
-	    if('fldlist' not in meta):
-	    	print('Backfilling diagnostic metadata')
-	    	if(prefixes[k] == 'BRGFlx'):
-	    		meta['fldlist'] = ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY','BRGhFacC']
-	    	elif(prefixes[k] == 'dynDiag'):
-	    		meta['fldlist'] = ['THETA','SALT','UVEL','WVEL','VVEL']
-	    	elif(prefixes[k] == 'ptraceDiag'):
-	    		meta['fldlist'] = ['TRAC01','TRAC02']
-	    	elif(prefixes[k] == 'plumeDiag'):
-	    		meta['fldlist'] = ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntR']
-	    	elif(prefixes[k] == 'momDiag'):
-	    		meta['fldlist'] = ['Um_Diss','Um_Advec','Um_Cori','Um_dPhiX','Wm_Diss','Wm_Advec']
-	    	elif(prefixes[k] == 'heatDiag'):
-	    		meta['fldlist'] = ['ADVx_TH','ADVy_TH','ADVr_TH','UTHMASS','VTHMASS','WTHMASS']
-	    	elif(prefixes[k] == 'presDiag'):
-	    		meta['fldlist'] = ['PHIHYD','PHI_NH']
-	    mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=i, dataprec='float32',fields=meta['fldlist'],)
-	    os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],i)) #picks out tile level files
+	    try:
+		    print('\t == %s ==' %prefixes[k])
+		    dataTemp, it, meta = mds.rdmds("results/%s"%(prefixes[k]), i, returnmeta=True)
+		    # print(meta)
+		    if('fldlist' not in meta):
+		    	print('Backfilling diagnostic metadata')
+		    	if(prefixes[k] == 'BRGFlx'):
+		    		meta['fldlist'] = ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY','BRGhFacC']
+		    	elif(prefixes[k] == 'dynDiag'):
+		    		meta['fldlist'] = ['THETA','SALT','UVEL','WVEL','VVEL']
+		    	elif(prefixes[k] == 'ptraceDiag'):
+		    		meta['fldlist'] = ['TRAC01','TRAC02']
+		    	elif(prefixes[k] == 'plumeDiag'):
+		    		meta['fldlist'] = ['icefrntW','icefrntT','icefrntS','icefrntA','icefrntR']
+		    	elif(prefixes[k] == 'momDiag'):
+		    		meta['fldlist'] = ['Um_Diss','Um_Advec','Um_Cori','Um_dPhiX','Wm_Diss','Wm_Advec']
+		    	elif(prefixes[k] == 'heatDiag'):
+		    		meta['fldlist'] = ['ADVx_TH','ADVy_TH','ADVr_TH','UTHMASS','VTHMASS','WTHMASS']
+		    	elif(prefixes[k] == 'presDiag'):
+		    		meta['fldlist'] = ['PHIHYD','PHI_NH']
+		    mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=i, dataprec='float32',fields=meta['fldlist'],)
+		    os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],i)) #picks out tile level files
+		except Exception as e:
+			print(f"Skipped {prefixes[k]} due to error: {e}")
 
 # Clean up final files
 prefixes = ['Depth','DXC','DXF','DXG','DXV','DYC','DYF','DYG','DYU','hFacC','hFacS','hFacW',
