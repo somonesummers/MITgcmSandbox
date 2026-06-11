@@ -4,6 +4,12 @@ import sys
 import fileinput
 import numpy as np
 import xmitgcm ## this is new
+import argparse
+
+parser = argparse.ArgumentParser(description='Save NetCDF file of dataset, use conda env 3_12, needs Python 3.12')
+parser.add_argument('-i','--iters', nargs='*', type=int, default = None,
+                    help='option specification of views to plot [default = all] [Temp, Sal, U, W, V, BRGmltRt,TracePlume,TraceBerg]')
+args = parser.parse_args()
 
 print('Making xArray datafile now')
 
@@ -20,13 +26,13 @@ print(f'dt loaded as {dt}')
 
 # ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = dt)
 
-ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = 15,iters='all')
+ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = 1,iters='all')
 
 print(ds)
 
 # print(ds.variables)
 
-ds.to_netcdf('xarray_data.nc', encoding={"time": {"dtype": "int64"}}) #this is slow, be patient
+ds.to_netcdf('xarray_data.nc', format='NETCDF3_64BIT') #this is slow, be patient
 
 print('Done saving!')
 
