@@ -60,11 +60,14 @@ def handler(signum, frame):
 OSX = platform.system()
 current_directory = os.getcwd()
 baseDir = ''
+CondaDir = ''
 if OSX == 'Darwin':
-    pass
+    CondaDir = '~/anaconda3'
 elif "cluster" in current_directory:
+    CondaDir = '~/.conda'
     OSX = 'Tufts'
 elif "hcoda" in current_directory:
+    CondaDir = '~/.conda'
     OSX = 'PACE'
 else:
     raise Exception("unknown OSX or running location, please configure")
@@ -364,7 +367,7 @@ for ii in range(iterationsToRun):
         os.system('rm results/pickup_ptracers.%010i.*' %int((newStartTime)/dt))
 
     # We adjust the icebergs to the new mélange geometry. This could be within this script.
-    os.system("~/.conda/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
+    os.system(f"{CondaDir}/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
 
     os.chdir("results")
     if(OSX == 'Tufts'):
@@ -388,7 +391,7 @@ for ii in range(iterationsToRun):
     sysPrint('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t == %s ==' %prefixes[k])
-        dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter)
+        dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter, returnmeta=True)
         mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
         os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],endIter))
     

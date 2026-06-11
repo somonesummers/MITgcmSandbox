@@ -10,7 +10,7 @@ showZeros = True
 
 # Color Maps
 saltCmap = "cmo.haline"
-tempCmap = "cmo.thermal"
+tempCmap = "RdYlBu_r" #"cmo.thermal" is a good one too
 uCmap = "cmo.balance"
 vCmap = "cmo.balance"
 wCmap = "cmo.curl"
