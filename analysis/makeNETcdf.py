@@ -25,14 +25,16 @@ for line in fileinput.input('input/data'):
 print(f'dt loaded as {dt}')
 
 # ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = dt)
-
-ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = 1,iters='all')
+i_s = list(range(5760,2108160,5760))
+ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = 15,iters=i_s,geometry='cartesian')
 
 print(ds)
 
+#this enables compression for all variables (lossless), levels are 1-9 fastest to most compressed
+encoding = {var: {"zlib": True, "complevel": 5} for var in ds.data_vars}
 # print(ds.variables)
 
-ds.to_netcdf('xarray_data.nc', format='NETCDF3_64BIT') #this is slow, be patient
+ds.to_netcdf('xarray_data.nc',encoding=encoding) #this is slow, be patient
 
 print('Done saving!')
 
