@@ -75,9 +75,9 @@ nPx = 0
 nPy = 0
 for line in fileinput.input('code/SIZE.h'):
     if "nPx =" in line:
-        nPx = float(re.sub(r"\D", "", line)) #strips all non digits out of line
+        nPx = int(re.sub(r"\D", "", line)) #strips all non digits out of line
     if "nPy =" in line:
-        nPy = float(re.sub(r"\D", "", line))  #strips all non digits out of line
+        nPy = int(re.sub(r"\D", "", line))  #strips all non digits out of line
 if(nPy*nPx == 0):
     raise Exception("Cannot identify cores required, please configure")
 else:

@@ -1344,7 +1344,7 @@ cluster_params['exps_dir'] = run_config['run_dir']
 cluster_params['run_dir'] = os.path.join(cluster_params['exps_dir'], run_config['run_name'])
 if(OSX == 'Tufts'):
     cluster_params['sbatch_preamble'] = ['#SBATCH -p mpi,batch\n']
-    cluster_params['load_list'] = ['module load openmpi/4.1.4\n']
+    cluster_params['load_list'] = ['module load openmpi/4.1.4\n','export OMPI_MCA_mca_base_component_show_load_errors=0\n']
     cluster_params['cpus_per_node'] = 40 
 elif(OSX == 'PACE'):
     cluster_params['sbatch_preamble'] = ['#SBATCH -q inferno\n', '#SBATCH --account=gts-arobel3-atlas\n']
