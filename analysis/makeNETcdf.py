@@ -6,11 +6,6 @@ import numpy as np
 import xmitgcm ## this is new
 import argparse
 
-parser = argparse.ArgumentParser(description='Save NetCDF file of dataset, use conda env 3_12, needs Python 3.12')
-parser.add_argument('-i','--iters', nargs='*', type=int, default = None,
-                    help='option specification of views to plot [default = all] [Temp, Sal, U, W, V, BRGmltRt,TracePlume,TraceBerg]')
-args = parser.parse_args()
-
 print('Making xArray datafile now')
 
 dt = 0.0
@@ -25,6 +20,7 @@ for line in fileinput.input('input/data'):
 print(f'dt loaded as {dt}')
 
 # ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = dt)
+
 i_s = list(range(5760,2108160,5760))
 ds = xmitgcm.open_mdsdataset('results/',ignore_unknown_vars=False, delta_t = 15,iters=i_s,geometry='cartesian')
 
