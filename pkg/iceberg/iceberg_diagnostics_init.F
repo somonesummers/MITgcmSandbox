@@ -94,7 +94,7 @@ C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
 
       diagName  = 'BRGhFacC'
       diagTitle = 
-     &     'Ocean fraction (HfacC) in icebergs'
+     &     'Ocean fraction ( = HfacC when blocking on)  '
       diagUnits = 'none            '
       diagCode  = 'SM      MR      '
       CALL DIAGNOSTICS_ADDTOLIST( diagNum,

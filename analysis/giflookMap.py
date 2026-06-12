@@ -34,7 +34,6 @@ xCrossSection = 5000
 zDepth = -50
 plotDPI = 100
 cleanPNGs = True
-usePcolor = True
 showQuiver = args.quiver
 showZeros = True
 
@@ -265,13 +264,24 @@ for k in kList:
             )
             plt.clabel(cc, inline=3, fontsize=8)
         if(args.shadow > 0):
-            cp2 = plt.contourf(np.squeeze(x),
-                np.squeeze(y),
-                np.squeeze(dataBergPlot[zSlice, :, :]),
-                [.4,.6,.8,.9,.95],
-                extend="min",
-                alpha=.1,
-                cmap='cmo.gray')
+            if(True):
+                cp = plt.pcolormesh(
+                    np.squeeze(x),
+                    np.squeeze(y),
+                    np.squeeze(dataBergPlot[zSlice, :, :]),
+                    cmap='cmo.gray',
+                    vmin=.4,
+                    vmax=.90,
+                    alpha = .2
+                )
+            else:
+                cp2 = plt.contourf(np.squeeze(x),
+                    np.squeeze(y),
+                    np.squeeze(dataBergPlot[zSlice, :, :]),
+                    [.4,.6,.8,.9,.95],
+                    extend="min",
+                    alpha=.1,
+                    cmap='cmo.gray')
             # cbar2 = plt.colorbar(cp2)
             # cbar2.set_label('Ocean Fraction')
 

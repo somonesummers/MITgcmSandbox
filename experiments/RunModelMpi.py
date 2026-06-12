@@ -141,8 +141,8 @@ elif(freshStart): #This distinguises between a new coupled run, or continuing a 
     # sysPrint('\tcondensing diagnostic tile files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t == %s ==' %prefixes[k])
-        dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter)
-        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
+        dataTemp, it, meta = mds.rdmds("results/%s"%(prefixes[k]), endIter, returnmeta=True)
+        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32', fields=meta['fldlist'])
         os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],endIter)) #picks out tile level files
 
 
@@ -391,8 +391,8 @@ for ii in range(iterationsToRun):
     sysPrint('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t == %s ==' %prefixes[k])
-        dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter, returnmeta=True)
-        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
+        dataTemp, it, meta = mds.rdmds("results/%s"%(prefixes[k]), endIter, returnmeta=True)
+        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32', fields=meta['fldlist'])
         os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],endIter))
     
     sysPrint('\t\tSeconds to run coupled step: %.4f' % (time.time() - start_time))

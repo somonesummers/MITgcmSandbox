@@ -4,9 +4,8 @@ Created on Wed Mar 26 2025
 
 @author: psummers8
 
-Main Script for running mélange/MITgcm coupled model.
-Depends on advectBergs.py, this should be incorperated. 
-Depends on glaciome1d class. This should stand alone.
+Main Script for running iceberg advection run
+
 
 
 
@@ -21,14 +20,11 @@ from MITgcmutils import mds
 import os
 # sys.path.append('/hdd/glaciome/models/glaciome1D')
 # sys.path.insert(0, '')
-sys.path.append('/Users/psummers8/Documents/glaciome1D')
-sys.path.append('/storage/home/hcoda1/2/psummers8/glaciome1d')
-from glaciome1D import constants, glaciome
-import glob
-import pickle
 import time
 import copy
 import signal
+import platform
+import re
 
 # resetStart = True
 # freshStart = False
@@ -59,40 +55,44 @@ def replaceAll(file,searchExp,replaceExp):
 mitgcmWarningFlag = 1 #if it fails first run, should error
 mitgcmWarningCount = 0
 
+OSX = platform.system()
+current_directory = os.getcwd()
+baseDir = ''
+CondaDir = ''
+if OSX == 'Darwin':
+    CondaDir = '~/anaconda3/envs/MITgcm/bin/'
+elif "cluster" in current_directory:
+    CondaDir = '~/.conda/envs/MITgcm/bin/'
+    OSX = 'Tufts'
+elif "hcoda" in current_directory:
+    CondaDir = '~/.conda/envs/MITgcm/bin/'
+    OSX = 'PACE'
+else:
+    raise Exception("unknown OSX or running location, please configure")
+
+sysPrint(f'Operating system identified as {OSX}')
+
+nPx = 0 
+nPy = 0
+isMPI = False
+for line in fileinput.input('code/SIZE.h'):
+    if "nPx =" in line:
+        nPx = float(re.sub(r"\D", "", line)) #strips all non digits out of line
+    if "nPy =" in line:
+        nPy = float(re.sub(r"\D", "", line))  #strips all non digits out of line
+if nPx * nPy > 1:
+    isMPI = True
+if(nPy*nPx == 0):
+    raise Exception("Cannot identify cores required, please configure")
+else:
+    sysPrint(f'Identified cores as {nPx} x {nPy} = {nPy*nPx}, isMPI = {isMPI}')
+
+
+
 # This used to reset the directory to initial conditions, currently out of date, doesnt work for spun up starts
 if(resetStart):
-    sysPrint("Resetting this experiment directory, DELETING FILES AND FIGS. Steps to run: %i..." %iterationsToRun)
-    time.sleep(1)
-    # Reset iceberg files (don't need to do this so long as mélange is roughly similar)
-    # os.system('rm input/icebergs_length.bin input/icebergs_depths.bin input/icebergs_widths.bin')
-    # os.system('cp input/icebergs_length_init.bin input/icebergs_length.bin')
-    # os.system('cp input/icebergs_depths_init.bin input/icebergs_depths.bin')
-    # os.system('cp input/icebergs_widths_init.bin input/icebergs_widths.bin')
+    sysPrint("Not Supported")
 
-    # Clean out itermediate save states and figures
-    os.system("find couplingResults/MITgcmRun_*.pickle ! -name 'MITgcmRun_00000.pickle' -type f -exec rm {} +")
-    os.system("rm couplingResults/*.txt")
-    os.system("rm input/pickup*.data input/pickup*.meta")
-    os.system("rm figs/*")
-
-    # Reset data file with correct start/stop times
-    for line in fileinput.input('input/data'):
-            if "nIter0=" in line:
-                startIter = float(line[8:-2])
-            elif "endTime=" in line:
-                endTime = float(line[9:-2])
-    sysPrint('\tadjust start iteration %i to %i' %(int(startIter),int(0)))
-    replaceAll('input/data','nIter0=%i' %(int(startIter)), 'nIter0=%i' % int(0))
-    # So ptracers Iter0 should actually be 0, it is when the tracer exp starts, not what to load
-    # replaceAll('input/data.ptracers','Iter0=%i' %(int(startIter)), 'Iter0=%i' % int(0))
-    sysPrint('\tadjust end time %i to %i' %(int(endTime),int(couplingTime)))
-    replaceAll('input/data','endTime=%i' %(int(endTime)), 'endTime=%i' %(int(couplingTime)))
-
-    #Set melange to length consistent with initial glaciome1d size
-    os.system("~/.conda/envs/MITgcm/bin/python advectBergsOcean.py >> couplingResults/out.txt")
-
-    #Run intial MITgcm, this resets the results folder
-    os.system('bash ../makeRun.sh')
 elif(freshStart): #This distinguises between a new coupled run, or continuing a paused coupled run
     #Make couplingResults directory if not there already
     os.system("mkdir -p couplingResults")
@@ -106,7 +106,32 @@ elif(freshStart): #This distinguises between a new coupled run, or continuing a 
     #os.system('cp input/icebergs_widths_init.bin input/icebergs_widths.bin')
     
     # run initial MITgcm
-    os.system('bash ../makeRunMpi.sh > MITgcmInitOut.txt')
+    #mpirun flags, these help reduce minor errors and unneeded output
+    mpi_flags = ''
+    if(OSX == 'Tufts'):
+        mpi_flags = '--quiet --mca btl_vader_single_copy_mechanism none'
+    elif(OSX == 'PACE'):
+        mpi_flags = '-v'
+    elif(OSX == 'Darwin'):
+        mpi_flags = '-v'
+    # run initial MITgcm
+    os.system("touch results/test.txt")
+    os.chdir("results")
+    os.system("rm *")
+    os.system("cp ../build/mitgcmuv .")
+    os.system("ln -s ../input/* .")
+    if(isMPI):
+        if(OSX == 'Tufts'):
+            os.system(f"mpirun {mpi_flags} -n {nPy*nPx} ./mitgcmuv")
+        elif(OSX == 'PACE'): 
+            os.system(f"srun {mpi_flags} ./mitgcmuv") #srun is smart and allocated cores automatically
+        elif(OSX == 'Darwin'):
+            os.system(f"mpirun {mpi_flags} -n {nPy*nPx} ./mitgcmuv")
+        else:
+            raise ExceptionType("unknown OSX or running location, please configure")
+    else:
+        os.system(f"./mitgcmuv > MITgcm_output.txt")
+    os.chdir("../")
 
     # Clean tile level files
     dt = 0.0
@@ -122,8 +147,8 @@ elif(freshStart): #This distinguises between a new coupled run, or continuing a 
     sysPrint('\tcondensing diagnostic tile files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t == %s ==' %prefixes[k])
-        dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter)
-        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
+        dataTemp, it, meta = mds.rdmds("results/%s"%(prefixes[k]), endIter, returnmeta=True)
+        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32', fields=meta['fldlist'])
         os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],endIter)) #picks out tile level files
 
 
@@ -189,22 +214,28 @@ for ii in range(iterationsToRun):
     sysPrint('\tadjust end time %i to %i' %(int(newStartTime),int(newStartTime+couplingTime)))
     replaceAll('input/data','endTime=%i' %(int(newStartTime)), 'endTime=%i' %(int(newStartTime+couplingTime)))
 
-    if(False and index > 1 and index % 100 == 0): #block this for now
-        # Reset prtracers every 100 steps, avoid saturation.
-        # We read old value, then replace it with new in ptracer file.
-        # We also must delete the ptracer pickup files to start at tracers=0.
-        sysPrint('\t\t PTRACERS RESET every 100 iterations')
-        for line in fileinput.input('input/data.ptracers'):
-            if "Iter0" in line:
-                oldStartIterPt = int(line[16:-1])# This assumes this is last line in data.prtacers. make -2 if more lines after
-        replaceAll('input/data.ptracers','PTRACERS_Iter0=%i' %(int(oldStartIterPt)), 'PTRACERS_Iter0=%i' % int(newStartTime/dt))
-        os.system('rm results/pickup_ptracers.%010i.*' %int((newStartTime)/dt))
+    # Advect icebergs
+    os.system(f"{CondaDir}python advectBergsOcean.py >> couplingResults/out.txt")
 
-    # We adjust the icebergs to the new mélange geometry. This could be within this script.
-    os.system("~/.conda/envs/MITgcm/bin/python advectBergsOcean.py >> couplingResults/out.txt")
-
+    if(OSX == 'Tufts'):
+        mpi_flags = '--quiet --mca btl_vader_single_copy_mechanism none'
+    elif(OSX == 'PACE'):
+        mpi_flags = '-v'
+    elif(OSX == 'Darwin'):
+        mpi_flags = '-v'
+    # run on existing MITgcm files, no clearing of the folder
     os.chdir("results")
-    os.system('srun ./mitgcmuv') # srun has no outputs, all in STDOUT/STDERR.*.*
+    if(isMPI):
+        if(OSX == 'Tufts'):
+            os.system(f"mpirun {mpi_flags} -n {nPy*nPx} ./mitgcmuv")
+        elif(OSX == 'PACE'): 
+            os.system(f"srun {mpi_flags} ./mitgcmuv") #srun is smart and allocated cores automatically
+        elif(OSX == 'Darwin'):
+            os.system(f"mpirun {mpi_flags} -n {nPy*nPx} ./mitgcmuv")
+        else:
+            raise ExceptionType("unknown OSX or running location, please configure")
+    else:
+        os.system(f"./mitgcmuv > ../MITgcm_output.txt")
     os.chdir("../")
     
     # Create global files to reduce file counts
@@ -218,8 +249,8 @@ for ii in range(iterationsToRun):
     sysPrint('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t == %s ==' %prefixes[k])
-        dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter)
-        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
+        dataTemp, it, meta = mds.rdmds("results/%s"%(prefixes[k]), endIter, returnmeta=True)
+        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32', fields=meta['fldlist'])
         os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],endIter))
     
     sysPrint('\t\tSeconds to run coupled step: %.4f' % (time.time() - start_time))

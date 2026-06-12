@@ -598,6 +598,8 @@ C     Write to diagnostics
      &      0,Nr,0,1,1,myThid)
           CALL DIAGNOSTICS_FILL_RS(brg_Area3D,'BRGarea3D',
      &      0,Nr,0,1,1,myThid)
+          CALL DIAGNOSTICS_FILL_RS(brg_OpenFraction, 'BRGhFacC',
+     &      0,Nr,0,1,1,myThid)
          ENDIF
 #endif /* ALLOW_DIAGNOSTICS */
 

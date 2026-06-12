@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
 Created on Wed Mar 26 2025
-
+Updated on Jun 2026 to be work on Tufts Pax and GATech PACE
 @author: psummers8
 
 Main Script for running mélange/MITgcm coupled model.
-Depends on advectBergs.py, this should be incorperated. 
+Depends on advectBergs.py, this could (should) be incorperated. 
 Depends on glaciome1d class. This should stand alone.
 
 
@@ -19,22 +19,21 @@ import fileinput
 import shutil
 from MITgcmutils import mds
 import os
+import re
 # sys.path.append('/hdd/glaciome/models/glaciome1D')
 # sys.path.insert(0, '')
 sys.path.append('/Users/psummers8/Documents/glaciome1D')
 sys.path.append('/storage/home/hcoda1/2/psummers8/glaciome1d')
+sys.path.append('/cluster/home/psumme03/glaciome1d')
 from glaciome1D import constants, glaciome
 import glob
 import pickle
 import time
 import copy
 import signal
+import platform
 
-# resetStart = True
-# freshStart = False
-# icebergCoverLambda = .8
-# iterationsToRun = 100
-#Define if new run or not, and packing fraction of melange
+
 sys.path.append('.')
 
 # Import run specific settings from the experiment directory
@@ -58,61 +57,77 @@ def handler(signum, frame):
     sysPrint("WARNING glaciome1d seems frozen, sad. Revert to old state")
     raise Exception("Timeout")
 
+OSX = platform.system()
+current_directory = os.getcwd()
+baseDir = ''
+CondaDir = ''
+
+## You may have to customize these to align with your
+if OSX == 'Darwin':
+    CondaDir = '~/anaconda3'
+elif "cluster" in current_directory:
+    CondaDir = '~/.conda'
+    OSX = 'Tufts'
+elif "hcoda" in current_directory:
+    CondaDir = '~/.conda'
+    OSX = 'PACE'
+else:
+    raise Exception("unknown OSX or running location, please configure")
+
+sysPrint(f'Operating system identified as {OSX}')
+
+nPx = 0 
+nPy = 0
+for line in fileinput.input('code/SIZE.h'):
+    if "nPx =" in line:
+        nPx = int(re.sub(r"\D", "", line)) #strips all non digits out of line
+    if "nPy =" in line:
+        nPy = int(re.sub(r"\D", "", line))  #strips all non digits out of line
+if(nPy*nPx == 0):
+    raise Exception("Cannot identify cores required, please configure")
+else:
+    sysPrint(f'Identified cores as {nPx} x {nPy} = {nPy*nPx}')
+
 # Track exceptions
 glmeWarningFlag = False
 glmeWarningCount = 0
 mitgcmWarningFlag = 1 #if it fails first run, should error
 mitgcmWarningCount = 0
 
-# This used to reset the directory to initial conditions, currently out of date, doesnt work for spun up starts
+
 if(resetStart):
-    sysPrint("Resetting this experiment directory, DELETING FILES AND FIGS. Steps to run: %i..." %iterationsToRun)
-    time.sleep(1)
-    # Reset iceberg files (don't need to do this so long as mélange is roughly similar)
-    # os.system('rm input/icebergs_length.bin input/icebergs_depths.bin input/icebergs_widths.bin')
-    # os.system('cp input/icebergs_length_init.bin input/icebergs_length.bin')
-    # os.system('cp input/icebergs_depths_init.bin input/icebergs_depths.bin')
-    # os.system('cp input/icebergs_widths_init.bin input/icebergs_widths.bin')
-
-    # Clean out itermediate save states and figures
-    os.system("find couplingResults/MITgcmRun_*.pickle ! -name 'MITgcmRun_00000.pickle' -type f -exec rm {} +")
-    os.system("rm couplingResults/*.txt")
-    os.system("rm input/pickup*.data input/pickup*.meta")
-    os.system("rm figs/*")
-
-    # Reset data file with correct start/stop times
-    for line in fileinput.input('input/data'):
-            if "nIter0=" in line:
-                startIter = float(line[8:-2])
-            elif "endTime=" in line:
-                endTime = float(line[9:-2])
-    sysPrint('\tadjust start iteration %i to %i' %(int(startIter),int(0)))
-    replaceAll('input/data','nIter0=%i' %(int(startIter)), 'nIter0=%i' % int(0))
-    # So ptracers Iter0 should actually be 0, it is when the tracer exp starts, not what to load
-    # replaceAll('input/data.ptracers','Iter0=%i' %(int(startIter)), 'Iter0=%i' % int(0))
-    sysPrint('\tadjust end time %i to %i' %(int(endTime),int(86400)))
-    replaceAll('input/data','endTime=%i' %(int(endTime)), 'endTime=%i' %(int(86400)))
-
-    #Set melange to length consistent with initial glaciome1d size
-    os.system('python advectBergs.py >> couplingResults/out.txt')
-
-    #Run intial MITgcm, this resets the results folder
-    os.system('bash ../makeRun.sh')
+    raise Exception("Restart start no longer supported")
 elif(freshStart): #This distinguises between a new coupled run, or continuing a paused coupled run
     #Make couplingResults directory if not there already
     os.system("mkdir -p couplingResults")
     os.system("rm -f couplingResults/out.txt")
     sysPrint('Running from fresh start...')
     sysPrint("Assuming fresh MITgcm directory. Steps to run: %i..." %iterationsToRun)
-    time.sleep(1)
-    #prime the iceberg files
-    #os.system('cp input/icebergs_length_init.bin input/icebergs_length.bin')
-    #os.system('cp input/icebergs_depths_init.bin input/icebergs_depths.bin')
-    #os.system('cp input/icebergs_widths_init.bin input/icebergs_widths.bin')
-    
-    # run initial MITgcm
-    os.system('bash ../makeRun.sh > MITgcmInitOut.txt')
+    time.sleep(1) # this is a brief pause that lets you panic kill the job as the next steps nukes the results folder
 
+    #mpirun flags, these help reduce minor errors and unneeded output
+    mpi_flags = ''
+    if(OSX == 'Tufts'):
+        mpi_flags = '--quiet --mca btl_vader_single_copy_mechanism none'
+    elif(OSX == 'PACE'):
+        mpi_flags = '-v'
+    elif(OSX == 'Darwin'):
+        mpi_flags = '-v'
+    # run initial MITgcm
+    os.system("touch results/test.txt")
+    os.chdir("results")
+    os.system("rm *")
+    os.system("cp ../build/mitgcmuv .")
+    os.system("ln -s ../input/* .")
+    if(OSX == 'Tufts'):
+        os.system(f"./mitgcmuv > MITgcmOut.txt")
+    elif(OSX == 'PACE'): 
+        os.system(f"./mitgcmuv > MITgcmOut.txt") #srun is smart and allocated cores automatically
+    elif(OSX == 'Darwin'):
+        os.system(f"./mitgcmuv > MITgcmOut.txt")
+    else:
+        raise ExceptionType("unknown OSX or running location, please configure")
+    os.chdir("../")
     # Clean tile level files
     dt = 0.0
     oldStartIter = 0   
@@ -122,13 +137,14 @@ elif(freshStart): #This distinguises between a new coupled run, or continuing a 
             if "nIter0" in line:
                 oldStartIter = int(line[8:-2])
 
-    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
+    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']#,'presDiag','momDiag','heatDiag']
+    # prefixes = ['presDiag','momDiag','heatDiag']
     endIter = int((24*3600)/dt)
-    sysPrint('\tcondensing diagnostic tile files to global files iter:%i' %endIter)
+    # sysPrint('\tcondensing diagnostic tile files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t == %s ==' %prefixes[k])
-        dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter)
-        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
+        dataTemp, it, meta = mds.rdmds("results/%s"%(prefixes[k]), endIter, returnmeta=True)
+        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32', fields=meta['fldlist'])
         os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],endIter)) #picks out tile level files
 
 
@@ -184,6 +200,8 @@ for ii in range(iterationsToRun):
 
     files = sorted(glob.glob('couplingResults/MITgcmRun_[0-9][0-9][0-9][0-9][0-9].pickle'))
     # print(files)
+    if(len(files) == 0):
+        raise Exception('No mélange files found')
     with open(files[-1], 'rb') as file:
         data = pickle.load(file)
         file.close()
@@ -212,7 +230,7 @@ for ii in range(iterationsToRun):
     # continuiously. 
 
     lambdaHelper = 1-openFrac[0,1:-1,1:]
-    lambdaHelper[lambdaHelper == 0] = 0.01
+    lambdaHelper[lambdaHelper == 0] = 0.01 #set minimum for icefrac to smooth edge cases, maybe un-needed?
     # data is of list ['BRGfwFlx','BRGhtFlx','BRGmltRt','BRG_TauX','BRG_TauY']
     # Vertically sum all of the fresh water fluxes [m^3/s] cells/ divide by surface area 
     # (lamdba helper and dx*dy) of bergs in that cell [m/s]. dx*dy is outside the sum 
@@ -221,7 +239,7 @@ for ii in range(iterationsToRun):
     # vertical melt per day, the value glaciome wants. 
     b_mitgcm = -1*np.nanmean(np.nansum(dataMITgcm[0,:,1:-1,1:],axis=0)/lambdaHelper,axis=0)/(dx*dy)*(24*3600)
 
-    if(np.mean(b_mitgcm) > -1e-4):
+    if(np.mean(b_mitgcm) > -1e-4 or np.mean(b_mitgcm) < -1000): #sometimes returns 0 or -inf both are problems
         sysPrint(f'\t\tMITgcm melt rates looks problematic min/ave/min: {np.min(b_mitgcm):.2f}/{np.mean(b_mitgcm):.2f}/{np.max(b_mitgcm):.2f}')
         # This means MITgcm has had an overflow. We can try once to re-advect bergs and try again. To do this, we delete the 
         # last BRGFlx file and skipping the rest of this loop with a CONTINUE statement. This consumes one iteration of the 
@@ -281,9 +299,9 @@ for ii in range(iterationsToRun):
     # data.steadystate()
 
     signal.signal(signal.SIGALRM,handler) #setting a timer for glaciome1d
-    signal.alarm(600) # if its not done in 10 minutes, its probably at minimum size. 
+    signal.alarm(6000) # if its not done in 100 minutes, its probably at minimum size. 
                     # if this is happening for non-trivially small melange, something is off.
-                    # Can happen when mélange thickness increases down fjord, need to look into more 
+                    # Can happen when mélange thickness increases down fjord, caused by freezing which should be fixed now 
     try:
         data.prognostic(method='lm')
     except Exception as e:
@@ -296,7 +314,7 @@ for ii in range(iterationsToRun):
     sysPrint(f"\tterm loc/depth {data.X[0]:5.0f}/{data.Ht:5.1f} m, calving/glacier speed: {data.Uc:0.0f}/{data.Ut:0.0f} m/yr")
     sysPrint('\t\tSeconds to run GLACIOME step: %.4f' % (time.time() - start_time))
     
-    if(data.H0 < 25.0 or data.L < 300): #limit small size of melang, glaciome1d gets slow 
+    if(data.L < 300): #limit small size of melang, glaciome1d gets slow 
         # This is really a secondary limit for the same reason as the time limit above
         # likely, we should only have the time limit and not this one.
         data = dataCopy
@@ -338,7 +356,8 @@ for ii in range(iterationsToRun):
     sysPrint('\tadjust end time %i to %i' %(int(newStartTime),int(newStartTime+24*3600)))
     replaceAll('input/data','endTime=%i' %(int(newStartTime)), 'endTime=%i' %(int(newStartTime+24*3600)))
 
-    if(False and index > 1 and index % 100 == 0):
+    if(False and index > 1 and index % 100 == 0): 
+    #the FALSE here is because this not done anymore, but you can flip it if you would like
         # Reset prtracers every 100 steps, avoid saturation.
         # We read old value, then replace it with new in ptracer file.
         # We also must delete the ptracer pickup files to start at tracers=0.
@@ -350,11 +369,17 @@ for ii in range(iterationsToRun):
         os.system('rm results/pickup_ptracers.%010i.*' %int((newStartTime)/dt))
 
     # We adjust the icebergs to the new mélange geometry. This could be within this script.
-
-    os.system('python advectBergs.py >> couplingResults/out.txt')
+    os.system(f"{CondaDir}/envs/MITgcm/bin/python advectBergs.py >> couplingResults/out.txt")
 
     os.chdir("results")
-    os.system('./mitgcmuv >> ../couplingResults/OutMITgcm%05i.txt' %(index+1))
+    if(OSX == 'Tufts'):
+        os.system(f"./mitgcmuv > MITgcmOut.txt")
+    elif(OSX == 'PACE'): 
+        os.system(f"./mitgcmuv > MITgcmOut.txt")
+    elif(OSX == 'Darwin'):
+        os.system(f"./mitgcmuv > MITgcmOut.txt")
+    else:
+        raise ExceptionType("unknown OSX or running location, please configure")
     os.chdir("../")
     
     # Create global files to reduce file counts
@@ -362,14 +387,14 @@ for ii in range(iterationsToRun):
     # per timestep, which quickly become insane for long runs. This step collects all those tile files into
     # 2 global files (*.data, *.meta), then deletes the tiles files. This reduces files count by a factor of 20
     # This VASTLY improves data transfer and compression speeds. 
-    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']
+    prefixes = ['BRGFlx','dynDiag','ptraceDiag','plumeDiag']#,'presDiag','momDiag','heatDiag']
 
     endIter = int((newStartTime + 24*3600)/dt)
     sysPrint('\tcondensing diagnostic tiles files to global files iter:%i' %endIter)
     for k in range(len(prefixes)):
         sysPrint('\t\t == %s ==' %prefixes[k])
-        dataTemp = mds.rdmds("results/%s"%(prefixes[k]), endIter)
-        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32')
+        dataTemp, it, meta = mds.rdmds("results/%s"%(prefixes[k]), endIter, returnmeta=True)
+        mds.wrmds('results/%s' %prefixes[k],dataTemp,itr=endIter, dataprec='float32', fields=meta['fldlist'])
         os.system('rm results/%s.%010i.0*.0*' %(prefixes[k],endIter))
     
     sysPrint('\t\tSeconds to run coupled step: %.4f' % (time.time() - start_time))

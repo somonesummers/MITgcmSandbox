@@ -223,8 +223,6 @@ C-     Explicit case: diagnose directly the iceberg stress, only implemented cas
        ENDIF
        CALL DIAGNOSTICS_FILL_RS( brg_DragU, 'BRG_TauX',
      &                          0, Nr, 1, bi, bj, myThid )
-       CALL DIAGNOSTICS_FILL_RS( hFacC, 'BRGhFacC',
-     &                          0, Nr, 1, bi, bj, myThid )
       ENDIF !useDiagnostics+ 
 #endif /* ALLOW_DIAGNOSTICS */
 #endif /* ALLOW_ICEBERG */

@@ -32,7 +32,6 @@ oceanDensity = 1030 # [kg/m^3]
 minBergDepth = 5 # bergs not allowed to shrink/melt smaller than this [m]
 maxBergDepth = 450 # bergs not allowed to shrink/melt smaller than this [m]
 maxLambda = .90 # Cells are full at this lambda [hard limit]
-scaleMin = 0.2 # percent error allowed between MITgcm effective depth and GLACIOME depth
 ## Bergs added to top off to icebergCoverLamba left of refreshGate
 icebergRefreshingGate = 2
 maxBergs = 500
@@ -43,7 +42,7 @@ sys.path.append('.')
 from melangeModel import *
 
 icebergPhi = np.min([.8,icebergCoverLambda]) # Scaling from GLACIOME1D
-icebergCoverLambda = np.min([.9,icebergCoverLambda * 2]) # How full filled cells are
+icebergCoverLambda = np.min([.9,icebergCoverLambda]) # How full filled cells are
 
 print('\t\tLambda/Phi %.3f/%.3f' %(icebergCoverLambda,icebergPhi))
 ## Get most recent data from MITgcm
@@ -77,7 +76,7 @@ sum_z = np.cumsum(dz)
 
 ## This needs to know about z. Bergs cant be deeper than this
 hardMaxDepth = np.max(np.abs(z)) - 5
-## icebergs are destroyed when they move past here. Issues when GLACIOME grows past here
+## icebergs are destroyed when they move past here
 icebergRightHandGate = int(nx*0.9)
 
 ## Now we load the iceberg geometry and mask files
@@ -300,6 +299,10 @@ if(addBergs):
                     # print('Last iceberg was too big, so we exit')
                     break
             # print(tmpBergFac)
+    if(len(generatedWidths) == 0):
+        generatedDepths.append(0)
+        generatedWidths.append(0)
+
     print('\t\tMax depth/width of new bergs: %.2f/%.2f' %(np.max(generatedDepths),np.max(generatedWidths)))
     plt.figure(3)
     plt.subplot(211)

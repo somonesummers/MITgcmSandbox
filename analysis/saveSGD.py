@@ -69,7 +69,7 @@ else: #semi-rad
 
 f = interpolate.interp1d(seasonTime, runoff,fill_value='0')
 
-time = np.arange(startStep,maxStep,sizeStep) * dt/86400
+time = np.arange(startStep,maxStep+sizeStep,sizeStep) * dt/86400
 
 print(time)
 
