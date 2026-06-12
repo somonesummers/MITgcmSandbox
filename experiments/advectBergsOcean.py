@@ -77,7 +77,7 @@ sum_z = np.cumsum(dz)
 ## This needs to know about z. Bergs cant be deeper than this
 hardMaxDepth = np.max(np.abs(z)) - 5
 ## icebergs are destroyed when they move past here
-icebergRightHandGate = int(nx*0.9)
+icebergRightHandGate = int(nx*0.95)
 
 ## Now we load the iceberg geometry and mask files
 
@@ -328,9 +328,9 @@ for i in range(nx): #loops over whole domain, this calculates new hfill factors
         numberOfBergs = len(bergDepths[bergDepths[:,j,i] > 0,j,i])
         # print(i,j,numberOfBergs)
         if(numberOfBergs > 0):
-            lengths = bergLength[bergLength[:,j,i] > 0,j,i] #return only non-zeros 
-            widths = bergWidths[bergWidths[:,j,i] > 0,j,i] #return only non-zeros
-            depths = bergDepths[bergDepths[:,j,i] > 0,j,i] #return only non-zeros (negatives should have been blocked before here)
+            lengths = bergLength[bergDepths[:,j,i] > 0,j,i] #return only non-zeros 
+            widths  = bergWidths[bergDepths[:,j,i] > 0,j,i] #return only non-zeros
+            depths  = bergDepths[bergDepths[:,j,i] > 0,j,i] #return only non-zeros (negatives should have been blocked before here)
             for k in range(nz):
                 cellVolume = deltaX*deltaY*dz[k]
                 d_bot = sum_z[k] #bottom of depth bin
