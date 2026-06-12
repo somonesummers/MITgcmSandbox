@@ -164,6 +164,7 @@ for k in kList:
             dataBergPlot[dataBergPlot == 0] = np.nan
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         kk = k
+        data[:,:, topo == 0] = np.nan
         if k == 0:
             lvl = tempRange
             cm = tempCmap
