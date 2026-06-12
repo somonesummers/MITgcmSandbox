@@ -333,9 +333,9 @@ for i in range(nx): #loops over whole domain, this calculates new hfill factors
         numberOfBergs = len(bergDepths[bergDepths[:,j,i] > 0,j,i])
         # print(i,j,numberOfBergs)
         if(numberOfBergs > 0):
-            lengths = bergLength[bergLength[:,j,i] > 0,j,i] #return only non-zeros 
-            widths = bergWidths[bergWidths[:,j,i] > 0,j,i] #return only non-zeros
-            depths = bergDepths[bergDepths[:,j,i] > 0,j,i] #return only non-zeros (negatives should have been blocked before here)
+            lengths = bergLength[bergDepths[:,j,i] > 0,j,i] #return only non-zeros 
+            widths  = bergWidths[bergDepths[:,j,i] > 0,j,i] #return only non-zeros
+            depths  = bergDepths[bergDepths[:,j,i] > 0,j,i] #return only non-zeros (negatives should have been blocked before here)
             for k in range(nz):
                 cellVolume = deltaX*deltaY*dz[k]
                 d_bot = sum_z[k] #bottom of depth bin

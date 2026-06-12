@@ -64,10 +64,11 @@ if OSX == 'Darwin':
 elif "cluster" in current_directory:
     CondaDir = '~/.conda/envs/MITgcm/bin/'
     OSX = 'Tufts'
-elif "hcoda" in current_directory:
+elif ("storage" in current_directory) or ("hcoda" in current_directory):
     CondaDir = '~/.conda/envs/MITgcm/bin/'
     OSX = 'PACE'
 else:
+    print(current_directory)
     raise Exception("unknown OSX or running location, please configure")
 
 sysPrint(f'Operating system identified as {OSX}')
@@ -111,9 +112,9 @@ elif(freshStart): #This distinguises between a new coupled run, or continuing a 
     if(OSX == 'Tufts'):
         mpi_flags = '--quiet --mca btl_vader_single_copy_mechanism none'
     elif(OSX == 'PACE'):
-        mpi_flags = '-v'
+        mpi_flags = ''
     elif(OSX == 'Darwin'):
-        mpi_flags = '-v'
+        mpi_flags = ''
     # run initial MITgcm
     os.system("touch results/test.txt")
     os.chdir("results")
@@ -220,9 +221,9 @@ for ii in range(iterationsToRun):
     if(OSX == 'Tufts'):
         mpi_flags = '--quiet --mca btl_vader_single_copy_mechanism none'
     elif(OSX == 'PACE'):
-        mpi_flags = '-v'
+        mpi_flags = ''
     elif(OSX == 'Darwin'):
-        mpi_flags = '-v'
+        mpi_flags = ''
     # run on existing MITgcm files, no clearing of the folder
     os.chdir("results")
     if(isMPI):
