@@ -132,9 +132,9 @@ if(fullDepth == False):
     print('depth is z =', z[zSlice,0,0], 'index', zSlice)
 
 if(isBerg):
-    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag','BRGFlx','BRGFlx']
-    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg','BrgDrag_x','BrgDrag_y']
-    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]","[N/m^2]","[N/m^2]"]
+    dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','BRGFlx','ptraceDiag','ptraceDiag']
+    name = ["Temp", "Sal", "U", "W", "V", "BRGmltRt",'TracePlume','TraceBerg']
+    cbarLabel = ["[C]", "[ppt]", "[m/s]", "[m/s]", "[m/s]", "[m/d]","[Vol Frac]","[Vol Frac]"]
 else:
     dynName = ['dynDiag', 'dynDiag', 'dynDiag', 'dynDiag','dynDiag']
     name = ["Temp", "Sal", "U", "W", "V"]
@@ -152,10 +152,12 @@ for k in kList:
     for i in np.arange(startStep, maxStep + 1, sizeStep):
         if(showQuiver):
             dataQuiv = mds.rdmds("results/dynDiag", i)
-        if(isBerg and os.path.isfile('results/BRGFlx.%010i.001.001.data' % i)):
-            localBergs = False
-        else:
-            localBergs = False
+        if(isBerg): 
+            dataBergs = mds.rdmds("results/BRGFlx",i)
+            if(dataBergs.shape[0] == 6):
+                dataBergPlot = dataBergs[5,:,:,:] #directly saved for these runs
+                dataBergPlot[:,topo[:,:] == 0] = 1 #zero weight non-ocean cell
+                # dataBergPlot[:,:,0] = 1
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         kk = k
         if k == 0:
@@ -266,14 +268,25 @@ for k in kList:
                 linewidths=0.5
             )
             plt.clabel(cc, inline=3, fontsize=8)
-        if(localBergs):
-            cp2 = plt.contourf(np.squeeze(x),
-                np.squeeze(y),
-                np.squeeze(openFrac[zSlice, :, :]),
-                [.4,.6,.8,.9,.95],
-                extend="min",
-                alpha=.1,
-                cmap='cmo.gray')
+        if(isBerg):
+            if(True):
+                cp = plt.pcolormesh(
+                    np.squeeze(x),
+                    np.squeeze(y),
+                    np.squeeze(dataBergPlot[zSlice, :, :]),
+                    cmap='cmo.gray',
+                    vmin=.01,
+                    vmax=.90,
+                    alpha = .5
+                )
+            else:
+                cp2 = plt.contourf(np.squeeze(x),
+                    np.squeeze(y),
+                    np.squeeze(dataBergPlot[zSlice, :, :]),
+                    [.4,.6,.8,.9,.95],
+                    extend="min",
+                    alpha=.1,
+                    cmap='cmo.gray')
             #cbar2 = plt.colorbar(cp2)
             #cbar2.set_label('Ocean Fraction')
 

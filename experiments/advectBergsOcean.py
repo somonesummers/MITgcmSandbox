@@ -20,9 +20,11 @@ def write_bin(fname, data):
 
 advectBergs = True
 clipBergs = True
-trialOnly = False   
+trialOnly = False
+makePlot = False
 showPlots = False
 addBergs = True
+
 couplingTimeStep = 6*3600 #[s]
 
 iceDensity = 917 # [kg/m^3]
@@ -77,7 +79,7 @@ sum_z = np.cumsum(dz)
 ## This needs to know about z. Bergs cant be deeper than this
 hardMaxDepth = np.max(np.abs(z)) - 5
 ## icebergs are destroyed when they move past here
-icebergRightHandGate = int(nx*0.9)
+icebergRightHandGate = int(nx*0.95)
 
 ## Now we load the iceberg geometry and mask files
 
@@ -133,6 +135,7 @@ minMoveY = int(0)
 moveBergCount = 0
 stuckBergCount = 0
 bumpedBergCount = 0
+ejectedBergCount = 0
 if(advectBergs):
     for i in range(nx-1,0,-1): #i goes from nx-1 to 1 in reverse order
         for j in range(ny-1,0,-1):#j goes backwards as well, as bergs tend to move north
@@ -229,7 +232,7 @@ if(advectBergs):
                             stuckBergCount += 1
                     else:
                         # print('Iceberg has left the zone and is lost. Index: %i' %(i + advect))
-                        pass
+                        ejectedBergCount += 1
                 else: 
                     ## I try to set the minimum berg size such that this doesnt happen in the melange
                     ## You may want to rely on this option like this for freely drifting bergs, but for now its a warning as it should happen
@@ -247,6 +250,7 @@ print('\t\tTotal bergs after move: %i' %np.sum(bergsPerCell))
 print(f'\t\tMoving Attempt bergs: {moveBergCount} ({moveBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
 print(f'\t\tStuck bergs: {stuckBergCount} ({stuckBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
 print(f'\t\tBumped bergs: {bumpedBergCount} ({bumpedBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
+print(f'\t\tEjected bergs: {ejectedBergCount} ({ejectedBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
 if(clipBergs):
     ## Remove Bergs too far along fjord, beyond right hand gate
     bergWidths[:,:,icebergRightHandGate:] = 0
@@ -304,6 +308,7 @@ if(addBergs):
         generatedWidths.append(0)
 
     print('\t\tMax depth/width of new bergs: %.2f/%.2f' %(np.max(generatedDepths),np.max(generatedWidths)))
+if(makePlot):
     plt.figure(3)
     plt.subplot(211)
     plt.hist(np.array(generatedDepths),100)
@@ -367,66 +372,69 @@ del i,j
 
 ## Remove blocking from plume locations
 barrierMask[plumeMask[:,1] > 1,1] = 0
-
-## Visual outputs, can toggle on/off or save
-
-plt.figure(1)
-plt.subplot(221)
 varphi = 1-openFrac
-varphi[varphi == 1] = np.nan
-plt.plot(x[0,:],np.sum(bergsPerCell[1:-1,:],axis=0))
-plt.title('berg count')
-plt.ylabel('Count [ ]')
-plt.xlabel('Along fjord [m]')
 
-plt.subplot(222)
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", category=RuntimeWarning)
-    pc = plt.plot(x[0,:],np.nanmean(varphi[0,:,:],axis=0),linestyle='-')
-    pc = plt.plot(x[0,:],np.nanmax(varphi[0,:,:],axis=0),linestyle=':')
-# plt.suptitle('$\\lambda$')
-plt.ylim([0,1])
-plt.ylabel('$\\lambda$')
-plt.xlabel('Along fjord [m]')
+if(makePlot):
+    plt.figure(1)
+    plt.subplot(221)
+    varphi[varphi == 1] = np.nan
+    plt.plot(x[0,:],np.sum(bergsPerCell[1:-1,:],axis=0))
+    plt.title('berg count')
+    plt.ylabel('Count [ ]')
+    plt.xlabel('Along fjord [m]')
 
-depthHelper = bergDepths.copy()
-depthHelper[depthHelper == 0] = np.nan
-plt.subplot(223)
-varphi = 1-openFrac
-varphi[varphi == 1] = np.nan
-# print(varphi[:,:,0:10])
-with warnings.catch_warnings():
-	warnings.simplefilter("ignore", category=RuntimeWarning)
-	pc = plt.pcolormesh(x[0,:],-z,np.nanmean(varphi[:,1:-1,:],axis=1),cmap='gray_r')
-cbar = plt.colorbar(pc)
-depthHelper = bergDepths.copy()
-depthHelper[depthHelper == 0] = np.nan
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", category=RuntimeWarning)
-    plt.plot(x[0,:],-np.nanmean(depthHelper[:,1:-1,:],axis=(0,1)),color='xkcd:orange',linestyle='--',label='$<D>$')
-plt.suptitle('$\\varphi$')
-plt.legend()
-plt.ylabel('Depth [m]')
-plt.xlabel('Along fjord [m]')
-cbar.set_label('ice fraction')
+    plt.subplot(222)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        pc = plt.plot(x[0,:],np.nanmean(varphi[0,:,:],axis=0),linestyle='-')
+        pc = plt.plot(x[0,:],np.nanmax(varphi[0,:,:],axis=0),linestyle=':')
+    # plt.suptitle('$\\lambda$')
+    plt.ylim([0,1])
+    plt.ylabel('$\\lambda$')
+    plt.xlabel('Along fjord [m]')
 
-plt.subplot(224)
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", category=RuntimeWarning)
-    pc = plt.pcolormesh(x[0,:],y[:,0],varphi[0,:,:],cmap='cmo.ice_r')
-cbar = plt.colorbar(pc)
-plt.suptitle('$\\lambda$')
-plt.ylabel('Across fjord [m]')
-plt.xlabel('Along fjord [m]')
-cbar.set_label('ice fraction')
-plt.clim([0,1])
-del depthHelper
+    depthHelper = bergDepths.copy()
+    depthHelper[depthHelper == 0] = np.nan
+
+    plt.subplot(223)
+    varphi = 1-openFrac
+    varphi[varphi == 1] = np.nan
+    # print(varphi[:,:,0:10])
+    with warnings.catch_warnings():
+    	warnings.simplefilter("ignore", category=RuntimeWarning)
+    	pc = plt.pcolormesh(x[0,:],-z,np.nanmean(varphi[:,1:-1,:],axis=1),cmap='gray_r')
+    cbar = plt.colorbar(pc)
+    depthHelper = bergDepths.copy()
+    depthHelper[depthHelper == 0] = np.nan
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        plt.plot(x[0,:],-np.nanmean(depthHelper[:,1:-1,:],axis=(0,1)),color='xkcd:orange',linestyle='--',label='$<D>$')
+    plt.suptitle('$\\varphi$')
+    plt.legend()
+    plt.ylabel('Depth [m]')
+    plt.xlabel('Along fjord [m]')
+    cbar.set_label('ice fraction')
+
+    plt.subplot(224)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        pc = plt.pcolormesh(x[0,:],y[:,0],varphi[0,:,:],cmap='cmo.ice_r')
+    cbar = plt.colorbar(pc)
+    plt.suptitle('$\\lambda$')
+    plt.ylabel('Across fjord [m]')
+    plt.xlabel('Along fjord [m]')
+    cbar.set_label('ice fraction')
+    plt.clim([0,1])
+    del depthHelper
+
+    plt.tight_layout() 
+    ## you can save this figure if you'd like, it is a fun movie if you combine them all
+    plt.savefig('figs/advectBergs%08d.png' %maxStep,format='png',dpi=150)
+
 
 print('\t\tMax lambda/Depth/Width is: %.3f/%.3f/%.3f' %(np.max(varphi[0,:,:]),np.max(bergDepths),np.max(bergWidths)))
 
-plt.tight_layout() 
-## you can save this figure if you'd like, it is a fun movie if you combine them all
-plt.savefig('figs/advectBergs%08d.png' %maxStep,format='png',dpi=150)
+
 
 ## I toggle this for troubleshooting purposes
 if(not trialOnly):
@@ -445,7 +453,7 @@ if(not trialOnly):
 else:
     print('Not Saving')
     print('Seconds to advect: %.4f' % (time.time() - start_time))
-if(showPlots):
+if(makePlot and showPlots):
     plt.show()
     plt.close()
 # os.rename("totalBergArea.bin", "totalBergArea.bin" + "~") #save old file incase something goes wrong

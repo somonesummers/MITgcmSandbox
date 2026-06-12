@@ -159,6 +159,7 @@ for k in kList:
             dataBergs = mds.rdmds("results/BRGFlx",i)
             if(dataBergs.shape[0] == 6):
                 openFrac[:,:,:] = dataBergs[5,:,:,:] #directly saved for these runs
+                openFrac[:,topo[:,:] == 0] = 0 #zero weight non-ocean cell
                 openFrac[:,:,0] = 1
                 oldAveraging = False
         if(args.shadow > 0): #enable berg shadows here
@@ -210,7 +211,7 @@ for k in kList:
             cp = plt.pcolormesh(
                 np.squeeze(x[0,:]),
                 np.squeeze(z),
-                np.squeeze(np.average(data[kk, :, 1:-1, :], weights=openFrac[:,1:-1,:],axis=1)),
+                np.squeeze(np.average(data[kk, :, 1:-1, :], weights=openFrac[:,:,:],axis=1)),
                 cmap=cm,
                 vmin=np.min(lvl),
                 vmax=np.max(lvl),
@@ -231,7 +232,7 @@ for k in kList:
             cp2 = plt.contourf(
                 x[0,:],
                 np.squeeze(z),
-                np.squeeze(np.nanmean(dataBergPlot[:, 1:-1, :],axis=1)),
+                np.squeeze(np.nanmean(dataBergPlot[:, :, :],axis=1)),
                 [.4,.6,.8,.9,.95],
                 extend="min",
                 alpha=.2,
@@ -241,10 +242,10 @@ for k in kList:
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
         if(showDensity and (dynName[k] == 'dynDiag')):
-            salt = np.squeeze(np.average(data[1,:,1:-1,:],weights=openFrac[:,1:-1,:],axis=1))
+            salt = np.squeeze(np.average(data[1,:,:,:],weights=openFrac[:,:,:],axis=1))
             if(i == startStep): #only calc pressure once
                 pressure = -1 * np.ones(salt.shape) * 1020 * 9.81 * np.repeat(np.expand_dims(z,1), salt.shape[1], axis=1) /10e3
-            CT = gsw.CT_from_t(salt, np.average(data[0,:,1:-1,:],weights=openFrac[:,1:-1,:],axis=1), pressure)
+            CT = gsw.CT_from_t(salt, np.average(data[0,:,:,:],weights=openFrac[:,:,:],axis=1), pressure)
             density = gsw.rho(salt, CT, 0) - 1000 #in-stu density less 1000
             densityLevels = np.linspace(25,28,16)
             cc = plt.contour(
@@ -262,7 +263,7 @@ for k in kList:
                 cc = plt.contour(
                     np.squeeze(x[0,:]),
                     np.squeeze(z),
-                    np.squeeze(np.average(data[kk, :, 1:-1, :], weights=openFrac[:,1:-1,:],axis=1)),
+                    np.squeeze(np.average(data[kk, :, :, :], weights=openFrac[:,::],axis=1)),
                     [0],
                     colors='gray',
                     linewidths=0.5,
