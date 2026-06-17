@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 # Paul Summers, June 2026
-# Script for generating MITgcm setup for coupling with MELANGE1D on single core
+# Script for generating MITgcm setup for drifting icebergs. 
+# This is borrowed from the melange coupling script, so some melange stuff gets copied over that really isn't needed. 
+# I've tried to clean that up, but I'm not perfect
 # Including seasonal forcing of plume for now, BCs also enabled
 
 import os
@@ -86,7 +88,7 @@ Allows for seasonal forcing (plume and off shore)
 Enables pTracers for plume and icebergs seperately
 
 big pool model, 20km pool off shore
-ramping summer peak from 500 to 1500
+Constant SGD
 Coupled with variable Uc and 4x enhanced melt
 Summer forcing
 
@@ -100,13 +102,13 @@ setUpPrint('====== Welcome to the mélange building script =====')
 run_config = {}
 grid_params = {}
 run_config['ncpus_xy'] = [1,1] # cpu distribution in the x and y directions
-run_config['run_name'] = 'example_2'
-run_config['ndays'] = 1 # simulation time (days)
+run_config['run_name'] = 'example_drift'
+run_config['ndays'] = 0.25 # simulation time (days)
 run_config['test'] = False # if True, run_config['nyrs'] will be shortened to a few time steps
 
 wallWidthInd = 4 #width of walls in units of dy
 run_config['horiz_res_m'] = 700 # horizontal grid spacing (m)
-run_config['Lx_m'] = 35000 # domain size in x (m)
+run_config['Lx_m'] = 42000 # domain size in x (m)
 #If you change Fjord width you must update mélange width, and ensure that is starting from a reasonable steady state.
 fjord_width = 5600
 run_config['Ly_m'] = fjord_width + (2 * wallWidthInd * run_config['horiz_res_m']) # domain size in y (m) with walls (1 wall each side)
@@ -116,7 +118,7 @@ grid_params['Nr'] = 32 # num of z-grid points
 
 run_config['make_icebergs'] = False 
 
-run_config['pickup_location'] = None # location of spin-up files, None assumes net new run, uses donor glaciome 
+run_config['pickup_location'] = None # location of spin-up files, None assumes net new run 
 if (run_config['pickup_location'] == None):
     run_config['make_icebergs'] = True 
 
@@ -136,26 +138,27 @@ input("Confirm above is accurate before continuing...")
 
 # Variables to adjust ======================
 assign_deltaT = 0 # [C]
-assign_plumeSGD = 1000 #[m^3/s]
+assign_plumeSGD = 750 #[m^3/s]
 base_SGD = 500 #[m^3/s]
 season_sw = 's'
 
 # Offshore current =========================
 oscStrength = 0.03 #[m/s] peak strength of offshore current
-lengthOffShoreLength = 3500 #width of offshore region [m]
+lengthOffShoreLength = 7000 #width of offshore region [m]
 indexOSC = int(lengthOffShoreLength/run_config['horiz_res_m'])
 
 # Iceberg configuration =========================
 iceBergDepth = 300 # max iceberg depth [meters], used for ICEBERG package
-iceExtent = 25000 # [meters] of extent of ice
-iceCoverage = 60 # % of ice cover in melange, stay under 90% ideally
+iceExtent = 10000 # [meters] of extent of ice
+iceCoverage = 30 # % of ice cover in melange, stay under 90% ideally
 doMelt = 1 # do we actually calculate melt (0/1 = no/yes)
-doBlock = 1 # do we actually calculate melt (0/1 = no/yes)
+doBlock = 0 # do we let icebergs block flow (0/1 = no/yes) (drifters don't block)
 # Set median drafts to align with output from melange1D
 forceDraft = False
 
 #========================================================================================
-# The rest of this should take care of it self mostly
+# The rest of this should take care of it self mostly. 
+# Noteably iceberg drifing couples at 6 hours, whereas mélange coupled at 24 hours
 
 #run_config['evolve_salt'] = False
 run_config['use_GMRedi'] = False # should be set to false for eddy permitting resolutions
@@ -322,8 +325,8 @@ params01['staggerTimeStep'] = True
 
 # diffusivity
 #params01['diffK4T'] = 0.0e4 # ?? temp diffusion
-# These all default to 0, and actually were 0 for my paper runs despite me saying otherwise. The implicit diffuision =TRUE below almost always overrides this. 
-params01['diffKhT'] = 1.0e-5 # Horizontal temp diffusion
+# These all default to 0, and actually were 0 for my paper runs despite me saying otherwise. The implicit diffuision = TRUE below almost always overrides this. 
+params01['diffKhT'] = 1.0e-5 # Horizontal temp diffusion. 
 params01['diffKhS'] = 1.0e-5 # Horz salt diffusion
 params01['diffKzT'] = 1.0e-5 # Vertical temp diffusion
 params01['diffKzS'] = 1.0e-5 # Vert salt diffusion
@@ -347,7 +350,7 @@ params01['selectAddFluid'] = 1
 # params01['useRealFreshWaterFlux'] = True #we add fluid above, so I think this is un-needed
 params01['exactConserv'] = True
 params01['implicitViscosity'] = True
-params01['implicitDiffusion'] = True
+params01['implicitDiffusion'] = True #This overr
 
 # physical parameters
 params01['f0'] = 1.37e-4
@@ -386,11 +389,11 @@ params03['abEps'] = 0.1
 #if run_config['testing']:
     
 params03['chkptFreq'] = 0.0
-params03['pChkptFreq'] = 86400.0
+params03['pChkptFreq'] = 21600.0 # 6 hours
 params03['taveFreq'] = 0.0
 params03['dumpFreq'] = 0.0
 params03['taveFreq'] = 0.0
-params03['monitorFreq'] = 21600.0 # 6 hours
+params03['monitorFreq'] = 10800.0 # 3 hours
 params03['monitorSelect'] = 1
 
 # Force with yearly cycle
@@ -461,8 +464,8 @@ if run_config['test']:
     run_config['tavg_freq'] = 1 # multiples of timestep
     
 else:
-    run_config['inst_freq'] = 24 # multiples of hours (must be at least every day for coupling to get iceberg melt rates)
-    run_config['tavg_freq'] = 24 # multiples of hours 
+    run_config['inst_freq'] = 6 # multiples of hours (must be at least every day for coupling to get iceberg melt rates)
+    run_config['tavg_freq'] = 6 # multiples of hours 
 
 #---------specify time averaged fields------#
 # NOTE: many more options available see mitgcm docs
@@ -787,15 +790,15 @@ plumeMask = np.zeros([grid_params['Ny'],grid_params['Nx']])
 
 ## Total runoff (m^3/s)
 ## Seasonal Peak
-rampedPeak = base_SGD + assign_plumeSGD * np.arange(nt)/float(nt)
-runoff = -2*(rampedPeak)* np.sin(2*np.pi * np.arange(nt)/(nt/10)) - rampedPeak
-runoff[runoff <  25 ] = 25
+# rampedPeak = base_SGD + assign_plumeSGD * np.arange(nt)/float(nt)
+# runoff = -2*(rampedPeak)* np.sin(2*np.pi * np.arange(nt)/(nt/10)) - rampedPeak
+# runoff[runoff <  25 ] = 25
 ## linear ramp
 # runoff = 500 + assign_plumeSGD * np.arange(nt)/float(nt)
 # runoff[-1] = runoff[0] #wrapping periodic BCs to ensure no shock
 # runoff = runoff[::-1] #flipping around for building melange
 ## Constant
-# runoff = assign_plumeSGD * np.ones(nt)
+runoff = assign_plumeSGD * np.ones(nt)
 
 setUpPrint('Runoff is:')
 setUpPrint(runoff)
@@ -1351,7 +1354,7 @@ elif(OSX == 'PACE'):
     cluster_params['sbatch_preamble'] = ['#SBATCH -q inferno\n', '#SBATCH --account=gts-arobel3-atlas\n']
     cluster_params['load_list'] = []
     cluster_params['cpus_per_node'] = 10 #PACE has bigger nodes, but when I ask for more core it stalls forever and never runs 
-extraList = ["~/.conda/envs/MITgcm/bin/python -u RunModelMpi.py"]
+extraList = ["~/.conda/envs/MITgcm/bin/python -u RunOceanMpi.py"]
 
 run_config['extraCommands'] = "".join(extraList)
      
@@ -1370,14 +1373,17 @@ if(makeDirs):
     #some coupling files
     os.makedirs("%s/couplingResults" %run_config['run_dir'], exist_ok=True)
     os.makedirs("%s/figs" %run_config['run_dir'], exist_ok=True)
-    os.system(f"ln -s {baseDir}/experiments/advectBergs.py {run_config['run_dir']}")
-    os.system(f"ln -s {baseDir}//experiments/RunModelMpi.py {run_config['run_dir']}")
+    os.system(f"ln -s {baseDir}/experiments/advectBergsOcean.py {run_config['run_dir']}") #Note this is different from the mélange script
+    os.system(f"ln -s {baseDir}//experiments/RunOceanMpi.py {run_config['run_dir']}") #Note this is different from the mélange script
     os.system("cp ../experiments/melangeModelExample.py %s/melangeModel.py" %run_config['run_dir'])
+    replaceAll(run_config['run_dir'] + '/melangeModel.py','icebergCoverLambda = .60', 'icebergCoverLambda = .30') # less dense icebergs compared to mélange
+    replaceAll(run_config['run_dir'] + '/melangeModel.py','iterationsToRun = 3650', 'iterationsToRun = 40') # shorten run time
     if(run_config['pickup_location'] != None):
         os.system(f"cp -v {run_config['pickup_location']}/* {run_config['run_dir']}/input")
-        os.system(f"cp -v {run_config['pickup_location']}/MITgcmRun_00000.pickle {run_config['run_dir']}/couplingResults")
+        # os.system(f"cp -v {run_config['pickup_location']}/MITgcmRun_00000.pickle {run_config['run_dir']}/couplingResults")
     else:
-        os.system(f"cp -v melangeDefault.pickle {run_config['run_dir']}/couplingResults/MITgcmRun_00000.pickle")
+        pass
+        # os.system(f"cp -v melangeDefault.pickle {run_config['run_dir']}/couplingResults/MITgcmRun_00000.pickle")
     if os.path.isfile(run_config['run_dir']+'/input/setupReport.txt'):   
         os.remove(run_config['run_dir']+'/input/setupReport.txt')
         setUpPrint('previous setupReport.txt deleted in '+ run_config['run_dir']+'/input/')

@@ -157,10 +157,14 @@ for k in kList:
             dataQuiv = mds.rdmds("results/dynDiag", i)
         if(isBerg):
             dataBergs = mds.rdmds("results/BRGFlx",i)
+            # So this bit is a little tricky, but we are only weighting the average as much as the ocean is actually IN this cell 
+            # as opposed weighting all wet cells evenly. This likely not a HUGE deal but it is not hard to do it correctly. 
+            # In the mélange where cells can be majority ice, this becomes more important. 
             if(dataBergs.shape[0] == 6):
                 openFrac[:,:,:] = dataBergs[5,:,:,:] #directly saved for these runs
-                openFrac[:,topo[:,:] == 0] = 0 #zero weight non-ocean cell
-                openFrac[:,:,0] = 1
+                openFrac[openFrac == 0] = 1 #non-iceberg cells default to 0 this causes issues with averaging
+                openFrac[:,topo[:,:] == 0] = 0 #zero weight non-ocean cells
+                openFrac[:,:,0] = 1 #first cell can't be all 0 weighted
                 oldAveraging = False
         if(args.shadow > 0): #enable berg shadows here
             if(dataBergs.shape[0] < 6):
