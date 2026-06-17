@@ -387,7 +387,6 @@ for ii in range(iterationsToRun):
         elif(OSX == 'Darwin'):
             mpi_flags = ''
         # run on existing MITgcm files, no clearing of the folder
-        os.chdir("results")
         if(isMPI):
             if(OSX == 'Tufts'):
                 sys_ret = os.system(f"mpirun {mpi_flags} -n {nPy*nPx} ./mitgcmuv")
