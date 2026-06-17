@@ -66,7 +66,7 @@ if OSX == 'Darwin':
 elif "cluster" in current_directory:
     CondaDir = '~/.conda'
     OSX = 'Tufts'
-elif "hcoda" in current_directory:
+elif ("storage" in current_directory) or ("hcoda" in current_directory):
     CondaDir = '~/.conda'
     OSX = 'PACE'
 else:
