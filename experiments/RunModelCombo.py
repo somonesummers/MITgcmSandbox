@@ -376,17 +376,34 @@ for ii in range(iterationsToRun):
     os.system(f"{CondaDir}/envs/MITgcm/bin/python advectBergsCombo.py >> couplingResults/out.txt")
 
     os.chdir("results")
-    if(isMPI):
+    maxTry = 3
+    # Sometime PACE specifically will timeout when queueing SRUN jobs, this kills the whole run and is a bummer,
+    # so here we allow the script to try a few times to get this to go. 
+    for attempt_i in range(maxTry):
         if(OSX == 'Tufts'):
-            os.system(f"mpirun {mpi_flags} -n {nPy*nPx} ./mitgcmuv")
-        elif(OSX == 'PACE'): 
-            os.system(f"srun {mpi_flags} ./mitgcmuv") #srun is smart and allocated cores automatically
+            mpi_flags = '--quiet --mca btl_vader_single_copy_mechanism none'
+        elif(OSX == 'PACE'):
+            mpi_flags = ''
         elif(OSX == 'Darwin'):
-            os.system(f"mpirun {mpi_flags} -n {nPy*nPx} ./mitgcmuv")
+            mpi_flags = ''
+        # run on existing MITgcm files, no clearing of the folder
+        os.chdir("results")
+        if(isMPI):
+            if(OSX == 'Tufts'):
+                sys_ret = os.system(f"mpirun {mpi_flags} -n {nPy*nPx} ./mitgcmuv")
+            elif(OSX == 'PACE'): 
+                sys_ret = os.system(f"srun {mpi_flags} ./mitgcmuv") #srun is smart and allocated cores automatically
+            elif(OSX == 'Darwin'):
+                sys_ret = os.system(f"mpirun {mpi_flags} -n {nPy*nPx} ./mitgcmuv")
+            else:
+                raise ExceptionType("unknown OSX or running location, please configure")
         else:
-            raise ExceptionType("unknown OSX or running location, please configure")
-    else:
-        os.system(f"./mitgcmuv > MITgcm_output.txt")
+            sys_ret = os.system(f"./mitgcmuv > ../MITgcm_output.txt")
+        sysPrint(f"MITgcm run return is {sys_ret}")
+        if(sys_ret == 0): #MITgcm ran successfully, so lets continue. Specifically sys_ret = 256 seems to be the 
+                          # srun: error: Unable to confirm allocation for job 9983843: Socket timed out on send/recv operation
+                          # srun: Check SLURM_JOB_ID environment variable. Expired or invalid job 9983843
+            break
     os.chdir("../")
     
     # Create global files to reduce file counts
