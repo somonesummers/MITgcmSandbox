@@ -26,9 +26,9 @@ def write_bin(fname, data):
 
 advectBergs = True
 clipBergs = True
-shadedEdge = True
+shadedEdge = False #don't shade when letting bergs drift out
 fillIn = True
-icebergFringe = False
+driftBergs = True
 trialAndPlot = False
 couplingTimeStep = 1*24*3600 #[s]
 
@@ -38,10 +38,10 @@ oceanDensity = 1030 # [kg/m^3]
 ## Some rules on advecting/melting/sizing
 minBergDepth = 5 # bergs not allowed to shrink/melt smaller than this [m]
 maxBergDepth = 450 # bergs not allowed to shrink/melt smaller than this [m]
-maxLambda = .90 # Cells are full at this lambda [hard limit]
+maxLambda = .95 # Cells are full at this lambda [hard limit]
 scaleMin = 0.2 # error allowed between MITgcm effective depth and GLACIOME depth
 ## Bergs added to top off to icebergCoverLamba left of refreshGate
-icebergRefreshingGate = 3
+icebergRefreshingGate = 2
 maxBergs = 500
 
 
@@ -67,8 +67,9 @@ for file in os.listdir('results'):
         if int(words[1]) > maxStep:
             maxStep = int(words[1])
 
-## Iceberg melt data
+## Iceberg melt data, ocean velocity model
 dataMITgcm = mds.rdmds("results/BRGFlx", maxStep)
+dataMITgcmOcean = mds.rdmds("results/dynDiag", maxStep)
 
 ## Geometry of MITgcm domain
 x = mds.rdmds("results/XC")
@@ -176,28 +177,33 @@ print('\t\tTotal bergs at start move: %i' %np.sum(bergsPerCell))
 ## Track where the edge of the melange is according to GLACIOME
 melangeIndex = int(np.ceil(glaciome_L/deltaX))
 print(f'\t\tMélange edge is index: {melangeIndex}')
-if(icebergFringe): 
-    # Remove Bergs beyong the melange, ie the fringe. 
-    # This must bedone before advecting mélange bergs to ensure no big icebergs get 'stuck' in the mélange.
-    # Once iceberg fringe advection is enabled, this may be possible to remove.
-    bergWidths[:,:,melangeIndex:] = 0
-    bergLength[:,:,melangeIndex:] = 0
-    bergDepths[:,:,melangeIndex:] = 0
-    bergsPerCell[:,melangeIndex:] = 0
+
 print('\t\tTotal bergs after first clipping, before move: %i' %np.sum(bergsPerCell))
 
 ## Advect bergs. We go backwards (front to back) to ensure overfull icebergs can get priority to stay where they are
 ## If you want it to not really be random
 # np.random.seed(3)
 maxMove = int(0) #track this to know how far the farthest berg moved. We only 'top off' this far.
+#stats we're curious about for drifters
+maxMoveX = int(0) 
+maxMoveY = int(0) 
+minMoveX = int(0) 
+minMoveY = int(0) 
+moveBergCount = 0
+stuckBergCount = 0
+bumpedBergCount = 0
+ejectedBergCount = 0
+driftersCount = 0
+ridgidCount = 0
 if(advectBergs):
     for j in range(ny):
-        for i in range(nx-1,0,-1): #i goes from nx-1 to 1 in reverse order
+        for i in range(melangeIndex-1,0,-1): #i goes from melange tip to 1 in reverse order
                 if(bathymetry[j,i] == 0):
                     continue #This is a wall, no bergs here
                 ## Total freshwater flux / area of bergs in cell 
                 ## perhaps this below line could use the actual lambda for the location, but be careful about plume cells
                 effectiveMelt = np.nanmean(np.nansum(dataMITgcm[0,:,:,1:],axis=0),axis=0)/(deltaX*deltaY*icebergPhi)*(24*3600)*1000/917 #[m]
+                ridgidCount += bergsPerCell[j,i]
                 for k in range(bergsPerCell[j,i]):
                     if(min(bergWidths[k,j,i],bergLength[k,j,i],bergDepths[k,j,i]) > 2):
                         #assign berg location, advect, re-bin
@@ -244,26 +250,129 @@ if(advectBergs):
                         ## I try to set the minimum berg size such that this doesnt happen in the melange
                         ## You may want to rely on this option like this for freely drifting bergs, but for now its a warning as it should happen
                         print('\t\t** WARNING small iceberg discarded second filter [W,L,D]: [%.3f,%.3f,%.3f] WARNING **' %(bergWidths[k,j,i],bergLength[k,j,i],bergDepths[k,j,i]))
-    del i,j,k
+    del i,j
+if(driftBergs):
+    for i in range(nx-1,melangeIndex-1,-1): #i goes from nx-1 to melangeIndex in reverse order
+        for j in range(ny-1,0,-1):#j goes backwards as well, as bergs tend to move north
+            if(bathymetry[j,i] == 0):
+                continue #This is a wall, no bergs here, skip to next iteration
+            ## Total freshwater flux / area of bergs in cell 
+            ## perhaps this below line could use the actual lambda for the location, but be careful about plume cells
+            spd_x = dataMITgcmOcean[2,:,j,i] #[m/s]
+            spd_y = dataMITgcmOcean[4,:,j,i] #[m/s]
+            driftersCount += bergsPerCell[j,i]
+            for k in range(bergsPerCell[j,i]):
+                if(min(bergWidths[k,j,i],bergLength[k,j,i],bergDepths[k,j,i]) > 2):
+                    ## Depth check
+                    if(bergDepths[k,j,i] > hardMaxDepth):
+                        bergDepths[k,j,i] = hardMaxDepth
+                        print(f"WARNING deep iceberg adjusted to fit in domain k/j/i: {k}/{j}/{i}")
+                    ## assign berg location, advect, re-bin
+                    depthIndex = np.max([np.argmin(np.abs(z[:] - bergDepths[k,j,i])),1]) # shallow bergs are entirely in top layer
+                    # print(f"depth, ind of berg: {bergDepths[k,j,i]}, {depthIndex}")
+                    avgMelt = np.nanmean(dataMITgcm[2,:depthIndex,j,i,],axis=0) #m/day
+                    init_x = random.random()*deltaX
+                    init_y = random.random()*deltaY
+                    ## movement = speed * couplingTimeStep
+                    move_x = np.mean(spd_x[:depthIndex]) * couplingTimeStep #only avg to depth of berg
+                    move_y = np.mean(spd_y[:depthIndex]) * couplingTimeStep #only avg to depth of berg
+                    # print(f"spdx,y {spd_x[:depthIndex]}, {spd_y[:depthIndex]}")
+                    advect_x = int(np.floor((init_x + move_x)/deltaX))
+                    advect_y = int(np.floor((init_y + move_y)/deltaY))
+                    # if(advect_y  < 0):
+                    #     print(f"i,j init x,y {i},{j} {init_x:0.2f},{init_y:0.2f}")
+                    #     print(f"i,j move x,y {i},{j} {move_x:0.2f},{move_y:0.2f}")
+                    #     print(f"i,j advect x,y {i},{j} {advect_x},{advect_y}")
+                    if(advect_x > maxMoveX):
+                            maxMoveX = advect_x
+                    if(advect_y > maxMoveY):
+                            maxMoveY = advect_y
+                    if(advect_x < minMoveX):
+                            minMoveX = advect_x
+                    if(advect_y < minMoveY):
+                            minMoveY = advect_y
+                    if(advect_y != 0 or advect_x != 0):
+                        moveBergCount += 1
+                    # print(f" j,i {j:2d},{i:2d} advect y, x: {advect_y},{advect_x}")
+                    ## move into new cell, increment number of berg in new cell
+                    if(i + advect_x < icebergRightHandGate):
+                        bergArea = (bergWidths[k,j,i]) * (bergLength[k,j,i])
+                        new_j = j + advect_y
+                        new_i = i + advect_x
+                        ## Bounds on array lengths
+                        if(new_j < 0):
+                            new_j = 0
+                        elif(new_j > ny-1):
+                            new_j = ny - 1
+                        if(new_i < 0):
+                            new_i = 0
+                        elif(new_i > nx-1):
+                            new_i = nx - 1
+                        ## Bounds on where the ocean actually is
+                        while(bathymetry[new_j,new_i] == 0):
+                            if(new_i < melangeIndex): #if inside mélange, push out
+                                new_i = melangeIndex
+                            elif(new_j < ny/2): #if in fjord walls, push back to center
+                                new_j = new_j + 1
+                            else:
+                                new_j = new_j - 1
+                        existingAreaHome = np.sum(bergWidthsNew[:,j,i] * bergLengthNew[:,j,i])  #area of bergs in new timestep where you are coming from
+                        if((bergArea + existingAreaHome)/(deltaX*deltaY) > maxLambda and new_j == j and new_i == i):
+                            ## This means your home cell is full before we even start, and you weren't planning to move
+                            ## We are going to say you are now "shoved" by the incoming bergs. You get pushed 1 cell down fjord no matter what. 
+                            new_i = i + 1 #bumping you down fjord
+                            bumpedBergCount += 1 
+                            # print(f"\t\tBumping berg j,i {j},{i} depth {bergDepths[k,j,i]:0.2f}")
+                        existingArea = np.sum(bergWidthsNew[:,new_j,new_i] * bergLengthNew[:,new_j,new_i]) #area of bergs in new timestep where you want to go
+                        if((bergArea + existingArea)/(deltaX*deltaY) < maxLambda and bergsPerCellNew[new_j,new_i] < maxBergs - 2):
+                            bergWidthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergWidths[k,j,i] - avgMelt * couplingTimeStep/86400
+                            bergLengthNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergLength[k,j,i] - avgMelt * couplingTimeStep/86400
+                            if((bergDepths[k,j,i] - avgMelt * couplingTimeStep/86400) > minBergDepth):
+                                bergDepthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergDepths[k,j,i] - avgMelt * couplingTimeStep/86400
+                            else:
+                                bergDepthsNew[bergsPerCellNew[new_j,new_i],new_j,new_i] = bergDepths[k,j,i] # too little to melt
+                            bergsPerCellNew[new_j,new_i] += 1
+                        elif(bergsPerCellNew[j,i] > maxBergs - 2):
+                            print(f'**WARNING**  Cell j,i ({j},{i}) is overfull on COUNT, deleting berg depth {bergDepths[k,j,i]:0.2f} m. This is bad.')
+                        elif((bergArea + existingAreaHome)/(deltaX*deltaY) > maxLambda):
+                            print(f'**WARNING**  Cell j,i ({j},{i}) is overfull on LAMBDA, deleting berg depth {bergDepths[k,j,i]:0.2f} m. This is bad.')
+                        else:
+                            # print('Cell too full (volume or count), iceberg melts, but does not move')
+                            bergWidthsNew[bergsPerCellNew[j,i],j,i] = bergWidths[k,j,i] - avgMelt * couplingTimeStep/86400
+                            bergLengthNew[bergsPerCellNew[j,i],j,i] = bergLength[k,j,i] - avgMelt * couplingTimeStep/86400
+                            if((bergDepths[k,j,i] - avgMelt * couplingTimeStep/86400) > minBergDepth):
+                                bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] - avgMelt * couplingTimeStep/86400
+                            else:
+                                bergDepthsNew[bergsPerCellNew[j,i],j,i] = bergDepths[k,j,i] # youre too little!
+                            bergsPerCellNew[j,i] += 1
+                            stuckBergCount += 1
+                    else:
+                        # print('Iceberg has left the zone and is lost. Index: %i' %(i + advect))
+                        ejectedBergCount += 1
+                else: 
+                    ## I try to set the minimum berg size such that this doesnt happen in the melange
+                    ## You may want to rely on this option like this for freely drifting bergs, but for now its a warning as it should happen
+                    print('\t\t** WARNING small iceberg discarded second filter [W,L,D]: [%.3f,%.3f,%.3f] WARNING **' %(bergWidths[k,j,i],bergLength[k,j,i],bergDepths[k,j,i]))
+    del i,j
 
-    ## Now sorted, we can put the new arrays into the old arrays
-    bergWidths = bergWidthsNew.copy()
-    bergLength = bergLengthNew.copy()
-    bergDepths = bergDepthsNew.copy()
-    bergsPerCell = bergsPerCellNew.copy()
-
+## Now sorted, we can put the new arrays into the old arrays
+bergWidths = bergWidthsNew.copy()
+bergLength = bergLengthNew.copy()
+bergDepths = bergDepthsNew.copy()
+bergsPerCell = bergsPerCellNew.copy()
+print('\tMélange Moves:')
 print('\t\tMax move is',maxMove)
 print('\t\tTotal bergs after move: %i' %np.sum(bergsPerCell))
+print(f'\t\tTotal rigid bergs: {ridgidCount} ({ridgidCount/np.sum(bergsPerCell)*100:0.2f}%)')
+print('\tDrifters:')
+print(f'\t\tMax/Min move is (y,x): ({maxMoveY}, {maxMoveX})/({minMoveY}, {minMoveX})')
+print(f'\t\tTotal drifter bergs: {ridgidCount} ({ridgidCount/np.sum(bergsPerCell)*100:0.2f}%)')
+print(f'\t\tMoving Attempt bergs: {moveBergCount} ({moveBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
+print(f'\t\tStuck bergs: {stuckBergCount} ({stuckBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
+print(f'\t\tBumped bergs: {bumpedBergCount} ({bumpedBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
+print(f'\t\tEjected bergs: {ejectedBergCount} ({ejectedBergCount * 100.0 / np.sum(bergsPerCell):0.2f}%)')
 
-if(clipBergs):
-    ## Remove Bergs too far along fjord, beyond melange
-    bergWidths[:,:,melangeIndex:] = 0
-    bergLength[:,:,melangeIndex:] = 0
-    bergDepths[:,:,melangeIndex:] = 0
-    bergsPerCell[:,melangeIndex:] = 0
-print('\t\tTotal bergs after clipping: %i' %np.sum(bergsPerCell))
-
-if(shadedEdge):
+if(shadedEdge): #should probably be false
     ## Trim final cell, this is the last cell melange extends into
     ## Should trim proportional to how far into this cell the melange extends. Clipping by number of bergs remains somewhat random
     trimFac = (glaciome_L - (melangeIndex-1)*deltaX)/deltaX
@@ -273,7 +382,7 @@ if(shadedEdge):
         bergWidths[bergsPerCell[j,melangeIndex-1]:,j,melangeIndex-1] = 0
         bergLength[bergsPerCell[j,melangeIndex-1]:,j,melangeIndex-1] = 0
         bergDepths[bergsPerCell[j,melangeIndex-1]:,j,melangeIndex-1] = 0
-print('\t\tTotal bergs after shadedEdge: %i' %np.sum(bergsPerCell))
+    print('\t\tTotal bergs after shadedEdge: %i' %np.sum(bergsPerCell))
 
 if(fillIn):
     ## We fill in the backside of the mélange with new icebergs breaking off the glacier.
@@ -343,202 +452,6 @@ totalBergArea[:,:,:] = np.nan
 ## We need to rescale our bergs according to the GLACIOME1D geometry
 ## We get effective depth from the geometry files (how deep would all this ice be if packed 100%)
 effectiveDepth = np.nanmean(np.nansum(bergDepths[:,:,:]*bergWidths[:,:,:]*bergLength[:,:,:],axis=0)/(deltaX*deltaY),axis=0)
-
-if(icebergFringe):
-    from bisect import bisect_left
-    def find_closest_indices(sorted_A, sorted_B):
-        closest_indices = []
-        for a in sorted_A:
-            pos = bisect_left(sorted_B, a)  # Find position in B where a would fit
-            # Compare neighbors to find the closest
-            if pos == 0:
-                closest_indices.append(0)
-            elif pos == len(sorted_B):
-                closest_indices.append(len(sorted_B) - 1)
-            else:
-                before = pos - 1
-                after = pos
-                closest_indices.append(before if abs(sorted_B[before] - a) <= abs(sorted_B[after] - a) else after)
-        return closest_indices
-    ## Making new bergs to fill ocean infront of mélange to desired fill (20 - 1 percent over 10km)
-    ## We generate these in bulk then assign them to positions
-    
-    ## Geometry of the fringe
-    bergType = 1 # 1 = block 2 = cone (not implemented)
-    scaling = 1 # 1 = Sulak 2017 2 = Barker 2004
-    fringeMaxBergDepth = 160 # (m) 
-    fringeLengthInd = int(20000/deltaX)
-    print(f'\t\tIceberg fringe is {fringeLengthInd} cells long')
-    fringeBergConc = np.zeros(np.shape(bergDepths[0,:,:]))
-    fringeBergMask = np.zeros_like(bergMask)
-    if(melangeIndex + fringeLengthInd > nx):
-        print('Iceberg Fringe extends beyond domain, errors to follow')
-    
-    ## set concentration (lambda) of fringe
-    fringeBergConc[:,melangeIndex:(melangeIndex+fringeLengthInd)] = np.linspace(20,5,num=fringeLengthInd)
-    fringeBergConc[bathymetry == 0] = 0 #walls get no icebergs
-    fringeBergMask[fringeBergConc > 0] = 1
-
-    desiredBergArea = np.sum(fringeBergConc/100.0*deltaX*deltaY)
-    bergMaskArea = np.sum(fringeBergMask*deltaX*deltaY)
-    print('Area where bergs live: ' + str(bergMaskArea) + ' m^2')
-    print('Desired berg area: ' + str(desiredBergArea) + ' m^2')
-    print('Ratio: ' + str(desiredBergArea/bergMaskArea*100) + '%')
-
-    if(scaling == 1): # then use Sulak17 volume-area scaling volume = 6.0*area^1.30
-        # assumes volume = L*W*D and W = L/1.62 (Dowdeswell et al 1992)
-        if(maxBergWidth==0):
-            maxBergWidth = 0.0642449*fringeMaxBergDepth**(5/3)
-            # minBergWidth = 0.0642449*minBergDepth**(5/3)
-        elif(fringeMaxBergDepth==0):
-            fringeMaxBergDepth = 5.19155*maxBergWidth**(5/3)
-            minBergDepth = 5.19155*minBergWidth**(5/3)
-    elif(scaling == 2): # Then use Barker04 width-depth relationship
-        # Depth = 2.91*Width^0.71
-        if(maxBergWidth==0):
-            maxBergWidth = (100*10**(58/71)*fringeMaxBergDepth**(100/71)) / (291*291**(29/71))
-            #minBergWidth = (100*10**(58/71)*minBergDepth**(100/71)) / (291*291**(29/71))        
-        elif(fringeMaxBergDepth==0):
-            fringeMaxBergDepth = 2.91*maxBergWidth^0.71
-            minBergDepth = 2.91*minBergWidth^0.71
-
-    numberOfBergs = 25 #low start, immediately doubled by scheme below, so guess low, high guesses (300%+) can cause to fail
-    bergTopArea = 0
-    areaResidual = 1
-    ## Generate the Inverse Power Law cumulative distribution function
-    ## over the range minBergWidth-maxBergWidth with a slope of alpha.
-    print('Making bergs, this can take a few loops...')
-    loop_count = 1
-
-    # np.random.seed(2)
-    # print('random seed set, not really random anymore')
-
-    while(np.abs(areaResidual) > .005 ): # Create random power dist of bergs, ensure correct surface area
-        numberOfBergs = round(numberOfBergs * (1 + areaResidual))  
-        print('\tnumberOfBergs: ' + str(numberOfBergs))
-        x_width = np.arange(minBergWidth, maxBergWidth, (maxBergWidth-minBergWidth)/(numberOfBergs*1e2))
-        inversePowerLawPDF_width = ((-alpha-1) / minBergWidth) * (x_width/minBergWidth) ** (alpha)
-        ## Get the CDF numerically
-        inversePowerLawCDF_width = np.cumsum(inversePowerLawPDF_width)
-        ## Normalize
-        inversePowerLawCDF_width = inversePowerLawCDF_width / inversePowerLawCDF_width[-1]
-            
-        ## Generate number_of_bergs uniformly distributed random numbers.
-        uniformlyDistributedRandomNumbers = np.random.uniform(0,1,numberOfBergs)
-        
-        inversePowerLawDistNumbers_width = np.zeros(uniformlyDistributedRandomNumbers.size);
-
-        nearestIndex_width = [0] * uniformlyDistributedRandomNumbers.size
-
-        nearestIndex_width = find_closest_indices(uniformlyDistributedRandomNumbers,inversePowerLawCDF_width)
-
-
-        inversePowerLawDistNumbers_width = x_width[nearestIndex_width];
-        inversePowerLawDistNumbers_length = inversePowerLawDistNumbers_width/1.12 # Widths are bigger 
-
-        randScale = np.random.normal(6,1.22,numberOfBergs)
-        randPower = np.random.normal(0.3,0.016,numberOfBergs)
-        inversePowerLawDistNumbers_depth = randScale * (inversePowerLawDistNumbers_width*inversePowerLawDistNumbers_length) ** randPower * (920/1025)
-        inversePowerLawDistNumbers_depth[inversePowerLawDistNumbers_depth < 5.123] = 5.123 #doest like round numbers, cap low end of bergs
-
-        tooWide = np.count_nonzero(inversePowerLawDistNumbers_width > deltaX * np.sqrt(maxLambda))  #disallow completely full cells
-        tooLong = np.count_nonzero(inversePowerLawDistNumbers_length > deltaX * np.sqrt(maxLambda))
-        inversePowerLawDistNumbers_width[inversePowerLawDistNumbers_width > deltaX * np.sqrt(maxLambda)] = deltaX * np.sqrt(maxLambda) - .01  # Max width is grid cell (assumed square)
-        inversePowerLawDistNumbers_length[inversePowerLawDistNumbers_length > deltaX * np.sqrt(maxLambda)] = deltaX * np.sqrt(maxLambda) - .01 # Max length is grid cell (assumed square)
-        if(tooLong + tooWide > 0):
-            print('\t\tBergs clipped: %i for width, %i for length' % (tooWide, tooLong))
-        
-        bergTopArea = sum(inversePowerLawDistNumbers_width*inversePowerLawDistNumbers_length)
-        areaResidual = (desiredBergArea - bergTopArea)/desiredBergArea
-        print('\t\t%.2f %% Bergs' % (bergTopArea/bergMaskArea*100))
-        print('\t\tareaResidual %.2f %%' % (areaResidual * 100))
-        loop_count += 1
-    print('====== Success! Found our bergs =====')
-    print('Width min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_width),np.mean(inversePowerLawDistNumbers_width),np.max(inversePowerLawDistNumbers_width)))
-    print('Depth min/mean/max: %f/%f/%f [m]' % (np.min(inversePowerLawDistNumbers_depth),np.mean(inversePowerLawDistNumbers_depth),np.max(inversePowerLawDistNumbers_depth)))
-    print('Total Berg Area %f' % bergTopArea)
-    print('Total Berg fract: %.2f %%' % (bergTopArea/bergMaskArea*100))
-
-    ## Now we sort these berg into cell, randomly 
-    bergMaski = 0  #Bad name, but this is the count of cells that will recieve bergs
-    bergDict = {}
-
-    for j in range(ny):
-        for i in range(nx):
-            if(fringeBergMask[j,i] == 1):
-                # print('i,j, bergmask',i,j,fringeBergMask[j,i])
-                bergMaski = 1 + bergMaski #Needs to start at 1, as non-bergs will be 0
-                bergMaskNums[j,i] = bergMaski #Assign Mask Nums, not random as we'll randomly place bergs in cells
-                bergDict[bergMaski] = [j,i] #This lets us do 1-D loops for the whole grid
-    print('%i cells with bergs' % bergMaski)
-
-    # Sort my bergs
-    sorted_indices = np.argsort(-inversePowerLawDistNumbers_depth) # Sort backwards to get descending from big to small bergs 
-    sorted_depth = inversePowerLawDistNumbers_depth[sorted_indices]
-    sorted_width = inversePowerLawDistNumbers_width[sorted_indices]
-    sorted_length = inversePowerLawDistNumbers_length[sorted_indices]
-    assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) # In this script, every berg has a home
-
-    ## Array for bergs
-    bergsPerCellLimit = 500
-    icebergs_depths = np.zeros([bergMaski,bergsPerCellLimit])
-    icebergs_widths = np.zeros([bergMaski,bergsPerCellLimit])
-    icebergs_length = np.zeros([bergMaski,bergsPerCellLimit])  #careful, not plural as to length match
-
-    # np.random.seed(2)
-    assignedCell = np.random.randint(0,bergMaski,[numberOfBergs]) #every Berg has a spot
-
-    icebergs_per_cell = np.zeros([bergMaski],dtype=np.int16)
-    icebergs_area_per_cell = np.zeros([bergMaski])
-
-    for i in range(numberOfBergs): 
-        j = assignedCell[i]
-        # print('looking at mask number',j,'at berg',i)
-        # print('Berg number', icebergs_per_cell[j],'in this cell')
-        # print('Width, Length',sorted_width[i], sorted_length[i])
-        bergArea = sorted_width[i] * sorted_length[i]
-        loopLimiter = 0
-        while(bergArea > (deltaX * deltaY  * (fringeBergConc[bergDict[j+1][0],bergDict[j+1][1]]/100) - icebergs_area_per_cell[j])): #if above 'full', pick random new cell, accept with decreasing probability
-            j_old = j
-            j = np.random.randint(0,bergMaski)
-            loopLimiter += 1
-            if((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY) < maxLambda - .01): #only consider accepting if under 95
-                odds = np.abs(np.random.normal(0,.5,1))  #randomly accepts those that are big in overfull cells, but at decreasing frequency
-                overFull = ((bergArea + icebergs_area_per_cell[j])/(deltaX * deltaY)*100 - fringeBergConc[bergDict[j+1][0],bergDict[j+1][1]])
-                if(odds > overFull):
-                    # print('accepting overfull')
-                    assignedCell[i] = j  #if we it a shuffling critera
-                    break
-            if(loopLimiter > bergMaski*20): #eventually we have to force some in
-                indexesAllowed = np.where((deltaX * deltaY * maxLambda - icebergs_area_per_cell)  > bergArea)
-                # print(indexesAllowed)
-                randi = np.random.randint(0,len(indexesAllowed[0]))
-                j = indexesAllowed[0][randi]
-                assignedCell[i] = j  #if we it a shuffling critera, must line up for calculation below
-                print('\t Randomly missed, will force into cell with room: %i' % j)
-                if((np.min(icebergs_area_per_cell) + bergArea)/(deltaX * deltaY) > maxLambda):
-                    print('WARNING cell very full: %.2f%%' %((np.min(icebergs_area_per_cell) + bergArea)*100/(deltaX * deltaY)))
-                break
-        
-        icebergs_depths[j,icebergs_per_cell[j]] = sorted_depth[i]
-        icebergs_widths[j,icebergs_per_cell[j]] = sorted_width[i]
-        icebergs_length[j,icebergs_per_cell[j]] = sorted_length[i]
-        icebergs_per_cell[j] += 1
-        # icebergs_area_per_cell[j] = np.sum(icebergs_widths[j,:]*icebergs_length[j,:])
-        icebergs_area_per_cell[j] += bergArea
-    #print('Bergs per cell and filled faction at surface for spot check')     
-    #print(icebergs_per_cell)
-    #print(np.round(icebergs_area_per_cell/(deltaX*deltaY),2))
-    print('Max fill for fringe is: %.2f%%' % (np.nanmax(icebergs_area_per_cell/(deltaX*deltaY))*100))
-
-    ## above makes 1D list of all bergs using a dictionary, here we drop them into the proper cells of the 2D arrays
-    for k in range(bergMaski):
-        j = bergDict[k+1][0]
-        i = bergDict[k+1][1]
-        bergDepths[:,j,i] = icebergs_depths[k,:]
-        bergWidths[:,j,i] = icebergs_widths[k,:]
-        bergLength[:,j,i] = icebergs_length[k,:]
-        bergsPerCell[j,i] = icebergs_per_cell[k]
 
 print('\t\tMelange edge at i=%i' %melangeIndex)
 for i in range(nx): #loops over whole domain, this calculates new hfill factors
