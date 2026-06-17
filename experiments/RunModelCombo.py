@@ -111,9 +111,9 @@ elif(freshStart): #This distinguises between a new coupled run, or continuing a 
     if(OSX == 'Tufts'):
         mpi_flags = '--quiet --mca btl_vader_single_copy_mechanism none'
     elif(OSX == 'PACE'):
-        mpi_flags = '-v'
+        mpi_flags = ''
     elif(OSX == 'Darwin'):
-        mpi_flags = '-v'
+        mpi_flags = ''
     # run initial MITgcm
     os.system("touch results/test.txt")
     os.chdir("results")
