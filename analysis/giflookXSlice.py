@@ -15,6 +15,8 @@ parser.add_argument('-q','--quick', action='count', default=0,
                     help='quick option for last from only, double to show plot(s)')
 parser.add_argument('-k','--kValues', nargs='*', type=int, default = None,
                     help='option specification of views to plot [default = all]')
+parser.add_argument('-s','--shadow', action='count', default=0,
+                    help='option of shadow for mélange [default (off)]')
 parser.add_argument('-n','--numFrames', nargs='?', type=int, default = 60,
                     help='optional specification of numFrames [default = 60]')
 parser.add_argument('-t','--timeRange', nargs=2, type=int, default = None,
@@ -127,6 +129,33 @@ if(isBerg):
     #             maxDepth[j,i] = np.max(depths)
 
 
+if(isBerg):
+    bergMask = np.fromfile('input/bergMask.bin', dtype='>f8')
+    bergMask = bergMask.reshape(np.shape(x))
+    bergMaskNums = np.fromfile('input/bergMaskNums.bin', dtype='>f8')
+    bergMaskNums = bergMaskNums.reshape(np.shape(x))
+    bergsPerCell = np.fromfile('input/numBergsPerCell.bin', dtype='>f8')
+    bergsPerCell = bergsPerCell.reshape(np.shape(x))
+    bergContaingingCells = int(np.sum(bergMask))
+    maxDepth = np.zeros(np.shape(x))
+
+    ## deepest contour
+    # for i in range(np.shape(x)[1]):
+    #     for j in range(np.shape(x)[0]):
+    #         bergCount = int(bergsPerCell[j,i])
+    #         if(bergMask[j,i] == 1 and bergCount > 0):  #only go in if bergs here
+    #             depthFile = 'input/iceberg_depth_%05i.txt' % int(bergMaskNums[j,i])
+    #             depths = np.zeros(bergCount)
+    #             with open(depthFile,'r') as readFile:
+    #                 ii = 0
+    #                 for line in readFile:
+    #                     if ii >= bergCount:
+    #                         print('berg count mismatch in depth')
+    #                         break
+    #                     depths[ii] = float(line)
+    #                     ii += 1
+    #             readFile.close()
+    #             maxDepth[j,i] = np.max(depths)
     # contourf plot
     openFrac = np.fromfile('input/openFrac.bin', dtype='>f8')
     openFrac = openFrac.reshape((np.shape(z)[0], np.shape(x)[0], np.shape(x)[1]))
@@ -164,6 +193,16 @@ for k in kList:
             localBergs = True
         else:
             localBergs = False
+        if(args.shadow > 0): #enable berg shadows here
+            dataBergs = mds.rdmds("results/BRGFlx",i)
+            if(dataBergs.shape[0] < 6):
+                dataBergPlot = dataBergs[0,:,:,:].copy()
+                dataBergPlot[dataBergPlot != 0] = .2
+                dataBergPlot[data[0,:,:,:] < -1] = .2 #attemp to recapture freezing limit ice
+                dataBergPlot[:,np.nansum(dataBergs[0,:,:,:],axis=0) == 0] = 0 #attemp to recapture freezing limit ice
+            else:
+                dataBergPlot = dataBergs[5,:,:,:]
+            dataBergPlot[dataBergPlot == 0] = 1 #np.nan
         data = mds.rdmds("results/%s"%(dynName[k]), i)
         kk = k
         if k == 0:
@@ -232,16 +271,16 @@ for k in kList:
         # plt.plot(y[:,xSlice],ice[:,xSlice],color='gray')
         cbar = plt.colorbar(cp)
         cbar.set_label(cbarLabel[k])
-        if(localBergs):
+        if(args.shadow > 0):
             # plt.plot(y[:,xSlice],-np.max(maxDepth,axis=1),color='gray',linestyle='dotted')
-            cp2 = plt.contourf(
+            cp2 = plt.pcolormesh(
                 np.squeeze(y[:,xSlice]),
                 np.squeeze(z),
-                np.squeeze(openFrac[:, :, xSlice]),
-                [.4,.6,.8,.9,.95],
-                extend="min",
-                alpha=.1,
-                cmap='cmo.gray')
+                np.squeeze(dataBergPlot[:, :, xSlice]),
+                cmap='cmo.gray',
+                vmin=.4,
+                vmax=.90,
+                alpha = .2)
             #cbar2 = plt.colorbar(cp2)
             #cbar2.set_label('Ocean Fraction')
         plt.xlabel('Across Fjord [m] %.3f %.3f nan: %i' %(np.nanmin(data[kk, :, :, xSlice]),np.nanmax(data[kk, :, :, xSlice]),np.max(np.isnan(data[kk, :, :, xSlice]))))
