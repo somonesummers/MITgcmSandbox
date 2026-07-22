@@ -71,6 +71,13 @@ elif "hcoda" in current_directory:
     OSX = 'PACE'
 else:
     raise Exception("unknown OSX or running location, please configure")
+mpi_flags = ''
+if(OSX == 'Tufts'):
+    mpi_flags = '--quiet --mca btl_vader_single_copy_mechanism none'
+elif(OSX == 'PACE'):
+    mpi_flags = '-v'
+elif(OSX == 'Darwin'):
+    mpi_flags = '-v'
 
 sysPrint(f'Operating system identified as {OSX}')
 
